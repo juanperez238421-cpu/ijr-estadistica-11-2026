@@ -18,16 +18,33 @@ jobs:
       - name: Checkout temporary render branch
         uses: actions/checkout@v4
 
-      - name: Reconstruct and validate Python source
+      - name: Reconstruct, revise, and validate Python source
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p render_workspace
           base64 -d < manim_render_jobs/statistics11_colab_20260727/payload_compact.py.gz.b64 | gzip -dc > render_workspace/main.py
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('render_workspace/main.py')
+          source = path.read_text(encoding='utf-8')
+          replacements = {
+              "self.focus_camera(VGroup(multiplication_group, highlight_mul), min_width=3.3, max_width=4.5, hold=P_EXPLAIN)":
+              "self.focus_camera(VGroup(row_1, highlight_mul), min_width=6.3, max_width=7.3, padding_x=0.72, hold=P_EXPLAIN)",
+              "self.focus_camera(VGroup(parentheses_group, highlight_parentheses), min_width=3.7, max_width=5.2, hold=P_EXPLAIN)":
+              "self.focus_camera(VGroup(row_2, highlight_parentheses), min_width=6.8, max_width=7.8, padding_x=0.72, hold=P_EXPLAIN)",
+          }
+          for old, new in replacements.items():
+              if old not in source:
+                  raise RuntimeError(f'Expected senior-review target not found: {old}')
+              source = source.replace(old, new, 1)
+          path.write_text(source, encoding='utf-8')
+          PY
           python -m py_compile render_workspace/main.py
           test -s render_workspace/main.py
           sha256sum render_workspace/main.py | tee source_sha256.txt
           grep -nE '^class Statistics11ColabPythonIntroduction' render_workspace/main.py
+          grep -n 'focus_camera(VGroup(row_[12]' render_workspace/main.py
 
       - name: Pull official ManimCE 0.20.1 image
         shell: bash
