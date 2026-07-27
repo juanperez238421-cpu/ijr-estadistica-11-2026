@@ -1,0 +1,29 @@
+name: Render Final Statistics 11 Colab Lab
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute validated render pipeline
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d < manim_render_jobs/statistics11_colab_real_lab_v2/render_pipeline.sh.gz.b64 | gzip -dc > render_pipeline.sh
+          bash render_pipeline.sh
+      - name: Upload verified delivery
+        uses: actions/upload-artifact@v4
+        with:
+          name: Statistics11ColabProbabilityMasterclassFinal_pqh
+          path: delivery/
+          if-no-files-found: error
+          retention-days: 7
