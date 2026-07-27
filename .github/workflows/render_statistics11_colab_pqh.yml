@@ -69,6 +69,15 @@ jobs:
           ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt \
             -show_entries format=duration,size -of default=noprint_wrappers=1 "$PREVIEW"
 
+      - name: Upload preview failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Statistics11_preview_failure_diagnostics
+          path: preview_render.log
+          if-no-files-found: error
+          retention-days: 2
+
       - name: Final render with literal -pqh
         shell: bash
         run: |
