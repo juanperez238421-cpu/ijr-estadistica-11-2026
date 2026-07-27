@@ -19,7 +19,12 @@ jobs:
         run: |
           set -euo pipefail
           base64 -d < manim_render_jobs/statistics11_colab_real_lab_v2/render_pipeline.sh.gz.b64 | gzip -dc > render_pipeline.sh
-          bash render_pipeline.sh
+          set +e
+          bash -x render_pipeline.sh > pipeline_debug.log 2>&1
+          status=$?
+          set -e
+          tail -n 200 pipeline_debug.log
+          exit "$status"
       - name: Upload verified delivery
         uses: actions/upload-artifact@v4
         with:
@@ -33,6 +38,7 @@ jobs:
         with:
           name: Statistics11ColabProbabilityMasterclassFinal_failure_diagnostics
           path: |
+            pipeline_debug.log
             render_pipeline.sh
             render_workspace/
             preview_render.log
