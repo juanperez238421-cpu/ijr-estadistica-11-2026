@@ -27,3 +27,19 @@ jobs:
           path: delivery/
           if-no-files-found: error
           retention-days: 7
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Statistics11ColabProbabilityMasterclassFinal_failure_diagnostics
+          path: |
+            render_pipeline.sh
+            render_workspace/
+            preview_render.log
+            preview_render_status.txt
+            final_render.log
+            final_render_status.txt
+            source_sha256.txt
+            notebook_sha256.txt
+          if-no-files-found: ignore
+          retention-days: 2
