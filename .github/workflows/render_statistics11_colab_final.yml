@@ -19,6 +19,7 @@ jobs:
         run: |
           set -euo pipefail
           cat manim_render_jobs/statistics11_colab_real_lab_v2/render_pipeline_*.b64 | base64 -d | gzip -dc > render_pipeline.sh
+          sed -i "s/'multiplication rule'/'two red marbles'/" render_pipeline.sh
           set +e
           bash -x render_pipeline.sh > pipeline_debug.log 2>&1
           status=$?
