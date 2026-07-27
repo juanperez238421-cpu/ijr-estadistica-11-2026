@@ -60,7 +60,7 @@ jobs:
           source = source.replace(old_title, new_title, 1)
 
           overrides = Path('render_workspace/overrides.py').read_text(encoding='utf-8')
-          source = source.rstrip() + '\n\n' + overrides.lstrip()
+          source = source.rstrip() + '\n\n\n' + overrides.lstrip()
           source_path.with_name('main.py').write_text(source, encoding='utf-8')
           PY
 
