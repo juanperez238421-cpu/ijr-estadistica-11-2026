@@ -23,8 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p render_workspace
-          base64 -d < manim_render_jobs/statistics11_colab_20260727/payload_compact.py.gz.b64 \
-            | gzip -dc > render_workspace/main.py
+          base64 -d < manim_render_jobs/statistics11_colab_20260727/payload_compact.py.gz.b64 | gzip -dc > render_workspace/main.py
           python -m py_compile render_workspace/main.py
           test -s render_workspace/main.py
           sha256sum render_workspace/main.py | tee source_sha256.txt
@@ -32,9 +31,7 @@ jobs:
 
       - name: Pull official ManimCE 0.20.1 image
         shell: bash
-        run: |
-          set -euo pipefail
-          docker pull manimcommunity/manim:v0.20.1
+        run: docker pull manimcommunity/manim:v0.20.1
 
       - name: Mandatory preview render with literal -pql
         shell: bash
@@ -56,26 +53,15 @@ jobs:
               printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/colab-bin/xdg-open
               chmod +x /tmp/colab-bin/xdg-open
               export PATH="/tmp/colab-bin:$PATH"
-              manim -pql main.py Statistics11ColabPythonIntroductionPreview \
-                --format=mp4 \
-                --disable_caching
+              manim -pql main.py Statistics11ColabPythonIntroductionPreview --format=mp4 --disable_caching
             ' 2>&1 | tee preview_render.log
           status=${PIPESTATUS[0]}
           set -e
           echo "Preview container exit status: $status"
-
           PREVIEW="$(find render_workspace/media -type f -name 'Statistics11ColabPythonIntroductionPreview.mp4' -print -quit)"
           test -n "$PREVIEW"
           test -s "$PREVIEW"
-          docker run --rm \
-            -v "$PWD:/manim" \
-            --entrypoint ffprobe \
-            manimcommunity/manim:v0.20.1 \
-            -v error \
-            -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt \
-            -show_entries format=duration,size \
-            -of default=noprint_wrappers=1 \
-            "/manim/$PREVIEW" | tee preview_ffprobe.txt
+          stat -c 'size=%s' "$PREVIEW" | tee preview_ffprobe.txt
 
       - name: Final render with literal -pqh
         shell: bash
@@ -98,14 +84,11 @@ jobs:
               printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/colab-bin/xdg-open
               chmod +x /tmp/colab-bin/xdg-open
               export PATH="/tmp/colab-bin:$PATH"
-              manim -pqh main.py Statistics11ColabPythonIntroduction \
-                --format=mp4 \
-                --disable_caching
+              manim -pqh main.py Statistics11ColabPythonIntroduction --format=mp4 --disable_caching
             ' 2>&1 | tee final_render.log
           status=${PIPESTATUS[0]}
           set -e
           echo "Final container exit status: $status" | tee final_render_status.txt
-
           VIDEO="$(find render_workspace/media -type f -name 'Statistics11ColabPythonIntroduction.mp4' -print -quit)"
           test -n "$VIDEO"
           test -s "$VIDEO"
@@ -118,32 +101,24 @@ jobs:
           VIDEO="$(find render_workspace/media -type f -name 'Statistics11ColabPythonIntroduction.mp4' -print -quit)"
           test -n "$VIDEO"
           test -s "$VIDEO"
-
           mkdir -p delivery
           cp "$VIDEO" delivery/Statistics11ColabPythonIntroduction_pqh.mp4
           cp render_workspace/main.py delivery/statistics11_colab_python_intro_masterclass_senior_render_source.py
           cp preview_render.log preview_ffprobe.txt final_render.log final_render_status.txt source_sha256.txt delivery/
-
           cat > delivery/render_command.txt <<'EOF'
           docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp/manim-home -e STATS11_COLAB_SHORT_PAUSES=1 -e STATS11_COLAB_SHOW_SOLUTIONS=0 -v "$PWD:/manim" -w /manim/render_workspace --entrypoint bash manimcommunity/manim:v0.20.1 -c 'mkdir -p /tmp/colab-bin; printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/colab-bin/xdg-open; chmod +x /tmp/colab-bin/xdg-open; export PATH="/tmp/colab-bin:$PATH"; manim -pqh main.py Statistics11ColabPythonIntroduction --format=mp4 --disable_caching'
           EOF
-
           docker run --rm \
             -v "$PWD:/manim" \
-            --entrypoint ffprobe \
+            -w /manim \
+            --entrypoint python \
             manimcommunity/manim:v0.20.1 \
-            -v error \
-            -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt \
-            -show_entries format=duration,size \
-            -of default=noprint_wrappers=1 \
-            /manim/delivery/Statistics11ColabPythonIntroduction_pqh.mp4 \
+            -c 'import av, os; p="delivery/Statistics11ColabPythonIntroduction_pqh.mp4"; c=av.open(p); s=c.streams.video[0]; cc=s.codec_context; print(f"codec_name={cc.name}"); print(f"width={cc.width}"); print(f"height={cc.height}"); print(f"pix_fmt={cc.pix_fmt}"); print(f"r_frame_rate={s.average_rate}"); print(f"duration={float(c.duration/av.time_base):.6f}"); print(f"size={os.path.getsize(p)}")' \
             | tee delivery/FFPROBE.txt
-
           grep -q '^codec_name=h264$' delivery/FFPROBE.txt
           grep -q '^width=1920$' delivery/FFPROBE.txt
           grep -q '^height=1080$' delivery/FFPROBE.txt
           grep -q '^pix_fmt=yuv420p$' delivery/FFPROBE.txt
-
           sha256sum delivery/* > delivery/SHA256SUMS.txt
           ls -lh delivery
           echo "video=delivery/Statistics11ColabPythonIntroduction_pqh.mp4" >> "$GITHUB_OUTPUT"
