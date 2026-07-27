@@ -30,10 +30,11 @@ jobs:
             manim_render_jobs/statistics11_colab_real_layout_20260727/payload_03c.b64 \
             manim_render_jobs/statistics11_colab_real_layout_20260727/payload_03d.b64 \
             | base64 -d | gzip -dc > render_workspace/main.py
+          sed -i 's/# 6 is the total number of die outcomes/# Total number of die outcomes/g' render_workspace/main.py
           python -m py_compile render_workspace/main.py
           test -s render_workspace/main.py
           ACTUAL_SHA="$(sha256sum render_workspace/main.py | awk '{print $1}')"
-          EXPECTED_SHA="e00b7de85e1d70aa8c171fc70cccc583feadbee002f6c9dbd455a5984bb13f33"
+          EXPECTED_SHA="be08ddc263dbf72948d69bfa0202bcb58a9ab3d637b68f006ede27b77113518f"
           echo "source_sha256=$ACTUAL_SHA" | tee source_sha256.txt
           test "$ACTUAL_SHA" = "$EXPECTED_SHA"
           grep -nE '^class Statistics11ColabPythonIntroduction' render_workspace/main.py
