@@ -1,0 +1,181 @@
+name: Render Statistics 11 Real Colab Layout
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout temporary render branch
+        uses: actions/checkout@v4
+
+      - name: Reconstruct and validate source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p render_workspace
+          cat manim_render_jobs/statistics11_colab_real_layout_20260727/payload_*.b64 \
+            | base64 -d \
+            | gzip -dc > render_workspace/main.py
+          python -m py_compile render_workspace/main.py
+          test -s render_workspace/main.py
+          ACTUAL_SHA="$(sha256sum render_workspace/main.py | awk '{print $1}')"
+          EXPECTED_SHA="e00b7de85e1d70aa8c171fc70cccc583feadbee002f6c9dbd455a5984bb13f33"
+          echo "source_sha256=$ACTUAL_SHA" | tee source_sha256.txt
+          test "$ACTUAL_SHA" = "$EXPECTED_SHA"
+          grep -nE '^class Statistics11ColabPythonIntroduction' render_workspace/main.py
+
+      - name: Pull official ManimCE 0.20.1 image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull manimcommunity/manim:v0.20.1
+
+      - name: Mandatory full preview with literal -pql
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -e STATS11_COLAB_SHORT_PAUSES=1 \
+            -e STATS11_COLAB_SHOW_SOLUTIONS=0 \
+            -v "$PWD:/manim" \
+            -w /manim/render_workspace \
+            --entrypoint bash \
+            manimcommunity/manim:v0.20.1 \
+            -c '
+              set -euo pipefail
+              mkdir -p /tmp/colab-bin
+              printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/colab-bin/xdg-open
+              chmod +x /tmp/colab-bin/xdg-open
+              export PATH="/tmp/colab-bin:$PATH"
+              manim -pql main.py Statistics11ColabPythonIntroduction \
+                --format=mp4 \
+                --disable_caching
+            ' 2>&1 | tee preview_render.log
+          status=${PIPESTATUS[0]}
+          set -e
+          echo "preview_container_exit_status=$status" | tee preview_status.txt
+          PREVIEW="$(find render_workspace/media -type f -name 'Statistics11ColabPythonIntroduction.mp4' -print -quit)"
+          test -n "$PREVIEW"
+          test -s "$PREVIEW"
+          cp "$PREVIEW" preview.mp4
+
+      - name: Final render with literal -pqh
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf render_workspace/media
+          set +e
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -e STATS11_COLAB_SHORT_PAUSES=1 \
+            -e STATS11_COLAB_SHOW_SOLUTIONS=0 \
+            -v "$PWD:/manim" \
+            -w /manim/render_workspace \
+            --entrypoint bash \
+            manimcommunity/manim:v0.20.1 \
+            -c '
+              set -euo pipefail
+              mkdir -p /tmp/colab-bin
+              printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/colab-bin/xdg-open
+              chmod +x /tmp/colab-bin/xdg-open
+              export PATH="/tmp/colab-bin:$PATH"
+              manim -pqh main.py Statistics11ColabPythonIntroduction \
+                --format=mp4 \
+                --disable_caching
+            ' 2>&1 | tee final_render.log
+          status=${PIPESTATUS[0]}
+          set -e
+          echo "final_container_exit_status=$status" | tee final_status.txt
+          VIDEO="$(find render_workspace/media -type f -name 'Statistics11ColabPythonIntroduction.mp4' -print -quit)"
+          test -n "$VIDEO"
+          test -s "$VIDEO"
+
+      - name: Verify and stage delivery with PyAV
+        shell: bash
+        run: |
+          set -euo pipefail
+          VIDEO="$(find render_workspace/media -type f -name 'Statistics11ColabPythonIntroduction.mp4' -print -quit)"
+          mkdir -p delivery
+          cp "$VIDEO" delivery/Statistics11ColabRealLayout_pqh.mp4
+          cp render_workspace/main.py delivery/statistics11_colab_real_layout_masterclass.py
+          cp preview_render.log preview_status.txt final_render.log final_status.txt source_sha256.txt delivery/
+
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -v "$PWD:/manim" \
+            -w /manim \
+            --entrypoint python \
+            manimcommunity/manim:v0.20.1 \
+            -c '
+import av
+from pathlib import Path
+p = Path("delivery/Statistics11ColabRealLayout_pqh.mp4")
+container = av.open(str(p))
+stream = container.streams.video[0]
+codec = stream.codec_context.name
+pix_fmt = stream.codec_context.pix_fmt
+fps = float(stream.average_rate)
+duration = float(container.duration / av.time_base)
+lines = [
+    f"codec_name={codec}",
+    f"width={stream.width}",
+    f"height={stream.height}",
+    f"r_frame_rate={fps:.6f}",
+    f"pix_fmt={pix_fmt}",
+    f"duration={duration:.6f}",
+    f"size={p.stat().st_size}",
+]
+Path("delivery/MEDIA_INFO.txt").write_text("\n".join(lines) + "\n")
+assert codec == "h264"
+assert stream.width == 1920
+assert stream.height == 1080
+assert abs(fps - 30.0) < 0.01
+assert pix_fmt == "yuv420p"
+assert duration > 1.0
+'
+
+          cat > delivery/render_command.txt <<'EOF'
+          docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp/manim-home -e STATS11_COLAB_SHORT_PAUSES=1 -e STATS11_COLAB_SHOW_SOLUTIONS=0 -v "$PWD:/manim" -w /manim/render_workspace --entrypoint bash manimcommunity/manim:v0.20.1 -c 'mkdir -p /tmp/colab-bin; printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/colab-bin/xdg-open; chmod +x /tmp/colab-bin/xdg-open; export PATH="/tmp/colab-bin:$PATH"; manim -pqh main.py Statistics11ColabPythonIntroduction --format=mp4 --disable_caching'
+          EOF
+
+          sha256sum delivery/* > delivery/SHA256SUMS.txt
+          cat delivery/MEDIA_INFO.txt
+          ls -lh delivery
+
+      - name: Upload verified delivery
+        uses: actions/upload-artifact@v4
+        with:
+          name: Statistics11ColabRealLayout_pqh
+          path: delivery/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Statistics11ColabRealLayout_failure_diagnostics
+          path: |
+            render_workspace/main.py
+            preview_render.log
+            preview_status.txt
+            final_render.log
+            final_status.txt
+            source_sha256.txt
+          if-no-files-found: ignore
+          retention-days: 2
