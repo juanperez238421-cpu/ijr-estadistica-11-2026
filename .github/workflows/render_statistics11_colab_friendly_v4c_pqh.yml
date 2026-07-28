@@ -1,0 +1,228 @@
+name: Render Statistics 11 Friendly Colab V4C PQH
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render_v4c:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout isolated V4C branch
+        uses: actions/checkout@v4
+
+      - name: Build and validate final standalone source
+        shell: bash
+        run: |
+          set -euo pipefail
+          exec > >(tee validation_v4c.log) 2>&1
+
+          set +e
+          cat manim_render_jobs/statistics11_colab_friendly_v3/source_part_*.b64 \
+            | base64 -d | gzip -dc \
+            > statistics11_colab_friendly_introduction_v3_base.py
+          base_status=${PIPESTATUS[2]}
+          set -e
+          echo "base gzip status: ${base_status}"
+          test -s statistics11_colab_friendly_introduction_v3_base.py
+          sed -i -e 's/diffepence/difference/g' -e 's/pender/render/g' \
+            statistics11_colab_friendly_introduction_v3_base.py
+
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('statistics11_colab_friendly_introduction_v3_base.py')
+          text = path.read_text(encoding='utf-8')
+          old = "result = str(value).replace('–', '--').replace('—', '---')"
+          new = "result = str(value).replace('–', '--').replace('—', '---').replace('…', '...').replace('≈', 'approximately').replace('×', 'x').replace('→', '->')"
+          if old not in text:
+              raise SystemExit('Expected sanitizer line not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+          cat manim_render_jobs/statistics11_colab_friendly_v4/overrides_part_*.b64 \
+            | base64 -d | gzip -dc \
+            > statistics11_colab_friendly_v4_overrides.py
+
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('statistics11_colab_friendly_v4_overrides.py')
+          text = path.read_text(encoding='utf-8')
+          old = """        title_group.set_opacity(0)\n        badge.set_opacity(0)\n        self.add_fixed_in_frame_mobjects(title_group, badge)\n        self._v4_fixed = getattr(self, '_v4_fixed', []) + [title_group, badge]\n        self.play(\n            title_group.animate.set_opacity(1),\n            badge.animate.set_opacity(1),\n            run_time=RUN_NORMAL,\n        )\n        return VGroup(title_group, badge)\n"""
+          new = """        self.play(\n            FadeIn(main, shift=DOWN * 0.04),\n            Create(rule),\n            FadeIn(badge, shift=LEFT * 0.03),\n            run_time=RUN_NORMAL,\n        )\n        self.play(FadeIn(subtitle, shift=UP * 0.02), run_time=RUN_FAST)\n        return VGroup(title_group, badge)\n"""
+          old2 = """        fixed = getattr(self, '_v4_fixed', [])\n        if fixed:\n            self.remove_fixed_in_frame_mobjects(*fixed)\n            self.remove(*fixed)\n        self._v4_fixed = []\n"""
+          if old not in text or old2 not in text:
+              raise SystemExit('Expected V4 compatibility blocks not found')
+          text = text.replace(old, new, 1).replace(old2, '', 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          echo "0e24f55cd9b4c50bc0d6975d604a9db777255509c167c43c0a10d566906ed584  statistics11_colab_friendly_v4_overrides.py" \
+            | sha256sum -c -
+
+          cp statistics11_colab_friendly_introduction_v3_base.py \
+            statistics11_colab_friendly_introduction_v4c.py
+          tail -n +2 statistics11_colab_friendly_v4_overrides.py \
+            >> statistics11_colab_friendly_introduction_v4c.py
+
+          cat manim_render_jobs/statistics11_colab_friendly_v4c/patch.b64 \
+            | base64 -d | gzip -dc \
+            > statistics11_colab_friendly_v4c_patch.py
+          echo "e953ee2e47a35084b376daae5e9b959550cdd4230e1c10a87dc25bfb8c26c988  statistics11_colab_friendly_v4c_patch.py" \
+            | sha256sum -c -
+          tail -n +2 statistics11_colab_friendly_v4c_patch.py \
+            >> statistics11_colab_friendly_introduction_v4c.py
+
+          python -m py_compile statistics11_colab_friendly_introduction_v4c.py
+          grep -Fq 'class Statistics11ColabFriendlyIntroductionV4C(Statistics11ColabFriendlyIntroductionV4):' \
+            statistics11_colab_friendly_introduction_v4c.py
+          grep -Fq 'class Statistics11ColabFriendlyIntroductionV4CPreview(Statistics11ColabFriendlyIntroductionV4C):' \
+            statistics11_colab_friendly_introduction_v4c.py
+          sha256sum statistics11_colab_friendly_introduction_v4c.py \
+            | tee v4c_source_sha256.txt
+
+      - name: Pull fixed ManimCE image
+        shell: bash
+        run: docker pull manimcommunity/manim:v0.20.1
+
+      - name: Targeted final preview with literal -pql
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home -e STATS11_COLAB_SHORT_PAUSES=1 \
+            -e STATS11_COLAB_SHOW_SOLUTIONS=0 \
+            -v "$PWD:/manim" -w /manim --entrypoint bash \
+            manimcommunity/manim:v0.20.1 -c '
+              set -euo pipefail
+              mkdir -p /tmp/colab-bin
+              printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/colab-bin/xdg-open
+              chmod +x /tmp/colab-bin/xdg-open
+              export PATH="/tmp/colab-bin:$PATH"
+              manim -pql statistics11_colab_friendly_introduction_v4c.py \
+                Statistics11ColabFriendlyIntroductionV4CPreview \
+                --format=mp4 --disable_caching
+            ' 2>&1 | tee preview_v4c.log
+
+      - name: Complete V4C validation with literal -pql
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home -e STATS11_COLAB_SHORT_PAUSES=1 \
+            -e STATS11_COLAB_SHOW_SOLUTIONS=0 \
+            -v "$PWD:/manim" -w /manim --entrypoint bash \
+            manimcommunity/manim:v0.20.1 -c '
+              set -euo pipefail
+              mkdir -p /tmp/colab-bin
+              printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/colab-bin/xdg-open
+              chmod +x /tmp/colab-bin/xdg-open
+              export PATH="/tmp/colab-bin:$PATH"
+              manim -pql statistics11_colab_friendly_introduction_v4c.py \
+                Statistics11ColabFriendlyIntroductionV4C \
+                --format=mp4 --disable_caching
+            ' 2>&1 | tee complete_v4c_pql.log
+
+      - name: Full-duration final render with literal -pqh
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home -e STATS11_COLAB_SHORT_PAUSES=0 \
+            -e STATS11_COLAB_SHOW_SOLUTIONS=0 \
+            -v "$PWD:/manim" -w /manim --entrypoint bash \
+            manimcommunity/manim:v0.20.1 -c '
+              set -euo pipefail
+              mkdir -p /tmp/colab-bin
+              printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/colab-bin/xdg-open
+              chmod +x /tmp/colab-bin/xdg-open
+              export PATH="/tmp/colab-bin:$PATH"
+              manim -pqh statistics11_colab_friendly_introduction_v4c.py \
+                Statistics11ColabFriendlyIntroductionV4C \
+                --format=mp4 --disable_caching
+            ' 2>&1 | tee final_v4c_pqh.log
+
+      - name: Verify, decode, and stage final delivery
+        shell: bash
+        run: |
+          set -euo pipefail
+          VIDEO="$(find media -type f -path '*/1080p30/*' \
+            -name 'Statistics11ColabFriendlyIntroductionV4C.mp4' \
+            -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)"
+          test -n "$VIDEO"
+          test -s "$VIDEO"
+          mkdir -p delivery/control_frames
+
+          ffprobe -v error \
+            -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt \
+            -show_entries format=duration,size -of json "$VIDEO" \
+            | tee delivery/FFPROBE.json
+
+          python - <<'PY'
+          import json
+          data = json.load(open('delivery/FFPROBE.json', encoding='utf-8'))
+          stream = data['streams'][0]
+          fmt = data['format']
+          assert stream['codec_name'] == 'h264'
+          assert int(stream['width']) == 1920
+          assert int(stream['height']) == 1080
+          assert stream['r_frame_rate'] == '30/1'
+          assert stream['pix_fmt'] == 'yuv420p'
+          assert float(fmt['duration']) > 60
+          assert int(fmt['size']) > 1_000_000
+          print('Technical media validation: PASS')
+          PY
+
+          ffmpeg -v error -i "$VIDEO" -f null -
+          DURATION="$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$VIDEO")"
+          MID="$(python -c "print(float('${DURATION}')/2.0)")"
+          ffmpeg -y -v error -ss 5 -i "$VIDEO" -frames:v 1 delivery/control_frames/start.png
+          ffmpeg -y -v error -ss "$MID" -i "$VIDEO" -frames:v 1 delivery/control_frames/middle.png
+          ffmpeg -y -v error -sseof -5 -i "$VIDEO" -frames:v 1 delivery/control_frames/end.png
+          test -s delivery/control_frames/start.png
+          test -s delivery/control_frames/middle.png
+          test -s delivery/control_frames/end.png
+
+          cp "$VIDEO" delivery/Statistics11ColabFriendlyIntroductionV4C_pqh.mp4
+          cp statistics11_colab_friendly_introduction_v4c.py delivery/
+          cp validation_v4c.log preview_v4c.log complete_v4c_pql.log final_v4c_pqh.log delivery/
+          cat > delivery/RENDER_INFO.txt <<'EOF'
+          Scene: Statistics11ColabFriendlyIntroductionV4C
+          Source: statistics11_colab_friendly_introduction_v4c.py
+          ManimCE: 0.20.1
+          Command: manim -pqh statistics11_colab_friendly_introduction_v4c.py Statistics11ColabFriendlyIntroductionV4C --format=mp4 --disable_caching
+          Edition: student, guided solution hidden
+          EOF
+          sha256sum delivery/Statistics11ColabFriendlyIntroductionV4C_pqh.mp4 \
+            delivery/statistics11_colab_friendly_introduction_v4c.py \
+            > delivery/SHA256SUMS.txt
+          ls -lah delivery delivery/control_frames
+
+      - name: Upload verified V4C delivery
+        uses: actions/upload-artifact@v4
+        with:
+          name: Statistics11ColabFriendlyIntroductionV4C_pqh
+          path: delivery/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload V4C failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Statistics11ColabFriendlyIntroductionV4C_failure
+          path: |
+            statistics11_colab_friendly_introduction_v4c.py
+            statistics11_colab_friendly_v4c_patch.py
+            validation_v4c.log
+            preview_v4c.log
+            complete_v4c_pql.log
+            final_v4c_pqh.log
+            media/
+          if-no-files-found: ignore
+          retention-days: 2
