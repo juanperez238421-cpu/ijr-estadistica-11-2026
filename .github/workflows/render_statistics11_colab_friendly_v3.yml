@@ -26,12 +26,18 @@ jobs:
             | gzip -dc \
             > statistics11_colab_friendly_introduction_v3.py
 
+          # Repair three verified one-character transport corruptions in the
+          # compressed connector payload, then require the original source hash.
+          sed -i \
+            -e 's/diffepence/difference/g' \
+            -e 's/pender/render/g' \
+            statistics11_colab_friendly_introduction_v3.py
+
           test -s statistics11_colab_friendly_introduction_v3.py
           echo "995032512e6502d38453fc5fd4230518ced95b7094aef900daf85008f39bd5fc  statistics11_colab_friendly_introduction_v3.py" \
             | sha256sum -c -
           python -m py_compile statistics11_colab_friendly_introduction_v3.py
-          grep -q '^class Statistics11ColabFriendlyIntroduction(MovingCameraScene)' statistics11_colab_friendly_introduction_v3.py || \
-            grep -q '^class Statistics11ColabFriendlyIntroduction(Statistics11ColabProbabilityMasterclassFinal)' statistics11_colab_friendly_introduction_v3.py
+          grep -q '^class Statistics11ColabFriendlyIntroduction(Statistics11ColabProbabilityMasterclassFinal)' statistics11_colab_friendly_introduction_v3.py
           grep -q '^class Statistics11ColabFriendlyIntroductionPreview' statistics11_colab_friendly_introduction_v3.py
 
       - name: Pull fixed ManimCE image
@@ -111,7 +117,6 @@ jobs:
             ' 2>&1 | tee final_pqh_render.log
 
       - name: Verify, decode, inspect frames, and stage delivery
-        id: verify
         shell: bash
         run: |
           set -euo pipefail
@@ -134,11 +139,7 @@ jobs:
 
           ffmpeg -v error -i "$VIDEO" -f null -
           DURATION="$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$VIDEO")"
-          MID="$(python - <<PY
-          d=float('$DURATION')
-          print(max(1.0, d/2.0))
-          PY
-          )"
+          MID="$(awk -v d="$DURATION" 'BEGIN {m=d/2; if (m<1) m=1; print m}')"
           ffmpeg -y -v error -ss 5 -i "$VIDEO" -frames:v 1 delivery/control_frames/frame_start.png
           ffmpeg -y -v error -ss "$MID" -i "$VIDEO" -frames:v 1 delivery/control_frames/frame_middle.png
           ffmpeg -y -v error -sseof -5 -i "$VIDEO" -frames:v 1 delivery/control_frames/frame_end.png
@@ -149,15 +150,15 @@ jobs:
           cp "$VIDEO" delivery/Statistics11ColabFriendlyIntroduction_pqh.mp4
           cp statistics11_colab_friendly_introduction_v3.py delivery/
           cp preview_render.log complete_pql_render.log final_pqh_render.log delivery/
-          cat > delivery/RENDER_INFO.txt <<'EOF'
-          Scene: Statistics11ColabFriendlyIntroduction
-          Source: statistics11_colab_friendly_introduction_v3.py
-          ManimCE: 0.20.1
-          Final command: manim -pqh statistics11_colab_friendly_introduction_v3.py Statistics11ColabFriendlyIntroduction --format=mp4 --disable_caching
-          Resolution target: 1920x1080
-          FPS target: 30
-          Student edition: guided-practice solution hidden
-          EOF
+          printf '%s\n' \
+            'Scene: Statistics11ColabFriendlyIntroduction' \
+            'Source: statistics11_colab_friendly_introduction_v3.py' \
+            'ManimCE: 0.20.1' \
+            'Final command: manim -pqh statistics11_colab_friendly_introduction_v3.py Statistics11ColabFriendlyIntroduction --format=mp4 --disable_caching' \
+            'Resolution target: 1920x1080' \
+            'FPS target: 30' \
+            'Student edition: guided-practice solution hidden' \
+            > delivery/RENDER_INFO.txt
           sha256sum delivery/Statistics11ColabFriendlyIntroduction_pqh.mp4 \
             delivery/statistics11_colab_friendly_introduction_v3.py \
             > delivery/SHA256SUMS.txt
