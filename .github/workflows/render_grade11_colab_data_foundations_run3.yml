@@ -1,0 +1,231 @@
+name: Render Grade 11 Colab Data Foundations Run3 PQH
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout isolated render branch
+        uses: actions/checkout@v4
+
+      - name: Reconstruct and validate source, database, and notebook
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd render_jobs/statistics11_colab_data_foundations
+          cat source_part_*.b64 | base64 -d | gzip -dc > statistics11_colab_data_analysis_foundations.py
+          cat dataset_part_*.b64 | base64 -d | gzip -dc > grade11_colab_student_success.csv
+          cat dictionary_part_*.b64 | base64 -d | gzip -dc > grade11_colab_student_success_data_dictionary.csv
+          cat notebook_part_*.b64 | base64 -d | gzip -dc > grade11_colab_data_analysis_foundations.ipynb
+          # ManimCE 0.20.1 / Python 3.14 requires a string weight value.
+          sed -i 's/weight: str | None = None,/weight: str = "NORMAL",/' statistics11_colab_data_analysis_foundations.py
+          python -m py_compile statistics11_colab_data_analysis_foundations.py
+          echo "e775ba7712fb79ccd586dc54b2cf49f2c8fb936f1f6b83df509c0664f2a574bf  statistics11_colab_data_analysis_foundations.py" | sha256sum -c -
+          echo "9e290045435cefb82e798234eb19ceb120788ca49a70b8f9e7eaa3ad74a5497c  grade11_colab_student_success.csv" | sha256sum -c -
+          echo "573d074459da8cde33e79ff9475cca3304daa73fbbf25749190c119b9c426cc6  grade11_colab_student_success_data_dictionary.csv" | sha256sum -c -
+          echo "8b8278adca16ef249f04c49309ec2a252e5868ab34159ab6be2ad3280d455dd9  grade11_colab_data_analysis_foundations.ipynb" | sha256sum -c -
+          python - <<'PY'
+          import ast, csv, json
+          from pathlib import Path
+
+          source = Path('statistics11_colab_data_analysis_foundations.py').read_text(encoding='utf-8')
+          tree = ast.parse(source)
+          classes = {node.name for node in tree.body if isinstance(node, ast.ClassDef)}
+          assert 'Statistics11ColabDataAnalysisFoundations' in classes
+          assert 'Statistics11ColabDataAnalysisFoundationsPreview' in classes
+
+          with open('grade11_colab_student_success.csv', newline='', encoding='utf-8') as handle:
+              rows = list(csv.DictReader(handle))
+          assert len(rows) == 72
+          assert len(rows[0]) == 13
+          assert sum(not row['Study_Hours_Week'] for row in rows) == 4
+          assert sum(not row['Sleep_Hours'] for row in rows) == 3
+
+          notebook = json.loads(Path('grade11_colab_data_analysis_foundations.ipynb').read_text(encoding='utf-8'))
+          assert notebook['nbformat'] == 4
+          assert len(notebook['cells']) >= 20
+          print('Validation PASS: source, 72x13 CSV, data dictionary, and Colab notebook')
+          PY
+
+      - name: Pull fixed ManimCE image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull manimcommunity/manim:v0.20.1
+
+      - name: Mandatory targeted preview with literal -pql
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd render_jobs/statistics11_colab_data_foundations
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -e STATS11_FOUNDATIONS_SHORT_PAUSES=1 \
+            -v "$PWD:/manim" \
+            -w /manim \
+            --entrypoint bash \
+            manimcommunity/manim:v0.20.1 \
+            -c '
+              set -euo pipefail
+              mkdir -p /tmp/colab-bin
+              printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/colab-bin/xdg-open
+              chmod +x /tmp/colab-bin/xdg-open
+              export PATH="/tmp/colab-bin:$PATH"
+              manim -pql statistics11_colab_data_analysis_foundations.py \
+                Statistics11ColabDataAnalysisFoundationsPreview \
+                --format=mp4 --disable_caching
+            ' 2>&1 | tee preview_foundations.log
+
+      - name: Complete class validation with literal -pql
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd render_jobs/statistics11_colab_data_foundations
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -e STATS11_FOUNDATIONS_SHORT_PAUSES=1 \
+            -v "$PWD:/manim" \
+            -w /manim \
+            --entrypoint bash \
+            manimcommunity/manim:v0.20.1 \
+            -c '
+              set -euo pipefail
+              mkdir -p /tmp/colab-bin
+              printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/colab-bin/xdg-open
+              chmod +x /tmp/colab-bin/xdg-open
+              export PATH="/tmp/colab-bin:$PATH"
+              manim -pql statistics11_colab_data_analysis_foundations.py \
+                Statistics11ColabDataAnalysisFoundations \
+                --format=mp4 --disable_caching
+            ' 2>&1 | tee complete_foundations_pql.log
+
+      - name: Final full-duration render with literal -pqh
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd render_jobs/statistics11_colab_data_foundations
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -e STATS11_FOUNDATIONS_SHORT_PAUSES=0 \
+            -v "$PWD:/manim" \
+            -w /manim \
+            --entrypoint bash \
+            manimcommunity/manim:v0.20.1 \
+            -c '
+              set -euo pipefail
+              mkdir -p /tmp/colab-bin
+              printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/colab-bin/xdg-open
+              chmod +x /tmp/colab-bin/xdg-open
+              export PATH="/tmp/colab-bin:$PATH"
+              manim -pqh statistics11_colab_data_analysis_foundations.py \
+                Statistics11ColabDataAnalysisFoundations \
+                --format=mp4 --disable_caching
+            ' 2>&1 | tee final_foundations_pqh.log
+
+      - name: Verify, decode, audit frames, and stage delivery
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd render_jobs/statistics11_colab_data_foundations
+          VIDEO="$(find media -type f -path '*/1080p30/*' -name 'Statistics11ColabDataAnalysisFoundations.mp4' -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)"
+          test -n "$VIDEO"
+          test -s "$VIDEO"
+
+          mkdir -p delivery/control_frames
+          ffprobe -v error -show_streams -show_format -of json "$VIDEO" > delivery/FFPROBE.json
+          python - "$VIDEO" <<'PY'
+          import json, subprocess, sys
+          from pathlib import Path
+
+          video = Path(sys.argv[1])
+          data = json.loads(Path('delivery/FFPROBE.json').read_text(encoding='utf-8'))
+          stream = next(s for s in data['streams'] if s.get('codec_type') == 'video')
+          assert stream['codec_name'] == 'h264', stream
+          assert int(stream['width']) == 1920, stream
+          assert int(stream['height']) == 1080, stream
+          assert stream['r_frame_rate'] == '30/1', stream
+          assert stream['pix_fmt'] == 'yuv420p', stream
+          duration = float(data['format']['duration'])
+          size = int(data['format']['size'])
+          assert duration > 240, duration
+          assert size > 1_000_000, size
+          print(f'Verified {video}: {duration:.2f}s, {size} bytes')
+          PY
+
+          ffmpeg -v error -i "$VIDEO" -f null -
+          DURATION="$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$VIDEO")"
+          python - "$VIDEO" "$DURATION" <<'PY'
+          import subprocess, sys
+          video, duration = sys.argv[1], float(sys.argv[2])
+          times = [5, 45, 90, 135, 180, 225, max(1.0, duration - 5)]
+          for index, time_value in enumerate(times):
+              subprocess.run([
+                  'ffmpeg', '-y', '-v', 'error', '-ss', f'{time_value:.3f}', '-i', video,
+                  '-frames:v', '1', f'delivery/control_frames/frame_{index:02d}_{time_value:.0f}s.png'
+              ], check=True)
+          PY
+
+          cp "$VIDEO" delivery/Statistics11ColabDataAnalysisFoundations_pqh.mp4
+          cp statistics11_colab_data_analysis_foundations.py delivery/
+          cp grade11_colab_student_success.csv delivery/
+          cp grade11_colab_student_success_data_dictionary.csv delivery/
+          cp grade11_colab_data_analysis_foundations.ipynb delivery/
+          cp preview_foundations.log complete_foundations_pql.log final_foundations_pqh.log delivery/
+
+          cat > delivery/RENDER_INFO.txt <<'EOF'
+          Scene: Statistics11ColabDataAnalysisFoundations
+          Source: statistics11_colab_data_analysis_foundations.py
+          Dataset: grade11_colab_student_success.csv
+          Notebook: grade11_colab_data_analysis_foundations.ipynb
+          ManimCE: 0.20.1
+          Final command: manim -pqh statistics11_colab_data_analysis_foundations.py Statistics11ColabDataAnalysisFoundations --format=mp4 --disable_caching
+          Resolution target: 1920x1080
+          FPS target: 30
+          Language: English
+          EOF
+
+          sha256sum \
+            delivery/Statistics11ColabDataAnalysisFoundations_pqh.mp4 \
+            delivery/statistics11_colab_data_analysis_foundations.py \
+            delivery/grade11_colab_student_success.csv \
+            delivery/grade11_colab_data_analysis_foundations.ipynb \
+            > delivery/SHA256SUMS.txt
+          ls -lah delivery delivery/control_frames
+
+      - name: Upload verified final delivery
+        uses: actions/upload-artifact@v4
+        with:
+          name: Statistics11ColabDataAnalysisFoundations_pqh
+          path: render_jobs/statistics11_colab_data_foundations/delivery/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Statistics11ColabDataAnalysisFoundations_failure
+          path: |
+            render_jobs/statistics11_colab_data_foundations/statistics11_colab_data_analysis_foundations.py
+            render_jobs/statistics11_colab_data_foundations/grade11_colab_student_success.csv
+            render_jobs/statistics11_colab_data_foundations/grade11_colab_student_success_data_dictionary.csv
+            render_jobs/statistics11_colab_data_foundations/grade11_colab_data_analysis_foundations.ipynb
+            render_jobs/statistics11_colab_data_foundations/preview_foundations.log
+            render_jobs/statistics11_colab_data_foundations/complete_foundations_pql.log
+            render_jobs/statistics11_colab_data_foundations/final_foundations_pqh.log
+            render_jobs/statistics11_colab_data_foundations/media/
+            render_jobs/statistics11_colab_data_foundations/delivery/
+          if-no-files-found: ignore
+          retention-days: 2
