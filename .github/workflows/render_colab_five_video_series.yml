@@ -1,0 +1,221 @@
+name: Render Grade 11 Colab Five Video Series
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: 01_register
+            file: 01_colab_register.py
+            scene: ColabRegisterAndAccess
+            preview: ColabRegisterAndAccessPreview
+            title: Register
+          - id: 02_interface
+            file: 02_colab_interface_review.py
+            scene: ColabInterfaceFullReview
+            preview: ColabInterfaceFullReviewPreview
+            title: Interface Full Review
+          - id: 03_first_steps
+            file: 03_colab_first_steps.py
+            scene: ColabFirstSteps
+            preview: ColabFirstStepsPreview
+            title: First Steps
+          - id: 04_first_operations
+            file: 04_colab_first_operations.py
+            scene: ColabFirstOperations
+            preview: ColabFirstOperationsPreview
+            title: First Operations
+          - id: 05_first_functions
+            file: 05_colab_first_functions.py
+            scene: ColabFirstFunctions
+            preview: ColabFirstFunctionsPreview
+            title: First Functions
+
+    steps:
+      - name: Checkout isolated render branch
+        uses: actions/checkout@v4
+
+      - name: Reconstruct and validate exact source package
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd render_jobs/colab_five_video_series
+          cat payload_*.b64 | base64 -d > payload.tar.gz
+          echo "afe305188e2eeb5e57867fdd87da4364fbae4a72ce71cabac7bcf9c3479c86e0  payload.tar.gz" | sha256sum -c -
+          tar -xzf payload.tar.gz
+          python -m py_compile \
+            colab_series_library.py \
+            01_colab_register.py \
+            02_colab_interface_review.py \
+            03_colab_first_steps.py \
+            04_colab_first_operations.py \
+            05_colab_first_functions.py
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+          required = {
+              '01_colab_register.py': {'ColabRegisterAndAccess', 'ColabRegisterAndAccessPreview'},
+              '02_colab_interface_review.py': {'ColabInterfaceFullReview', 'ColabInterfaceFullReviewPreview'},
+              '03_colab_first_steps.py': {'ColabFirstSteps', 'ColabFirstStepsPreview'},
+              '04_colab_first_operations.py': {'ColabFirstOperations', 'ColabFirstOperationsPreview'},
+              '05_colab_first_functions.py': {'ColabFirstFunctions', 'ColabFirstFunctionsPreview'},
+          }
+          for filename, expected in required.items():
+              tree = ast.parse(Path(filename).read_text(encoding='utf-8'))
+              classes = {node.name for node in tree.body if isinstance(node, ast.ClassDef)}
+              assert expected <= classes, (filename, expected - classes)
+          print('Five-video source validation: PASS')
+          PY
+
+      - name: Pull fixed ManimCE image
+        run: docker pull manimcommunity/manim:v0.20.1
+
+      - name: Mandatory critical preview with literal -pql
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd render_jobs/colab_five_video_series
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home -e COLAB_SERIES_SHORT_PAUSES=1 \
+            -v "$PWD:/manim" -w /manim --entrypoint bash \
+            manimcommunity/manim:v0.20.1 -c '
+              set -euo pipefail
+              mkdir -p /tmp/colab-bin
+              printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/colab-bin/xdg-open
+              chmod +x /tmp/colab-bin/xdg-open
+              export PATH="/tmp/colab-bin:$PATH"
+              manim -pql "${{ matrix.file }}" "${{ matrix.preview }}" \
+                --format=mp4 --disable_caching
+            ' 2>&1 | tee "${{ matrix.id }}_preview_pql.log"
+
+      - name: Complete scene validation with literal -pql
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd render_jobs/colab_five_video_series
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home -e COLAB_SERIES_SHORT_PAUSES=1 \
+            -v "$PWD:/manim" -w /manim --entrypoint bash \
+            manimcommunity/manim:v0.20.1 -c '
+              set -euo pipefail
+              mkdir -p /tmp/colab-bin
+              printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/colab-bin/xdg-open
+              chmod +x /tmp/colab-bin/xdg-open
+              export PATH="/tmp/colab-bin:$PATH"
+              manim -pql "${{ matrix.file }}" "${{ matrix.scene }}" \
+                --format=mp4 --disable_caching
+            ' 2>&1 | tee "${{ matrix.id }}_complete_pql.log"
+
+      - name: Final full-duration render with literal -pqh
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd render_jobs/colab_five_video_series
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home -e COLAB_SERIES_SHORT_PAUSES=0 \
+            -v "$PWD:/manim" -w /manim --entrypoint bash \
+            manimcommunity/manim:v0.20.1 -c '
+              set -euo pipefail
+              mkdir -p /tmp/colab-bin
+              printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/colab-bin/xdg-open
+              chmod +x /tmp/colab-bin/xdg-open
+              export PATH="/tmp/colab-bin:$PATH"
+              manim -pqh "${{ matrix.file }}" "${{ matrix.scene }}" \
+                --format=mp4 --disable_caching
+            ' 2>&1 | tee "${{ matrix.id }}_final_pqh.log"
+
+      - name: Verify, decode, extract control frames, and stage delivery
+        shell: bash
+        env:
+          SCENE: ${{ matrix.scene }}
+          SOURCE: ${{ matrix.file }}
+          ITEM_ID: ${{ matrix.id }}
+          ITEM_TITLE: ${{ matrix.title }}
+        run: |
+          set -euo pipefail
+          cd render_jobs/colab_five_video_series
+          VIDEO="$(find media -type f -path '*/1080p30/*' -name "${SCENE}.mp4" -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)"
+          test -n "$VIDEO" && test -s "$VIDEO"
+          mkdir -p "delivery/${ITEM_ID}/control_frames"
+
+          docker run --rm \
+            -e VIDEO="$VIDEO" -e SCENE="$SCENE" -e ITEM_ID="$ITEM_ID" \
+            -v "$PWD:/manim" -w /manim --entrypoint bash \
+            manimcommunity/manim:v0.20.1 -c '
+              set -euo pipefail
+              ffprobe -v error -show_streams -show_format -of json "$VIDEO" > "delivery/$ITEM_ID/FFPROBE.json"
+              python - <<"PY"
+          import json, os
+          from pathlib import Path
+          path = Path("delivery") / os.environ["ITEM_ID"] / "FFPROBE.json"
+          data = json.loads(path.read_text(encoding="utf-8"))
+          stream = next(s for s in data["streams"] if s.get("codec_type") == "video")
+          assert stream["codec_name"] == "h264"
+          assert int(stream["width"]) == 1920 and int(stream["height"]) == 1080
+          assert stream["r_frame_rate"] == "30/1"
+          assert stream["pix_fmt"] == "yuv420p"
+          assert float(data["format"]["duration"]) > 45
+          assert int(data["format"]["size"]) > 1_000_000
+          print("Technical validation: PASS")
+          PY
+              ffmpeg -v error -i "$VIDEO" -f null -
+              duration=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$VIDEO")
+              python - "$VIDEO" "$duration" "$ITEM_ID" <<"PY"
+          import subprocess, sys
+          video, duration, item = sys.argv[1], float(sys.argv[2]), sys.argv[3]
+          times = list(range(6, int(duration), 12)) + [max(1.0, duration - 3)]
+          for index, t in enumerate(times):
+              subprocess.run([
+                  "ffmpeg", "-y", "-v", "error", "-ss", f"{t:.3f}", "-i", video,
+                  "-frames:v", "1", f"delivery/{item}/control_frames/frame_{index:02d}_{t:.0f}s.png"
+              ], check=True)
+          PY
+            '
+
+          cp "$VIDEO" "delivery/${ITEM_ID}/${SCENE}_pqh.mp4"
+          cp "$SOURCE" "delivery/${ITEM_ID}/"
+          cp colab_series_library.py "delivery/${ITEM_ID}/"
+          cp README_SERIES.md "delivery/${ITEM_ID}/"
+          cp "${ITEM_ID}_preview_pql.log" "${ITEM_ID}_complete_pql.log" "${ITEM_ID}_final_pqh.log" "delivery/${ITEM_ID}/"
+          cat > "delivery/${ITEM_ID}/RENDER_INFO.txt" <<EOF
+          Video: ${ITEM_TITLE}
+          Scene: ${SCENE}
+          Source: ${SOURCE}
+          ManimCE: 0.20.1
+          Final command: manim -pqh ${SOURCE} ${SCENE} --format=mp4 --disable_caching
+          Resolution: 1920x1080
+          Frame rate: 30 fps
+          EOF
+          sha256sum "delivery/${ITEM_ID}/${SCENE}_pqh.mp4" "delivery/${ITEM_ID}/${SOURCE}" "delivery/${ITEM_ID}/colab_series_library.py" > "delivery/${ITEM_ID}/SHA256SUMS.txt"
+
+      - name: Upload verified video package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Grade11_Colab_${{ matrix.id }}_pqh
+          path: render_jobs/colab_five_video_series/delivery/${{ matrix.id }}/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Grade11_Colab_${{ matrix.id }}_failure
+          path: |
+            render_jobs/colab_five_video_series/*.py
+            render_jobs/colab_five_video_series/${{ matrix.id }}_*.log
+            render_jobs/colab_five_video_series/media/
+            render_jobs/colab_five_video_series/delivery/${{ matrix.id }}/
+          if-no-files-found: ignore
+          retention-days: 2
