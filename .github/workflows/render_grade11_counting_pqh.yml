@@ -96,30 +96,49 @@ jobs:
                 --format=mp4 --disable_caching
             ' 2>&1 | tee render_grade11_counting/render_pqh.log
 
-      - name: Verify MP4 and extract control frames
+      - name: Normalize and verify final MP4
         id: verify
         shell: bash
         run: |
           set -euo pipefail
           ROOT='render_grade11_counting'
-          VIDEO="$(find "$ROOT/media" -type f -name 'Statistics11CountingVisualRoadmap.mp4' -path '*1080p30*' -print -quit)"
-          test -n "$VIDEO"
-          test -s "$VIDEO"
-          echo "video=$VIDEO" >> "$GITHUB_OUTPUT"
+          RAW_VIDEO="$(find "$ROOT/media" -type f -name 'Statistics11CountingVisualRoadmap.mp4' -path '*1080p30*' -print -quit)"
+          test -n "$RAW_VIDEO"
+          test -s "$RAW_VIDEO"
 
-          mkdir -p "$ROOT/delivery/control_frames"
+          DELIVERY="$ROOT/delivery"
+          FINAL_VIDEO="$DELIVERY/Statistics11_Counting_VisualRoadmap_1080p30.mp4"
+          mkdir -p "$DELIVERY/control_frames"
+
           ffprobe -v error \
             -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt \
             -show_entries format=duration,size \
             -of default=noprint_wrappers=1 \
-            "$VIDEO" | tee "$ROOT/delivery/FFPROBE.txt"
+            "$RAW_VIDEO" | tee "$DELIVERY/FFPROBE_RAW.txt"
 
-          codec="$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of csv=p=0 "$VIDEO")"
-          width="$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$VIDEO")"
-          height="$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$VIDEO")"
-          fps="$(ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -of csv=p=0 "$VIDEO")"
-          pix="$(ffprobe -v error -select_streams v:0 -show_entries stream=pix_fmt -of csv=p=0 "$VIDEO")"
-          duration="$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$VIDEO")"
+          ffmpeg -y -v error -i "$RAW_VIDEO" \
+            -map 0:v:0 -an \
+            -vf 'scale=1920:1080:flags=lanczos,fps=30,format=yuv420p' \
+            -c:v libx264 -preset medium -crf 17 \
+            -profile:v high -level 4.1 \
+            -movflags +faststart \
+            "$FINAL_VIDEO"
+
+          test -s "$FINAL_VIDEO"
+          echo "video=$FINAL_VIDEO" >> "$GITHUB_OUTPUT"
+
+          ffprobe -v error \
+            -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt \
+            -show_entries format=duration,size \
+            -of default=noprint_wrappers=1 \
+            "$FINAL_VIDEO" | tee "$DELIVERY/FFPROBE.txt"
+
+          codec="$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of csv=p=0 "$FINAL_VIDEO")"
+          width="$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$FINAL_VIDEO")"
+          height="$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$FINAL_VIDEO")"
+          fps="$(ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -of csv=p=0 "$FINAL_VIDEO")"
+          pix="$(ffprobe -v error -select_streams v:0 -show_entries stream=pix_fmt -of csv=p=0 "$FINAL_VIDEO")"
+          duration="$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$FINAL_VIDEO")"
 
           test "$codec" = 'h264'
           test "$width" = '1920'
@@ -128,24 +147,22 @@ jobs:
           test "$pix" = 'yuv420p'
 
           midpoint="$(awk -v d="$duration" 'BEGIN { printf "%.3f", d/2 }')"
-          ffmpeg -y -v error -ss 5 -i "$VIDEO" -frames:v 1 "$ROOT/delivery/control_frames/frame_start.png"
-          ffmpeg -y -v error -ss "$midpoint" -i "$VIDEO" -frames:v 1 "$ROOT/delivery/control_frames/frame_middle.png"
-          ffmpeg -y -v error -sseof -5 -i "$VIDEO" -frames:v 1 "$ROOT/delivery/control_frames/frame_end.png"
-          ffmpeg -v error -i "$VIDEO" -f null -
+          ffmpeg -y -v error -ss 5 -i "$FINAL_VIDEO" -frames:v 1 "$DELIVERY/control_frames/frame_start.png"
+          ffmpeg -y -v error -ss "$midpoint" -i "$FINAL_VIDEO" -frames:v 1 "$DELIVERY/control_frames/frame_middle.png"
+          ffmpeg -y -v error -sseof -5 -i "$FINAL_VIDEO" -frames:v 1 "$DELIVERY/control_frames/frame_end.png"
+          ffmpeg -v error -i "$FINAL_VIDEO" -f null -
 
-      - name: Stage delivery and hashes
+      - name: Stage logs, source, metadata and hashes
         shell: bash
         run: |
           set -euo pipefail
           ROOT='render_grade11_counting'
-          VIDEO='${{ steps.verify.outputs.video }}'
-          mkdir -p "$ROOT/delivery"
-          cp "$VIDEO" "$ROOT/delivery/Statistics11_Counting_VisualRoadmap_1080p30.mp4"
-          cp "$ROOT/statistics11_counting_visual_roadmap.py" "$ROOT/delivery/"
-          cp "$ROOT/render_pql.log" "$ROOT/delivery/"
-          cp "$ROOT/render_pqh.log" "$ROOT/delivery/"
-          cp "$ROOT/math_validation.log" "$ROOT/delivery/"
-          cat > "$ROOT/delivery/RENDER_INFO.txt" <<'EOF'
+          DELIVERY="$ROOT/delivery"
+          cp "$ROOT/statistics11_counting_visual_roadmap.py" "$DELIVERY/"
+          cp "$ROOT/render_pql.log" "$DELIVERY/"
+          cp "$ROOT/render_pqh.log" "$DELIVERY/"
+          cp "$ROOT/math_validation.log" "$DELIVERY/"
+          cat > "$DELIVERY/RENDER_INFO.txt" <<'EOF'
           Scene: Statistics11CountingVisualRoadmap
           Source: statistics11_counting_visual_roadmap.py
           ManimCE: 0.20.1
@@ -153,11 +170,21 @@ jobs:
           manim -pql statistics11_counting_visual_roadmap.py Statistics11CountingVisualRoadmap --format=mp4 --disable_caching
           Final command:
           manim -pqh statistics11_counting_visual_roadmap.py Statistics11CountingVisualRoadmap --format=mp4 --disable_caching
-          Target: 1920x1080, 30 fps, H.264, yuv420p
+          Delivery normalization:
+          ffmpeg H.264 high profile, CRF 17, yuv420p, 1920x1080, 30 fps, faststart
+          Validated target: 1920x1080, 30 fps, H.264, yuv420p
           EOF
           (
-            cd "$ROOT/delivery"
-            sha256sum Statistics11_Counting_VisualRoadmap_1080p30.mp4 statistics11_counting_visual_roadmap.py render_pql.log render_pqh.log math_validation.log FFPROBE.txt > SHA256SUMS.txt
+            cd "$DELIVERY"
+            sha256sum \
+              Statistics11_Counting_VisualRoadmap_1080p30.mp4 \
+              statistics11_counting_visual_roadmap.py \
+              render_pql.log render_pqh.log math_validation.log \
+              FFPROBE_RAW.txt FFPROBE.txt RENDER_INFO.txt \
+              control_frames/frame_start.png \
+              control_frames/frame_middle.png \
+              control_frames/frame_end.png \
+              > SHA256SUMS.txt
           )
 
       - name: Upload render artifact
