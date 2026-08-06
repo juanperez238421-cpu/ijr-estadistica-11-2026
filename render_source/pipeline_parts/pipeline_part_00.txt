@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCENES=(
+  Semana01_ColabPython
+  Semana02_ExperimentoEspacioEvento
+  Semana03_ProbabilidadClasica
+  Semana04_ProbabilidadFrecuentista
+  Semana05_ReglaAdicion
+  Semana06_MultiplicacionIndependencia
+  Semana07_DependenciaSinReemplazo
+  Semana08_ProbabilidadCondicional
+  Semana09_FuncionesProyecto
+  Semana10_RepasoEvaluacion
+)
+
+declare -A OUTPUTS=(
+  [Semana01_ColabPython]="01_Colab_y_Python_Desde_Cero.mp4"
+  [Semana02_ExperimentoEspacioEvento]="02_Experimento_Espacio_Muestral_Evento.mp4"
+  [Semana03_ProbabilidadClasica]="03_Probabilidad_Clasica.mp4"
+  [Semana04_ProbabilidadFrecuentista]="04_Probabilidad_Frecuentista_Simulacion.mp4"
+  [Semana05_ReglaAdicion]="05_Regla_de_Adicion.mp4"
+  [Semana06_MultiplicacionIndependencia]="06_Multiplicacion_e_Independencia.mp4"
+  [Semana07_DependenciaSinReemplazo]="07_Dependencia_Sin_Reemplazo.mp4"
+  [Semana08_ProbabilidadCondicional]="08_Probabilidad_Condicional.mp4"
+  [Semana09_FuncionesProyecto]="09_Funciones_Pruebas_Proyecto.mp4"
+  [Semana10_RepasoEvaluacion]="10_Repaso_Sustentacion_Evaluacion.mp4"
+)
+
+SOURCE="estadistica11_periodo2_manimce.py"
+SOURCE_SHA="408e88cbd8a6d8acc64a1f78a4cee5494e30d5681d37e313f8d762e8b7a03a22"
+IMAGE="manimcommunity/manim:v0.20.1"
+
+mkdir -p diagnostics logs delivery qa media_pql media_pqh
+rm -rf media_pql/* media_pqh/* delivery/* qa/* logs/*
+
+cat render_source/source_parts/source_part_*.b64 > diagnostics/source_bundle.py.gz.b64
+echo "71eb505bc2cc276dac8f05ce313c5ab7c13024d4da1cd8cad486cb2c04319d47  diagnostics/source_bundle.py.gz.b64" | sha256sum -c - | tee diagnostics/source_bundle_sha_check.txt
+base64 -d diagnostics/source_bundle.py.gz.b64 | gzip -d > "$SOURCE"
+echo "$SOURCE_SHA  $SOURCE" | sha256sum -c - | tee diagnostics/source_sha_check.txt
+python -m py_compile "$SOURCE" 2>&1 | tee diagnostics/py_compile.log
+python - <<'PY' | tee diagnostics/scene_inventory.txt
+import ast
+from pathlib import Path
+p = Path("estadistica11_periodo2_manimce.py")
+tree = ast.parse(p.read_text(encoding="utf-8"))
+scenes = [n.name for n in tree.body if isinstance(n, ast.ClassDef) and n.name.startswith("Semana")]
+print("\n".join(scenes))
+assert len(scenes) == 10, scenes
+PY
+
+if ! command -v ffmpeg >/dev/null 2>&1 || ! command -v ffprobe >/dev/null 2>&1; then
+  sudo apt-get update
+  sudo apt-get install -y ffmpeg
+fi
+ffmpeg -version | head -1 | tee diagnostics/ffmpeg_version.txt
+
+d
