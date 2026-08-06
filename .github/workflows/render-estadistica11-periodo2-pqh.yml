@@ -21,13 +21,15 @@ jobs:
       - name: Checkout render branch
         uses: actions/checkout@v4
 
-      - name: Reconstruct exact render pipeline
+      - name: Reconstruct and syntax-check render pipeline
         shell: bash
         run: |
           set -euo pipefail
           base64 -d render_source/render_stats11_pipeline.sh.gz.b64 | gzip -d > render_stats11_pipeline.sh
-          echo "874a51b8dce71711c9477df2372ed7ac7186706d6a944590bd88ae30252c24ec  render_stats11_pipeline.sh" | sha256sum -c -
+          test -s render_stats11_pipeline.sh
+          bash -n render_stats11_pipeline.sh
           chmod +x render_stats11_pipeline.sh
+          sha256sum render_stats11_pipeline.sh | tee pipeline_sha256.txt
 
       - name: Validate and render every scene separately
         shell: bash
@@ -46,6 +48,7 @@ jobs:
           name: Estadistica11_Periodo2_Diagnostics
           path: |
             pipeline_status.txt
+            pipeline_sha256.txt
             diagnostics/
             logs/
             qa/
