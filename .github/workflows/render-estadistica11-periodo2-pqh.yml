@@ -26,12 +26,42 @@ jobs:
         run: |
           set -euo pipefail
           base64 -d render_source/render_stats11_pipeline.sh.gz.b64 | gzip -d > render_stats11_pipeline.sh
-          echo "4d03e048d26f26e8bd58739922ec39b4990cd294996e629d3b41d9fcf8684c60  render_stats11_pipeline.sh" | sha256sum -c -
+          echo "98356d7c0c01f9fe8c78ab2661ae9ab25266601c4ebfb7996930fd371ff84184  render_stats11_pipeline.sh" | sha256sum -c -
           chmod +x render_stats11_pipeline.sh
 
-      - name: Validate, render PQL, render PQH and verify
+      - name: Validate and render every scene separately
         shell: bash
-        run: ./render_stats11_pipeline.sh
+        run: |
+          set +e
+          ./render_stats11_pipeline.sh
+          status=$?
+          set -e
+          printf '%s\n' "$status" > pipeline_status.txt
+          exit 0
+
+      - name: Upload diagnostics and per-scene logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Estadistica11_Periodo2_Diagnostics
+          path: |
+            pipeline_status.txt
+            diagnostics/
+            logs/
+            qa/
+            estadistica11_periodo2_manimce.py
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Enforce successful render pipeline
+        shell: bash
+        run: |
+          set -euo pipefail
+          status="$(cat pipeline_status.txt)"
+          if [ "$status" -ne 0 ]; then
+            echo "The ManimCE pipeline failed with status $status. Download the diagnostics artifact for the exact scene and traceback."
+            exit "$status"
+          fi
 
       - name: Upload verified ManimCE PQH series
         uses: actions/upload-artifact@v4
