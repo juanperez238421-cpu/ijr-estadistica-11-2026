@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - render/estadistica11-periodo2-pqh-20260805
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -18,198 +21,17 @@ jobs:
       - name: Checkout render branch
         uses: actions/checkout@v4
 
-      - name: Reconstruct and validate exact ManimCE source
+      - name: Reconstruct exact render pipeline
         shell: bash
         run: |
           set -euo pipefail
-          base64 -d render_source/estadistica11_periodo2_manimce.py.gz.b64 | gzip -d > estadistica11_periodo2_manimce.py
-          echo "296b35539185806e94eb90b0802f8871df876f346356c48547b9d6862d42d96c  estadistica11_periodo2_manimce.py" | sha256sum -c -
-          python -m py_compile estadistica11_periodo2_manimce.py
-          grep -nE '^class Semana(01|02|03|04|05|06|07|08|09|10)_' estadistica11_periodo2_manimce.py
+          base64 -d render_source/render_stats11_pipeline.sh.gz.b64 | gzip -d > render_stats11_pipeline.sh
+          echo "4d03e048d26f26e8bd58739922ec39b4990cd294996e629d3b41d9fcf8684c60  render_stats11_pipeline.sh" | sha256sum -c -
+          chmod +x render_stats11_pipeline.sh
 
-      - name: Pull official ManimCE 0.20.1 image
+      - name: Validate, render PQL, render PQH and verify
         shell: bash
-        run: |
-          set -euo pipefail
-          docker pull manimcommunity/manim:v0.20.1
-
-      - name: Prepare writable output directories
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p media delivery qa
-          chmod -R u+rwx media delivery qa
-
-      - name: Native complete QA render with literal -pql
-        shell: bash
-        run: |
-          set -euo pipefail
-          docker run --rm \
-            --user "$(id -u):$(id -g)" \
-            -e HOME=/tmp/manim-home \
-            -e STATS_TIME_SCALE=0.08 \
-            -v "$PWD:/manim" \
-            -w /manim \
-            --entrypoint bash \
-            manimcommunity/manim:v0.20.1 \
-            -c '
-              set -euo pipefail
-              mkdir -p /tmp/manim-bin
-              printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/manim-bin/xdg-open
-              chmod +x /tmp/manim-bin/xdg-open
-              export PATH="/tmp/manim-bin:$PATH"
-              manim -pql estadistica11_periodo2_manimce.py \
-                Semana01_ColabPython \
-                Semana02_ExperimentoEspacioEvento \
-                Semana03_ProbabilidadClasica \
-                Semana04_ProbabilidadFrecuentista \
-                Semana05_ReglaAdicion \
-                Semana06_MultiplicacionIndependencia \
-                Semana07_DependenciaSinReemplazo \
-                Semana08_ProbabilidadCondicional \
-                Semana09_FuncionesProyecto \
-                Semana10_RepasoEvaluacion \
-                --format=mp4 \
-                --renderer=cairo \
-                --disable_caching
-            ' 2>&1 | tee render_pql.log
-
-          PQL_COUNT="$(find media -type f -path '*/480p15/*.mp4' | wc -l)"
-          test "$PQL_COUNT" -eq 10
-
-      - name: Native final render with literal -pqh
-        shell: bash
-        run: |
-          set -euo pipefail
-          docker run --rm \
-            --user "$(id -u):$(id -g)" \
-            -e HOME=/tmp/manim-home \
-            -e STATS_TIME_SCALE=1.0 \
-            -v "$PWD:/manim" \
-            -w /manim \
-            --entrypoint bash \
-            manimcommunity/manim:v0.20.1 \
-            -c '
-              set -euo pipefail
-              mkdir -p /tmp/manim-bin
-              printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/manim-bin/xdg-open
-              chmod +x /tmp/manim-bin/xdg-open
-              export PATH="/tmp/manim-bin:$PATH"
-              manim -pqh estadistica11_periodo2_manimce.py \
-                Semana01_ColabPython \
-                Semana02_ExperimentoEspacioEvento \
-                Semana03_ProbabilidadClasica \
-                Semana04_ProbabilidadFrecuentista \
-                Semana05_ReglaAdicion \
-                Semana06_MultiplicacionIndependencia \
-                Semana07_DependenciaSinReemplazo \
-                Semana08_ProbabilidadCondicional \
-                Semana09_FuncionesProyecto \
-                Semana10_RepasoEvaluacion \
-                --format=mp4 \
-                --renderer=cairo \
-                --disable_caching
-            ' 2>&1 | tee render_pqh.log
-
-      - name: Locate, rename and verify all final videos
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          declare -A OUTPUTS=(
-            [Semana01_ColabPython]="01_Colab_y_Python_Desde_Cero.mp4"
-            [Semana02_ExperimentoEspacioEvento]="02_Experimento_Espacio_Muestral_Evento.mp4"
-            [Semana03_ProbabilidadClasica]="03_Probabilidad_Clasica.mp4"
-            [Semana04_ProbabilidadFrecuentista]="04_Probabilidad_Frecuentista_Simulacion.mp4"
-            [Semana05_ReglaAdicion]="05_Regla_de_Adicion.mp4"
-            [Semana06_MultiplicacionIndependencia]="06_Multiplicacion_e_Independencia.mp4"
-            [Semana07_DependenciaSinReemplazo]="07_Dependencia_Sin_Reemplazo.mp4"
-            [Semana08_ProbabilidadCondicional]="08_Probabilidad_Condicional.mp4"
-            [Semana09_FuncionesProyecto]="09_Funciones_Pruebas_Proyecto.mp4"
-            [Semana10_RepasoEvaluacion]="10_Repaso_Sustentacion_Evaluacion.mp4"
-          )
-
-          : > ffprobe_all.txt
-          : > concat.txt
-
-          for scene in \
-            Semana01_ColabPython \
-            Semana02_ExperimentoEspacioEvento \
-            Semana03_ProbabilidadClasica \
-            Semana04_ProbabilidadFrecuentista \
-            Semana05_ReglaAdicion \
-            Semana06_MultiplicacionIndependencia \
-            Semana07_DependenciaSinReemplazo \
-            Semana08_ProbabilidadCondicional \
-            Semana09_FuncionesProyecto \
-            Semana10_RepasoEvaluacion; do
-
-            VIDEO="$(find media -type f -path '*/1080p30/*' -name "${scene}.mp4" -print -quit)"
-            test -n "$VIDEO"
-            test -s "$VIDEO"
-            DEST="delivery/${OUTPUTS[$scene]}"
-            cp "$VIDEO" "$DEST"
-
-            echo "===== ${OUTPUTS[$scene]} =====" | tee -a ffprobe_all.txt
-            ffprobe -v error \
-              -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt \
-              -show_entries format=duration,size \
-              -of default=noprint_wrappers=1 \
-              "$DEST" | tee -a ffprobe_all.txt
-
-            ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of csv=p=0 "$DEST" | grep -qx h264
-            ffprobe -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$DEST" | grep -qx 1920
-            ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$DEST" | grep -qx 1080
-            ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -of csv=p=0 "$DEST" | grep -qx 30/1
-            ffprobe -v error -select_streams v:0 -show_entries stream=pix_fmt -of csv=p=0 "$DEST" | grep -qx yuv420p
-            ffmpeg -v error -i "$DEST" -f null -
-
-            printf "file '%s'\n" "$(realpath "$DEST")" >> concat.txt
-            ffmpeg -y -v error -sseof -3 -i "$DEST" -frames:v 1 "qa/${scene}_final.png"
-            test -s "qa/${scene}_final.png"
-          done
-
-          test "$(find delivery -maxdepth 1 -name '*.mp4' | wc -l)" -eq 10
-          test "$(find qa -maxdepth 1 -name '*.png' | wc -l)" -eq 10
-
-      - name: Build and verify full series compilation
-        shell: bash
-        run: |
-          set -euo pipefail
-          ffmpeg -y -v error -f concat -safe 0 -i concat.txt -c copy delivery/00_Serie_Completa_Estadistica11_Periodo2.mp4
-          test -s delivery/00_Serie_Completa_Estadistica11_Periodo2.mp4
-          ffmpeg -v error -i delivery/00_Serie_Completa_Estadistica11_Periodo2.mp4 -f null -
-          ffprobe -v error \
-            -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt \
-            -show_entries format=duration,size \
-            -of default=noprint_wrappers=1 \
-            delivery/00_Serie_Completa_Estadistica11_Periodo2.mp4 | tee ffprobe_compilation.txt
-
-      - name: Stage reproducible delivery package
-        shell: bash
-        run: |
-          set -euo pipefail
-          cp estadistica11_periodo2_manimce.py delivery/
-          cp render_pql.log render_pqh.log ffprobe_all.txt ffprobe_compilation.txt delivery/
-          cp qa/*.png delivery/
-
-          cat > delivery/RENDER_INFO.txt <<'EOF'
-          Serie: Estadística 11° · Segundo período
-          Fuente: estadistica11_periodo2_manimce.py
-          Escenas: 10
-          ManimCE: 0.20.1
-          Renderer: Cairo
-          Resolución: 1920 x 1080
-          FPS: 30
-          Prueba: manim -pql estadistica11_periodo2_manimce.py <escenas> --format=mp4 --renderer=cairo --disable_caching
-          Final: manim -pqh estadistica11_periodo2_manimce.py <escenas> --format=mp4 --renderer=cairo --disable_caching
-          Estabilidad: Scene fija; sin movimiento de camera.frame; sin interpolación externa.
-          Contenido: 10 semanas del segundo período, según el paquete curricular suministrado.
-          EOF
-
-          sha256sum delivery/* > delivery/SHA256SUMS.txt
-          test "$(find delivery -maxdepth 1 -name '*.mp4' | wc -l)" -eq 11
-          test -s delivery/SHA256SUMS.txt
+        run: ./render_stats11_pipeline.sh
 
       - name: Upload verified ManimCE PQH series
         uses: actions/upload-artifact@v4
