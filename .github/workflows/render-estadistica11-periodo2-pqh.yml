@@ -26,7 +26,7 @@ jobs:
         run: |
           set -euo pipefail
           base64 -d render_source/render_stats11_pipeline.sh.gz.b64 | gzip -d > render_stats11_pipeline.sh
-          echo "98356d7c0c01f9fe8c78ab2661ae9ab25266601c4ebfb7996930fd371ff84184  render_stats11_pipeline.sh" | sha256sum -c -
+          echo "2e1473891eb228bacefb21c8d39262104b53912fe31a3d9ae460b3ffb934b88f  render_stats11_pipeline.sh" | sha256sum -c -
           chmod +x render_stats11_pipeline.sh
 
       - name: Validate and render every scene separately
