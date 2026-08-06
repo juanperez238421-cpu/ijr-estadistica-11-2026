@@ -1,9 +1,6 @@
 name: Render Estadistica 11 Periodo 2 PQH
 
 on:
-  push:
-    branches:
-      - render/estadistica11-periodo2-pqh-20260805
   pull_request:
     branches:
       - main
@@ -11,6 +8,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: estadistica11-periodo2-pqh
+  cancel-in-progress: true
 
 jobs:
   render:
