@@ -154,21 +154,37 @@ alter table public.responses enable row level security;
 alter table public.attempt_events enable row level security;
 alter table public.teacher_actions enable row level security;
 
+drop policy if exists "profile self read" on public.profiles;
 create policy "profile self read" on public.profiles for select using (auth_user_id=auth.uid() or public.is_teacher());
+drop policy if exists "teacher profiles write" on public.profiles;
 create policy "teacher profiles write" on public.profiles for all using (public.is_teacher()) with check (public.is_teacher());
+drop policy if exists "authenticated assessments read" on public.assessments;
 create policy "authenticated assessments read" on public.assessments for select to authenticated using (true);
+drop policy if exists "teacher assessments write" on public.assessments;
 create policy "teacher assessments write" on public.assessments for all using (public.is_teacher()) with check (public.is_teacher());
+drop policy if exists "teacher private questions read" on public.questions_private;
 create policy "teacher private questions read" on public.questions_private for select using (public.is_teacher());
+drop policy if exists "teacher private questions write" on public.questions_private;
 create policy "teacher private questions write" on public.questions_private for all using (public.is_teacher()) with check (public.is_teacher());
+drop policy if exists "teacher assignments read" on public.assignments;
 create policy "teacher assignments read" on public.assignments for select using (public.is_teacher());
+drop policy if exists "teacher assignments write" on public.assignments;
 create policy "teacher assignments write" on public.assignments for all using (public.is_teacher()) with check (public.is_teacher());
+drop policy if exists "attempt owner read" on public.attempts;
 create policy "attempt owner read" on public.attempts for select using (auth_user_id=auth.uid() or public.is_teacher());
+drop policy if exists "teacher attempts write" on public.attempts;
 create policy "teacher attempts write" on public.attempts for all using (public.is_teacher()) with check (public.is_teacher());
+drop policy if exists "responses owner read" on public.responses;
 create policy "responses owner read" on public.responses for select using (exists(select 1 from public.attempts a where a.id=attempt_id and (a.auth_user_id=auth.uid() or public.is_teacher())));
+drop policy if exists "teacher responses write" on public.responses;
 create policy "teacher responses write" on public.responses for all using (public.is_teacher()) with check (public.is_teacher());
+drop policy if exists "events owner read" on public.attempt_events;
 create policy "events owner read" on public.attempt_events for select using (exists(select 1 from public.attempts a where a.id=attempt_id and (a.auth_user_id=auth.uid() or public.is_teacher())));
+drop policy if exists "teacher events read" on public.attempt_events;
 create policy "teacher events read" on public.attempt_events for select using (public.is_teacher());
+drop policy if exists "teacher actions read" on public.teacher_actions;
 create policy "teacher actions read" on public.teacher_actions for select using (public.is_teacher());
+drop policy if exists "teacher actions write" on public.teacher_actions;
 create policy "teacher actions write" on public.teacher_actions for insert with check (public.is_teacher() and teacher_user_id=auth.uid());
 
 insert into public.assessments(slug,title,status,duration_minutes,questions_per_student,max_raw_points,grade_min,grade_max,passing_grade,globally_disjoint,require_fullscreen,tab_strike_limit)
