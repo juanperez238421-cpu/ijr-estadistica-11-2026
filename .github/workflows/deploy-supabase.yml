@@ -1,6 +1,14 @@
 name: Deploy Supabase Backend
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/functions/**'
+      - 'tools/check_backend_readiness.py'
+      - 'tools/open_assessment.py'
+      - '.github/workflows/deploy-supabase.yml'
   workflow_dispatch:
     inputs:
       open_assessment:
@@ -57,17 +65,20 @@ jobs:
         run: |
           python tools/check_backend_readiness.py \
             --url "$SUPABASE_URL" \
-            --service-role-key "$SUPABASE_SERVICE_ROLE_KEY" \
-            --expected-status draft
+            --service-role-key "$SUPABASE_SERVICE_ROLE_KEY"
 
-      - name: Open assessment after full readiness validation
-        if: ${{ inputs.open_assessment }}
+      - name: Validate draft state before opening
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.open_assessment }}
         run: |
           python tools/check_backend_readiness.py \
             --url "$SUPABASE_URL" \
             --service-role-key "$SUPABASE_SERVICE_ROLE_KEY" \
             --expected-status draft \
             --require-teacher
+
+      - name: Open assessment after full readiness validation
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.open_assessment }}
+        run: |
           python tools/open_assessment.py \
             --url "$SUPABASE_URL" \
             --service-role-key "$SUPABASE_SERVICE_ROLE_KEY"
