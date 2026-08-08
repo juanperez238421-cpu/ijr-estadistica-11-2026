@@ -1,21 +1,33 @@
 #!/usr/bin/env python3
 """Import the private Statistics 11 bank into Supabase and create globally disjoint 18-question assignments.
 
+Production baseline (v2):
+- 2,000 validated questions total.
+- 500 FCP.
+- 500 simple permutations.
+- 500 distinguishable permutations.
+- 500 circular permutations.
+- 18 questions/student with quotas 5/5/4/4.
+- Strict capacity: 100 students without reusing any question globally.
+
 Usage:
   SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... \
   python tools/import_secure_statistics11_assessment.py \
     --bank /path/to/question_bank.json --roster roster.csv
 
-The service-role key is local/admin only. Never commit it and never place it in GitHub Pages JavaScript.
+The service-role key and the canonical answer bank are local/admin only.
+Never commit them and never place them in GitHub Pages JavaScript.
 """
 from __future__ import annotations
-import argparse,csv,json,os,random,sys
-from collections import defaultdict
+import argparse,csv,hashlib,json,os,random,sys
+from collections import Counter,defaultdict
 from pathlib import Path
 import requests
 
 SLUG="statistics11-counting-permutations-2026"
 QUOTAS={"FCP":5,"P_SIMPLE":5,"P_DIST":4,"P_CIRC":4}
+PRODUCTION_TOPIC_MINIMUM={"FCP":500,"P_SIMPLE":500,"P_DIST":500,"P_CIRC":500}
+PRODUCTION_BANK_MINIMUM=sum(PRODUCTION_TOPIC_MINIMUM.values())
 
 def api(method,path,payload=None,params=None,prefer=None):
     url=os.environ["SUPABASE_URL"].rstrip("/")+"/rest/v1/"+path
@@ -27,11 +39,25 @@ def api(method,path,payload=None,params=None,prefer=None):
     return r.json() if r.text.strip() else None
 
 def load_bank(path):
-    data=json.loads(Path(path).read_text(encoding="utf-8")); qs=data.get("questions",data)
+    raw=Path(path).read_bytes()
+    data=json.loads(raw.decode("utf-8")); qs=data.get("questions",data)
     out=[]
     for q in qs:
         out.append({"id":q["id"],"topic_code":q["topic_code"],"difficulty":q["difficulty"],"prompt_es":q["prompt_es"],"prompt_en":q.get("prompt_en"),"options":q["options"],"correct_answer":str(q["correct_answer"]),"formula_latex":q.get("formula_latex"),"solution_steps_es":q.get("solution_steps_es"),"solution_steps_en":q.get("solution_steps_en"),"diagram":q.get("diagram"),"fingerprint":q.get("fingerprint"),"active":True})
-    return out
+    return out,hashlib.sha256(raw).hexdigest()
+
+def validate_production_bank(bank):
+    ids=[q["id"] for q in bank]
+    fps=[q.get("fingerprint") for q in bank]
+    if len(bank)<PRODUCTION_BANK_MINIMUM:
+        raise SystemExit(f"Production bank requires at least {PRODUCTION_BANK_MINIMUM} questions; found {len(bank)}.")
+    if len(ids)!=len(set(ids)): raise SystemExit("Duplicate question IDs detected")
+    if None in fps or len(fps)!=len(set(fps)): raise SystemExit("Missing or duplicate fingerprints detected")
+    counts=Counter(q["topic_code"] for q in bank)
+    for topic,minimum in PRODUCTION_TOPIC_MINIMUM.items():
+        if counts[topic]<minimum:
+            raise SystemExit(f"Production bank topic {topic} requires >= {minimum}; found {counts[topic]}.")
+    return counts
 
 def load_roster(path):
     rows=list(csv.DictReader(Path(path).open(encoding="utf-8-sig")))
@@ -49,17 +75,18 @@ def chunks(seq,n=200):
 def main():
     ap=argparse.ArgumentParser();ap.add_argument("--bank",required=True);ap.add_argument("--roster",required=True);ap.add_argument("--seed",type=int,default=11082026);args=ap.parse_args()
     if not os.getenv("SUPABASE_URL") or not os.getenv("SUPABASE_SERVICE_ROLE_KEY"): sys.exit("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY")
-    bank=load_bank(args.bank); roster=load_roster(args.roster); required=len(roster)*sum(QUOTAS.values())
-    print(f"Bank={len(bank)} students={len(roster)} required={required}")
-    if len(bank)<required:
-        raise SystemExit(f"Insufficient globally-disjoint bank: need {required}, have {len(bank)}. At 18 questions the 1600-item bank supports at most {len(bank)//18} students. Expand the private bank before importing.")
+    bank,bank_sha256=load_bank(args.bank); counts=validate_production_bank(bank); roster=load_roster(args.roster); required=len(roster)*sum(QUOTAS.values())
+    print(f"Bank={len(bank)} sha256={bank_sha256} topics={dict(counts)} students={len(roster)} required={required}")
     by_topic=defaultdict(list)
     for q in bank: by_topic[q["topic_code"]].append(q)
     for t,q in QUOTAS.items():
         need=len(roster)*q
-        if len(by_topic[t])<need: raise SystemExit(f"Topic {t} needs {need}, has {len(by_topic[t])}. Expand this topic.")
+        if len(by_topic[t])<need: raise SystemExit(f"Topic {t} needs {need}, has {len(by_topic[t])}. Maximum strict roster for this topic is {len(by_topic[t])//q}.")
     for batch in chunks(bank): api("POST","questions_private",batch,prefer="resolution=merge-duplicates")
-    assessment=api("GET","assessments",params={"slug":f"eq.{SLUG}","select":"id,questions_per_student"})[0]
+    assessment_rows=api("GET","assessments",params={"slug":f"eq.{SLUG}","select":"id,questions_per_student"})
+    if not assessment_rows: raise SystemExit(f"Assessment slug not found: {SLUG}")
+    assessment=assessment_rows[0]
+    if int(assessment["questions_per_student"])!=18: raise SystemExit(f"Assessment must use 18 questions; database has {assessment['questions_per_student']}")
     rng=random.Random(args.seed)
     pools={t:[q["id"] for q in items] for t,items in by_topic.items()}
     for p in pools.values(): rng.shuffle(p)
@@ -75,6 +102,6 @@ def main():
     assert len(ids)==len(set(ids)),"Global question reuse detected"
     api("DELETE","assignments",params={"assessment_id":f"eq.{assessment['id']}"})
     for batch in chunks(assignments): api("POST","assignments",batch)
-    print(json.dumps({"assessment_id":assessment["id"],"students":len(roster),"assignments":len(assignments),"global_unique_questions":len(set(ids)),"quotas":QUOTAS,"seed":args.seed},indent=2))
+    print(json.dumps({"assessment_id":assessment["id"],"bank_questions":len(bank),"bank_sha256":bank_sha256,"topic_counts":dict(counts),"students":len(roster),"assignments":len(assignments),"global_unique_questions":len(set(ids)),"duplicates":0,"quotas":QUOTAS,"strict_capacity_students":min(counts[t]//n for t,n in QUOTAS.items()),"seed":args.seed},indent=2))
 
 if __name__=="__main__": main()
