@@ -5,8 +5,6 @@
 - Student: `https://juanperez238421-cpu.github.io/ijr-estadistica-11-2026/evaluacion-conteo-permutaciones/`
 - Teacher: `https://juanperez238421-cpu.github.io/ijr-estadistica-11-2026/evaluacion-conteo-permutaciones/teacher/`
 
-The student page deliberately stays **closed** while `config.js` contains placeholder Supabase values. An official assessment must never fall back to browser-only storage.
-
 ## Production assessment
 
 - 18 questions.
@@ -14,9 +12,47 @@ The student page deliberately stays **closed** while `config.js` contains placeh
 - Maximum raw score: 15 points.
 - Reported grade: 1.0–5.0.
 - Passing grade: 3.0.
-- Default grade formula: `1 + 4 × correct/18`; therefore 9/18 = 3.0.
+- Grade formula: `1 + 4 × correct/18`; therefore 9/18 = 3.0.
 - Question quota: 5 FCP, 5 simple permutations, 4 distinguishable permutations, 4 circular permutations.
 - Three confirmed tab-switch strikes automatically invalidate the attempt, with teacher audit/override possible.
+
+## Student identification
+
+The student-facing form no longer asks for a student code and no longer calls Supabase Anonymous Sign-In.
+
+Students enter only:
+
+1. group (`11A`, `11B`, or `11C`);
+2. full name.
+
+The backend validates the normalized name against the institutional `student_registry`. Source names that were truncated with `...` are kept exactly as supplied and matched by prefix; missing name characters are never guessed.
+
+The error `Anonymous sign-ins are disabled` is therefore removed from the student flow.
+
+After a valid roster match, PostgreSQL generates a random opaque attempt token. Only the SHA-256 hash is stored in the database. The browser keeps the raw token in session storage for the active attempt and must present it for every answer, event and finish request.
+
+## Institutional roster and academic sources
+
+The database now separates stable roster identity from academic snapshots:
+
+- `student_registry`
+- `academic_sources`
+- `academic_records`
+
+Current supplied roster:
+
+- 11A: 18 students
+- 11B: 20 students
+- 11C: 23 students
+- Total: 61 students
+
+The initial academic source is stored as:
+
+`calificar_statistics11_2026_08_07`
+
+Blank values are stored as SQL `NULL`, not zero. Historical snapshots are additive: a new source creates a new `academic_sources` row and does not overwrite previous snapshots.
+
+See `docs/ROSTER_AND_ACADEMIC_SOURCES.md`.
 
 ## Production question bank v2
 
@@ -27,7 +63,7 @@ The production baseline is **2,000 validated questions**:
 - 500 Distinguishable Permutations (`P_DIST`).
 - 500 Circular Permutations (`P_CIRC`).
 
-Validation completed locally against the canonical bank:
+Validation completed against the canonical bank:
 
 - 2,000 unique IDs.
 - 2,000 unique Spanish prompts.
@@ -35,40 +71,60 @@ Validation completed locally against the canonical bank:
 - 2,000 unique fingerprints.
 - 100% mathematical answer recomputation passed.
 - 4 unique multiple-choice options per question.
-- 0 assignment collisions in the 90-student / 18-question production simulation.
+- 0 assignment collisions in the 90-student / 18-question simulation.
 - 1,620 unique assigned question IDs for 90 students.
 - Question-bank SHA-256: `8c5f08d519f5213ca070aa04a5ac92e76c3b151e60c830d30f60ee63abb9e2e7`.
 
-With the 5/5/4/4 quota, 500 questions per topic give a strict capacity of **100 students** without globally reusing a question. A 90-student roster consumes 450 FCP, 450 simple, 360 distinguishable and 360 circular questions, leaving reserve capacity.
+With the 5/5/4/4 quota, 500 questions per topic give a strict capacity of **100 students** without globally reusing a question.
 
-The canonical 2,000-question bank contains answer keys and solutions, so it **must not be committed to this public repository**. Keep it private and import it into Supabase with `tools/import_secure_statistics11_assessment.py`. Publishing the canonical answer bank in GitHub Pages would expose the exam.
+The canonical 2,000-question bank contains answer keys and solutions, so it **must not be committed to this public repository**. Keep it private and import it into Supabase. Publishing the canonical answer bank in GitHub Pages would expose the exam.
 
 ## Architecture
 
-GitHub Pages is the public frontend. Supabase provides anonymous student authentication, PostgreSQL, Row Level Security, Edge Functions and Realtime for the teacher dashboard. Correct answers are stored only in `questions_private` and are never sent to the student browser during assessment mode.
+GitHub Pages serves the public frontend. Supabase/PostgreSQL is authoritative for roster validation, question assignment, responses, scoring, event history and teacher data.
 
-## Required setup before opening the assessment
+Student assessment requests use controlled PostgreSQL RPCs rather than anonymous Supabase Auth:
 
-1. Create/connect a Supabase project.
-2. Enable Anonymous Sign-Ins in Supabase Auth for students.
-3. Apply `supabase/migrations/20260807_secure_statistics11_assessment.sql`.
-4. Deploy Edge Functions: `start-attempt`, `submit-answer`, `log-event`, `finish-attempt`, `teacher-action`.
-5. Set Edge Function secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and a random `IP_HASH_SALT`.
-6. Import the private **2,000-question** canonical bank and roster with `tools/import_secure_statistics11_assessment.py`.
-7. Create the teacher user in Supabase Auth and set `profiles.role` to `teacher` or `admin`.
-8. Put only the Supabase URL and **anon/publishable** key in `evaluacion-conteo-permutaciones/config.js`.
-9. Run the student and teacher smoke tests.
-10. Set the assessment row from `draft` to `open` when the class should begin.
+- `student_start_attempt`
+- `student_resume_attempt`
+- `student_submit_answer`
+- `student_log_event`
+- `student_finish_attempt`
 
-## IP and device evidence
+The private question table remains inaccessible to the public browser. Correct answers are evaluated server-side.
 
-Do **not** use IP address as the student's identity. A school network can place many students behind one public IP. The Edge Function records a salted SHA-256 IP hash plus user-agent/session information as supporting evidence. Raw IP storage is intentionally off by default.
+Teacher/admin access continues to use Supabase Auth and RLS.
+
+## Required backend migrations
+
+Apply migrations in repository order, including:
+
+- `20260807_secure_statistics11_assessment.sql`
+- `20260808_dynamic_question_allocation.sql`
+- `20260808_roster_multisource_student_rpc.sql`
+
+The last migration seeds the 61-row institutional roster and the supplied Calificar academic snapshot.
+
+## Future academic sources
+
+A reusable importer is available:
+
+```bash
+python tools/import_academic_source.py \
+  --file snapshot.csv \
+  --source-key calificar_statistics11_2026_08_21 \
+  --source-system Calificar \
+  --source-date 2026-08-21 \
+  --title "Statistics 11 · Calificar · 2026-08-21"
+```
+
+The import aborts on unmatched or ambiguous students.
 
 ## Integrity telemetry
 
-The browser logs observable events such as:
+The browser records observable events such as:
 
-- `visibilitychange` / tab hidden and visible;
+- tab hidden/visible;
 - window blur/focus;
 - fullscreen enter/exit;
 - copy/cut/paste attempts;
@@ -77,15 +133,16 @@ The browser logs observable events such as:
 - online/offline;
 - page hide/unload;
 - duplicate tabs in the same browser;
-- server heartbeat and duplicate server sessions.
+- heartbeat activity.
 
-A standard web page **cannot reliably detect or block every operating-system screenshot**, a photograph taken with another device, a second physical monitor, or Alt+Tab at the OS level. The assessment therefore uses a personalized rotating watermark and logs `PrintScreen` only when the browser receives that key event. For stronger lockdown use Safe Exam Browser or an institution-managed kiosk environment.
+A standard web page cannot reliably detect or block every operating-system screenshot, a photograph taken with another device, a second physical monitor, or Alt+Tab itself. The assessment therefore uses a personalized watermark and logs only browser-observable evidence.
 
-## Traceability goal
+## Traceability
 
 For every attempt the teacher can reconstruct:
 
-- student registration and group;
+- roster identity and entered name;
+- group;
 - server start/end times;
 - exact question IDs and displayed option order;
 - answer submitted for each question;
@@ -96,9 +153,8 @@ For every attempt the teacher can reconstruct:
 - fullscreen exits;
 - copy/paste and observable screenshot-key attempts;
 - connectivity events;
-- duplicate-session evidence;
 - teacher review actions.
 
 ## Privacy
 
-Only collect data necessary to administer the assessment. The student is shown a supervision notice before beginning. Camera, microphone, geolocation and invasive device fingerprinting are not required by this implementation.
+Historical grades are teacher-only through RLS and are never returned by student RPCs. The public browser does not receive the class grade table or private answer key.
