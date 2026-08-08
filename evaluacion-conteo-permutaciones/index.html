@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>Statistics 11 · Counting & Permutations Assessment</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div id="watermark" class="watermark" aria-hidden="true"></div>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">Instituto Jorge Robledo · Statistics 11</div>
+        <h1>Counting & Permutations Assessment</h1>
+      </div>
+      <div id="timer" class="timer hidden">40:00</div>
+    </header>
+
+    <section id="setupPanel" class="panel">
+      <h2>Registro del estudiante</h2>
+      <p class="lead">18 preguntas · 40 minutos · máximo 15 puntos.</p>
+      <div class="notice warning">
+        <strong>Condiciones de integridad:</strong> la evaluación registra tiempos de respuesta, cambios de pestaña, pérdida de foco, salida de pantalla completa, intentos de copiar/pegar, conectividad y sesiones duplicadas. Al tercer cambio de pestaña confirmado, el intento se anula automáticamente y queda disponible para revisión docente. Las capturas de pantalla están prohibidas; un navegador normal no puede detectar todas las capturas del sistema operativo, por lo que se usa marca de agua personal y se registran las teclas/eventos que el navegador sí puede observar.
+      </div>
+      <form id="registrationForm" class="form-grid">
+        <label>Nombre completo<input id="studentName" required autocomplete="name" maxlength="100"></label>
+        <label>Código de estudiante<input id="studentId" required autocomplete="off" maxlength="30" placeholder="Ej. 11B-017"></label>
+        <label>Grupo<select id="groupCode" required><option value="">Selecciona</option><option>11A</option><option>11B</option><option>11C</option></select></label>
+        <label class="check-row"><input id="integrityConsent" type="checkbox" required> He leído y acepto las condiciones de supervisión de esta evaluación.</label>
+        <button id="startButton" class="primary" type="submit">Comenzar evaluación</button>
+      </form>
+      <p id="setupStatus" class="status"></p>
+      <p class="small">El sistema usa el código del estudiante como referencia académica. La IP no se usa como identidad principal porque varios estudiantes pueden compartir la misma red; el backend puede registrar un hash de IP como evidencia de sesión.</p>
+    </section>
+
+    <section id="examPanel" class="panel hidden" aria-live="polite">
+      <div class="exam-meta">
+        <span id="progressText">Pregunta 1 / 18</span>
+        <span id="attemptBadge"></span>
+      </div>
+      <div class="progress"><div id="progressBar"></div></div>
+      <div id="integrityBanner" class="notice warning hidden"></div>
+      <article class="question-card">
+        <div id="topicLabel" class="topic"></div>
+        <h2 id="questionPrompt">Cargando pregunta…</h2>
+        <div id="diagram" class="diagram"></div>
+        <form id="answerForm" class="options"></form>
+        <button id="submitAnswer" class="primary" disabled>Confirmar respuesta</button>
+      </article>
+      <p id="examStatus" class="status"></p>
+    </section>
+
+    <section id="finishPanel" class="panel hidden">
+      <h2 id="finishTitle">Evaluación enviada</h2>
+      <div id="finishSummary" class="summary"></div>
+      <p>El registro oficial del intento queda almacenado en el backend. No cierres esta pestaña hasta ver la confirmación de envío.</p>
+    </section>
+
+    <section id="configPanel" class="panel hidden">
+      <h2>Configuración pendiente</h2>
+      <p>El frontend está publicado, pero el modo evaluación se mantiene cerrado hasta conectar Supabase. Esto evita registrar una prueba oficial únicamente en el navegador.</p>
+    </section>
+  </main>
+
+  <div id="fullscreenGate" class="gate hidden"><div><h2>Vuelve a pantalla completa</h2><p>La evaluación está pausada hasta volver a pantalla completa.</p><button id="returnFullscreen" class="primary">Volver a pantalla completa</button></div></div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
