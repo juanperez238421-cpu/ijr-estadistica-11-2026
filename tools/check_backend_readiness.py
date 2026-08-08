@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import uuid
 from collections import Counter
 
 import requests
@@ -13,6 +14,7 @@ TOPIC_EXPECTED = {"FCP": 500, "P_SIMPLE": 500, "P_DIST": 500, "P_CIRC": 500}
 ROSTER_EXPECTED = {"11A": 18, "11B": 20, "11C": 23}
 QUESTIONS_PER_STUDENT = 18
 INITIAL_SOURCE_KEY = "calificar_statistics11_2026_08_07"
+REPORT_EMAIL = "juanperez238421@gmail.com"
 
 
 def headers(key: str, count: bool = False):
@@ -45,6 +47,18 @@ def count(url, key, table, params=None):
     return int(cr.split("/")[-1])
 
 
+def rpc_exists(url: str, key: str, name: str, payload: dict) -> tuple[bool, str]:
+    r = requests.post(
+        f"{url.rstrip('/')}/rest/v1/rpc/{name}",
+        headers={**headers(key), "Content-Type": "application/json"},
+        json=payload,
+        timeout=30,
+    )
+    text = r.text[:800]
+    missing = r.status_code == 404 or "PGRST202" in text or "Could not find the function" in text
+    return (not missing), f"HTTP {r.status_code}: {text}"
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--url", required=True)
@@ -54,6 +68,7 @@ def main():
     args = ap.parse_args()
     url = args.url
     key = args.service_role_key
+    errors: list[str] = []
 
     assessments = get(url, key, "assessments", {
         "slug": f"eq.{SLUG}",
@@ -62,7 +77,6 @@ def main():
     if len(assessments) != 1:
         raise SystemExit(f"Expected one assessment, found {len(assessments)}")
     a = assessments[0]
-    errors = []
 
     if args.expected_status and a["status"] != args.expected_status:
         errors.append(f"status={a['status']} expected={args.expected_status}")
@@ -86,13 +100,13 @@ def main():
         t: count(url, key, "questions_private", {"active": "eq.true", "topic_code": f"eq.{t}"})
         for t in TOPIC_EXPECTED
     }
-    for t, expected in TOPIC_EXPECTED.items():
-        if topic_counts[t] != expected:
-            errors.append(f"{t}={topic_counts[t]}; expected={expected}")
+    for topic, expected in TOPIC_EXPECTED.items():
+        if topic_counts[topic] != expected:
+            errors.append(f"{topic}={topic_counts[topic]}; expected={expected}")
 
     roster_counts = {
-        g: count(url, key, "student_registry", {"active": "eq.true", "group_code": f"eq.{g}"})
-        for g in ROSTER_EXPECTED
+        group: count(url, key, "student_registry", {"active": "eq.true", "group_code": f"eq.{group}"})
+        for group in ROSTER_EXPECTED
     }
     for group, expected in ROSTER_EXPECTED.items():
         if roster_counts[group] != expected:
@@ -127,12 +141,44 @@ def main():
     qids = [x["question_id"] for x in assignments]
     if len(qids) != len(set(qids)):
         errors.append("assignment question reuse detected")
-    if len(by_student) > 100:
-        errors.append(f"strict capacity exceeded: {len(by_student)} students > 100")
+    production_students = [s for s in by_student if not s.startswith("TEST-")]
+    if len(production_students) > 100:
+        errors.append(f"strict capacity exceeded: {len(production_students)} students > 100")
 
-    teacher_count = count(url, key, "profiles", {"role": "in.(teacher,admin)", "active": "eq.true"})
-    if args.require_teacher and teacher_count < 1:
-        errors.append("no active teacher/admin profile")
+    report_settings = get(url, key, "assessment_report_settings", {
+        "assessment_id": f"eq.{a['id']}",
+        "select": "recipient_email,enabled",
+    })
+    if len(report_settings) != 1 or report_settings[0]["recipient_email"] != REPORT_EMAIL or not report_settings[0]["enabled"]:
+        errors.append(f"report email is not configured as {REPORT_EMAIL}")
+
+    rpc_probes = {
+        "student_start_attempt": {
+            "p_assessment_slug": SLUG,
+            "p_student_name": "BACKEND PROBE",
+            "p_group_code": "INVALID",
+            "p_session_id": str(uuid.uuid4()),
+            "p_user_agent": "readiness-probe",
+        },
+        "student_resume_attempt": {"p_attempt_id": str(uuid.uuid4()), "p_attempt_token": "probe"},
+        "student_submit_answer": {"p_attempt_id": str(uuid.uuid4()), "p_attempt_token": "probe", "p_question_id": "PROBE", "p_selected_option": "A"},
+        "student_log_event": {"p_attempt_id": str(uuid.uuid4()), "p_attempt_token": "probe", "p_question_id": None, "p_event_type": "PROBE"},
+        "student_finish_attempt": {"p_attempt_id": str(uuid.uuid4()), "p_attempt_token": "probe", "p_reason": "probe"},
+        "teacher_code_login": {"p_code": "0000", "p_user_agent": "readiness-probe"},
+        "teacher_dashboard_snapshot": {"p_teacher_token": "probe", "p_assessment_slug": SLUG},
+        "teacher_attempt_detail": {"p_teacher_token": "probe", "p_attempt_id": str(uuid.uuid4())},
+        "teacher_code_action": {"p_teacher_token": "probe", "p_assessment_slug": SLUG, "p_action": "PROBE", "p_attempt_id": None},
+        "teacher_start_smoke_test": {"p_teacher_token": "probe", "p_assessment_slug": SLUG, "p_group_code": "11A", "p_session_id": str(uuid.uuid4()), "p_user_agent": "readiness-probe"},
+    }
+    rpc_status = {}
+    for name, payload in rpc_probes.items():
+        exists, diagnostic = rpc_exists(url, key, name, payload)
+        rpc_status[name] = {"exists": exists, "diagnostic": diagnostic}
+        if not exists:
+            errors.append(f"RPC missing from PostgREST schema cache: {name}")
+
+    if args.require_teacher and not rpc_status["teacher_code_login"]["exists"]:
+        errors.append("teacher code mode is unavailable")
 
     report = {
         "ready": not errors,
@@ -143,10 +189,11 @@ def main():
         "roster_total": roster_total,
         "academic_source": INITIAL_SOURCE_KEY,
         "academic_source_record_count": source_record_count,
-        "assigned_students": len(by_student),
+        "assigned_students": len(production_students),
         "assignment_rows": len(assignments),
         "global_unique_assignment_questions": len(set(qids)),
-        "active_teacher_admin_profiles": teacher_count,
+        "report_email": REPORT_EMAIL,
+        "rpc_status": rpc_status,
         "errors": errors,
     }
     print(json.dumps(report, ensure_ascii=False, indent=2))
