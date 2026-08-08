@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'supabase/migrations/**'
+      - 'supabase/functions/**'
       - 'tools/check_backend_readiness.py'
       - '.github/workflows/deploy-supabase.yml'
   workflow_dispatch:
@@ -28,6 +29,8 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      ASSESSMENT_EMAIL_FROM: ${{ secrets.ASSESSMENT_EMAIL_FROM }}
 
     steps:
       - name: Checkout
@@ -45,7 +48,7 @@ jobs:
             fi
           done
           if [ "$missing" -ne 0 ]; then
-            echo "Configure the two missing secrets in Repository Settings > Secrets and variables > Actions."
+            echo "Configure the missing database deployment secrets in Repository Settings > Secrets and variables > Actions."
             exit 1
           fi
           echo "Production project: $SUPABASE_PROJECT_REF"
@@ -66,6 +69,30 @@ jobs:
         run: |
           set -euo pipefail
           supabase db push --include-all
+
+      - name: Configure transactional email secrets
+        if: ${{ env.RESEND_API_KEY != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase secrets set RESEND_API_KEY="$RESEND_API_KEY" --project-ref "$SUPABASE_PROJECT_REF"
+          if [ -n "${ASSESSMENT_EMAIL_FROM:-}" ]; then
+            supabase secrets set ASSESSMENT_EMAIL_FROM="$ASSESSMENT_EMAIL_FROM" --project-ref "$SUPABASE_PROJECT_REF"
+          fi
+
+      - name: Warn when email provider is not configured
+        if: ${{ env.RESEND_API_KEY == '' }}
+        run: |
+          echo "::warning::RESEND_API_KEY is not configured. Reports will remain in the durable outbox until this secret is added."
+
+      - name: Deploy transactional email Edge Function
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase functions deploy send-assessment-email \
+            --project-ref "$SUPABASE_PROJECT_REF" \
+            --no-verify-jwt \
+            --use-api
 
       - name: Wait for PostgREST schema reload
         run: sleep 6
@@ -112,7 +139,7 @@ jobs:
                   failures.append(f'{topic}={topics.get(topic)}, expected >= 500')
           if failures:
               raise SystemExit('BACKEND NOT READY:\n- ' + '\n- '.join(failures))
-          print('Statistics 11 backend is READY for student traffic, email capture and teacher analytics.')
+          print('Statistics 11 backend is READY for student traffic, email outbox and teacher analytics.')
           PY
 
       - name: Deep private readiness check
@@ -126,13 +153,19 @@ jobs:
 
       - name: Deployment summary
         if: success()
+        shell: bash
         run: |
           echo "### Statistics 11 assessment backend READY" >> "$GITHUB_STEP_SUMMARY"
           echo "- Project: \`$SUPABASE_PROJECT_REF\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Assessment: OPEN" >> "$GITHUB_STEP_SUMMARY"
           echo "- Questions: >= 2,000; >= 500 per topic" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Student email capture: READY" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Three-strike integrity enforcement: server-side" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Third integrity strike: terminal server-side finalization" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Email Edge Function: DEPLOYED" >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "${RESEND_API_KEY:-}" ]; then
+            echo "- Email provider: CONFIGURED" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- Email provider: PENDING RESEND_API_KEY" >> "$GITHUB_STEP_SUMMARY"
+          fi
           echo "- Teacher analytics RPC: available" >> "$GITHUB_STEP_SUMMARY"
           echo "- PostgREST schema cache: refreshed" >> "$GITHUB_STEP_SUMMARY"
 
@@ -143,8 +176,15 @@ jobs:
           JOB_STATUS: ${{ job.status }}
           RUN_ID: ${{ github.run_id }}
           SHA: ${{ github.sha }}
+        shell: bash
         run: |
-          if [ "$JOB_STATUS" = "success" ]; then icon="✅ READY"; else icon="❌ FAILED"; fi
+          if [ "$JOB_STATUS" != "success" ]; then
+            label="❌ FAILED"
+          elif [ -z "${RESEND_API_KEY:-}" ]; then
+            label="⚠️ CORE READY · EMAIL PROVIDER PENDING"
+          else
+            label="✅ READY · EMAIL ACTIVE"
+          fi
           gh issue comment 33 \
             --repo juanperez238421-cpu/ijr-estadistica-11-2026 \
-            --body "$icon · Deploy Supabase Backend · run $RUN_ID · commit $SHA · $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            --body "$label · Deploy Supabase Backend · run $RUN_ID · commit $SHA · $(date -u +'%Y-%m-%dT%H:%M:%SZ')"

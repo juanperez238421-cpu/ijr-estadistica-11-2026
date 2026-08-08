@@ -1,0 +1,87 @@
+/* Production exam readability layer · 2026-08-08 */
+@media (min-width: 761px) {
+  .shell {
+    width:min(1320px,calc(100% - 28px));
+    margin-top:16px;
+  }
+
+  .exam-panel {
+    padding:24px clamp(28px,3vw,46px) 34px;
+  }
+
+  .question-card {
+    max-width:1080px;
+    width:100%;
+  }
+
+  .exam-meta {
+    font-size:.92rem;
+  }
+
+  .progress {
+    height:8px;
+    margin:10px 0 20px;
+  }
+
+  .topic {
+    font-size:.84rem;
+    margin-bottom:8px;
+  }
+
+  .question-card h2 {
+    font-size:clamp(1.42rem,1.05vw + .95rem,1.9rem);
+    line-height:1.28;
+    margin-bottom:18px;
+    max-width:1050px;
+  }
+
+  .diagram {
+    margin:12px 0 18px;
+    min-height:44px;
+  }
+
+  .options {
+    gap:11px;
+    margin:18px 0;
+  }
+
+  .option {
+    min-height:54px;
+    padding:14px 16px;
+    gap:12px;
+    font-size:clamp(1.02rem,.24vw + .97rem,1.13rem);
+    line-height:1.35;
+  }
+
+  .option input {
+    width:17px;
+    height:17px;
+    margin-top:3px;
+    flex:0 0 auto;
+  }
+
+  .answer-button {
+    min-width:220px;
+    min-height:49px;
+    padding:12px 19px;
+    font-size:1rem;
+  }
+}
+
+@media (min-width: 1500px) {
+  .shell { width:min(1420px,88vw); }
+  .question-card { max-width:1180px; }
+  .question-card h2 { font-size:1.82rem; }
+  .option { font-size:1.1rem; }
+}
+
+@media (max-width:760px) {
+  .question-card h2 {
+    font-size:1.2rem;
+    line-height:1.32;
+  }
+  .option {
+    font-size:1rem;
+    padding:12px 13px;
+  }
+}

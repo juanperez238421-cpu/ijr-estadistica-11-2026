@@ -6,7 +6,8 @@
   <meta name="color-scheme" content="light">
   <meta name="robots" content="noindex,nofollow">
   <title>Statistics 11 · Counting & Permutations Assessment</title>
-  <link rel="stylesheet" href="styles.css?v=20260808-6">
+  <link rel="stylesheet" href="styles.css?v=20260808-7">
+  <link rel="stylesheet" href="exam-ux.css?v=20260808-7">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -30,7 +31,7 @@
           <h2>Registro del estudiante</h2>
           <p class="lead">18 preguntas · 40 minutos · máximo 15 puntos.</p>
         </div>
-        <span class="policy-badge">3 eventos = bloqueo</span>
+        <span class="policy-badge">3 eventos = finalización</span>
       </div>
 
       <div class="notice warning integrity-rules">
@@ -38,7 +39,7 @@
         <ul>
           <li><strong>Prohibido tomar pantallazos, fotografías o grabaciones</strong> de la evaluación.</li>
           <li><strong>No cambies de pestaña, ventana ni salgas de pantalla completa.</strong> El sistema registra estos eventos.</li>
-          <li>Al <strong>tercer evento de integridad confirmado</strong>, el intento se bloquea y se anula automáticamente para revisión docente.</li>
+          <li>Al <strong>tercer evento de integridad confirmado</strong>, la evaluación finaliza automáticamente y queda marcada para revisión docente.</li>
           <li>El navegador registra los eventos que puede observar. Algunas capturas realizadas por el sistema operativo no son técnicamente detectables; la prohibición sigue vigente.</li>
         </ul>
       </div>
@@ -62,7 +63,7 @@
         </label>
         <label class="check-row consent-row">
           <input id="integrityConsent" type="checkbox" required>
-          <span>He leído las reglas. Entiendo que el tercer evento de integridad confirmado bloquea y anula el intento.</span>
+          <span>He leído las reglas. Entiendo que el tercer evento de integridad confirmado finaliza automáticamente mi intento.</span>
         </label>
         <button id="startButton" class="primary start-button" type="submit">Comenzar evaluación</button>
       </form>
@@ -132,7 +133,7 @@
 
         <h3>Reportes</h3>
         <div class="report-grid"><label class="field">Correo de resultados<input id="teacherReportEmailInput" type="email" value="juanperez238421@gmail.com" placeholder="correo@dominio.com"></label><button id="teacherSaveEmail" type="button" class="primary compact">Guardar correo destino</button></div>
-        <p class="small">Correo activo: <strong id="teacherReportEmail">juanperez238421@gmail.com</strong>. Cada intento terminal queda registrado en la cola de reportes del backend.</p>
+        <p class="small">Correo activo: <strong id="teacherReportEmail">juanperez238421@gmail.com</strong>. Cada intento terminal queda registrado en la cola de reportes del backend y, cuando el proveedor de correo está configurado, se envía automáticamente.</p>
         <div class="button-row"><button id="teacherExportAttempts" type="button" class="primary compact">Exportar intentos CSV</button><button id="teacherExportRoster" type="button" class="primary compact">Exportar roster CSV</button><button id="teacherPrepareEmail" type="button" class="primary compact">Preparar reporte</button></div>
 
         <details class="teacher-details"><summary>Fuentes académicas y roster institucional</summary>
@@ -162,11 +163,11 @@
   </main>
 
   <div id="fullscreenGate" class="gate hidden"><div><h2>Evaluación pausada</h2><p>Debes volver a pantalla completa para continuar. La salida quedó registrada.</p><button id="returnFullscreen" class="primary">Volver a pantalla completa</button></div></div>
-  <div id="integrityLockGate" class="gate lock-gate hidden"><div><h2>Evaluación bloqueada</h2><p id="integrityLockMessage">Se alcanzó el límite de eventos de integridad. El intento está siendo anulado y quedará disponible para revisión docente.</p></div></div>
+  <div id="integrityLockGate" class="gate lock-gate hidden"><div><h2>Evaluación finalizada</h2><p id="integrityLockMessage">Se alcanzó el límite de eventos de integridad. El intento está siendo finalizado y quedará disponible para revisión docente.</p></div></div>
 
-  <script src="config.js?v=20260808-6"></script>
-  <script src="app.js?v=20260808-6"></script>
-  <script src="teacher-demo-bank.js?v=20260808-6"></script>
-  <script src="teacher-mode.js?v=20260808-6"></script>
+  <script src="config.js?v=20260808-7"></script>
+  <script src="app.js?v=20260808-7"></script>
+  <script src="teacher-demo-bank.js?v=20260808-7"></script>
+  <script src="teacher-mode.js?v=20260808-7"></script>
 </body>
 </html>
