@@ -1,0 +1,71 @@
+name: Deploy Supabase Backend
+
+on:
+  workflow_dispatch:
+    inputs:
+      open_assessment:
+        description: "Open assessment after backend deploy (bank/assignments must already be loaded)"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      IP_HASH_SALT: ${{ secrets.IP_HASH_SALT }}
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate required configuration
+        run: |
+          set -euo pipefail
+          for name in SUPABASE_ACCESS_TOKEN SUPABASE_PROJECT_REF SUPABASE_DB_PASSWORD IP_HASH_SALT SUPABASE_URL SUPABASE_ANON_KEY; do
+            if [ -z "${!name:-}" ]; then echo "Missing $name"; exit 1; fi
+          done
+          if [ ${#IP_HASH_SALT} -lt 24 ]; then echo "IP_HASH_SALT must be at least 24 characters"; exit 1; fi
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Apply database migrations
+        run: supabase db push
+
+      - name: Configure Edge Function secret
+        run: supabase secrets set IP_HASH_SALT="$IP_HASH_SALT"
+
+      - name: Deploy Edge Functions
+        run: |
+          set -euo pipefail
+          for fn in start-attempt submit-answer log-event finish-attempt teacher-action; do
+            echo "Deploying $fn"
+            supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF"
+          done
+
+      - name: Backend readiness check
+        run: |
+          python tools/check_backend_readiness.py \
+            --url "$SUPABASE_URL" \
+            --anon-key "$SUPABASE_ANON_KEY" \
+            --expected-status draft
+
+      - name: Open assessment
+        if: ${{ inputs.open_assessment }}
+        run: |
+          echo "Assessment opening is intentionally not performed with the anon key."
+          echo "Run tools/open_assessment.py locally with SUPABASE_SERVICE_ROLE_KEY after bank/assignment readiness passes."
+          exit 1
