@@ -65,17 +65,24 @@ jobs:
               'blockContextMenu':True,
               'watermarkEnabled':True,
               'globallyDisjointQuestions':True,
-              'recordRawIp':False,
-              'endpoints':{
-                  'start':'start-attempt',
-                  'submit':'submit-answer',
-                  'event':'log-event',
-                  'finish':'finish-attempt',
-                  'teacher':'teacher-action'
+              'studentSessionStorageKey':'ijr-stat11-counting-permutations-active-v2',
+              'rpc':{
+                  'start':'student_start_attempt',
+                  'resume':'student_resume_attempt',
+                  'submit':'student_submit_answer',
+                  'event':'student_log_event',
+                  'finish':'student_finish_attempt'
               }
           }
           path.write_text('window.IJR_ASSESSMENT_CONFIG = Object.freeze(' + json.dumps(config, ensure_ascii=False, separators=(',',':')) + ');\n', encoding='utf-8')
           PY
+
+      - name: Verify application syntax
+        run: |
+          set -euo pipefail
+          node --check evaluacion-conteo-permutaciones/app.js
+          node --check evaluacion-conteo-permutaciones/teacher/app.js
+          python -m py_compile tools/check_backend_readiness.py tools/import_academic_source.py tools/open_assessment.py
 
       - name: Verify static assessment files
         run: |
@@ -87,6 +94,8 @@ jobs:
           test -s evaluacion-conteo-permutaciones/teacher/index.html
           test -s evaluacion-conteo-permutaciones/teacher/app.js
           ! grep -R "REPLACE_WITH_SUPABASE" evaluacion-conteo-permutaciones/config.js
+          grep -q "student_start_attempt" evaluacion-conteo-permutaciones/config.js
+          ! grep -q "start-attempt" evaluacion-conteo-permutaciones/config.js
           touch .nojekyll
 
       - name: Setup Pages
