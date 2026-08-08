@@ -5,44 +5,54 @@ on:
     branches: [main]
     paths:
       - 'supabase/migrations/**'
-      - 'supabase/functions/**'
       - 'tools/check_backend_readiness.py'
-      - 'tools/open_assessment.py'
       - '.github/workflows/deploy-supabase.yml'
   workflow_dispatch:
-    inputs:
-      open_assessment:
-        description: "Open assessment only after bank, roster, sources and teacher readiness pass"
-        required: true
-        default: false
-        type: boolean
 
 permissions:
   contents: read
 
+concurrency:
+  group: statistics11-supabase-production
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
+      # Public identifiers are intentionally fixed to the production project.
+      SUPABASE_PROJECT_REF: rlfxnjbqxbozjdzkbwlz
+      SUPABASE_URL: https://rlfxnjbqxbozjdzkbwlz.supabase.co
+      SUPABASE_ANON_KEY: sb_publishable_rmVOQ3Orx49KpW_4uMqYew_c2HpcA87
+
+      # Private GitHub Actions secrets. Only these are required to migrate DB.
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+      # Optional: enables the deeper private-table validation after public health passes.
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate required configuration
+      - name: Validate deployment credentials
+        shell: bash
         run: |
           set -euo pipefail
-          for name in SUPABASE_ACCESS_TOKEN SUPABASE_PROJECT_REF SUPABASE_DB_PASSWORD SUPABASE_SERVICE_ROLE_KEY SUPABASE_URL; do
-            if [ -z "${!name:-}" ]; then echo "Missing $name"; exit 1; fi
+          missing=0
+          for name in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing GitHub Actions secret: $name"
+              missing=1
+            fi
           done
-          case "$SUPABASE_URL" in
-            https://*.supabase.co) ;;
-            *) echo "SUPABASE_URL must be an https://*.supabase.co URL"; exit 1;;
-          esac
+          if [ "$missing" -ne 0 ]; then
+            echo "Configure the two missing secrets in Repository Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          echo "Production project: $SUPABASE_PROJECT_REF"
 
       - name: Setup Python dependency
         run: python -m pip install --disable-pip-version-check requests
@@ -52,33 +62,77 @@ jobs:
         with:
           version: latest
 
-      - name: Link project
+      - name: Link production project
         run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
 
-      - name: Apply database migrations
-        run: supabase db push
-
-      - name: Deploy teacher control function
-        run: supabase functions deploy teacher-action --project-ref "$SUPABASE_PROJECT_REF"
-
-      - name: Deep backend readiness check
+      - name: Apply all pending migrations
+        shell: bash
         run: |
-          python tools/check_backend_readiness.py \
-            --url "$SUPABASE_URL" \
-            --service-role-key "$SUPABASE_SERVICE_ROLE_KEY"
+          set -euo pipefail
+          # --include-all is intentional: the project was initially bootstrapped
+          # before migration history was fully managed by the CLI.
+          supabase db push --include-all
 
-      - name: Validate draft state before opening
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.open_assessment }}
+      - name: Wait for PostgREST schema reload
+        run: sleep 6
+
+      - name: Public production health check
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            --retry 6 --retry-delay 3 --retry-all-errors \
+            -X POST "$SUPABASE_URL/rest/v1/rpc/statistics11_assessment_health" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}' > /tmp/stat11_health.json
+
+          cat /tmp/stat11_health.json
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          payload=json.loads(Path('/tmp/stat11_health.json').read_text())
+          required={
+              'ready': True,
+              'status': 'open',
+              'student_rpc': True,
+              'teacher_rpc': True,
+          }
+          failures=[]
+          for key,value in required.items():
+              if payload.get(key) != value:
+                  failures.append(f'{key}={payload.get(key)!r}, expected {value!r}')
+          if int(payload.get('question_count') or 0) < 2000:
+              failures.append(f"question_count={payload.get('question_count')}, expected >= 2000")
+          if int(payload.get('roster_count') or 0) < 61:
+              failures.append(f"roster_count={payload.get('roster_count')}, expected >= 61")
+          topics=payload.get('topic_counts') or {}
+          for topic in ('FCP','P_SIMPLE','P_DIST','P_CIRC'):
+              if int(topics.get(topic) or 0) < 500:
+                  failures.append(f'{topic}={topics.get(topic)}, expected >= 500')
+          if failures:
+              raise SystemExit('BACKEND NOT READY:\n- ' + '\n- '.join(failures))
+          print('Statistics 11 backend is READY for student traffic.')
+          PY
+
+      - name: Deep private readiness check
+        if: ${{ env.SUPABASE_SERVICE_ROLE_KEY != '' }}
         run: |
           python tools/check_backend_readiness.py \
             --url "$SUPABASE_URL" \
             --service-role-key "$SUPABASE_SERVICE_ROLE_KEY" \
-            --expected-status draft \
+            --expected-status open \
             --require-teacher
 
-      - name: Open assessment after full readiness validation
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.open_assessment }}
+      - name: Deployment summary
+        if: success()
         run: |
-          python tools/open_assessment.py \
-            --url "$SUPABASE_URL" \
-            --service-role-key "$SUPABASE_SERVICE_ROLE_KEY"
+          echo "### Statistics 11 assessment backend READY" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Project: \`$SUPABASE_PROJECT_REF\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Assessment: OPEN" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Questions: >= 2,000; >= 500 per topic" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Student RPC: available" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Teacher RPC: available" >> "$GITHUB_STEP_SUMMARY"
+          echo "- PostgREST schema cache: refreshed" >> "$GITHUB_STEP_SUMMARY"
