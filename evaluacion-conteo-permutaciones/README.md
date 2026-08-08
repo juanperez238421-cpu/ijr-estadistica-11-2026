@@ -29,7 +29,7 @@ GitHub Pages is the public frontend. Supabase provides anonymous student authent
 1. Create a Supabase project.
 2. Enable Anonymous Sign-Ins in Supabase Auth for students.
 3. Apply `supabase/migrations/20260807_secure_statistics11_assessment.sql`.
-4. Deploy Edge Functions: `start-attempt`, `submit-answer`, `log-event`, `finish-attempt`.
+4. Deploy Edge Functions: `start-attempt`, `submit-answer`, `log-event`, `finish-attempt`, `teacher-action`.
 5. Set Edge Function secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and a random `IP_HASH_SALT`.
 6. Locally import the private question bank and assignments with `tools/import_secure_statistics11_assessment.py`. Never commit the service-role key.
 7. Create the teacher user in Supabase Auth and insert/update its `profiles.role` to `teacher` or `admin`.
@@ -38,9 +38,9 @@ GitHub Pages is the public frontend. Supabase provides anonymous student authent
 
 ## Question-bank capacity
 
-The supplied bank has 1,600 questions. With strict global non-repetition and 18 questions per student, it supports at most `floor(1600/18) = 88` students. A 90-student roster requires at least 1,620 questions; a 10–20% reserve is preferable.
+The supplied bank has 1,600 questions (400 per topic). The theoretical total-only limit at 18 globally unique questions is `floor(1600/18) = 88` students. However, the configured balanced quota is **5 FCP + 5 simple + 4 distinguishable + 4 circular**. Because FCP and simple permutations contain only 400 items each, the actual strict capacity under that quota is **80 students** (`400/5`). Therefore a three-group roster near 90 students must use an expanded bank.
 
-The supplied local generator was verified to generate 2,000 unique questions by using `TARGET_PER_TOPIC = 500` (500 × 4 topics). Keep the expanded canonical bank private and import it to Supabase; do not publish answer keys in GitHub Pages.
+For 90 students the configured quota requires at least 450 FCP, 450 simple, 360 distinguishable and 360 circular questions (1,620 total minimum). The supplied local generator was verified to generate **2,000 unique questions** by using `TARGET_PER_TOPIC = 500` (500 × 4 topics). This is the recommended production baseline because it supports 90 students under the 5/5/4/4 quota and leaves reserve capacity. Keep the expanded canonical bank private and import it to Supabase; do not publish answer keys in GitHub Pages.
 
 ## IP and device evidence
 
