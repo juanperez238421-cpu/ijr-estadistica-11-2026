@@ -26,7 +26,8 @@ Deno.serve(async(req)=>{
 
     const {data:existingProfile}=await admin.from('profiles').select('*').eq('student_id',studentId).maybeSingle();
     if(existingProfile&&existingProfile.auth_user_id!==user.id) return json({error:'Student ID is already registered to another session. Ask the teacher.'},409);
-    await admin.from('profiles').upsert({auth_user_id:user.id,student_id:studentId,full_name:fullName,group_code:group,role:'student',active:true},{onConflict:'auth_user_id'});
+    const {error:profileErr}=await admin.from('profiles').upsert({auth_user_id:user.id,student_id:studentId,full_name:fullName,group_code:group,role:'student',active:true},{onConflict:'auth_user_id'});
+    if(profileErr) throw profileErr;
 
     const {data:existing}=await admin.from('attempts').select('*').eq('assessment_id',assessment.id).eq('student_id',studentId).maybeSingle();
     if(existing){
@@ -36,7 +37,14 @@ Deno.serve(async(req)=>{
       return json({attempt_id:existing.id,expires_at:existing.expires_at,integrity_strikes:existing.integrity_strikes,question:q});
     }
 
-    const {count}=await admin.from('assignments').select('*',{count:'exact',head:true}).eq('assessment_id',assessment.id).eq('student_id',studentId);
+    let {count}=await admin.from('assignments').select('*',{count:'exact',head:true}).eq('assessment_id',assessment.id).eq('student_id',studentId);
+    if((count??0)===0){
+      const {data:allocated,error:allocErr}=await admin.rpc('allocate_assessment_questions',{p_assessment_id:assessment.id,p_student_id:studentId});
+      if(allocErr) return json({error:`Question allocation failed: ${allocErr.message}`},409);
+      if(Number(allocated)!==assessment.questions_per_student) return json({error:'Question allocation incomplete'},409);
+      const recount=await admin.from('assignments').select('*',{count:'exact',head:true}).eq('assessment_id',assessment.id).eq('student_id',studentId);
+      count=recount.count;
+    }
     if(count!==assessment.questions_per_student) return json({error:`No complete assignment for ${studentId}. Expected ${assessment.questions_per_student}, found ${count??0}.`},409);
 
     const forwarded=(req.headers.get('x-forwarded-for')||req.headers.get('cf-connecting-ip')||'unknown').split(',')[0].trim();
@@ -55,7 +63,10 @@ async function publicQuestion(admin:any,assessmentId:string,studentId:string,ord
   const {data:q,error:qErr}=await admin.from('questions_private').select('id,topic_code,prompt_es,options,diagram').eq('id',assignment.question_id).single();
   if(qErr||!q) throw new Error('Question not found');
   let orderIdx:number[]=Array.isArray(assignment.option_order)?assignment.option_order:shuffle([0,1,2,3]);
-  if(!assignment.option_order) await admin.from('assignments').update({option_order:orderIdx}).eq('assessment_id',assessmentId).eq('student_id',studentId).eq('question_order',order);
+  if(!assignment.option_order){
+    const {error:updateErr}=await admin.from('assignments').update({option_order:orderIdx}).eq('assessment_id',assessmentId).eq('student_id',studentId).eq('question_order',order);
+    if(updateErr) throw updateErr;
+  }
   const values=Array.isArray(q.options)?q.options:[];
   return {id:q.id,order:assignment.question_order,topic_label:q.topic_code,prompt:q.prompt_es,diagram:q.diagram,options:orderIdx.map((idx:number,pos:number)=>({key:String.fromCharCode(65+pos),label:String(values[idx])}))};
 }
