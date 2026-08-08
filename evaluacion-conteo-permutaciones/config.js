@@ -18,11 +18,20 @@ window.IJR_ASSESSMENT_CONFIG = Object.freeze({
   watermarkEnabled: true,
   globallyDisjointQuestions: true,
   studentSessionStorageKey: 'ijr-stat11-counting-permutations-active-v2',
+  reportEmail: 'juanperez238421@gmail.com',
   rpc: {
     start: 'student_start_attempt',
     resume: 'student_resume_attempt',
     submit: 'student_submit_answer',
     event: 'student_log_event',
     finish: 'student_finish_attempt'
+  },
+  teacherRpc: {
+    login: 'teacher_code_login',
+    logout: 'teacher_code_logout',
+    snapshot: 'teacher_dashboard_snapshot',
+    detail: 'teacher_attempt_detail',
+    action: 'teacher_code_action',
+    startTest: 'teacher_start_smoke_test'
   }
 });

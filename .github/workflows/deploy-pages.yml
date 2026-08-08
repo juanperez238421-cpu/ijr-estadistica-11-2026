@@ -72,12 +72,21 @@ jobs:
               'watermarkEnabled':True,
               'globallyDisjointQuestions':True,
               'studentSessionStorageKey':'ijr-stat11-counting-permutations-active-v2',
+              'reportEmail':'juanperez238421@gmail.com',
               'rpc':{
                   'start':'student_start_attempt',
                   'resume':'student_resume_attempt',
                   'submit':'student_submit_answer',
                   'event':'student_log_event',
                   'finish':'student_finish_attempt'
+              },
+              'teacherRpc':{
+                  'login':'teacher_code_login',
+                  'logout':'teacher_code_logout',
+                  'snapshot':'teacher_dashboard_snapshot',
+                  'detail':'teacher_attempt_detail',
+                  'action':'teacher_code_action',
+                  'startTest':'teacher_start_smoke_test'
               }
           }
           path.write_text('window.IJR_ASSESSMENT_CONFIG = Object.freeze(' + json.dumps(config, ensure_ascii=False, separators=(',',':')) + ');\n', encoding='utf-8')
@@ -87,7 +96,7 @@ jobs:
         run: |
           set -euo pipefail
           node --check evaluacion-conteo-permutaciones/app.js
-          node --check evaluacion-conteo-permutaciones/teacher/app.js
+          node --check evaluacion-conteo-permutaciones/teacher-mode.js
           python -m py_compile tools/check_backend_readiness.py tools/import_academic_source.py tools/open_assessment.py
 
       - name: Verify static assessment files
@@ -96,11 +105,12 @@ jobs:
           test -s index.html
           test -s evaluacion-conteo-permutaciones/index.html
           test -s evaluacion-conteo-permutaciones/app.js
+          test -s evaluacion-conteo-permutaciones/teacher-mode.js
           test -s evaluacion-conteo-permutaciones/config.js
           test -s evaluacion-conteo-permutaciones/teacher/index.html
-          test -s evaluacion-conteo-permutaciones/teacher/app.js
           ! grep -R "REPLACE_WITH_SUPABASE" evaluacion-conteo-permutaciones/config.js
           grep -q "student_start_attempt" evaluacion-conteo-permutaciones/config.js
+          grep -q "teacher_code_login" evaluacion-conteo-permutaciones/config.js
           ! grep -q "start-attempt" evaluacion-conteo-permutaciones/config.js
           touch .nojekyll
 
