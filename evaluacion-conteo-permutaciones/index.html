@@ -26,14 +26,22 @@
         <strong>Condiciones de integridad:</strong> la evaluación registra tiempos de respuesta, cambios de pestaña, pérdida de foco, salida de pantalla completa, intentos de copiar/pegar, conectividad y sesiones duplicadas. Al tercer cambio de pestaña confirmado, el intento se anula automáticamente y queda disponible para revisión docente. Las capturas de pantalla están prohibidas; un navegador normal no puede detectar todas las capturas del sistema operativo, por lo que se usa marca de agua personal y se registran las teclas/eventos que el navegador sí puede observar.
       </div>
       <form id="registrationForm" class="form-grid">
-        <label>Nombre completo<input id="studentName" required autocomplete="name" maxlength="100"></label>
-        <label>Código de estudiante<input id="studentId" required autocomplete="off" maxlength="30" placeholder="Ej. 11B-017"></label>
-        <label>Grupo<select id="groupCode" required><option value="">Selecciona</option><option>11A</option><option>11B</option><option>11C</option></select></label>
+        <label>Grupo
+          <select id="groupCode" required>
+            <option value="">Selecciona</option>
+            <option>11A</option>
+            <option>11B</option>
+            <option>11C</option>
+          </select>
+        </label>
+        <label>Nombre completo
+          <input id="studentName" required autocomplete="name" maxlength="120" placeholder="Escribe tu nombre completo">
+        </label>
         <label class="check-row"><input id="integrityConsent" type="checkbox" required> He leído y acepto las condiciones de supervisión de esta evaluación.</label>
         <button id="startButton" class="primary" type="submit">Comenzar evaluación</button>
       </form>
       <p id="setupStatus" class="status"></p>
-      <p class="small">El sistema usa el código del estudiante como referencia académica. La IP no se usa como identidad principal porque varios estudiantes pueden compartir la misma red; el backend puede registrar un hash de IP como evidencia de sesión.</p>
+      <p class="small">El sistema valida grupo y nombre contra la lista institucional de Statistics 11. No necesitas código de estudiante. El nombre escrito solo se utiliza para identificar el intento académico y queda registrado junto con la hora y la trazabilidad del examen.</p>
     </section>
 
     <section id="examPanel" class="panel hidden" aria-live="polite">
@@ -61,7 +69,7 @@
 
     <section id="configPanel" class="panel hidden">
       <h2>Configuración pendiente</h2>
-      <p>El frontend está publicado, pero el modo evaluación se mantiene cerrado hasta conectar Supabase. Esto evita registrar una prueba oficial únicamente en el navegador.</p>
+      <p>La evaluación está publicada, pero el backend aún no está disponible. Avise al docente.</p>
     </section>
   </main>
 

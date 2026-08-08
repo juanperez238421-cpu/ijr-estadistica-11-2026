@@ -25,23 +25,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate production configuration
+      - name: Validate optional repository configuration
         run: |
           set -euo pipefail
-          if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_ANON_KEY:-}" ]; then
-            echo "Missing repository variables SUPABASE_URL and/or SUPABASE_ANON_KEY"
-            exit 1
-          fi
-          case "$SUPABASE_URL" in
-            https://*.supabase.co) ;;
-            *) echo "SUPABASE_URL must be an https://*.supabase.co URL"; exit 1;;
-          esac
-          if [ ${#SUPABASE_ANON_KEY} -lt 40 ]; then
-            echo "SUPABASE_ANON_KEY appears invalid"
-            exit 1
+          if [ -n "${SUPABASE_URL:-}" ] || [ -n "${SUPABASE_ANON_KEY:-}" ]; then
+            if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+              echo "Set both SUPABASE_URL and SUPABASE_ANON_KEY, or neither."
+              exit 1
+            fi
+            case "$SUPABASE_URL" in
+              https://*.supabase.co) ;;
+              *) echo "SUPABASE_URL must be an https://*.supabase.co URL"; exit 1;;
+            esac
+            if [ ${#SUPABASE_ANON_KEY} -lt 40 ]; then
+              echo "SUPABASE_ANON_KEY appears invalid"
+              exit 1
+            fi
+            echo "Repository variables found; they will override committed public config."
+          else
+            echo "Repository variables not set; using committed public Supabase URL/publishable key."
           fi
 
-      - name: Inject public Supabase configuration
+      - name: Inject public Supabase configuration when variables exist
+        if: ${{ vars.SUPABASE_URL != '' && vars.SUPABASE_ANON_KEY != '' }}
         run: |
           python - <<'PY'
           import json, os, pathlib
@@ -65,17 +71,24 @@ jobs:
               'blockContextMenu':True,
               'watermarkEnabled':True,
               'globallyDisjointQuestions':True,
-              'recordRawIp':False,
-              'endpoints':{
-                  'start':'start-attempt',
-                  'submit':'submit-answer',
-                  'event':'log-event',
-                  'finish':'finish-attempt',
-                  'teacher':'teacher-action'
+              'studentSessionStorageKey':'ijr-stat11-counting-permutations-active-v2',
+              'rpc':{
+                  'start':'student_start_attempt',
+                  'resume':'student_resume_attempt',
+                  'submit':'student_submit_answer',
+                  'event':'student_log_event',
+                  'finish':'student_finish_attempt'
               }
           }
           path.write_text('window.IJR_ASSESSMENT_CONFIG = Object.freeze(' + json.dumps(config, ensure_ascii=False, separators=(',',':')) + ');\n', encoding='utf-8')
           PY
+
+      - name: Verify application syntax
+        run: |
+          set -euo pipefail
+          node --check evaluacion-conteo-permutaciones/app.js
+          node --check evaluacion-conteo-permutaciones/teacher/app.js
+          python -m py_compile tools/check_backend_readiness.py tools/import_academic_source.py tools/open_assessment.py
 
       - name: Verify static assessment files
         run: |
@@ -87,6 +100,8 @@ jobs:
           test -s evaluacion-conteo-permutaciones/teacher/index.html
           test -s evaluacion-conteo-permutaciones/teacher/app.js
           ! grep -R "REPLACE_WITH_SUPABASE" evaluacion-conteo-permutaciones/config.js
+          grep -q "student_start_attempt" evaluacion-conteo-permutaciones/config.js
+          ! grep -q "start-attempt" evaluacion-conteo-permutaciones/config.js
           touch .nojekyll
 
       - name: Setup Pages

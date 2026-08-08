@@ -17,11 +17,12 @@ window.IJR_ASSESSMENT_CONFIG = Object.freeze({
   blockContextMenu: true,
   watermarkEnabled: true,
   globallyDisjointQuestions: true,
-  recordRawIp: false,
-  endpoints: {
-    start: 'start-attempt',
-    submit: 'submit-answer',
-    event: 'log-event',
-    finish: 'finish-attempt'
+  studentSessionStorageKey: 'ijr-stat11-counting-permutations-active-v2',
+  rpc: {
+    start: 'student_start_attempt',
+    resume: 'student_resume_attempt',
+    submit: 'student_submit_answer',
+    event: 'student_log_event',
+    finish: 'student_finish_attempt'
   }
 });

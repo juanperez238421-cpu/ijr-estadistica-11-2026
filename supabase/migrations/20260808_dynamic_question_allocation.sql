@@ -99,7 +99,8 @@ begin
 end;
 $$;
 
--- This RPC is invoked only from an Edge Function using the service-role client.
+-- Private internal allocator. It is callable by trusted SECURITY DEFINER
+-- assessment functions, but never directly by the public browser role.
 revoke all on function public.allocate_assessment_questions(uuid,text) from public,anon,authenticated;
 
 commit;
