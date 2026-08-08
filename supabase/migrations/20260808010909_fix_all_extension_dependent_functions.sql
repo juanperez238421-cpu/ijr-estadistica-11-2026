@@ -6,8 +6,8 @@ begin;
 -- Earlier hotfixes covered student_* / teacher_* functions, but helper
 -- functions such as resolve_roster_student() also call pgcrypto/pg_trgm and
 -- intentionally pin their search_path. Supabase installs these extensions in
--- the `extensions` schema, so every extension-dependent public function must
--- explicitly include it.
+-- the `extensions` schema, so every extension-dependent APPLICATION function
+-- must explicitly include it. Extension-owned functions themselves are excluded.
 -- -----------------------------------------------------------------------------
 do $$
 declare
@@ -20,6 +20,12 @@ begin
     where n.nspname='public'
       and p.prokind in ('f','p')
       and (
+        p.proname like 'student_%'
+        or p.proname like 'teacher_%'
+        or p.proname like 'statistics11_%'
+        or p.proname in ('request_ip_hash','resolve_roster_student')
+      )
+      and (
         lower(pg_get_functiondef(p.oid)) like '%digest(%'
         or lower(pg_get_functiondef(p.oid)) like '%gen_random_bytes(%'
         or lower(pg_get_functiondef(p.oid)) like '%similarity(%'
@@ -30,13 +36,6 @@ begin
 end;
 $$;
 
--- A non-mutating runtime smoke test for the exact paths that failed in the
--- browser. It verifies:
---   1) unknown/free-form student names can traverse resolve_roster_student(),
---      including pg_trgm + pgcrypto;
---   2) teacher session token lookup can execute its pgcrypto digest path;
---   3) every public function that references extension routines has an
---      `extensions` search_path entry.
 create or replace function public.statistics11_runtime_smoke()
 returns jsonb
 language plpgsql
@@ -63,8 +62,6 @@ begin
   end;
 
   begin
-    -- Long enough to force teacher_code_session_id through its digest lookup,
-    -- but guaranteed not to match a real token. No row is inserted or changed.
     v_teacher_session := public.teacher_code_session_id(repeat('0',64));
     v_teacher_helper_ok := v_teacher_session is null;
   exception when others then
@@ -76,6 +73,12 @@ begin
   join pg_namespace n on n.oid=p.pronamespace
   where n.nspname='public'
     and p.prokind in ('f','p')
+    and (
+      p.proname like 'student_%'
+      or p.proname like 'teacher_%'
+      or p.proname like 'statistics11_%'
+      or p.proname in ('request_ip_hash','resolve_roster_student')
+    )
     and (
       lower(pg_get_functiondef(p.oid)) like '%digest(%'
       or lower(pg_get_functiondef(p.oid)) like '%gen_random_bytes(%'
@@ -99,7 +102,6 @@ $$;
 revoke all on function public.statistics11_runtime_smoke() from public;
 grant execute on function public.statistics11_runtime_smoke() to anon,authenticated;
 
--- Re-create overall health so READY now depends on the runtime smoke test.
 create or replace function public.statistics11_assessment_health()
 returns jsonb
 language plpgsql
