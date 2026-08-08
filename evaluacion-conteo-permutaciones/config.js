@@ -1,0 +1,27 @@
+window.IJR_ASSESSMENT_CONFIG = Object.freeze({
+  assessmentSlug: 'statistics11-counting-permutations-2026',
+  supabaseUrl: 'REPLACE_WITH_SUPABASE_URL',
+  supabaseAnonKey: 'REPLACE_WITH_SUPABASE_ANON_KEY',
+  durationMinutes: 40,
+  questionsPerAttempt: 18,
+  maxRawPoints: 15,
+  gradeMin: 1.0,
+  gradeMax: 5.0,
+  passingGrade: 3.0,
+  tabStrikeLimit: 3,
+  hiddenGraceMs: 1000,
+  heartbeatMs: 10000,
+  requireFullscreen: true,
+  fullscreenPolicy: 'pause',
+  blockCopyPaste: true,
+  blockContextMenu: true,
+  watermarkEnabled: true,
+  globallyDisjointQuestions: true,
+  recordRawIp: false,
+  endpoints: {
+    start: 'start-attempt',
+    submit: 'submit-answer',
+    event: 'log-event',
+    finish: 'finish-attempt'
+  }
+});
