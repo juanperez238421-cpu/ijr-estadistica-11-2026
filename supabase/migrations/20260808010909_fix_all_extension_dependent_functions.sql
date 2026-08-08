@@ -18,6 +18,7 @@ begin
     from pg_proc p
     join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='public'
+      and p.prokind in ('f','p')
       and (
         lower(pg_get_functiondef(p.oid)) like '%digest(%'
         or lower(pg_get_functiondef(p.oid)) like '%gen_random_bytes(%'
@@ -74,6 +75,7 @@ begin
   from pg_proc p
   join pg_namespace n on n.oid=p.pronamespace
   where n.nspname='public'
+    and p.prokind in ('f','p')
     and (
       lower(pg_get_functiondef(p.oid)) like '%digest(%'
       or lower(pg_get_functiondef(p.oid)) like '%gen_random_bytes(%'
