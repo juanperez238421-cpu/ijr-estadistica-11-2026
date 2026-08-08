@@ -87,11 +87,21 @@ jobs:
           import json
           from pathlib import Path
           payload=json.loads(Path('/tmp/stat11_health.json').read_text())
-          required={'ready':True,'status':'open','student_rpc':True,'teacher_rpc':True}
+          required={
+              'ready':True,
+              'status':'open',
+              'student_rpc':True,
+              'teacher_rpc':True,
+              'email_capture_ready':True,
+              'crypto_ready':True,
+          }
           failures=[]
           for key,value in required.items():
               if payload.get(key) != value:
                   failures.append(f'{key}={payload.get(key)!r}, expected {value!r}')
+          runtime=payload.get('runtime_smoke') or {}
+          if runtime.get('ready') is not True:
+              failures.append(f"runtime_smoke.ready={runtime.get('ready')!r}, expected True")
           if int(payload.get('question_count') or 0) < 2000:
               failures.append(f"question_count={payload.get('question_count')}, expected >= 2000")
           if int(payload.get('roster_count') or 0) < 61:
@@ -102,7 +112,7 @@ jobs:
                   failures.append(f'{topic}={topics.get(topic)}, expected >= 500')
           if failures:
               raise SystemExit('BACKEND NOT READY:\n- ' + '\n- '.join(failures))
-          print('Statistics 11 backend is READY for student traffic.')
+          print('Statistics 11 backend is READY for student traffic, email capture and teacher analytics.')
           PY
 
       - name: Deep private readiness check
@@ -121,8 +131,9 @@ jobs:
           echo "- Project: \`$SUPABASE_PROJECT_REF\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Assessment: OPEN" >> "$GITHUB_STEP_SUMMARY"
           echo "- Questions: >= 2,000; >= 500 per topic" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Student RPC: available" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Teacher RPC: available" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Student email capture: READY" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Three-strike integrity enforcement: server-side" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Teacher analytics RPC: available" >> "$GITHUB_STEP_SUMMARY"
           echo "- PostgREST schema cache: refreshed" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Report deployment status to issue
