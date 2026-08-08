@@ -1,0 +1,109 @@
+name: Deploy Statistics 11 Assessment
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    env:
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate production configuration
+        run: |
+          set -euo pipefail
+          if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+            echo "Missing repository variables SUPABASE_URL and/or SUPABASE_ANON_KEY"
+            exit 1
+          fi
+          case "$SUPABASE_URL" in
+            https://*.supabase.co) ;;
+            *) echo "SUPABASE_URL must be an https://*.supabase.co URL"; exit 1;;
+          esac
+          if [ ${#SUPABASE_ANON_KEY} -lt 40 ]; then
+            echo "SUPABASE_ANON_KEY appears invalid"
+            exit 1
+          fi
+
+      - name: Inject public Supabase configuration
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+          path = pathlib.Path('evaluacion-conteo-permutaciones/config.js')
+          config = {
+              'assessmentSlug':'statistics11-counting-permutations-2026',
+              'supabaseUrl':os.environ['SUPABASE_URL'].rstrip('/'),
+              'supabaseAnonKey':os.environ['SUPABASE_ANON_KEY'],
+              'durationMinutes':40,
+              'questionsPerAttempt':18,
+              'maxRawPoints':15,
+              'gradeMin':1.0,
+              'gradeMax':5.0,
+              'passingGrade':3.0,
+              'tabStrikeLimit':3,
+              'hiddenGraceMs':1000,
+              'heartbeatMs':10000,
+              'requireFullscreen':True,
+              'fullscreenPolicy':'pause',
+              'blockCopyPaste':True,
+              'blockContextMenu':True,
+              'watermarkEnabled':True,
+              'globallyDisjointQuestions':True,
+              'recordRawIp':False,
+              'endpoints':{
+                  'start':'start-attempt',
+                  'submit':'submit-answer',
+                  'event':'log-event',
+                  'finish':'finish-attempt',
+                  'teacher':'teacher-action'
+              }
+          }
+          path.write_text('window.IJR_ASSESSMENT_CONFIG = Object.freeze(' + json.dumps(config, ensure_ascii=False, separators=(',',':')) + ');\n', encoding='utf-8')
+          PY
+
+      - name: Verify static assessment files
+        run: |
+          set -euo pipefail
+          test -s index.html
+          test -s evaluacion-conteo-permutaciones/index.html
+          test -s evaluacion-conteo-permutaciones/app.js
+          test -s evaluacion-conteo-permutaciones/config.js
+          test -s evaluacion-conteo-permutaciones/teacher/index.html
+          test -s evaluacion-conteo-permutaciones/teacher/app.js
+          ! grep -R "REPLACE_WITH_SUPABASE" evaluacion-conteo-permutaciones/config.js
+          touch .nojekyll
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

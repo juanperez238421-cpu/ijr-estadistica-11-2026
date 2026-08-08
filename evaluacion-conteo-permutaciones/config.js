@@ -1,7 +1,7 @@
 window.IJR_ASSESSMENT_CONFIG = Object.freeze({
   assessmentSlug: 'statistics11-counting-permutations-2026',
-  supabaseUrl: 'REPLACE_WITH_SUPABASE_URL',
-  supabaseAnonKey: 'REPLACE_WITH_SUPABASE_ANON_KEY',
+  supabaseUrl: 'https://rlfxnjbqxbozjdzkbwlz.supabase.co',
+  supabaseAnonKey: 'sb_publishable_rmVOQ3Orx49KpW_4uMqYew_c2HpcA87',
   durationMinutes: 40,
   questionsPerAttempt: 18,
   maxRawPoints: 15,
