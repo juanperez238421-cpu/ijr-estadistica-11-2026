@@ -9,6 +9,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  issues: write
 
 concurrency:
   group: pages
@@ -122,3 +123,25 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  report:
+    if: always()
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report Pages deployment status to issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+          RUN_ID: ${{ github.run_id }}
+          SHA: ${{ github.sha }}
+        run: |
+          if [ "$BUILD_RESULT" = "success" ] && [ "$DEPLOY_RESULT" = "success" ]; then
+            icon="✅ PAGES READY"
+          else
+            icon="❌ PAGES FAILED"
+          fi
+          gh issue comment 33 \
+            --repo juanperez238421-cpu/ijr-estadistica-11-2026 \
+            --body "$icon · build=$BUILD_RESULT · deploy=$DEPLOY_RESULT · run $RUN_ID · commit $SHA · $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
