@@ -65,6 +65,15 @@
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
   }
 
+  function formatOptionLabel(value) {
+    const text = String(value ?? '').trim();
+    if (/^[+-]?\d+\.\d+$/.test(text)) {
+      const cleaned = text.replace(/(\.\d*?[1-9])0+$/, '$1').replace(/\.0+$/, '');
+      return cleaned;
+    }
+    return text;
+  }
+
   function saveActiveSession() {
     if (!state.attemptId || !state.attemptToken) return;
     sessionStorage.setItem(cfg.studentSessionStorageKey, JSON.stringify({
@@ -108,15 +117,56 @@
     }
   }
 
+  function updateEmailDeliveryStatus(message, kind = 'pending') {
+    const node = $('emailDeliveryStatus');
+    if (!node) return;
+    node.textContent = message;
+    node.dataset.state = kind;
+  }
+
+  async function dispatchEmailReport() {
+    if (!state.attemptId) return null;
+    updateEmailDeliveryStatus('Procesando envío…', 'pending');
+    try {
+      const response = await fetch(`${cfg.supabaseUrl}/functions/v1/send-assessment-email`, {
+        method: 'POST',
+        headers: {
+          'apikey': cfg.supabaseAnonKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ attempt_id: state.attemptId })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (payload?.sent) {
+        updateEmailDeliveryStatus('Enviado al correo docente', 'sent');
+        return payload;
+      }
+      if (payload?.configured === false) {
+        updateEmailDeliveryStatus('En cola · proveedor de correo pendiente', 'pending');
+        return payload;
+      }
+      if (response.status === 202) {
+        updateEmailDeliveryStatus('En cola para envío automático', 'pending');
+        return payload;
+      }
+      updateEmailDeliveryStatus('En cola · reintento requerido', 'failed');
+      return payload;
+    } catch (err) {
+      console.warn('email dispatch failed', err);
+      updateEmailDeliveryStatus('En cola · conexión con mailer no disponible', 'failed');
+      return null;
+    }
+  }
+
   function renderDiagram(d) {
     els.diagram.replaceChildren();
     if (!d || !d.type) return;
     const wrap = document.createElement('div');
-    wrap.style.cssText = 'border:1px solid #d9d9d9;border-radius:10px;padding:12px;background:#fafafa;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;min-height:72px';
+    wrap.style.cssText = 'border:1px solid #d4d4d4;border-radius:12px;padding:18px;background:#fafafa;display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap;min-height:110px';
     const token = text => {
       const x = document.createElement('div');
       x.textContent = text;
-      x.style.cssText = 'border:1px solid #888;border-radius:7px;padding:7px 10px;background:white;min-width:42px;text-align:center;font-weight:700;font-size:.9rem';
+      x.style.cssText = 'border:1px solid #777;border-radius:8px;padding:10px 14px;background:white;min-width:58px;text-align:center;font-weight:760;font-size:1.05rem';
       return x;
     };
 
@@ -129,13 +179,13 @@
         col.append(token(String(counts[i] ?? '?')));
         const cap = document.createElement('div');
         cap.textContent = label;
-        cap.style.cssText = 'font-size:.72rem;color:#555;margin-top:5px';
+        cap.style.cssText = 'font-size:.86rem;color:#555;margin-top:7px';
         col.append(cap);
         wrap.append(col);
         if (i < labels.length - 1) {
           const arrow = document.createElement('span');
           arrow.textContent = '→';
-          arrow.style.fontSize = '1.15rem';
+          arrow.style.fontSize = '1.45rem';
           wrap.append(arrow);
         }
       });
@@ -143,6 +193,7 @@
       wrap.append(token(`${d.n_items ?? '?'} elementos`));
       const arrow = document.createElement('span');
       arrow.textContent = '→';
+      arrow.style.fontSize = '1.45rem';
       wrap.append(arrow);
       for (let i = 0; i < (d.r_slots ?? d.n_items ?? 0); i++) wrap.append(token(`${i + 1}`));
     } else if (d.type === 'repeated_tokens') {
@@ -150,12 +201,12 @@
     } else if (d.type === 'circular_seats') {
       const n = Number(d.n_items || 0);
       const box = document.createElement('div');
-      box.style.cssText = 'position:relative;width:150px;height:150px;border:1px solid #aaa;border-radius:50%;background:white';
+      box.style.cssText = 'position:relative;width:190px;height:190px;border:1px solid #999;border-radius:50%;background:white';
       for (let i = 0; i < n; i++) {
         const dot = document.createElement('span');
         const a = 2 * Math.PI * i / n - Math.PI / 2;
         dot.textContent = String(i + 1);
-        dot.style.cssText = `position:absolute;left:${68 + 55 * Math.cos(a)}px;top:${68 + 55 * Math.sin(a)}px;width:25px;height:25px;border:1px solid #555;border-radius:50%;display:grid;place-items:center;background:#fff;font-size:.68rem;font-weight:700`;
+        dot.style.cssText = `position:absolute;left:${80 + 68 * Math.cos(a)}px;top:${80 + 68 * Math.sin(a)}px;width:30px;height:30px;border:1px solid #555;border-radius:50%;display:grid;place-items:center;background:#fff;font-size:.8rem;font-weight:760`;
         box.append(dot);
       }
       wrap.append(box);
@@ -192,7 +243,7 @@
         if (previous && previous !== o.key) logEvent('OPTION_CHANGED', { from: previous, to: o.key });
       });
       const span = document.createElement('span');
-      span.textContent = `${String.fromCharCode(65 + i)}. ${o.label}`;
+      span.textContent = `${String.fromCharCode(65 + i)}. ${formatOptionLabel(o.label)}`;
       label.append(input, span);
       els.answers.appendChild(label);
     });
@@ -256,16 +307,25 @@
     const result = await logEvent('INTEGRITY_STRIKE', { source, duration_ms: durationMs });
     state.strikes = Number(result?.integrity_strikes ?? (state.strikes + 1));
     els.banner.classList.remove('hidden');
-    els.banner.textContent = `Advertencia ${state.strikes}/${cfg.tabStrikeLimit}: ${source}. Al tercer evento de integridad confirmado, el intento se bloquea y se anula automáticamente.`;
+    els.banner.textContent = `Advertencia ${state.strikes}/${cfg.tabStrikeLimit}: ${source}. Al tercer evento confirmado, la evaluación finaliza automáticamente.`;
 
-    if (result?.invalidated || state.strikes >= cfg.tabStrikeLimit) {
-      lockExam(`Se registraron ${state.strikes} eventos de integridad. La evaluación está bloqueada y el intento será anulado automáticamente para revisión docente.`);
-      await finishAttempt('auto_invalidated_integrity');
+    if (result?.invalidated || result?.terminal || state.strikes >= cfg.tabStrikeLimit) {
+      lockExam(`Se registraron ${state.strikes} eventos de integridad. La evaluación finalizó automáticamente y quedó marcada para revisión docente.`);
+
+      if (result?.final_result) {
+        clearActiveSession();
+        showFinish(result.final_result, 'auto_invalidated_integrity');
+        if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+        await dispatchEmailReport();
+      } else {
+        await finishAttempt('auto_invalidated_integrity');
+      }
     }
   }
 
   function showFinish(result, reason = '') {
     state.submitted = true;
+    state.finishing = false;
     clearInterval(state.heartbeat);
     clearInterval(state.timer);
     els.exam.classList.add('hidden');
@@ -276,7 +336,7 @@
     els.finish.classList.remove('hidden');
     els.teacherButton.classList.remove('hidden');
     const invalid = String(result?.status || reason).includes('invalidated');
-    els.finishTitle.textContent = invalid ? 'Intento anulado automáticamente' : 'Evaluación enviada correctamente';
+    els.finishTitle.textContent = invalid ? 'Intento finalizado por integridad' : 'Evaluación enviada correctamente';
     els.finishTitle.classList.toggle('invalidated', invalid);
     const rows = [
       ['Estado', result?.status || reason || 'submitted'],
@@ -286,7 +346,8 @@
       ['Eventos de integridad', state.strikes],
       ['Aprobación', result?.grade != null ? (Number(result.grade) >= cfg.passingGrade ? 'Sí' : 'No') : 'Pendiente']
     ];
-    els.finishSummary.innerHTML = rows.map(([a, b]) => `<div class="summary-row"><strong>${a}</strong><span>${b}</span></div>`).join('');
+    els.finishSummary.innerHTML = rows.map(([a, b]) => `<div class="summary-row"><strong>${a}</strong><span>${b}</span></div>`).join('') +
+      '<div class="summary-row"><strong>Reporte docente</strong><span id="emailDeliveryStatus" data-state="pending">En cola para envío automático</span></div>';
   }
 
   async function finishAttempt(reason = 'student_finished') {
@@ -301,6 +362,7 @@
       clearActiveSession();
       showFinish(result, reason);
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      await dispatchEmailReport();
     } catch (err) {
       state.finishing = false;
       if (state.integrityLocked) {
@@ -533,6 +595,7 @@
         clearActiveSession();
         state.strikes = Number(result.integrity_strikes || 0);
         showFinish(result, result.status);
+        await dispatchEmailReport();
         return;
       }
 
@@ -553,7 +616,7 @@
         return;
       }
       if (state.strikes >= cfg.tabStrikeLimit) {
-        lockExam('El intento ya alcanzó el límite de eventos de integridad y está bloqueado para revisión docente.');
+        lockExam('El intento ya alcanzó el límite de eventos de integridad. La evaluación será finalizada para revisión docente.');
         await finishAttempt('auto_invalidated_integrity');
         return;
       }
