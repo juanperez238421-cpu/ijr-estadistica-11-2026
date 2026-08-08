@@ -115,6 +115,12 @@ def main():
     if roster_total < 61:
         errors.append(f"roster total={roster_total}; expected>=61")
 
+    # Fail if the new private audit columns are not queryable.
+    try:
+        get(url, key, "attempts", {"select": "id,student_email,student_email_normalized", "limit": "1"})
+    except RuntimeError as exc:
+        errors.append(f"student email audit columns unavailable: {exc}")
+
     source_rows = get(url, key, "academic_sources", {
         "source_key": f"eq.{INITIAL_SOURCE_KEY}",
         "select": "id,source_key,source_system,source_date",
@@ -153,9 +159,10 @@ def main():
         errors.append(f"report email is not configured as {REPORT_EMAIL}")
 
     rpc_probes = {
-        "student_start_attempt": {
+        "student_start_attempt_v2": {
             "p_assessment_slug": SLUG,
             "p_student_name": "BACKEND PROBE",
+            "p_student_email": "probe@example.invalid",
             "p_group_code": "INVALID",
             "p_session_id": str(uuid.uuid4()),
             "p_user_agent": "readiness-probe",
@@ -187,6 +194,7 @@ def main():
         "topic_counts": topic_counts,
         "roster_counts": roster_counts,
         "roster_total": roster_total,
+        "student_email_capture": rpc_status["student_start_attempt_v2"]["exists"],
         "academic_source": INITIAL_SOURCE_KEY,
         "academic_source_record_count": source_record_count,
         "assigned_students": len(production_students),

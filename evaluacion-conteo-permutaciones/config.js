@@ -10,17 +10,22 @@ window.IJR_ASSESSMENT_CONFIG = Object.freeze({
   passingGrade: 3.0,
   tabStrikeLimit: 3,
   hiddenGraceMs: 1000,
+  integrityDebounceMs: 1600,
   heartbeatMs: 10000,
   requireFullscreen: true,
   fullscreenPolicy: 'pause',
+  fullscreenExitCountsAsStrike: true,
+  screenshotKeyCountsAsStrike: true,
+  duplicateTabCountsAsStrike: true,
   blockCopyPaste: true,
   blockContextMenu: true,
   watermarkEnabled: true,
+  requireStudentEmail: true,
   globallyDisjointQuestions: true,
   studentSessionStorageKey: 'ijr-stat11-counting-permutations-active-v2',
   reportEmail: 'juanperez238421@gmail.com',
   rpc: {
-    start: 'student_start_attempt',
+    start: 'student_start_attempt_v2',
     resume: 'student_resume_attempt',
     submit: 'student_submit_answer',
     event: 'student_log_event',
@@ -32,6 +37,7 @@ window.IJR_ASSESSMENT_CONFIG = Object.freeze({
     snapshot: 'teacher_dashboard_snapshot',
     detail: 'teacher_attempt_detail',
     action: 'teacher_code_action',
-    startTest: 'teacher_start_smoke_test'
+    startTest: 'teacher_start_smoke_test',
+    setEmail: 'teacher_set_report_email'
   }
 });

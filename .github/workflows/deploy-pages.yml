@@ -60,16 +60,21 @@ jobs:
               'passingGrade':3.0,
               'tabStrikeLimit':3,
               'hiddenGraceMs':1000,
+              'integrityDebounceMs':1600,
               'heartbeatMs':10000,
               'requireFullscreen':True,
               'fullscreenPolicy':'pause',
+              'fullscreenExitCountsAsStrike':True,
+              'screenshotKeyCountsAsStrike':True,
+              'duplicateTabCountsAsStrike':True,
               'blockCopyPaste':True,
               'blockContextMenu':True,
               'watermarkEnabled':True,
+              'requireStudentEmail':True,
               'globallyDisjointQuestions':True,
               'studentSessionStorageKey':'ijr-stat11-counting-permutations-active-v2',
               'reportEmail':'juanperez238421@gmail.com',
-              'rpc':{'start':'student_start_attempt','resume':'student_resume_attempt','submit':'student_submit_answer','event':'student_log_event','finish':'student_finish_attempt'},
+              'rpc':{'start':'student_start_attempt_v2','resume':'student_resume_attempt','submit':'student_submit_answer','event':'student_log_event','finish':'student_finish_attempt'},
               'teacherRpc':{'login':'teacher_code_login','logout':'teacher_code_logout','snapshot':'teacher_dashboard_snapshot','detail':'teacher_attempt_detail','action':'teacher_code_action','startTest':'teacher_start_smoke_test','setEmail':'teacher_set_report_email'}
           }
           path.write_text('window.IJR_ASSESSMENT_CONFIG = Object.freeze(' + json.dumps(config, ensure_ascii=False, separators=(',',':')) + ');\n', encoding='utf-8')
@@ -94,8 +99,9 @@ jobs:
           test -s evaluacion-conteo-permutaciones/config.js
           test -s evaluacion-conteo-permutaciones/teacher/index.html
           ! grep -R "REPLACE_WITH_SUPABASE" evaluacion-conteo-permutaciones/config.js
-          grep -q "student_start_attempt" evaluacion-conteo-permutaciones/config.js
+          grep -q "student_start_attempt_v2" evaluacion-conteo-permutaciones/config.js
           grep -q "teacher_code_login" evaluacion-conteo-permutaciones/config.js
+          grep -q "studentEmail" evaluacion-conteo-permutaciones/index.html
           touch .nojekyll
 
       - name: Setup Pages
