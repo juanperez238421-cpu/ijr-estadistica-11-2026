@@ -28,12 +28,12 @@
       <div class="notice warning"><strong>Condiciones de integridad:</strong> la evaluación registra tiempos de respuesta, cambios de pestaña, pérdida de foco, salida de pantalla completa, intentos de copiar/pegar, conectividad y sesiones duplicadas. Al tercer cambio de pestaña confirmado, el intento se anula automáticamente y queda disponible para revisión docente. Las capturas de pantalla están prohibidas; un navegador normal no puede detectar todas las capturas del sistema operativo, por lo que se usa marca de agua personal y se registran las teclas/eventos que el navegador sí puede observar.</div>
       <form id="registrationForm" class="form-grid">
         <label>Grupo<select id="groupCode" required><option value="">Selecciona</option><option>11A</option><option>11B</option><option>11C</option></select></label>
-        <label>Nombre completo<input id="studentName" required autocomplete="name" maxlength="120" placeholder="Escribe tu nombre completo"></label>
+        <label>Nombre<input id="studentName" required autocomplete="name" maxlength="120" placeholder="Escribe el nombre con el que te identificas"></label>
         <label class="check-row"><input id="integrityConsent" type="checkbox" required> He leído y acepto las condiciones de supervisión de esta evaluación.</label>
         <button id="startButton" class="primary" type="submit">Comenzar evaluación</button>
       </form>
       <p id="setupStatus" class="status"></p>
-      <p class="small">El grupo y el nombre identifican el intento. El sistema normaliza mayúsculas, acentos, orden de palabras y tolera errores menores de escritura cuando la coincidencia es inequívoca. Se conserva exactamente el nombre escrito para auditoría. Un error pequeño no crea una identidad nueva ni habilita un segundo intento.</p>
+      <p class="small"><strong>El nombre no bloquea el ingreso.</strong> Puedes escribirlo aunque tenga errores, abreviaciones o no coincida con la lista institucional. El sistema intenta identificar internamente si corresponde a un estudiante del roster; si no puede verificarlo con suficiente confianza, el intento continúa y queda marcado para revisión docente como identidad no verificada. Se conserva exactamente lo escrito para auditoría.</p>
     </section>
 
     <section id="teacherPanel" class="panel hidden">

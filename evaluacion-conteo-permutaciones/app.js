@@ -275,11 +275,11 @@
 
   els.form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    setStatus(els.status, 'Validando lista institucional y preparando intento…');
+    setStatus(els.status, 'Registrando identificación y preparando intento…');
     const studentName = $('studentName').value.trim();
     const groupCode = $('groupCode').value;
-    if (studentName.length < 5 || !groupCode) {
-      setStatus(els.status, 'Selecciona tu grupo y escribe tu nombre completo.', true);
+    if (!studentName || !groupCode) {
+      setStatus(els.status, 'Selecciona tu grupo e ingresa un nombre.', true);
       return;
     }
 
@@ -311,7 +311,12 @@
       renderQuestion(result.question);
       startClocks();
       setStatus(els.status, '');
-      await logEvent('ATTEMPT_STARTED', { session_id: state.sessionId, registration_mode: 'institutional_roster' });
+      await logEvent('ATTEMPT_STARTED', {
+        session_id: state.sessionId,
+        registration_mode: result.identity_verified ? 'roster_verified' : 'name_unverified',
+        identity_match_mode: result.identity_match_mode || null,
+        identity_match_score: result.identity_match_score ?? null
+      });
     } catch (err) {
       setStatus(els.status, `No fue posible iniciar: ${err.message}`, true);
     }
