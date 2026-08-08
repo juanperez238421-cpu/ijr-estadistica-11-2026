@@ -1,0 +1,36 @@
+{
+  "bank_version": "2.0.0",
+  "question_count": 2000,
+  "topic_counts": {
+    "FCP": 500,
+    "P_SIMPLE": 500,
+    "P_DIST": 500,
+    "P_CIRC": 500
+  },
+  "assessment": {
+    "questions_per_student": 18,
+    "duration_minutes": 40,
+    "max_points": 15,
+    "passing_grade": 3.0,
+    "topic_quotas": {
+      "FCP": 5,
+      "P_SIMPLE": 5,
+      "P_DIST": 4,
+      "P_CIRC": 4
+    }
+  },
+  "strict_capacity_students": 100,
+  "validated_demo_students": 90,
+  "validated_demo_assignments": 1620,
+  "assignment_duplicates": 0,
+  "validation": {
+    "unique_ids": true,
+    "unique_prompt_es": true,
+    "unique_prompt_en": true,
+    "unique_fingerprints": true,
+    "math_recomputation_ok": true,
+    "errors": []
+  },
+  "canonical_question_bank_sha256": "8c5f08d519f5213ca070aa04a5ac92e76c3b151e60c830d30f60ee63abb9e2e7",
+  "security_note": "The canonical bank contains answer keys and solutions and is intentionally not committed to this public repository. Import it privately into Supabase."
+}
