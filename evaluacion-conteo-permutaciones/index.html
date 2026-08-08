@@ -6,30 +6,45 @@
   <meta name="color-scheme" content="light">
   <meta name="robots" content="noindex,nofollow">
   <title>Statistics 11 · Counting & Permutations Assessment</title>
-  <link rel="stylesheet" href="styles.css?v=20260808-5">
+  <link rel="stylesheet" href="styles.css?v=20260808-6">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div id="watermark" class="watermark" aria-hidden="true"></div>
+  <div id="watermark" class="audit-stamp" aria-hidden="true"></div>
+
   <main class="shell">
     <header class="topbar">
-      <div>
+      <div class="title-block">
         <div class="eyebrow">Instituto Jorge Robledo · Statistics 11</div>
         <h1>Counting &amp; Permutations Assessment</h1>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+      <div class="topbar-actions">
         <div id="timer" class="timer hidden">40:00</div>
-        <button id="teacherAccessButton" type="button" class="primary" style="width:auto;padding:9px 14px;background:#444">Modo docente</button>
+        <button id="teacherAccessButton" type="button" class="primary compact secondary-dark">Modo docente</button>
       </div>
     </header>
 
-    <section id="setupPanel" class="panel">
-      <h2>Registro del estudiante</h2>
-      <p class="lead">18 preguntas · 40 minutos · máximo 15 puntos.</p>
-      <div class="notice warning"><strong>Condiciones de integridad:</strong> la evaluación registra tiempos de respuesta, cambios de pestaña, pérdida de foco, salida de pantalla completa, intentos de copiar/pegar, conectividad y sesiones duplicadas. Al tercer cambio de pestaña confirmado, el intento se anula automáticamente y queda disponible para revisión docente. Las capturas de pantalla están prohibidas; un navegador normal no puede detectar todas las capturas del sistema operativo, por lo que se usa marca de agua personal y se registran las teclas/eventos que el navegador sí puede observar.</div>
+    <section id="setupPanel" class="panel setup-panel">
+      <div class="section-heading">
+        <div>
+          <h2>Registro del estudiante</h2>
+          <p class="lead">18 preguntas · 40 minutos · máximo 15 puntos.</p>
+        </div>
+        <span class="policy-badge">3 eventos = bloqueo</span>
+      </div>
 
-      <form id="registrationForm" class="form-grid">
-        <label>Grupo
+      <div class="notice warning integrity-rules">
+        <strong>Reglas obligatorias antes de iniciar</strong>
+        <ul>
+          <li><strong>Prohibido tomar pantallazos, fotografías o grabaciones</strong> de la evaluación.</li>
+          <li><strong>No cambies de pestaña, ventana ni salgas de pantalla completa.</strong> El sistema registra estos eventos.</li>
+          <li>Al <strong>tercer evento de integridad confirmado</strong>, el intento se bloquea y se anula automáticamente para revisión docente.</li>
+          <li>El navegador registra los eventos que puede observar. Algunas capturas realizadas por el sistema operativo no son técnicamente detectables; la prohibición sigue vigente.</li>
+        </ul>
+      </div>
+
+      <form id="registrationForm" class="registration-grid">
+        <label class="field field-group">Grupo
           <select id="groupCode" required>
             <option value="">Selecciona</option>
             <option>11A</option>
@@ -37,76 +52,121 @@
             <option>11C</option>
           </select>
         </label>
-        <label>Nombre — cualquier texto es aceptado
-          <input id="studentName" required autocomplete="name" maxlength="120" autocapitalize="words" placeholder="Ej.: Juan Pérez, Juan P., JP, etc.">
+        <label class="field field-name">Nombre completo
+          <input id="studentName" required autocomplete="name" maxlength="120" autocapitalize="words" placeholder="Escribe tu nombre">
+          <span class="field-help">El nombre no se bloquea por coincidencia exacta; se conserva tal como fue escrito para auditoría.</span>
         </label>
-        <label class="check-row"><input id="integrityConsent" type="checkbox" required> He leído y acepto las condiciones de supervisión de esta evaluación.</label>
-        <button id="startButton" class="primary" type="submit">Comenzar evaluación</button>
+        <label class="field field-email">Correo estudiantil
+          <input id="studentEmail" type="email" required autocomplete="email" maxlength="180" inputmode="email" placeholder="correo@dominio.edu.co">
+          <span class="field-help">Se usa para trazabilidad y detección de registros duplicados; no se muestra públicamente.</span>
+        </label>
+        <label class="check-row consent-row">
+          <input id="integrityConsent" type="checkbox" required>
+          <span>He leído las reglas. Entiendo que el tercer evento de integridad confirmado bloquea y anula el intento.</span>
+        </label>
+        <button id="startButton" class="primary start-button" type="submit">Comenzar evaluación</button>
       </form>
+
       <p id="setupStatus" class="status" aria-live="polite"></p>
-      <div class="small identity-policy"><strong>El nombre nunca bloquea el ingreso.</strong> El sistema conserva exactamente lo escrito y, de manera interna, intenta clasificarlo como estudiante verificado o identidad no verificada. Errores, abreviaciones o un nombre que no esté en el roster no son motivo para rechazar el inicio. Si aparece un aviso de servidor, se trata de disponibilidad del backend y no del nombre ingresado.</div>
+      <div class="small identity-policy"><strong>Identificación interna:</strong> el sistema conserva nombre, correo, grupo, hora de inicio, respuestas, tiempos y eventos técnicos del intento. El nombre puede quedar clasificado como verificado, aproximado o no verificado sin impedir el inicio.</div>
     </section>
 
-    <section id="teacherPanel" class="panel hidden">
-      <div class="exam-meta"><div><div class="eyebrow">Instituto Jorge Robledo · Teacher mode</div><h2 style="margin:.25rem 0 0">Assessment Operations</h2></div><button id="teacherCloseButton" type="button" class="primary" style="width:auto">Volver a estudiante</button></div>
+    <section id="teacherPanel" class="panel hidden teacher-panel">
+      <div class="exam-meta teacher-header">
+        <div><div class="eyebrow">Instituto Jorge Robledo · Teacher mode</div><h2>Assessment Operations</h2></div>
+        <button id="teacherCloseButton" type="button" class="primary compact">Volver a estudiante</button>
+      </div>
+
       <div id="teacherLogin">
         <p class="lead">Acceso docente mediante código de supervisión.</p>
-        <form id="teacherLoginForm" class="form-grid"><label>Código docente<input id="teacherCode" type="password" inputmode="numeric" autocomplete="off" maxlength="12" required placeholder="Código"></label><button class="primary" type="submit">Abrir panel docente</button></form>
+        <form id="teacherLoginForm" class="teacher-login-grid">
+          <label class="field">Código docente<input id="teacherCode" type="password" inputmode="numeric" autocomplete="off" maxlength="12" required placeholder="Código"></label>
+          <button class="primary" type="submit">Abrir panel docente</button>
+        </form>
       </div>
+
       <div id="teacherDashboard" class="hidden">
-        <div class="exam-meta" style="margin-top:12px"><strong id="teacherAssessmentTitle">Assessment</strong><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="teacherRefresh" type="button" class="primary" style="width:auto">Actualizar</button><button id="teacherLogout" type="button" class="primary" style="width:auto;background:#444">Cerrar sesión docente</button></div></div>
+        <div class="teacher-toolbar">
+          <strong id="teacherAssessmentTitle">Assessment</strong>
+          <div class="button-row"><button id="teacherRefresh" type="button" class="primary compact">Actualizar</button><button id="teacherLogout" type="button" class="primary compact secondary-dark">Cerrar sesión</button></div>
+        </div>
         <div id="teacherBackendNotice" class="notice warning hidden"></div>
-        <div id="teacherMetrics" class="summary" style="margin-top:14px"></div>
+
+        <h3>Resumen operativo</h3>
+        <div id="teacherMetrics" class="metric-grid"></div>
+        <div id="teacherAnalyticsSummary" class="analytics-strip"></div>
+
         <h3>Control maestro</h3>
-        <div class="button-row" style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><button id="teacherOpenAssessment" type="button" class="primary" style="width:auto">Abrir evaluación</button><button id="teacherPauseAssessment" type="button" class="primary" style="width:auto">Pausar evaluación</button><button id="teacherCloseAssessment" type="button" class="primary" style="width:auto">Cerrar evaluación</button><button id="teacherReleaseSolutions" type="button" class="primary" style="width:auto">Liberar soluciones</button></div>
+        <div class="button-row"><button id="teacherOpenAssessment" type="button" class="primary compact">Abrir evaluación</button><button id="teacherPauseAssessment" type="button" class="primary compact">Pausar evaluación</button><button id="teacherCloseAssessment" type="button" class="primary compact">Cerrar evaluación</button><button id="teacherReleaseSolutions" type="button" class="primary compact">Liberar soluciones</button></div>
+
         <h3>Test docente</h3>
-        <p class="small">El panel intenta iniciar primero un test aislado en Supabase. Si el backend todavía no tiene las RPC desplegadas, activa automáticamente un test local de 18 preguntas para validar interfaz, tiempos, selección y calificación sin consumir intentos de estudiantes.</p>
-        <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-bottom:16px"><label style="min-width:160px">Grupo de prueba<select id="teacherTestGroup"><option>11A</option><option>11B</option><option>11C</option></select></label><button id="teacherStartTest" type="button" class="primary" style="width:auto">Iniciar cuestionario de prueba</button></div>
-        <div id="teacherLocalTest" class="hidden" style="border:1px solid #ddd;border-radius:12px;padding:18px;margin:14px 0;background:#fafafa">
+        <p class="small">El test docente es aislado del roster. Sirve para validar interfaz, banco, tiempos y calificación sin crear un intento oficial de estudiante.</p>
+        <div class="inline-controls"><label class="field">Grupo de prueba<select id="teacherTestGroup"><option>11A</option><option>11B</option><option>11C</option></select></label><button id="teacherStartTest" type="button" class="primary compact">Iniciar cuestionario de prueba</button></div>
+        <div id="teacherLocalTest" class="local-test hidden">
           <div class="exam-meta"><strong id="teacherLocalTestProgress">Pregunta 1 / 18</strong><span id="teacherLocalTestScore"></span></div>
           <div class="progress"><div id="teacherLocalTestBar"></div></div>
           <h3 id="teacherLocalTestPrompt"></h3>
           <form id="teacherLocalTestOptions" class="options"></form>
-          <button id="teacherLocalTestSubmit" type="button" class="primary" disabled>Confirmar respuesta</button>
-          <div id="teacherLocalTestResult" class="summary" style="margin-top:14px"></div>
+          <button id="teacherLocalTestSubmit" type="button" class="primary compact" disabled>Confirmar respuesta</button>
+          <div id="teacherLocalTestResult" class="summary"></div>
         </div>
+
+        <h3>Intentos y trazabilidad</h3>
+        <div class="attempt-filters">
+          <label class="field">Buscar estudiante o correo<input id="teacherAttemptSearch" type="search" placeholder="Nombre o correo"></label>
+          <label class="field">Grupo<select id="teacherAttemptGroupFilter"><option value="">Todos</option><option>11A</option><option>11B</option><option>11C</option></select></label>
+          <label class="field">Estado<select id="teacherAttemptStatusFilter"><option value="">Todos</option><option value="active">Activos</option><option value="submitted">Finalizados</option><option value="invalidated">Anulados</option></select></label>
+          <label class="field">Integridad<select id="teacherIntegrityFilter"><option value="">Todos</option><option value="OK">OK</option><option value="ATTENTION">Atención</option><option value="REVIEW">Revisar</option><option value="BLOCKED">Bloqueado</option></select></label>
+        </div>
+        <div id="teacherAttemptCount" class="small table-caption"></div>
+        <div class="table-wrap attempts-wrap">
+          <table id="teacherAttemptsTable" class="data-table attempts-table">
+            <thead><tr><th>Estudiante</th><th>Correo</th><th>Grupo</th><th>Estado</th><th>Progreso</th><th>Puntaje</th><th>Nota</th><th>Correctas</th><th>Duración</th><th>Prom./preg.</th><th>Strikes</th><th>Integridad</th><th>Inicio</th><th>Actividad</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <h3>Análisis del intento seleccionado</h3>
+        <div class="button-row attempt-actions"><button id="teacherPauseStudent" type="button" class="primary compact" disabled>Pausar</button><button id="teacherResumeStudent" type="button" class="primary compact" disabled>Reanudar</button><button id="teacherForceSubmit" type="button" class="primary compact" disabled>Forzar entrega</button><button id="teacherInvalidate" type="button" class="primary compact" disabled>Anular</button><button id="teacherReopen" type="button" class="primary compact" disabled>Reabrir</button></div>
+        <div id="teacherAttemptDetail" class="attempt-detail">Selecciona un intento para revisar identificación, respuestas, tiempos y timeline completo.</div>
+
         <h3>Reportes</h3>
-        <div class="form-grid" style="margin-bottom:12px"><label>Correo de resultados<input id="teacherReportEmailInput" type="email" value="juanperez238421@gmail.com" placeholder="correo@dominio.com"></label><button id="teacherSaveEmail" type="button" class="primary">Guardar correo destino</button></div>
-        <p class="small">Correo activo: <strong id="teacherReportEmail">juanperez238421@gmail.com</strong>. En backend operativo, cada intento finalizado entra a la cola de reportes. Sin proveedor SMTP/API configurado, el navegador puede preparar el mensaje pero no enviarlo de forma silenciosa.</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"><button id="teacherExportAttempts" type="button" class="primary" style="width:auto">Exportar intentos CSV</button><button id="teacherExportRoster" type="button" class="primary" style="width:auto">Exportar roster CSV</button><button id="teacherPrepareEmail" type="button" class="primary" style="width:auto">Preparar / enviar reporte</button></div>
-        <h3>Fuentes académicas</h3><div id="teacherSources" class="summary"></div>
-        <h3>Roster institucional</h3><div style="overflow:auto;max-height:360px"><table id="teacherRosterTable" style="width:100%;border-collapse:collapse"><thead><tr><th>Grupo</th><th>#</th><th>Estudiante</th><th>Def. por Área</th><th>Acum. Año</th><th>Fuente</th></tr></thead><tbody></tbody></table></div>
-        <h3>Intentos y trazabilidad</h3><div style="overflow:auto;max-height:420px"><table id="teacherAttemptsTable" style="width:100%;border-collapse:collapse;min-width:980px"><thead><tr><th>Estudiante</th><th>Grupo</th><th>Estado</th><th>Progreso</th><th>Puntaje</th><th>Nota</th><th>Strikes</th><th>Match</th><th>Actividad</th></tr></thead><tbody></tbody></table></div>
-        <h3>Control del intento seleccionado</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"><button id="teacherPauseStudent" type="button" class="primary" style="width:auto" disabled>Pausar</button><button id="teacherResumeStudent" type="button" class="primary" style="width:auto" disabled>Reanudar</button><button id="teacherForceSubmit" type="button" class="primary" style="width:auto" disabled>Forzar entrega</button><button id="teacherInvalidate" type="button" class="primary" style="width:auto" disabled>Anular</button><button id="teacherReopen" type="button" class="primary" style="width:auto" disabled>Reabrir</button></div><div id="teacherAttemptDetail" class="small">Selecciona un intento para revisar respuestas y timeline.</div>
+        <div class="report-grid"><label class="field">Correo de resultados<input id="teacherReportEmailInput" type="email" value="juanperez238421@gmail.com" placeholder="correo@dominio.com"></label><button id="teacherSaveEmail" type="button" class="primary compact">Guardar correo destino</button></div>
+        <p class="small">Correo activo: <strong id="teacherReportEmail">juanperez238421@gmail.com</strong>. Cada intento terminal queda registrado en la cola de reportes del backend.</p>
+        <div class="button-row"><button id="teacherExportAttempts" type="button" class="primary compact">Exportar intentos CSV</button><button id="teacherExportRoster" type="button" class="primary compact">Exportar roster CSV</button><button id="teacherPrepareEmail" type="button" class="primary compact">Preparar reporte</button></div>
+
+        <details class="teacher-details"><summary>Fuentes académicas y roster institucional</summary>
+          <h3>Fuentes académicas</h3><div id="teacherSources" class="summary"></div>
+          <h3>Roster institucional</h3><div class="table-wrap roster-wrap"><table id="teacherRosterTable" class="data-table"><thead><tr><th>Grupo</th><th>#</th><th>Estudiante</th><th>Def. por Área</th><th>Acum. Año</th><th>Fuente</th></tr></thead><tbody></tbody></table></div>
+        </details>
       </div>
       <p id="teacherStatus" class="status"></p>
     </section>
 
-    <section id="examPanel" class="panel hidden" aria-live="polite"><div class="exam-meta"><span id="progressText">Pregunta 1 / 18</span><span id="attemptBadge"></span></div><div class="progress"><div id="progressBar"></div></div><div id="integrityBanner" class="notice warning hidden"></div><article class="question-card"><div id="topicLabel" class="topic"></div><h2 id="questionPrompt">Cargando pregunta…</h2><div id="diagram" class="diagram"></div><form id="answerForm" class="options"></form><button id="submitAnswer" class="primary" disabled>Confirmar respuesta</button></article><p id="examStatus" class="status"></p></section>
-    <section id="finishPanel" class="panel hidden"><h2 id="finishTitle">Evaluación enviada</h2><div id="finishSummary" class="summary"></div><p>El registro oficial del intento queda almacenado en el backend. No cierres esta pestaña hasta ver la confirmación de envío.</p></section>
+    <section id="examPanel" class="panel exam-panel hidden" aria-live="polite">
+      <div class="exam-meta"><span id="progressText">Pregunta 1 / 18</span><span id="attemptBadge"></span></div>
+      <div class="progress"><div id="progressBar"></div></div>
+      <div id="integrityBanner" class="notice warning hidden"></div>
+      <article class="question-card">
+        <div id="topicLabel" class="topic"></div>
+        <h2 id="questionPrompt">Cargando pregunta…</h2>
+        <div id="diagram" class="diagram"></div>
+        <form id="answerForm" class="options"></form>
+        <button id="submitAnswer" class="primary answer-button" disabled>Confirmar respuesta</button>
+      </article>
+      <p id="examStatus" class="status"></p>
+    </section>
+
+    <section id="finishPanel" class="panel hidden"><h2 id="finishTitle">Evaluación enviada</h2><div id="finishSummary" class="summary"></div><p>El registro oficial del intento quedó almacenado en el backend. No cierres esta pestaña hasta ver esta confirmación.</p></section>
     <section id="configPanel" class="panel hidden"><h2>Configuración pendiente</h2><p>La evaluación está publicada, pero el backend aún no está disponible. Avise al docente.</p></section>
   </main>
 
-  <div id="fullscreenGate" class="gate hidden"><div><h2>Vuelve a pantalla completa</h2><p>La evaluación está pausada hasta volver a pantalla completa.</p><button id="returnFullscreen" class="primary">Volver a pantalla completa</button></div></div>
+  <div id="fullscreenGate" class="gate hidden"><div><h2>Evaluación pausada</h2><p>Debes volver a pantalla completa para continuar. La salida quedó registrada.</p><button id="returnFullscreen" class="primary">Volver a pantalla completa</button></div></div>
+  <div id="integrityLockGate" class="gate lock-gate hidden"><div><h2>Evaluación bloqueada</h2><p id="integrityLockMessage">Se alcanzó el límite de eventos de integridad. El intento está siendo anulado y quedará disponible para revisión docente.</p></div></div>
 
-  <script src="config.js?v=20260808-5"></script>
-  <script src="app.js?v=20260808-5"></script>
-  <script src="teacher-demo-bank.js?v=20260808-5"></script>
-  <script src="teacher-mode.js?v=20260808-5"></script>
-  <script>
-    (() => {
-      const status = document.getElementById('setupStatus');
-      if (!status) return;
-      const rewriteBackendError = () => {
-        const text = status.textContent || '';
-        if (/student_start_attempt|schema cache|Could not find the function/i.test(text)) {
-          status.classList.add('backend-sync');
-          status.innerHTML = '<strong>Nombre aceptado.</strong> El problema no corresponde al nombre ingresado. El servidor de evaluación todavía no tiene sincronizada la función de inicio. El docente debe completar el despliegue del backend antes de usar esta evaluación como prueba oficial.';
-        }
-      };
-      new MutationObserver(rewriteBackendError).observe(status,{childList:true,subtree:true,characterData:true});
-      rewriteBackendError();
-    })();
-  </script>
+  <script src="config.js?v=20260808-6"></script>
+  <script src="app.js?v=20260808-6"></script>
+  <script src="teacher-demo-bank.js?v=20260808-6"></script>
+  <script src="teacher-mode.js?v=20260808-6"></script>
 </body>
 </html>
