@@ -80,11 +80,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # New sb_publishable_* keys are API keys, not JWTs. Send them only in
+          # the apikey header; the Supabase gateway maps the request to anon.
           curl --fail --silent --show-error \
             --retry 6 --retry-delay 3 --retry-all-errors \
             -X POST "$SUPABASE_URL/rest/v1/rpc/statistics11_assessment_health" \
             -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
             -H "Content-Type: application/json" \
             -d '{}' > /tmp/stat11_health.json
 
