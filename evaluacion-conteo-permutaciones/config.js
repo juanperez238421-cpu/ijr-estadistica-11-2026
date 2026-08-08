@@ -5,7 +5,7 @@ window.IJR_ASSESSMENT_CONFIG = Object.freeze({
   durationMinutes: 40,
   questionsPerAttempt: 18,
   maxRawPoints: 15,
-  gradeMin: 1.0,
+  gradeMin: 3.0,
   gradeMax: 5.0,
   passingGrade: 3.0,
   tabStrikeLimit: 3,
