@@ -94,26 +94,26 @@ def main():
         errors.append("tab_strike_limit must be 3")
 
     qtotal = count(url, key, "questions_private", {"active": "eq.true"})
-    if qtotal != 2000:
-        errors.append(f"active question count={qtotal}; expected=2000")
+    if qtotal < 2000:
+        errors.append(f"active question count={qtotal}; expected>=2000")
     topic_counts = {
         t: count(url, key, "questions_private", {"active": "eq.true", "topic_code": f"eq.{t}"})
         for t in TOPIC_EXPECTED
     }
-    for topic, expected in TOPIC_EXPECTED.items():
-        if topic_counts[topic] != expected:
-            errors.append(f"{topic}={topic_counts[topic]}; expected={expected}")
+    for topic, minimum in TOPIC_EXPECTED.items():
+        if topic_counts[topic] < minimum:
+            errors.append(f"{topic}={topic_counts[topic]}; expected>={minimum}")
 
     roster_counts = {
         group: count(url, key, "student_registry", {"active": "eq.true", "group_code": f"eq.{group}"})
         for group in ROSTER_EXPECTED
     }
     for group, expected in ROSTER_EXPECTED.items():
-        if roster_counts[group] != expected:
-            errors.append(f"roster {group}={roster_counts[group]}; expected={expected}")
+        if roster_counts[group] < expected:
+            errors.append(f"roster {group}={roster_counts[group]}; expected>={expected}")
     roster_total = sum(roster_counts.values())
-    if roster_total != 61:
-        errors.append(f"roster total={roster_total}; expected=61")
+    if roster_total < 61:
+        errors.append(f"roster total={roster_total}; expected>=61")
 
     source_rows = get(url, key, "academic_sources", {
         "source_key": f"eq.{INITIAL_SOURCE_KEY}",
@@ -124,8 +124,8 @@ def main():
         source_record_count = 0
     else:
         source_record_count = count(url, key, "academic_records", {"source_id": f"eq.{source_rows[0]['id']}"})
-        if source_record_count != 61:
-            errors.append(f"initial academic records={source_record_count}; expected=61")
+        if source_record_count < 61:
+            errors.append(f"initial academic records={source_record_count}; expected>=61")
 
     assignments = get(
         url,

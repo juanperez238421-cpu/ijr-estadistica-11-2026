@@ -34,8 +34,6 @@ begin
     raise exception 'Dynamic allocator currently requires 18 questions; assessment has %',v_expected;
   end if;
 
-  -- Serialize allocations per assessment so two simultaneous registrations
-  -- cannot reserve the same globally-disjoint question.
   perform pg_advisory_xact_lock(hashtext(p_assessment_id::text));
 
   select count(*) into v_existing
@@ -99,8 +97,6 @@ begin
 end;
 $$;
 
--- Private internal allocator. It is callable by trusted SECURITY DEFINER
--- assessment functions, but never directly by the public browser role.
 revoke all on function public.allocate_assessment_questions(uuid,text) from public,anon,authenticated;
 
 commit;
