@@ -1,0 +1,12 @@
+{
+  "name": "ijr-stat11-assessment-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "End-to-end QA bot for the Statistics 11 counting and permutations assessment.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0"
+  }
+}
