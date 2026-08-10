@@ -1,7 +1,7 @@
 name: Statistics 11 Assessment E2E Bot
 
 on:
-  pull_request:
+  push:
     branches:
       - main
     paths:
@@ -21,6 +21,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 concurrency:
   group: statistics11-assessment-e2e-bot-${{ github.ref }}
@@ -64,21 +65,51 @@ jobs:
       - name: Publish compact run summary
         if: always()
         working-directory: qa/assessment-bot
+        env:
+          GH_TOKEN: ${{ github.token }}
+          E2E_OUTCOME: ${{ steps.e2e.outcome }}
+          RUN_ID: ${{ github.run_id }}
+          SHA: ${{ github.sha }}
         shell: bash
         run: |
-          echo '### Statistics 11 Assessment QA Bot' >> "$GITHUB_STEP_SUMMARY"
-          echo "- Target: $ASSESSMENT_URL" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Group: $QA_GROUP" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Result: ${{ steps.e2e.outcome }}" >> "$GITHUB_STEP_SUMMARY"
           result_line="$(grep 'ASSESSMENT_BOT_RESULT=' assessment-bot.log | tail -1 || true)"
-          if [ -n "$result_line" ]; then
-            echo '- Bot completed the student flow and emitted a structured result.' >> "$GITHUB_STEP_SUMMARY"
-            echo '```text' >> "$GITHUB_STEP_SUMMARY"
-            echo "$result_line" >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          if [ "$E2E_OUTCOME" = "success" ]; then
+            label='✅ E2E BOT PASS'
           else
-            echo '- No final bot result was emitted; inspect the Playwright trace and log artifact.' >> "$GITHUB_STEP_SUMMARY"
+            label='❌ E2E BOT FAIL'
           fi
+
+          {
+            echo '### Statistics 11 Assessment QA Bot'
+            echo "- Target: $ASSESSMENT_URL"
+            echo "- Group: $QA_GROUP"
+            echo "- Result: $E2E_OUTCOME"
+            if [ -n "$result_line" ]; then
+              echo '- Bot completed the student flow and emitted a structured result.'
+              echo '```text'
+              echo "$result_line"
+              echo '```'
+            else
+              echo '- No final bot result was emitted; inspect the Playwright artifact.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          {
+            echo "$label · Statistics 11 assessment · run $RUN_ID · commit $SHA"
+            echo
+            echo "Target: $ASSESSMENT_URL"
+            echo "Group: $QA_GROUP"
+            if [ -n "$result_line" ]; then
+              echo
+              echo '```text'
+              echo "$result_line"
+              echo '```'
+            fi
+          } > bot-result.md
+
+          gh issue comment 33 \
+            --repo juanperez238421-cpu/ijr-estadistica-11-2026 \
+            --body-file bot-result.md
 
       - name: Upload QA evidence
         if: always()
