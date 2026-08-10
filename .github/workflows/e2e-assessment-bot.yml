@@ -1,9 +1,12 @@
 name: Statistics 11 Assessment E2E Bot
 
 on:
-  push:
+  pull_request:
     branches:
-      - 'qa/assessment-e2e-bot'
+      - main
+    paths:
+      - 'qa/assessment-bot/**'
+      - '.github/workflows/e2e-assessment-bot.yml'
   workflow_dispatch:
     inputs:
       group:
@@ -20,7 +23,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: statistics11-assessment-e2e-bot
+  group: statistics11-assessment-e2e-bot-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
