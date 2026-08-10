@@ -1,0 +1,90 @@
+name: Statistics 11 Assessment E2E Bot
+
+on:
+  push:
+    branches:
+      - 'qa/assessment-e2e-bot'
+  workflow_dispatch:
+    inputs:
+      group:
+        description: 'QA group used for the marked test attempt'
+        required: false
+        default: '11C'
+        type: choice
+        options:
+          - '11A'
+          - '11B'
+          - '11C'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: statistics11-assessment-e2e-bot
+  cancel-in-progress: false
+
+jobs:
+  student-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      ASSESSMENT_URL: https://juanperez238421-cpu.github.io/ijr-estadistica-11-2026/evaluacion-conteo-permutaciones/
+      QA_GROUP: ${{ inputs.group || '11C' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: qa/assessment-bot/package.json
+
+      - name: Install bot dependencies
+        working-directory: qa/assessment-bot
+        run: npm install --no-audit --no-fund
+
+      - name: Install Chromium and Linux dependencies
+        working-directory: qa/assessment-bot
+        run: npx playwright install --with-deps chromium
+
+      - name: Run real student registration and 18-question completion
+        id: e2e
+        working-directory: qa/assessment-bot
+        shell: bash
+        run: |
+          set -o pipefail
+          xvfb-run -a npm test 2>&1 | tee assessment-bot.log
+
+      - name: Publish compact run summary
+        if: always()
+        working-directory: qa/assessment-bot
+        shell: bash
+        run: |
+          echo '### Statistics 11 Assessment QA Bot' >> "$GITHUB_STEP_SUMMARY"
+          echo "- Target: $ASSESSMENT_URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Group: $QA_GROUP" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Result: ${{ steps.e2e.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+          result_line="$(grep 'ASSESSMENT_BOT_RESULT=' assessment-bot.log | tail -1 || true)"
+          if [ -n "$result_line" ]; then
+            echo '- Bot completed the student flow and emitted a structured result.' >> "$GITHUB_STEP_SUMMARY"
+            echo '```text' >> "$GITHUB_STEP_SUMMARY"
+            echo "$result_line" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo '- No final bot result was emitted; inspect the Playwright trace and log artifact.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: statistics11-assessment-e2e-${{ github.run_id }}
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            qa/assessment-bot/assessment-bot.log
+            qa/assessment-bot/playwright-report/
+            qa/assessment-bot/test-results/
