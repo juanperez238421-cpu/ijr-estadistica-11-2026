@@ -64,6 +64,10 @@ test('QA bot registers as a student and completes all 18 questions', async ({ pa
   }));
 
   expect(telemetry.config.questionsPerAttempt).toBe(18);
+  expect(telemetry.config.gradeMin).toBe(3.0);
+  expect(telemetry.config.gradeMax).toBe(5.0);
+  expect(telemetry.config.passingGrade).toBe(3.0);
+  expect(telemetry.config.requireFullscreen).toBeTruthy();
   expect(telemetry.config.supabaseUrlConfigured).toBeTruthy();
   expect(telemetry.config.anonKeyConfigured).toBeTruthy();
 
