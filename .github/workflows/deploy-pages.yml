@@ -56,7 +56,7 @@ jobs:
               'durationMinutes':40,
               'questionsPerAttempt':18,
               'maxRawPoints':15,
-              'gradeMin':1.0,
+              'gradeMin':3.0,
               'gradeMax':5.0,
               'passingGrade':3.0,
               'tabStrikeLimit':3,
@@ -102,6 +102,7 @@ jobs:
           ! grep -R "REPLACE_WITH_SUPABASE" evaluacion-conteo-permutaciones/config.js
           grep -q "student_start_attempt_v2" evaluacion-conteo-permutaciones/config.js
           grep -q "teacher_code_login" evaluacion-conteo-permutaciones/config.js
+          grep -Eq "gradeMin['\"]?:?3(\.0)?|gradeMin.*3\.0" evaluacion-conteo-permutaciones/config.js
           grep -q "studentEmail" evaluacion-conteo-permutaciones/index.html
           touch .nojekyll
 
