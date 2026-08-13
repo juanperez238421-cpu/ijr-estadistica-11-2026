@@ -1,3 +1,6 @@
+const IJR_IOS_MOBILE = /iPad|iPhone|iPod/.test(navigator.userAgent || '') ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
 window.IJR_ASSESSMENT_CONFIG = Object.freeze({
   assessmentSlug: 'statistics11-counting-permutations-2026',
   supabaseUrl: 'https://rlfxnjbqxbozjdzkbwlz.supabase.co',
@@ -9,12 +12,12 @@ window.IJR_ASSESSMENT_CONFIG = Object.freeze({
   gradeMax: 5.0,
   passingGrade: 3.0,
   tabStrikeLimit: 3,
-  hiddenGraceMs: 1000,
-  integrityDebounceMs: 1600,
+  hiddenGraceMs: IJR_IOS_MOBILE ? 2500 : 1000,
+  integrityDebounceMs: IJR_IOS_MOBILE ? 2200 : 1600,
   heartbeatMs: 10000,
-  requireFullscreen: true,
+  requireFullscreen: !IJR_IOS_MOBILE,
   fullscreenPolicy: 'pause',
-  fullscreenExitCountsAsStrike: true,
+  fullscreenExitCountsAsStrike: !IJR_IOS_MOBILE,
   screenshotKeyCountsAsStrike: true,
   duplicateTabCountsAsStrike: true,
   blockCopyPaste: true,
