@@ -102,7 +102,11 @@ jobs:
         run: |
           set -euo pipefail
           ROOT='render_grade11_counting'
-          RAW_VIDEO="$(find "$ROOT/media" -type f -name 'Statistics11CountingVisualRoadmap.mp4' -path '*1080p30*' -print -quit)"
+          # ManimCE -pqh may place the raw high-quality render in 1080p60 even
+          # when the lesson-level config requests 30 fps. Accept the genuine
+          # high-quality render from either 1080p30 or 1080p60, then normalize
+          # the delivery deterministically to 1920x1080 / 30 fps below.
+          RAW_VIDEO="$(find "$ROOT/media" -type f -name 'Statistics11CountingVisualRoadmap.mp4' \( -path '*1080p30*' -o -path '*1080p60*' \) -print -quit)"
           test -n "$RAW_VIDEO"
           test -s "$RAW_VIDEO"
 
