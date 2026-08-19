@@ -2,29 +2,30 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow">
   <title>Statistics 11 · Colab Lab 01</title>
-  <link rel="stylesheet" href="styles.css?v=20260819-1">
+  <link rel="stylesheet" href="styles.css?v=20260819-2">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <main class="shell">
   <header class="topbar">
     <div><div class="eyebrow">Instituto Jorge Robledo · Statistics 11</div><h1>Colab Lab 01 · Python to Data</h1></div>
-    <div class="badge">8 checkpoints · live grade</div>
+    <div class="badge">8 checkpoints · live grade · guided fullscreen</div>
   </header>
 
   <section id="setupPanel" class="panel">
     <h2>Actividad guiada con Google Colab</h2>
     <p class="lead">No es una evaluación de memoria. La meta es ejecutar código real, observar resultados y aprender a leer lo que Python devuelve. Puedes corregir y volver a intentar.</p>
-    <div class="notice"><strong>Trabajarás con dos pestañas:</strong> esta actividad registra tu progreso y Google Colab ejecuta el código. Cambiar entre ambas pestañas es parte normal de la actividad.</div>
+    <div class="notice"><strong>Registro abierto:</strong> selecciona 11A, 11B o 11C y escribe tu nombre. La actividad permite iniciar aunque el texto no coincida con la lista institucional; el nombre ingresado quedará registrado en el panel maestro.</div>
+    <div class="notice info"><strong>Modo de trabajo:</strong> el portal funciona en pantalla completa. Para ir a Google Colab usa siempre el botón <em>Abrir / volver a Colab</em>. Al regresar, el portal te pedirá activar de nuevo la pantalla completa antes de continuar.</div>
     <form id="registrationForm">
       <div class="grid" style="margin-top:16px">
         <div class="field"><label for="groupCode">Grupo</label><select id="groupCode" required><option value="">Selecciona…</option><option>11A</option><option>11B</option><option>11C</option></select></div>
-        <div class="field"><label for="studentName">Nombre completo</label><input id="studentName" autocomplete="name" required placeholder="Escribe tu nombre como aparece en la lista"></div>
+        <div class="field"><label for="studentName">Nombre completo</label><input id="studentName" autocomplete="name" required placeholder="Escribe tu nombre"></div>
       </div>
-      <div class="actions"><button id="startButton" type="submit">Iniciar actividad</button><a class="button secondary" href="../">Volver al curso</a></div>
+      <div class="actions"><button id="startButton" type="submit">Iniciar actividad en pantalla completa</button><a class="button secondary" href="../">Volver al curso</a></div>
       <div id="setupStatus" class="status"></div>
     </form>
   </section>
@@ -32,14 +33,15 @@
   <section id="activityPanel" class="panel hidden">
     <div class="progress-wrap">
       <div><div class="eyebrow" id="studentLabel"></div><h2 style="margin:.2rem 0">Your Colab checkpoint</h2></div>
-      <div class="score" id="gradeLabel">Nota 1.00 / 5.00</div>
+      <div class="score-stack"><div class="score" id="gradeLabel">Nota 1.00 / 5.00</div><div id="restrictionLabel" class="restriction-pill">Modo guiado activo</div></div>
     </div>
     <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
     <p class="lead"><span id="progressText">0/8</span> completados. Cada checkpoint correcto suma 0.50 a la nota.</p>
     <div class="actions">
-      <a id="openColab" class="button" target="_blank" rel="noopener" href="https://colab.research.google.com/github/juanperez238421-cpu/ijr-estadistica-11-2026/blob/main/actividad-colab-01/colab_01_fundamentos.ipynb">Abrir notebook real en Google Colab</a>
+      <a id="openColab" class="button" target="ijrColabWorkspace" rel="noopener" href="https://colab.research.google.com/github/juanperez238421-cpu/ijr-estadistica-11-2026/blob/main/actividad-colab-01/colab_01_fundamentos.ipynb">Abrir / volver a Colab</a>
       <a class="button secondary" target="_blank" rel="noopener" href="data.csv">Ver archivo CSV</a>
     </div>
+    <div class="notice compact"><strong>Importante:</strong> no uses Ctrl+Tab ni abras otras páginas desde este portal. Usa el botón de Colab para una transición autorizada. Si sales de pantalla completa, la actividad se pausa hasta que regreses.</div>
     <div id="activityStatus" class="status"></div>
     <div id="checkpointList" class="checkpoint-list"></div>
   </section>
@@ -51,7 +53,18 @@
     <div class="actions"><a class="button" href="../">Volver al curso</a></div>
   </section>
 </main>
-<script src="config.js?v=20260819-1"></script>
-<script src="app.js?v=20260819-1"></script>
+
+<div id="fullscreenGate" class="fullscreen-gate hidden" role="dialog" aria-modal="true" aria-labelledby="fullscreenGateTitle">
+  <div class="fullscreen-card">
+    <div class="eyebrow">Modo guiado</div>
+    <h2 id="fullscreenGateTitle">Pantalla completa requerida</h2>
+    <p id="fullscreenMessage">Esta actividad solo puede continuar en pantalla completa.</p>
+    <button id="enterFullscreenButton" type="button">Volver a pantalla completa</button>
+    <p class="gate-note">El navegador puede permitir salir con Esc o con atajos del sistema; el portal se bloquea automáticamente hasta que vuelvas a pantalla completa.</p>
+  </div>
+</div>
+
+<script src="config.js?v=20260819-2"></script>
+<script src="app.js?v=20260819-2"></script>
 </body>
 </html>
