@@ -1,654 +1,165 @@
 (() => {
   'use strict';
 
-  const cfg = window.IJR_COLAB_ACTIVITY_CONFIG;
-  const $ = id => document.getElementById(id);
-  const sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
-    auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}
-  });
+  const cfg=window.IJR_COLAB_ACTIVITY_CONFIG;
+  const $=id=>document.getElementById(id);
+  const sb=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+  const PYODIDE_INDEX='https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
+  const PLACEHOLDER='WRITE_HERE';
+  const TOTAL_MINUTES=Number(cfg.targetMinutes||40);
 
-  const PYODIDE_INDEX = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
-  const PLACEHOLDER = 'WRITE_HERE';
-
-  const state = {
-    attemptId:null,
-    token:null,
-    snapshot:null,
-    restrictionEvents:0,
-    pyodide:null,
-    runtimePromise:null,
-    pandasReady:false,
-    datasetReady:false,
-    executionCount:0,
-    currentKey:null,
-    currentStarter:'',
-    lastCellOutput:'',
-    lastCellScalar:''
+  const state={
+    attemptId:null,token:null,snapshot:null,currentCp:null,pendingNextSnapshot:null,
+    restrictionEvents:0,pyodide:null,runtimePromise:null,pandasReady:false,datasetReady:false,
+    executionCount:0,currentKey:null,currentStarter:'',lastCellOutput:'',lastCellScalar:'',
+    startedAt:null,timerHandle:null
   };
 
-  const LESSONS = {
-    A1:{
-      tag:'FOUNDATION · VARIABLES',
-      title:'Variables and addition',
-      concept:'<p>Una <strong>variable</strong> es un nombre que apunta a un valor. En Python, el signo <code>=</code> asigna y el operador <code>+</code> combina dos números mediante una suma.</p><p>En esta primera etapa no buscamos memorizar. El equipo debe leer el código, completar una parte pequeña, ejecutarlo y explicar qué ocurrió.</p>',
-      goal:'<p>Reconocer el flujo <strong>valor → variable → operación → salida</strong> y distinguir entre asignar un valor y mostrarlo en pantalla.</p>',
-      steps:[
-        'Lean las dos primeras líneas e identifiquen qué valor queda guardado en <code>a</code> y cuál en <code>b</code>.',
-        'Busquen <code>WRITE_HERE</code>. Allí deben escribir una expresión que combine <code>a</code> y <code>b</code> mediante suma.',
-        'No calculen mentalmente el resultado para escribirlo. La idea es que <strong>Python haga la operación</strong>.',
-        'Ejecuten la celda. Después de ver una salida numérica, discutan qué línea la produjo y validen la etapa.'
-      ],
-      task:'<p>Construir una variable llamada <code>result</code> que almacene la suma de <code>a</code> y <code>b</code>, y hacer que Python muestre ese valor.</p>',
-      explore:'<p>En la consola prueben <code>type(a)</code>. Luego prueben <code>a == 12</code>. Observen que la consola también puede responder preguntas sobre las variables creadas.</p>',
-      hint:'<p>La expresión que falta debe usar los nombres de las variables y el operador de suma. No escriban el resultado numérico directamente.</p>',
-      starter:`a = 12\nb = 5\n\n# TODO: construyan la suma usando las variables a y b\nresult = WRITE_HERE\n\nprint(result)`
-    },
-    A2:{
-      tag:'FOUNDATION · OPERATORS',
-      title:'Multiplication as an operation',
-      concept:'<p>Los operadores aritméticos transforman datos. En Python, la multiplicación se representa con <code>*</code>. Una expresión produce un valor y ese valor puede guardarse en una nueva variable.</p>',
-      goal:'<p>Diferenciar los <strong>datos de entrada</strong> de la <strong>operación</strong> y del <strong>valor resultante</strong>.</p>',
-      steps:[
-        'Identifiquen nuevamente las variables de entrada <code>a</code> y <code>b</code>.',
-        'Completen únicamente la parte marcada con <code>WRITE_HERE</code>. Esta vez necesitan una multiplicación.',
-        'Ejecuten y lean la salida. Si aparece un error, no borren todo: lean el mensaje y localicen la línea señalada.',
-        'Antes de validar, usen la consola para probar una operación distinta, por ejemplo elevar <code>a</code> al cuadrado.'
-      ],
-      task:'<p>Crear <code>product</code> a partir de las dos variables existentes y producir una única salida numérica al final de la celda.</p>',
-      explore:'<p>Prueben <code>a ** 2</code> en la consola. Comparen <code>*</code> con <code>**</code>: realizan operaciones diferentes.</p>',
-      hint:'<p>Para multiplicar dos variables, la expresión debe contener ambos nombres separados por <code>*</code>.</p>',
-      starter:`a = 12\nb = 5\n\n# TODO: construyan el producto usando a y b\nproduct = WRITE_HERE\n\nprint(product)`
-    },
-    A3:{
-      tag:'DATA STRUCTURES · LISTS',
-      title:'A list stores many values',
-      concept:'<p>Hasta ahora trabajamos con números aislados. Una <strong>list</strong> permite guardar varias observaciones dentro de un solo objeto usando corchetes <code>[ ]</code>.</p><p>En análisis de datos es frecuente preguntar cuántas observaciones tenemos antes de calcular cualquier estadístico.</p>',
-      goal:'<p>Pasar de variables escalares a una pequeña colección de datos y usar una función para conocer su tamaño.</p>',
-      steps:[
-        'Observen la lista <code>numbers</code>. No cuenten a mano todavía.',
-        'Python tiene una función que devuelve la cantidad de elementos de una colección. Identifiquen cuál es usando la explicación o la pista.',
-        'Completen <code>count = WRITE_HERE</code> con una expresión que calcule el tamaño de <code>numbers</code>.',
-        'Ejecuten y después comprueben en la consola <code>numbers[0]</code> y <code>numbers[-1]</code>.'
-      ],
-      task:'<p>Hacer que Python determine cuántas observaciones contiene <code>numbers</code> sin escribir manualmente esa cantidad.</p>',
-      explore:'<p>Prueben <code>type(numbers)</code>, <code>numbers[0]</code> y <code>numbers[-1]</code>. Los índices permiten acceder a posiciones específicas.</p>',
-      hint:'<p>La función <code>len(...)</code> cuenta elementos. Dentro de los paréntesis debe ir el nombre de la lista.</p>',
-      starter:`numbers = [12, 7, 15, 9, 11]\n\n# TODO: calculen cuántos elementos tiene numbers\ncount = WRITE_HERE\n\nprint(count)`
-    },
-    A4:{
-      tag:'DATA OPERATIONS · AGGREGATION',
-      title:'Aggregate a list with sum()',
-      concept:'<p>Una <strong>agregación</strong> transforma muchas observaciones en un solo resumen. Sumar todos los valores de una lista es una de las agregaciones más simples.</p>',
-      goal:'<p>Usar una función que recibe una colección completa y devuelve un único valor numérico.</p>',
-      steps:[
-        'Lean nuevamente la lista y piensen qué significa obtener su total.',
-        'No sumen los números uno por uno en el código. Busquen una función de Python que opere sobre toda la lista.',
-        'Completen la variable <code>total</code> y ejecuten.',
-        'Exploren después <code>min(numbers)</code> y <code>max(numbers)</code> en la consola para comparar tres agregaciones.'
-      ],
-      task:'<p>Calcular el total de todas las observaciones de <code>numbers</code> mediante una función de Python.</p>',
-      explore:'<p>Prueben <code>min(numbers)</code> y <code>max(numbers)</code>. ¿Qué resumen produce cada función?</p>',
-      hint:'<p>La función que agrega mediante suma se llama <code>sum(...)</code>.</p>',
-      starter:`numbers = [12, 7, 15, 9, 11]\n\n# TODO: obtengan el total de la lista con una función de Python\ntotal = WRITE_HERE\n\nprint(total)`
-    },
-    A5:{
-      tag:'STATISTICS · MEAN',
-      title:'Build the arithmetic mean',
-      concept:'<p>La media aritmética reúne dos ideas que ya usaron: <strong>sumar</strong> las observaciones y <strong>contarlas</strong>.</p><p>En notación estadística: \\(\\bar{x}=\\frac{\\sum x_i}{n}\\). El código debe representar exactamente esa estructura, pero sin escribir de antemano el valor final.</p>',
+  const LESSONS={
+    A1:{minutes:4,tag:'FOUNDATION · VARIABLES',title:'Variables and addition',
+      concept:'<p>Una <strong>variable</strong> es un nombre que apunta a un valor. En Python, <code>=</code> asigna un valor y <code>+</code> combina números mediante una suma.</p><p>El equipo debe leer, completar una línea pequeña, ejecutar y explicar lo que ocurrió.</p>',
+      goal:'<p>Reconocer el flujo <strong>valor → variable → operación → salida</strong> y diferenciar asignar de imprimir.</p>',
+      steps:['Identifiquen qué valor queda almacenado en <code>a</code> y en <code>b</code>.','Reemplacen <code>WRITE_HERE</code> por una expresión que combine <code>a</code> y <code>b</code> mediante suma.','No escriban el resultado numérico manualmente: hagan que Python lo calcule.','Ejecuten, lean la salida y validen únicamente cuando puedan explicar qué línea produjo ese valor.'],
+      task:'<p>Construir <code>result</code> con la suma de <code>a</code> y <code>b</code> y mostrarla con <code>print()</code>.</p>',
+      explore:'<p>Prueben <code>type(a)</code> y <code>a == 12</code> en la consola.</p>',
+      hints:['Piensen en el operador aritmético que representa una suma en Python.','La expresión debe usar <strong>los nombres</strong> <code>a</code> y <code>b</code>, no los números escritos otra vez.','La estructura que buscan es <code>result = a + b</code>.'],
+      starter:`a = 12\nb = 5\n\n# TODO: construyan la suma usando las variables a y b\nresult = WRITE_HERE\n\nprint(result)`,
+      solution:`a = 12\nb = 5\n\nresult = a + b\n\nprint(result)`},
+    A2:{minutes:3,tag:'FOUNDATION · OPERATORS',title:'Multiplication as an operation',
+      concept:'<p>Los operadores aritméticos transforman datos. En Python la multiplicación se representa con <code>*</code>. El valor producido por una expresión puede almacenarse y reutilizarse.</p>',
+      goal:'<p>Diferenciar <strong>datos de entrada</strong>, <strong>operación</strong> y <strong>resultado</strong>.</p>',
+      steps:['Identifiquen las variables de entrada <code>a</code> y <code>b</code>.','Completen únicamente <code>WRITE_HERE</code>; esta vez necesitan una multiplicación.','Ejecuten y, si aparece un error de Python, lean el mensaje antes de editar.','Antes de validar, prueben <code>a ** 2</code> en la consola y comparen los operadores.'],
+      task:'<p>Crear <code>product</code> a partir de las dos variables existentes y producir una salida numérica.</p>',
+      explore:'<p>Prueben <code>a ** 2</code>. <code>*</code> y <code>**</code> realizan operaciones distintas.</p>',
+      hints:['El símbolo matemático × no se escribe igual en Python.','Usen un asterisco <code>*</code> entre los dos nombres de variable.','La línea completa es <code>product = a * b</code>.'],
+      starter:`a = 12\nb = 5\n\n# TODO: construyan el producto usando a y b\nproduct = WRITE_HERE\n\nprint(product)`,
+      solution:`a = 12\nb = 5\n\nproduct = a * b\n\nprint(product)`},
+    A3:{minutes:4,tag:'DATA STRUCTURES · LISTS',title:'A list stores many values',
+      concept:'<p>Una <strong>list</strong> guarda varias observaciones dentro de un solo objeto usando corchetes <code>[ ]</code>. Antes de resumir datos suele ser necesario saber cuántas observaciones existen.</p>',
+      goal:'<p>Pasar de variables escalares a una colección y obtener su tamaño mediante una función.</p>',
+      steps:['Observen <code>numbers</code>; no cuenten manualmente.','Busquen una función de Python que devuelva la cantidad de elementos.','Completen <code>count = WRITE_HERE</code>.','Ejecuten y luego exploren <code>numbers[0]</code> y <code>numbers[-1]</code>.'],
+      task:'<p>Hacer que Python determine cuántas observaciones contiene <code>numbers</code>.</p>',
+      explore:'<p>Prueben <code>type(numbers)</code>, <code>numbers[0]</code> y <code>numbers[-1]</code>.</p>',
+      hints:['Necesitan una función que mida la longitud de una colección.','La función se llama <code>len(...)</code>. Dentro debe ir el nombre de la lista.','La línea completa es <code>count = len(numbers)</code>.'],
+      starter:`numbers = [12, 7, 15, 9, 11]\n\n# TODO: calculen cuántos elementos tiene numbers\ncount = WRITE_HERE\n\nprint(count)`,
+      solution:`numbers = [12, 7, 15, 9, 11]\n\ncount = len(numbers)\n\nprint(count)`},
+    A4:{minutes:4,tag:'DATA OPERATIONS · AGGREGATION',title:'Aggregate a list with sum()',
+      concept:'<p>Una <strong>agregación</strong> transforma muchas observaciones en un solo resumen. Sumar todos los valores es una primera agregación.</p>',
+      goal:'<p>Usar una función que recibe una colección completa y devuelve un valor numérico.</p>',
+      steps:['Piensen qué significa obtener el total de la lista.','No sumen valor por valor en el código.','Completen <code>total</code> con una función que opere sobre toda la lista.','Prueben luego <code>min(numbers)</code> y <code>max(numbers)</code>.'],
+      task:'<p>Calcular el total de todas las observaciones mediante una función de Python.</p>',
+      explore:'<p>Comparen <code>sum()</code>, <code>min()</code> y <code>max()</code>.</p>',
+      hints:['Busquen una función cuyo nombre en inglés significa “suma”.','La función es <code>sum(...)</code>.','La línea completa es <code>total = sum(numbers)</code>.'],
+      starter:`numbers = [12, 7, 15, 9, 11]\n\n# TODO: obtengan el total de la lista con una función de Python\ntotal = WRITE_HERE\n\nprint(total)`,
+      solution:`numbers = [12, 7, 15, 9, 11]\n\ntotal = sum(numbers)\n\nprint(total)`},
+    A5:{minutes:5,tag:'STATISTICS · MEAN',title:'Build the arithmetic mean',
+      concept:'<p>La media aritmética reúne dos ideas ya utilizadas: <strong>sumar</strong> las observaciones y <strong>contarlas</strong>.</p><p>En notación estadística: \\(\\bar{x}=\\frac{\\sum x_i}{n}\\). El código debe representar esa misma estructura.</p>',
       goal:'<p>Traducir una fórmula estadística a una expresión ejecutable de Python.</p>',
-      steps:[
-        'Identifiquen en la fórmula qué representa el numerador y qué representa el denominador.',
-        'Relacionen el numerador con una función ya usada en la etapa anterior.',
-        'Relacionen el denominador con la función utilizada para contar elementos.',
-        'Completen <code>mean_value</code>, ejecuten y verifiquen por qué Python devuelve un número decimal.'
-      ],
-      task:'<p>Construir la media de <code>numbers</code> a partir de operaciones sobre la lista. No escriban una media calculada manualmente.</p>',
-      explore:'<p>Después de obtener la media, prueben <code>round(mean_value, 1)</code> y comparen el valor redondeado con el original.</p>',
-      hint:'<p>La estructura es “total dividido por cantidad”. Pueden usar directamente las funciones correspondientes dentro de una sola expresión.</p>',
-      starter:`numbers = [12, 7, 15, 9, 11]\n\n# TODO: traduzcan la fórmula de la media a Python\nmean_value = WRITE_HERE\n\nprint(mean_value)`
-    },
-    A6:{
-      tag:'PANDAS · EXTERNAL DATA',
-      title:'Load a real CSV file',
-      concept:'<p>Ahora los datos dejan de estar escritos dentro del programa. Un archivo <strong>CSV</strong> guarda información organizada en filas y columnas. <code>pandas</code> lo convierte en un <strong>DataFrame</strong>, una estructura preparada para análisis.</p><p>El archivo de la clase ya está montado dentro de este entorno con el nombre <code>data.csv</code>.</p>',
+      steps:['Identifiquen numerador y denominador en la fórmula.','Relacionen el numerador con una función ya usada.','Relacionen el denominador con la función para contar elementos.','Completen <code>mean_value</code>, ejecuten y expliquen por qué aparece un decimal.'],
+      task:'<p>Construir la media de <code>numbers</code> mediante operaciones sobre la lista.</p>',
+      explore:'<p>Prueben <code>round(mean_value, 1)</code> y comparen ambos valores.</p>',
+      hints:['La receta estadística es “total dividido por cantidad”.','Pueden combinar <code>sum(numbers)</code> y <code>len(numbers)</code> con el operador de división <code>/</code>.','La línea completa es <code>mean_value = sum(numbers) / len(numbers)</code>.'],
+      starter:`numbers = [12, 7, 15, 9, 11]\n\n# TODO: traduzcan la fórmula de la media a Python\nmean_value = WRITE_HERE\n\nprint(mean_value)`,
+      solution:`numbers = [12, 7, 15, 9, 11]\n\nmean_value = sum(numbers) / len(numbers)\n\nprint(mean_value)`},
+    A6:{minutes:7,tag:'PANDAS · EXTERNAL DATA',title:'Load a real CSV file',
+      concept:'<p>Ahora los datos dejan de estar escritos dentro del programa. Un archivo <strong>CSV</strong> almacena filas y columnas. <code>pandas</code> lo convierte en un <strong>DataFrame</strong>.</p><p>El archivo de clase está montado en este entorno como <code>data.csv</code>.</p>',
       goal:'<p>Dar el primer paso desde Python básico hacia análisis de datos tabular real.</p>',
-      steps:[
-        'Ejecuten mentalmente las dos primeras líneas: importar Pandas y leer el archivo no significa todavía analizarlo.',
-        'Usen <code>df.head(3)</code> para mirar una pequeña muestra y reconocer las columnas.',
-        'Después necesitan obtener <strong>solo la cantidad de filas</strong>. Investiguen la propiedad <code>shape</code> usando la guía o la consola.',
-        'Completen <code>row_count</code>, ejecuten y asegúrense de que la última línea impresa sea únicamente ese conteo.'
-      ],
-      task:'<p>Cargar <code>data.csv</code> como DataFrame, inspeccionar sus primeras filas y producir al final el número de registros del archivo.</p>',
-      explore:'<p>En la consola prueben <code>df.columns</code>, <code>df.shape</code> y <code>df.dtypes</code>. No validen hasta poder explicar qué devuelve cada uno.</p>',
-      hint:'<p><code>df.shape</code> devuelve una pareja con filas y columnas. El índice <code>[0]</code> selecciona la primera parte: las filas.</p>',
-      starter:`import pandas as pd\n\ndf = pd.read_csv("data.csv")\nprint(df.head(3))\n\n# TODO: obtengan únicamente la cantidad de filas del DataFrame\nrow_count = WRITE_HERE\n\nprint(row_count)`
-    },
-    A7:{
-      tag:'PANDAS · COLUMN ANALYSIS',
-      title:'Calculate a column mean',
-      concept:'<p>Un DataFrame contiene variables organizadas por columnas. Seleccionar <code>df["score"]</code> produce una serie de datos; sobre esa serie podemos aplicar métodos estadísticos.</p>',
+      steps:['Reconozcan qué hacen <code>import pandas</code> y <code>pd.read_csv()</code>.','Observen <code>df.head(3)</code> para identificar columnas.','Necesitan obtener solo la cantidad de filas; investiguen <code>df.shape</code>.','Completen <code>row_count</code> y dejen como última salida únicamente el conteo.'],
+      task:'<p>Cargar <code>data.csv</code>, inspeccionar sus primeras filas y producir el número de registros.</p>',
+      explore:'<p>Prueben <code>df.columns</code>, <code>df.shape</code> y <code>df.dtypes</code>.</p>',
+      hints:['<code>df.shape</code> devuelve dos números: filas y columnas.','El primer elemento de una pareja se obtiene con el índice <code>[0]</code>.','La línea completa es <code>row_count = df.shape[0]</code>.'],
+      starter:`import pandas as pd\n\ndf = pd.read_csv("data.csv")\nprint(df.head(3))\n\n# TODO: obtengan únicamente la cantidad de filas del DataFrame\nrow_count = WRITE_HERE\n\nprint(row_count)`,
+      solution:`import pandas as pd\n\ndf = pd.read_csv("data.csv")\nprint(df.head(3))\n\nrow_count = df.shape[0]\n\nprint(row_count)`},
+    A7:{minutes:5,tag:'PANDAS · COLUMN ANALYSIS',title:'Calculate a column mean',
+      concept:'<p>Un DataFrame organiza variables por columnas. Seleccionar <code>df["score"]</code> produce una serie sobre la que se pueden aplicar métodos estadísticos.</p>',
       goal:'<p>Realizar una operación estadística directamente sobre una columna de un DataFrame.</p>',
-      steps:[
-        'Carguen el archivo y observen que la columna que interesa se llama <code>score</code>.',
-        'Seleccionen esa columna con corchetes.',
-        'Busquen el método de Pandas que calcula la media y completen <code>score_mean</code>.',
-        'Ejecuten. Después usen la consola para pedir <code>df["score"].describe()</code> y observen qué otros resúmenes aparecen.'
-      ],
-      task:'<p>Calcular con Pandas la media de la variable <code>score</code> sin usar una respuesta escrita previamente.</p>',
-      explore:'<p>Prueben <code>df["score"].describe()</code>. Identifiquen <em>count</em>, <em>mean</em>, <em>min</em> y <em>max</em>.</p>',
-      hint:'<p>Primero seleccionen la columna <code>score</code>; después llamen el método <code>.mean()</code>.</p>',
-      starter:`import pandas as pd\n\ndf = pd.read_csv("data.csv")\n\n# TODO: calculen la media de la columna score\nscore_mean = WRITE_HERE\n\nprint(score_mean)`
-    },
-    A8:{
-      tag:'PANDAS · FILTERING',
-      title:'Filter rows with a condition',
-      concept:'<p>Analizar datos también implica <strong>seleccionar</strong> registros. En Pandas una comparación sobre una columna produce valores <code>True</code>/<code>False</code>; esa condición puede utilizarse como filtro.</p>',
+      steps:['Carguen el archivo e identifiquen la columna <code>score</code>.','Seleccionen esa columna con corchetes.','Busquen el método de Pandas que calcula la media.','Ejecuten y después prueben <code>df["score"].describe()</code>.'],
+      task:'<p>Calcular con Pandas la media de <code>score</code>.</p>',
+      explore:'<p>Con <code>describe()</code> identifiquen <em>count</em>, <em>mean</em>, <em>min</em> y <em>max</em>.</p>',
+      hints:['Primero necesitan seleccionar una sola columna del DataFrame.','Después de <code>df["score"]</code> pueden llamar el método <code>.mean()</code>.','La línea completa es <code>score_mean = df["score"].mean()</code>.'],
+      starter:`import pandas as pd\n\ndf = pd.read_csv("data.csv")\n\n# TODO: calculen la media de la columna score\nscore_mean = WRITE_HERE\n\nprint(score_mean)`,
+      solution:`import pandas as pd\n\ndf = pd.read_csv("data.csv")\n\nscore_mean = df["score"].mean()\n\nprint(score_mean)`},
+    A8:{minutes:5,tag:'PANDAS · FILTERING',title:'Filter rows with a condition',
+      concept:'<p>Analizar datos también implica <strong>seleccionar</strong> registros. Una comparación sobre una columna produce valores <code>True</code>/<code>False</code> y esa condición puede utilizarse como filtro.</p>',
       goal:'<p>Construir una consulta básica con la secuencia <strong>seleccionar → filtrar → contar</strong>.</p>',
-      steps:[
-        'Carguen el DataFrame y formulen la condición “score mayor o igual que 4”.',
-        'Usen esa condición dentro de corchetes para crear un nuevo DataFrame llamado <code>passed</code>.',
-        'Después calculen cuántas filas quedaron en <code>passed</code>.',
-        'Ejecuten y, antes de validar, escriban <code>passed[["student_id", "score"]]</code> en la consola para inspeccionar el subconjunto.'
-      ],
-      task:'<p>Filtrar los registros cuyo <code>score</code> sea mayor o igual a 4 y contar cuántos registros cumplen la condición.</p>',
-      explore:'<p>Prueben <code>passed[["student_id", "score"]]</code>. Cambien temporalmente el umbral en la consola y observen cómo cambia el subconjunto.</p>',
-      hint:'<p>Un filtro típico tiene la forma <code>df[condición]</code>. Para contar las filas resultantes pueden reutilizar una función de etapas anteriores.</p>',
-      starter:`import pandas as pd\n\ndf = pd.read_csv("data.csv")\n\n# TODO 1: creen un DataFrame con score mayor o igual que 4\npassed = WRITE_HERE\n\n# TODO 2: cuenten cuántas filas quedaron después del filtro\npassed_count = WRITE_HERE\n\nprint(passed_count)`
-    }
+      steps:['Formulen la condición “score mayor o igual que 4”.','Usen esa condición dentro de corchetes para crear <code>passed</code>.','Calculen cuántas filas quedaron en <code>passed</code>.','Ejecuten y luego inspeccionen <code>passed[["student_id", "score"]]</code>.'],
+      task:'<p>Filtrar los registros cuyo <code>score</code> sea mayor o igual a 4 y contar cuántos cumplen.</p>',
+      explore:'<p>Cambien temporalmente el umbral en la consola y observen cómo cambia el subconjunto.</p>',
+      hints:['Un filtro de Pandas suele tener la forma <code>df[condición]</code>.','La condición es <code>df["score"] &gt;= 4</code>; después pueden reutilizar <code>len()</code>.','Las líneas son <code>passed = df[df["score"] &gt;= 4]</code> y <code>passed_count = len(passed)</code>.'],
+      starter:`import pandas as pd\n\ndf = pd.read_csv("data.csv")\n\n# TODO 1: creen un DataFrame con score mayor o igual que 4\npassed = WRITE_HERE\n\n# TODO 2: cuenten cuántas filas quedaron después del filtro\npassed_count = WRITE_HERE\n\nprint(passed_count)`,
+      solution:`import pandas as pd\n\ndf = pd.read_csv("data.csv")\n\npassed = df[df["score"] >= 4]\npassed_count = len(passed)\n\nprint(passed_count)`}
   };
 
-  async function rpc(name,args={}){
-    const {data,error}=await sb.rpc(name,args);
-    if(error)throw new Error(error.message||'Backend error');
-    return data;
-  }
-
+  async function rpc(name,args={}){const {data,error}=await sb.rpc(name,args);if(error)throw new Error(error.message||'Backend error');return data;}
   function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-  function setSetupStatus(msg,bad=false){const el=$('setupStatus');el.textContent=msg||'';el.style.color=bad?'#c5221f':'';}
-  function setValidation(msg,kind=''){const el=$('activityStatus');el.textContent=msg||'';el.className=`validation-status ${kind}`.trim();}
+  function fmtGrade(v){return Number(v??1).toFixed(2)}
+  function normalizeCode(v){return String(v??'').replace(/\\n/g,'\n')}
   function save(){if(state.attemptId&&state.token)sessionStorage.setItem(cfg.sessionStorageKey,JSON.stringify({attemptId:state.attemptId,token:state.token}));}
-  function clearSaved(){sessionStorage.removeItem(cfg.sessionStorageKey);}
-  function fmtGrade(v){return Number(v??1).toFixed(2);}
-  function activityActive(){return !!state.snapshot&&!state.snapshot.completed;}
-  function fullscreenSupported(){return !!document.documentElement.requestFullscreen;}
-  function isFullscreen(){return !!document.fullscreenElement;}
-  function normalizeCode(v){return String(v??'').replace(/\\n/g,'\n');}
+  function clearSaved(){sessionStorage.removeItem(cfg.sessionStorageKey)}
+  function activityActive(){return !!state.snapshot&&!state.snapshot.completed}
+  function fullscreenSupported(){return !!document.documentElement.requestFullscreen}
+  function isFullscreen(){return !!document.fullscreenElement}
+  function setSetupStatus(msg,bad=false){const el=$('setupStatus');el.textContent=msg||'';el.style.color=bad?'#b3261e':''}
+  function setValidation(msg,kind=''){const el=$('activityStatus');el.textContent=msg||'';el.className=`validation-status ${kind}`.trim()}
 
-  function setRuntimeBadge(mode,label){
-    const badge=$('runtimeBadge');
-    badge.className=`runtime-badge ${mode}`;
-    badge.innerHTML='<span class="status-dot"></span>'+esc(label);
-    const kernel=$('kernelLabel');
-    const kernelInfo=document.querySelector('.kernel-info');
-    if(kernel){
-      kernel.textContent=mode==='ready'?'Python 3 · connected in browser':label;
-      kernelInfo?.classList.toggle('ready',mode==='ready');
-    }
-  }
+  function setRuntimeBadge(mode,label){const badge=$('runtimeBadge');badge.className=`runtime-badge ${mode}`;badge.innerHTML='<span class="status-dot"></span>'+esc(label);const kernel=$('kernelLabel');const info=document.querySelector('.kernel-info');if(kernel){kernel.textContent=mode==='ready'?'Python 3 · connected in browser':label;info?.classList.toggle('ready',mode==='ready')}}
+  function updateRestrictionLabel(){const el=$('restrictionLabel');if(!el)return;el.textContent=state.restrictionEvents>0?`Exits: ${state.restrictionEvents}`:'Guided mode';el.classList.toggle('attention',state.restrictionEvents>0)}
+  async function logEvent(type,metadata={}){if(!state.attemptId||!state.token||!cfg.rpc.event)return null;try{const data=await rpc(cfg.rpc.event,{p_attempt_id:state.attemptId,p_attempt_token:state.token,p_event_type:type,p_metadata:metadata});if(Number.isFinite(Number(data?.restriction_events))){state.restrictionEvents=Number(data.restriction_events);updateRestrictionLabel()}return data}catch(err){console.warn('activity event log failed',type,err);return null}}
+  function showFullscreenGate(message){$('fullscreenMessage').textContent=message||'El laboratorio está pausado hasta que vuelvan a pantalla completa.';$('fullscreenGate').classList.remove('hidden')}
+  function hideFullscreenGate(){$('fullscreenGate').classList.add('hidden')}
+  async function enterFullscreen(){if(!cfg.requireFullscreen)return true;if(!fullscreenSupported()){showFullscreenGate('Este navegador no permite el modo de pantalla completa obligatorio. Usen Chrome o Edge en un computador.');return false}if(isFullscreen()){hideFullscreenGate();return true}try{await document.documentElement.requestFullscreen();hideFullscreenGate();await logEvent('FULLSCREEN_ENTER',{source:'student_action'});return true}catch(_){showFullscreenGate('Deben aceptar pantalla completa para trabajar en el laboratorio.');return false}}
+  function enforceFullscreen(){if(!cfg.requireFullscreen||!activityActive())return true;if(isFullscreen()){hideFullscreenGate();return true}showFullscreenGate('Laboratorio pausado. Vuelvan a pantalla completa para continuar.');return false}
 
-  function updateRestrictionLabel(){
-    const el=$('restrictionLabel');
-    if(!el)return;
-    el.textContent=state.restrictionEvents>0?`Exits: ${state.restrictionEvents}`:'Guided mode';
-    el.classList.toggle('attention',state.restrictionEvents>0);
-  }
+  function clearTerminal(message='Python console ready.'){const out=$('terminalOutput');out.textContent=message+'\n';out.scrollTop=out.scrollHeight}
+  function appendTerminal(text){const out=$('terminalOutput');const prefix=out.textContent&&!out.textContent.endsWith('\n')?'\n':'';out.textContent+=prefix+String(text??'')+(String(text??'').endsWith('\n')?'':'\n');out.scrollTop=out.scrollHeight}
+  function lastScalar(output){const lines=String(output||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);return lines.length?lines[lines.length-1]:''}
 
-  async function logEvent(type,metadata={}){
-    if(!state.attemptId||!state.token||!cfg.rpc.event)return null;
-    try{
-      const data=await rpc(cfg.rpc.event,{p_attempt_id:state.attemptId,p_attempt_token:state.token,p_event_type:type,p_metadata:metadata});
-      if(Number.isFinite(Number(data?.restriction_events))){
-        state.restrictionEvents=Number(data.restriction_events);
-        updateRestrictionLabel();
-      }
-      return data;
-    }catch(err){console.warn('activity event log failed',type,err);return null;}
-  }
+  async function ensureRuntime(){if(state.pyodide)return state.pyodide;if(state.runtimePromise)return state.runtimePromise;state.runtimePromise=(async()=>{try{setRuntimeBadge('loading','Loading Python…');if(typeof window.loadPyodide!=='function')throw new Error('Pyodide did not load. Check the network connection.');const py=await window.loadPyodide({indexURL:PYODIDE_INDEX});py.setStdin({stdin:()=>window.prompt('Python input:')??null});try{py.FS.mkdirTree('/home/pyodide')}catch(_){}await py.runPythonAsync("import os\nos.chdir('/home/pyodide')");try{const response=await fetch('data.csv',{cache:'no-store'});if(!response.ok)throw new Error(`CSV HTTP ${response.status}`);py.FS.writeFile('/home/pyodide/data.csv',await response.text());state.datasetReady=true}catch(err){state.datasetReady=false;console.warn('dataset preload failed',err)}state.pyodide=py;setRuntimeBadge('ready','Python ready');clearTerminal('Python 3 runtime ready.\nWorkspace ready for your team.');return py}catch(err){state.runtimePromise=null;setRuntimeBadge('error','Python unavailable');clearTerminal(`Runtime error: ${err.message}`);setValidation('Python no pudo iniciar. Revisen la conexión y recarguen la página.','bad');throw err}})();return state.runtimePromise}
+  async function ensurePandas(){const py=await ensureRuntime();if(state.pandasReady)return;setRuntimeBadge('loading','Loading Pandas…');appendTerminal('[system] Loading pandas…');await py.loadPackage('pandas');state.pandasReady=true;setRuntimeBadge('ready','Python + Pandas ready');appendTerminal('[system] pandas ready.')}
+  async function executePython(source,{cell=false,terminal=false}={}){if(!enforceFullscreen())return null;const py=await ensureRuntime();if(/(^|\n)\s*(import pandas|from pandas)/.test(source))await ensurePandas();const stdout=[],stderr=[];py.setStdout({batched:msg=>stdout.push(msg)});py.setStderr({batched:msg=>stderr.push(msg)});let result;try{result=await py.runPythonAsync(source);if(result!==undefined&&result!==null){const text=String(result);if(text!=='None')stdout.push(text);if(typeof result.destroy==='function')result.destroy()}}catch(err){stderr.push(String(err?.message||err))}const output=stdout.join('\n').trim(),errors=stderr.join('\n').trim();if(cell){state.executionCount+=1;$('executionCount').textContent=`[${state.executionCount}]`;appendTerminal(`\nIn [${state.executionCount}]:`);if(output)appendTerminal(output);if(errors)appendTerminal(`ERROR\n${errors}`);state.lastCellOutput=errors?'':output;state.lastCellScalar=errors?'':lastScalar(output);$('validateButton').disabled=!state.lastCellScalar;if(errors)setValidation('Python encontró un error. Léanlo, corrijan y vuelvan a ejecutar. Este error de ejecución no resta puntos.','bad');else if(state.lastCellScalar)setValidation('La celda produjo una salida. Si el equipo puede explicarla, presionen Validar salida.');else if(output)setValidation('La última salida todavía no es un valor validable. Revisen la guía.','bad');else setValidation('La celda no imprimió una salida. Revisen si falta print(...).','bad')}else if(terminal){if(output)appendTerminal(output);if(errors)appendTerminal(`ERROR\n${errors}`)}return{output,errors}}
 
-  function showFullscreenGate(message){
-    $('fullscreenMessage').textContent=message||'El laboratorio está pausado hasta que vuelvas a pantalla completa.';
-    $('fullscreenGate').classList.remove('hidden');
-  }
-  function hideFullscreenGate(){$('fullscreenGate').classList.add('hidden');}
+  function renderMath(){if(typeof window.renderMathInElement!=='function')return;try{window.renderMathInElement($('guidePane'),{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false})}catch(err){console.warn('math render skipped',err)}}
+  function currentCheckpoint(snapshot=state.snapshot){return Array.from(snapshot?.checkpoints||[]).find(cp=>!cp.completed)||null}
+  function formatElapsed(ms){const total=Math.max(0,Math.floor(ms/1000)),m=Math.floor(total/60),s=total%60;return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
+  function elapsedMs(){return state.startedAt?Math.max(0,Date.now()-state.startedAt.getTime()):0}
+  function updateTimer(){const el=$('timeLabel');if(!el)return;const ms=elapsedMs(),target=TOTAL_MINUTES*60000;el.textContent=`${formatElapsed(ms)} / ${String(TOTAL_MINUTES).padStart(2,'0')}:00`;el.classList.toggle('warn',ms>=35*60000&&ms<target);el.classList.toggle('over',ms>=target)}
+  function startTimer(startedAt){if(startedAt){const d=new Date(startedAt);if(!Number.isNaN(d.getTime()))state.startedAt=d}if(!state.startedAt)state.startedAt=new Date();clearInterval(state.timerHandle);updateTimer();state.timerHandle=setInterval(updateTimer,1000)}
+  function updateHelpUI(snapshot=state.snapshot){const remaining=Number(snapshot?.help_tokens_remaining??cfg.helpTokenLimit??3),used=Number(snapshot?.help_tokens_used||0);$('helpBadge').textContent=`${remaining} ayuda${remaining===1?'':'s'}`;$('helpBadge').classList.toggle('empty',remaining<=0);$('helpRemainingText').textContent=`Quedan ${remaining} de ${cfg.helpTokenLimit||3}`;$('helpButton').disabled=remaining<=0||!state.currentCp||!!state.currentCp.completed;$('helpButton').textContent=remaining>0?'Usar 1 ayuda':'Sin ayudas disponibles';$('finishHelps').textContent=`${used} / ${cfg.helpTokenLimit||3}`}
+  function updatePenaltyStatus(cp=state.currentCp){if(!cp){$('penaltyStatus').textContent='';return}const wrong=Number(cp.wrong_attempts||0),helps=Number(cp.help_count||0),potential=Number(cp.stage_potential??cp.points??1);$('penaltyStatus').textContent=`Esta etapa puede aportar ${potential.toFixed(2)} / ${Number(cp.points||1).toFixed(2)} puntos · errores validados: ${wrong} · ayudas usadas aquí: ${helps}.`;$('skipButton').classList.toggle('hidden',wrong<=0||cp.completed)}
+  function updateSnapshotMetrics(snapshot){state.snapshot=snapshot;const checkpoints=Array.from(snapshot.checkpoints||[]),completed=Number(snapshot.completed_count??checkpoints.filter(c=>c.completed).length),total=Number(snapshot.checkpoint_count||checkpoints.length||8);$('gradeLabel').textContent=`Proyección ${fmtGrade(snapshot.projected_grade??snapshot.grade)} / 5.00`;$('progressText').textContent=`${completed} / ${total} completadas`;$('progressBar').style.width=`${Math.min(100,completed/Math.max(1,total)*100)}%`;updateHelpUI(snapshot);updateRestrictionLabel()}
+  function renderStepRail(checkpoints,currentKey){$('stepRail').innerHTML=checkpoints.map(cp=>{let cls='';if(cp.completed){cls=cp.completion_mode==='revealed'?'revealed':cp.completion_mode==='skipped'?'skipped':'done'}else if(cp.key===currentKey)cls='active';return `<span class="step-dot ${cls}" title="Etapa ${esc(cp.sequence)} · ${esc(cp.completion_mode||'pending')}"></span>`}).join('')}
+  function showExistingHelp(cp,lesson){const count=Number(cp?.help_count||0),panel=$('helpPanel');if(count<=0){panel.classList.add('hidden');panel.innerHTML='';return}const index=Math.min(count,lesson.hints.length)-1;panel.innerHTML=`<strong>Ayuda ${count} usada en esta etapa</strong>${lesson.hints[index]}`;panel.classList.remove('hidden')}
 
-  async function enterFullscreen(){
-    if(!cfg.requireFullscreen)return true;
-    if(!fullscreenSupported()){
-      showFullscreenGate('Este navegador no permite el modo de pantalla completa obligatorio. Usa Chrome o Edge en un computador.');
-      return false;
-    }
-    if(isFullscreen()){hideFullscreenGate();return true;}
-    try{
-      await document.documentElement.requestFullscreen();
-      hideFullscreenGate();
-      await logEvent('FULLSCREEN_ENTER',{source:'student_action'});
-      return true;
-    }catch(_){
-      showFullscreenGate('Debes aceptar pantalla completa para trabajar en el laboratorio.');
-      return false;
-    }
-  }
+  function renderLesson(cp){const lesson=LESSONS[cp.key]||{minutes:4,tag:'PYTHON LAB',title:cp.title,concept:`<p>${esc(cp.prompt)}</p>`,goal:'<p>Ejecutar Python e interpretar su salida.</p>',steps:['Lean la consigna.','Completen el código.','Ejecuten y observen.','Valide cuando puedan explicar la salida.'],task:`<p>${esc(cp.prompt)}</p>`,explore:'<p>Usen la consola para inspeccionar variables.</p>',hints:[esc(cp.hint||'Revisen la consigna.'),esc(cp.hint||'Revisen la consigna.'),esc(cp.hint||'Revisen la consigna.')],starter:normalizeCode(cp.code),solution:normalizeCode(cp.code)};state.currentCp=cp;state.currentKey=cp.key;state.currentStarter=lesson.starter||normalizeCode(cp.code);state.lastCellOutput='';state.lastCellScalar='';state.executionCount=0;state.pendingNextSnapshot=null;$('lessonTag').textContent=lesson.tag;$('lessonTiming').textContent=`Objetivo: ${lesson.minutes} min`;$('lessonTitle').textContent=lesson.title;$('lessonConcept').innerHTML=lesson.concept;$('lessonGoal').innerHTML=lesson.goal;$('lessonSteps').innerHTML=(lesson.steps||[]).map((step,index)=>`<li><span>${index+1}</span><div>${step}</div></li>`).join('');$('lessonTask').innerHTML=lesson.task;$('lessonExplore').innerHTML=lesson.explore;$('codeEditor').value=state.currentStarter;$('validateButton').disabled=true;$('executionCount').textContent='[ ]';$('solutionPanel').classList.add('hidden');$('revealButton').disabled=false;$('runCodeButton').disabled=false;$('runCellButton').disabled=false;$('resetCodeButton').disabled=false;showExistingHelp(cp,lesson);updateHelpUI();updatePenaltyStatus(cp);setValidation('Lean la guía, completen WRITE_HERE y ejecuten. Pueden corregir código sin penalización.');renderMath()}
 
-  function enforceFullscreen(){
-    if(!cfg.requireFullscreen||!activityActive())return true;
-    if(isFullscreen()){hideFullscreenGate();return true;}
-    showFullscreenGate('Laboratorio pausado. Vuelve a pantalla completa para continuar.');
-    return false;
-  }
+  function render(snapshot){updateSnapshotMetrics(snapshot);$('setupPanel').classList.add('hidden');const checkpoints=Array.from(snapshot.checkpoints||[]),completed=Number(snapshot.completed_count??checkpoints.filter(c=>c.completed).length),total=Number(snapshot.checkpoint_count||checkpoints.length||8),teamSize=Number(snapshot.team_size||snapshot.participants?.length||1);$('studentLabel').textContent=`${snapshot.group_code} · ${snapshot.student_label}`;startTimer(snapshot.started_at);if(snapshot.completed){clearInterval(state.timerHandle);$('workspacePanel').classList.add('hidden');$('finishPanel').classList.remove('hidden');$('finishPoints').textContent=`${completed} / ${total}`;$('finishGrade').textContent=fmtGrade(snapshot.grade);$('finishHelps').textContent=`${snapshot.help_tokens_used||0} / ${cfg.helpTokenLimit||3}`;$('finishTime').textContent=formatElapsed(elapsedMs());hideFullscreenGate();clearSaved();if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});return}const current=currentCheckpoint(snapshot)||checkpoints[0];const n=Number(current?.sequence||completed+1);$('stepLabel').textContent=`Etapa ${n} de ${total}`;renderStepRail(checkpoints,current?.key);renderLesson(current);$('finishPanel').classList.add('hidden');$('workspacePanel').classList.remove('hidden');enforceFullscreen();ensureRuntime().catch(()=>{})}
 
-  function clearTerminal(message='Python console ready.'){
-    const out=$('terminalOutput');
-    out.textContent=message+'\n';
-    out.scrollTop=out.scrollHeight;
-  }
+  async function runCurrentCell(){if(!enforceFullscreen())return;const source=$('codeEditor').value;if(!source.trim()){setValidation('La celda está vacía. Restablézcanla y completen el código.','bad');return}if(source.includes(PLACEHOLDER)){setValidation('Todavía hay un WRITE_HERE. Reemplacen todos los marcadores antes de ejecutar.','bad');return}$('runCodeButton').disabled=true;$('runCellButton').disabled=true;try{await executePython(source,{cell:true})}finally{$('runCodeButton').disabled=false;$('runCellButton').disabled=false}}
 
-  function appendTerminal(text){
-    const out=$('terminalOutput');
-    const value=String(text??'');
-    const prefix=out.textContent&&!out.textContent.endsWith('\n')?'\n':'';
-    out.textContent+=prefix+value+(value.endsWith('\n')?'':'\n');
-    out.scrollTop=out.scrollHeight;
-  }
+  async function validateCurrent(){if(!enforceFullscreen())return;if(!state.currentKey||!state.lastCellScalar){setValidation('Primero ejecuten una celda que produzca una salida validable.','bad');return}const btn=$('validateButton');btn.disabled=true;setValidation('Validando la salida del equipo…');try{const data=await rpc(cfg.rpc.submit,{p_attempt_id:state.attemptId,p_attempt_token:state.token,p_checkpoint_key:state.currentKey,p_answer:state.lastCellScalar});if(data.correct){setValidation(`Correcto. Esta etapa obtuvo ${Number(data.awarded_points||0).toFixed(2)} / 1.00 puntos.`,'ok');appendTerminal(`✓ Stage validated · ${Number(data.awarded_points||0).toFixed(2)} points.`);await logEvent('LAB_STAGE_COMPLETED',{checkpoint_key:state.currentKey,execution_count:state.executionCount,awarded_points:data.awarded_points,workspace_version:'guided-v4'});setTimeout(()=>render(data.snapshot),900)}else{state.snapshot=data.snapshot;state.currentCp=(data.snapshot.checkpoints||[]).find(cp=>cp.key===state.currentKey)||state.currentCp;updateSnapshotMetrics(data.snapshot);renderStepRail(data.snapshot.checkpoints||[],state.currentKey);updatePenaltyStatus(state.currentCp);setValidation(`Salida incorrecta registrada. Error validado #${data.wrong_attempts}. Pueden corregir, usar una ayuda, ver la solución o continuar sin resolver.`,'bad');appendTerminal(`✗ Incorrect validation #${data.wrong_attempts}. Projected grade updated.`);btn.disabled=false}}catch(err){setValidation(`No se pudo registrar esta etapa: ${err.message}`,'bad');btn.disabled=false}}
 
-  function lastScalar(output){
-    const lines=String(output||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
-    if(!lines.length)return'';
-    for(let i=lines.length-1;i>=0;i--){
-      if(/^[-+]?\d+(?:[.,]\d+)?(?:[eE][-+]?\d+)?$/.test(lines[i]))return lines[i];
-    }
-    return'';
-  }
+  async function useHelp(){if(!enforceFullscreen()||!state.currentKey)return;const remaining=Number(state.snapshot?.help_tokens_remaining??3);if(remaining<=0)return;if(!window.confirm(`Usar una ayuda en esta etapa? Quedan ${remaining}. Cada ayuda reduce 0.10 de la nota máxima proyectada.`))return;$('helpButton').disabled=true;try{const data=await rpc(cfg.rpc.help,{p_attempt_id:state.attemptId,p_attempt_token:state.token,p_checkpoint_key:state.currentKey});state.snapshot=data.snapshot;state.currentCp=(data.snapshot.checkpoints||[]).find(cp=>cp.key===state.currentKey)||state.currentCp;updateSnapshotMetrics(data.snapshot);updatePenaltyStatus(state.currentCp);const lesson=LESSONS[state.currentKey],level=Math.min(Number(data.help_level||1),lesson.hints.length);$('helpPanel').innerHTML=`<strong>Ayuda ${level}</strong>${lesson.hints[level-1]}`;$('helpPanel').classList.remove('hidden');renderMath();setValidation(`Ayuda ${data.help_tokens_used} de ${cfg.helpTokenLimit||3} registrada. Lean la pista y vuelvan al código.`);await logEvent('HELP_SHOWN',{checkpoint_key:state.currentKey,help_level:level,workspace_version:'guided-v4'})}catch(err){setValidation(`No se pudo usar la ayuda: ${err.message}`,'bad')}finally{updateHelpUI()}}
 
-  async function ensureRuntime(){
-    if(state.pyodide)return state.pyodide;
-    if(state.runtimePromise)return state.runtimePromise;
-    state.runtimePromise=(async()=>{
-      try{
-        setRuntimeBadge('loading','Loading Python…');
-        if(typeof window.loadPyodide!=='function')throw new Error('Pyodide did not load. Check the network connection.');
-        const py=await window.loadPyodide({indexURL:PYODIDE_INDEX});
-        py.setStdin({stdin:()=>window.prompt('Python input:')??null});
-        try{py.FS.mkdirTree('/home/pyodide');}catch(_){ }
-        await py.runPythonAsync("import os\nos.chdir('/home/pyodide')");
-        try{
-          const response=await fetch('data.csv',{cache:'no-store'});
-          if(!response.ok)throw new Error(`CSV HTTP ${response.status}`);
-          const csv=await response.text();
-          py.FS.writeFile('/home/pyodide/data.csv',csv);
-          state.datasetReady=true;
-        }catch(err){
-          state.datasetReady=false;
-          console.warn('dataset preload failed',err);
-        }
-        state.pyodide=py;
-        setRuntimeBadge('ready','Python ready');
-        clearTerminal('Python 3 runtime ready.\nWorkspace ready for your team.');
-        return py;
-      }catch(err){
-        state.runtimePromise=null;
-        setRuntimeBadge('error','Python unavailable');
-        clearTerminal(`Runtime error: ${err.message}`);
-        setValidation('Python no pudo iniciar. Revisen la conexión y recarguen la página.','bad');
-        throw err;
-      }
-    })();
-    return state.runtimePromise;
-  }
+  async function revealSolution(){if(!enforceFullscreen()||!state.currentKey)return;if(!window.confirm('Ver la solución completa cierra esta etapa con 25% de su valor. ¿Desean continuar?'))return;$('revealButton').disabled=true;try{const key=state.currentKey,data=await rpc(cfg.rpc.reveal,{p_attempt_id:state.attemptId,p_attempt_token:state.token,p_checkpoint_key:key});state.pendingNextSnapshot=data.snapshot;updateSnapshotMetrics(data.snapshot);const lesson=LESSONS[key];$('solutionCode').textContent=lesson.solution;$('solutionOutput').textContent=data.expected_answer;$('solutionCredit').textContent=`${Math.round(Number(data.awarded_points||0)*100)}% de la etapa`;$('solutionPanel').classList.remove('hidden');$('runCodeButton').disabled=true;$('runCellButton').disabled=true;$('resetCodeButton').disabled=true;$('validateButton').disabled=true;$('helpButton').disabled=true;$('skipButton').classList.add('hidden');setValidation('Solución revelada y registrada. Lean cada línea antes de continuar.','ok');appendTerminal(`↳ Solution revealed · ${Number(data.awarded_points||0).toFixed(2)} points.`)}catch(err){setValidation(`No se pudo revelar la solución: ${err.message}`,'bad');$('revealButton').disabled=false}}
 
-  async function ensurePandas(){
-    const py=await ensureRuntime();
-    if(state.pandasReady)return;
-    setRuntimeBadge('loading','Loading Pandas…');
-    appendTerminal('[system] Loading pandas for the data-analysis stages…');
-    await py.loadPackage('pandas');
-    state.pandasReady=true;
-    setRuntimeBadge('ready','Python + Pandas ready');
-    appendTerminal('[system] pandas ready.');
-  }
+  async function skipStage(){if(!enforceFullscreen()||!state.currentKey)return;if(!window.confirm('Continuar sin resolver asigna 0% a esta etapa. ¿Desean avanzar?'))return;$('skipButton').disabled=true;try{const data=await rpc(cfg.rpc.skip,{p_attempt_id:state.attemptId,p_attempt_token:state.token,p_checkpoint_key:state.currentKey});appendTerminal('↳ Stage skipped · 0.00 points.');render(data.snapshot)}catch(err){setValidation(`No se pudo continuar: ${err.message}`,'bad');$('skipButton').disabled=false}}
 
-  async function executePython(source,{cell=false,terminal=false}={}){
-    if(!enforceFullscreen())return null;
-    const py=await ensureRuntime();
-    if(/(^|\n)\s*(import pandas|from pandas)/.test(source))await ensurePandas();
+  function updateTeamSizeUI(){const size=Number($('teamSize').value||3),show=size===3;$('student3Wrap').classList.toggle('hidden-member',!show);$('studentName3').required=show;if(!show)$('studentName3').value=''}
+  function readTeamNames(){const size=Number($('teamSize').value||3),names=[$('studentName1').value.trim(),$('studentName2').value.trim()];if(size===3)names.push($('studentName3').value.trim());return names}
+  $('teamSize').addEventListener('change',updateTeamSizeUI);updateTeamSizeUI();
 
-    const stdout=[];
-    const stderr=[];
-    py.setStdout({batched:msg=>stdout.push(msg)});
-    py.setStderr({batched:msg=>stderr.push(msg)});
+  $('registrationForm').addEventListener('submit',async e=>{e.preventDefault();const group=$('groupCode').value,names=readTeamNames();if(!group||names.some(n=>n.length<2)){setSetupStatus('Completen el grupo y el nombre de cada integrante.',true);return}const normalized=names.map(x=>x.toLocaleLowerCase('es').replace(/\s+/g,' ').trim());if(new Set(normalized).size!==normalized.length){setSetupStatus('No repitan el mismo nombre dentro del equipo.',true);return}if(cfg.requireFullscreen){if(!fullscreenSupported()){setSetupStatus('Este navegador no permite pantalla completa obligatoria. Usen Chrome o Edge.',true);return}if(!await enterFullscreen())return}$('startButton').disabled=true;setSetupStatus('Registrando el equipo y preparando Python…');try{const data=await rpc(cfg.rpc.startTeam,{p_activity_slug:cfg.activitySlug,p_student_names:names,p_group_code:group,p_session_id:crypto.randomUUID(),p_user_agent:navigator.userAgent});state.attemptId=data.attempt_id;state.token=data.attempt_token;save();render(data.snapshot);setSetupStatus('');await logEvent('ACTIVITY_READY',{identity_mode:'team',team_size:names.length,target_minutes:TOTAL_MINUTES,workspace_version:'guided-v4'})}catch(err){$('startButton').disabled=false;setSetupStatus(`No fue posible iniciar: ${err.message}`,true);if(document.fullscreenElement)document.exitFullscreen().catch(()=>{})}});
 
-    let result;
-    try{
-      result=await py.runPythonAsync(source);
-      if(result!==undefined&&result!==null){
-        const text=String(result);
-        if(text!=='None')stdout.push(text);
-        if(typeof result.destroy==='function')result.destroy();
-      }
-    }catch(err){
-      stderr.push(String(err?.message||err));
-    }
-
-    const output=stdout.join('\n').trim();
-    const errors=stderr.join('\n').trim();
-
-    if(cell){
-      state.executionCount+=1;
-      $('executionCount').textContent=`[${state.executionCount}]`;
-      appendTerminal(`\nIn [${state.executionCount}]:`);
-      if(output)appendTerminal(output);
-      if(errors)appendTerminal(`ERROR\n${errors}`);
-      state.lastCellOutput=errors?'':output;
-      state.lastCellScalar=errors?'':lastScalar(output);
-      $('validateButton').disabled=!state.lastCellScalar;
-      if(errors){
-        setValidation('Python encontró un error. Lean el mensaje, localicen la línea y vuelvan a ejecutar.','bad');
-      }else if(state.lastCellScalar){
-        setValidation('La celda produjo una salida numérica. Explórenla y, cuando puedan explicarla, validen la etapa.');
-      }else if(output){
-        setValidation('La celda se ejecutó, pero la última salida todavía no es un valor numérico validable. Revisen las instrucciones.','bad');
-      }else{
-        setValidation('La celda se ejecutó, pero no imprimió una salida. Revisen si falta un print(...).','bad');
-      }
-    }else if(terminal){
-      if(output)appendTerminal(output);
-      if(errors)appendTerminal(`ERROR\n${errors}`);
-    }
-    return {output,errors};
-  }
-
-  function renderMath(){
-    if(typeof window.renderMathInElement!=='function')return;
-    try{
-      window.renderMathInElement($('guidePane'),{
-        delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],
-        throwOnError:false
-      });
-    }catch(err){console.warn('math render skipped',err);}
-  }
-
-  function renderStepRail(checkpoints,currentKey){
-    $('stepRail').innerHTML=checkpoints.map(cp=>`<span class="step-dot ${cp.correct?'done':cp.key===currentKey?'active':''}" title="Stage ${esc(cp.sequence)}"></span>`).join('');
-  }
-
-  function renderLesson(cp){
-    const lesson=LESSONS[cp.key]||{
-      tag:'PYTHON LAB',
-      title:cp.title,
-      concept:`<p>${esc(cp.prompt)}</p>`,
-      goal:'<p>Ejecutar Python e interpretar su salida.</p>',
-      steps:['Lean la consigna.','Completen la parte faltante del código.','Ejecuten y observen la consola.','Valide únicamente cuando el equipo pueda explicar la salida.'],
-      task:`<p>${esc(cp.prompt)}</p>`,
-      explore:'<p>Usen la consola para inspeccionar variables creadas por la celda.</p>',
-      hint:`<p>${esc(cp.hint||'Revisen la última salida impresa.')}</p>`,
-      starter:normalizeCode(cp.code)
-    };
-
-    state.currentKey=cp.key;
-    state.currentStarter=lesson.starter||normalizeCode(cp.code);
-    state.lastCellOutput='';
-    state.lastCellScalar='';
-    state.executionCount=0;
-
-    $('lessonTag').textContent=lesson.tag;
-    $('lessonTitle').textContent=lesson.title;
-    $('lessonConcept').innerHTML=lesson.concept;
-    $('lessonGoal').innerHTML=lesson.goal;
-    $('lessonSteps').innerHTML=(lesson.steps||[]).map((step,index)=>`<li><span>${index+1}</span><div>${step}</div></li>`).join('');
-    $('lessonTask').innerHTML=lesson.task;
-    $('lessonExplore').innerHTML=lesson.explore;
-    $('lessonHint').innerHTML=lesson.hint;
-    $('codeEditor').value=state.currentStarter;
-    $('validateButton').disabled=true;
-    $('executionCount').textContent='[ ]';
-    setValidation('Lean primero la guía. Completen WRITE_HERE y ejecuten la celda cuando el equipo esté listo.');
-    renderMath();
-  }
-
-  function render(snapshot){
-    state.snapshot=snapshot;
-    $('setupPanel').classList.add('hidden');
-    const checkpoints=Array.from(snapshot.checkpoints||[]);
-    const completed=Number(snapshot.correct_count||0);
-    const total=Number(snapshot.checkpoint_count||checkpoints.length||8);
-    const teamSize=Number(snapshot.team_size||snapshot.participants?.length||1);
-
-    $('studentLabel').textContent=`${snapshot.group_code} · ${snapshot.student_label}`;
-    $('gradeLabel').textContent=`${fmtGrade(snapshot.grade)} / 5.00`;
-    $('progressText').textContent=`${completed} / ${total} completed`;
-    $('progressBar').style.width=`${Math.min(100,completed/Math.max(1,total)*100)}%`;
-    updateRestrictionLabel();
-
-    if(snapshot.completed){
-      $('workspacePanel').classList.add('hidden');
-      $('finishPanel').classList.remove('hidden');
-      $('finishPoints').textContent=`${completed} / ${total}`;
-      $('finishGrade').textContent=fmtGrade(snapshot.grade);
-      $('finishTeamSize').textContent=String(teamSize);
-      hideFullscreenGate();
-      clearSaved();
-      if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
-      return;
-    }
-
-    const current=checkpoints.find(cp=>!cp.correct)||checkpoints[0];
-    const currentNumber=Number(current?.sequence||completed+1);
-    $('stepLabel').textContent=`Stage ${currentNumber} of ${total}`;
-    renderStepRail(checkpoints,current?.key);
-    renderLesson(current);
-    $('finishPanel').classList.add('hidden');
-    $('workspacePanel').classList.remove('hidden');
-    enforceFullscreen();
-    ensureRuntime().catch(()=>{});
-  }
-
-  async function runCurrentCell(){
-    if(!enforceFullscreen())return;
-    const source=$('codeEditor').value;
-    if(!source.trim()){
-      setValidation('La celda está vacía. Restablézcanla y completen el código.','bad');
-      return;
-    }
-    if(source.includes(PLACEHOLDER)){
-      setValidation('Todavía hay un WRITE_HERE sin completar. Lean el paso a paso y reemplacen cada marcador antes de ejecutar.','bad');
-      return;
-    }
-    $('runCodeButton').disabled=true;
-    $('runCellButton').disabled=true;
-    try{await executePython(source,{cell:true});}
-    finally{$('runCodeButton').disabled=false;$('runCellButton').disabled=false;}
-  }
-
-  async function validateCurrent(){
-    if(!enforceFullscreen())return;
-    if(!state.currentKey||!state.lastCellScalar){
-      setValidation('Primero ejecuten la celda correctamente. La validación usa la última salida numérica impresa.','bad');
-      return;
-    }
-    const btn=$('validateButton');
-    btn.disabled=true;
-    setValidation('Validando la salida del equipo…');
-    try{
-      const data=await rpc(cfg.rpc.submit,{
-        p_attempt_id:state.attemptId,
-        p_attempt_token:state.token,
-        p_checkpoint_key:state.currentKey,
-        p_answer:state.lastCellScalar
-      });
-      if(data.correct){
-        setValidation('Correcto. La etapa quedó registrada; preparen la siguiente.','ok');
-        appendTerminal('✓ Stage validated and recorded.');
-        await logEvent('LAB_STAGE_COMPLETED',{
-          checkpoint_key:state.currentKey,
-          execution_count:state.executionCount,
-          workspace_version:'team-guided-v3'
-        });
-        setTimeout(()=>render(data.snapshot),700);
-      }else{
-        setValidation('La salida todavía no corresponde al objetivo. No hay penalización: vuelvan a la guía, revisen el código y ejecuten otra vez.','bad');
-        appendTerminal('✗ Not validated yet. Review, edit and run again.');
-        btn.disabled=false;
-      }
-    }catch(err){
-      setValidation(`No se pudo registrar esta etapa: ${err.message}`,'bad');
-      btn.disabled=false;
-    }
-  }
-
-  function updateTeamSizeUI(){
-    const size=Number($('teamSize').value||3);
-    const wrap=$('student3Wrap');
-    const input=$('studentName3');
-    const show=size===3;
-    wrap.classList.toggle('hidden-member',!show);
-    input.required=show;
-    if(!show)input.value='';
-  }
-
-  function readTeamNames(){
-    const size=Number($('teamSize').value||3);
-    const names=[$('studentName1').value.trim(),$('studentName2').value.trim()];
-    if(size===3)names.push($('studentName3').value.trim());
-    return names;
-  }
-
-  $('teamSize').addEventListener('change',updateTeamSizeUI);
-  updateTeamSizeUI();
-
-  $('registrationForm').addEventListener('submit',async e=>{
-    e.preventDefault();
-    const group=$('groupCode').value;
-    const names=readTeamNames();
-    if(!group||names.some(name=>name.length<2)){
-      setSetupStatus('Completen el grupo y el nombre de cada integrante del equipo.',true);
-      return;
-    }
-    const normalized=names.map(x=>x.toLocaleLowerCase('es').replace(/\s+/g,' ').trim());
-    if(new Set(normalized).size!==normalized.length){
-      setSetupStatus('No repitan el mismo nombre dentro del equipo.',true);
-      return;
-    }
-
-    if(cfg.requireFullscreen){
-      if(!fullscreenSupported()){
-        setSetupStatus('Este navegador no permite pantalla completa obligatoria. Usen Chrome o Edge en computador.',true);
-        return;
-      }
-      if(!await enterFullscreen())return;
-    }
-
-    $('startButton').disabled=true;
-    setSetupStatus('Registrando el equipo y preparando Python…');
-    try{
-      const data=await rpc(cfg.rpc.startTeam,{
-        p_activity_slug:cfg.activitySlug,
-        p_student_names:names,
-        p_group_code:group,
-        p_session_id:crypto.randomUUID(),
-        p_user_agent:navigator.userAgent
-      });
-      state.attemptId=data.attempt_id;
-      state.token=data.attempt_token;
-      save();
-      render(data.snapshot);
-      setSetupStatus('');
-      await logEvent('ACTIVITY_READY',{
-        identity_mode:'team',
-        team_size:names.length,
-        workspace_version:'team-guided-v3'
-      });
-    }catch(err){
-      $('startButton').disabled=false;
-      setSetupStatus(`No fue posible iniciar: ${err.message}`,true);
-      if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
-    }
-  });
-
-  $('runCodeButton').addEventListener('click',runCurrentCell);
-  $('runCellButton').addEventListener('click',runCurrentCell);
-  $('validateButton').addEventListener('click',validateCurrent);
-
-  $('resetCodeButton').addEventListener('click',()=>{
-    if(!enforceFullscreen())return;
-    $('codeEditor').value=state.currentStarter;
-    state.lastCellOutput='';
-    state.lastCellScalar='';
-    state.executionCount=0;
-    $('executionCount').textContent='[ ]';
-    $('validateButton').disabled=true;
-    setValidation('Celda restablecida. Lean nuevamente los pasos antes de completar WRITE_HERE.');
-  });
-
+  $('runCodeButton').addEventListener('click',runCurrentCell);$('runCellButton').addEventListener('click',runCurrentCell);$('validateButton').addEventListener('click',validateCurrent);$('helpButton').addEventListener('click',useHelp);$('revealButton').addEventListener('click',revealSolution);$('skipButton').addEventListener('click',skipStage);$('continueAfterRevealButton').addEventListener('click',()=>{if(state.pendingNextSnapshot)render(state.pendingNextSnapshot)});
+  $('resetCodeButton').addEventListener('click',()=>{if(!enforceFullscreen())return;$('codeEditor').value=state.currentStarter;state.lastCellOutput='';state.lastCellScalar='';state.executionCount=0;$('executionCount').textContent='[ ]';$('validateButton').disabled=true;setValidation('Celda restablecida. Lean los pasos y vuelvan a completar WRITE_HERE.')});
   $('clearTerminalButton').addEventListener('click',()=>clearTerminal('Python console cleared.'));
-
-  $('terminalForm').addEventListener('submit',async e=>{
-    e.preventDefault();
-    if(!enforceFullscreen())return;
-    const input=$('terminalCommand');
-    const command=input.value.trim();
-    if(!command)return;
-    input.value='';
-    appendTerminal(`>>> ${command}`);
-    try{await executePython(command,{terminal:true});}
-    catch(err){appendTerminal(`ERROR\n${err.message}`);}
-  });
-
-  $('codeEditor').addEventListener('keydown',e=>{
-    if(e.key==='Tab'){
-      e.preventDefault();
-      const editor=e.currentTarget,start=editor.selectionStart,end=editor.selectionEnd;
-      editor.setRangeText('    ',start,end,'end');
-    }
-    if((e.shiftKey||e.ctrlKey)&&e.key==='Enter'){
-      e.preventDefault();
-      runCurrentCell();
-    }
-  });
-
+  $('terminalForm').addEventListener('submit',async e=>{e.preventDefault();if(!enforceFullscreen())return;const input=$('terminalCommand'),command=input.value.trim();if(!command)return;input.value='';appendTerminal(`>>> ${command}`);try{await executePython(command,{terminal:true})}catch(err){appendTerminal(`ERROR\n${err.message}`)}});
+  $('codeEditor').addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();const editor=e.currentTarget,start=editor.selectionStart,end=editor.selectionEnd;editor.setRangeText('    ',start,end,'end')}if((e.shiftKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();runCurrentCell()}});
   $('enterFullscreenButton').addEventListener('click',enterFullscreen);
+  document.addEventListener('fullscreenchange',async()=>{if(!activityActive()||!cfg.requireFullscreen)return;if(isFullscreen()){hideFullscreenGate();await logEvent('FULLSCREEN_ENTER',{source:'fullscreenchange',workspace_version:'guided-v4'})}else{showFullscreenGate('Salieron de pantalla completa. El laboratorio quedó pausado.');await logEvent('FULLSCREEN_EXIT',{visibility:document.visibilityState,workspace_version:'guided-v4'})}});
+  document.addEventListener('visibilitychange',async()=>{if(!activityActive())return;if(document.visibilityState==='hidden')await logEvent('UNAUTHORIZED_LEAVE',{reason:'visibility_hidden',workspace_version:'guided-v4'});else enforceFullscreen()});
+  window.addEventListener('beforeunload',e=>{if(activityActive()){e.preventDefault();e.returnValue=''}});
 
-  document.addEventListener('fullscreenchange',async()=>{
-    if(!activityActive()||!cfg.requireFullscreen)return;
-    if(isFullscreen()){
-      hideFullscreenGate();
-      await logEvent('FULLSCREEN_ENTER',{source:'fullscreenchange',workspace_version:'team-guided-v3'});
-    }else{
-      showFullscreenGate('Salieron de pantalla completa. El laboratorio quedó pausado hasta que regresen.');
-      await logEvent('FULLSCREEN_EXIT',{visibility:document.visibilityState,workspace_version:'team-guided-v3'});
-    }
-  });
-
-  document.addEventListener('visibilitychange',async()=>{
-    if(!activityActive())return;
-    if(document.visibilityState==='hidden'){
-      await logEvent('UNAUTHORIZED_LEAVE',{reason:'visibility_hidden',workspace_version:'team-guided-v3'});
-    }else{
-      enforceFullscreen();
-    }
-  });
-
-  window.addEventListener('beforeunload',e=>{
-    if(activityActive()){
-      e.preventDefault();
-      e.returnValue='';
-    }
-  });
-
-  async function restore(){
-    const raw=sessionStorage.getItem(cfg.sessionStorageKey);
-    if(!raw)return;
-    try{
-      const saved=JSON.parse(raw);
-      if(!saved.attemptId||!saved.token)return clearSaved();
-      state.attemptId=saved.attemptId;
-      state.token=saved.token;
-      const data=await rpc(cfg.rpc.resume,{p_attempt_id:state.attemptId,p_attempt_token:state.token});
-      render(data.snapshot);
-      if(activityActive())showFullscreenGate('Sesión del equipo recuperada. Vuelvan a pantalla completa para continuar.');
-    }catch(err){
-      clearSaved();
-      setSetupStatus('La sesión anterior ya no está disponible. Pueden registrar nuevamente el equipo.',true);
-    }
-  }
-
+  async function restore(){const raw=sessionStorage.getItem(cfg.sessionStorageKey);if(!raw)return;try{const saved=JSON.parse(raw);if(!saved.attemptId||!saved.token)return clearSaved();state.attemptId=saved.attemptId;state.token=saved.token;const data=await rpc(cfg.rpc.resume,{p_attempt_id:state.attemptId,p_attempt_token:state.token});render(data.snapshot);if(activityActive())showFullscreenGate('Sesión del equipo recuperada. Vuelvan a pantalla completa para continuar.')}catch(err){clearSaved();setSetupStatus('La sesión anterior ya no está disponible. Pueden registrar nuevamente el equipo.',true)}}
   restore();
 })();
