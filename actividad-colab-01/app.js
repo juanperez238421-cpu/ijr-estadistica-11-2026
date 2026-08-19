@@ -9,7 +9,7 @@
     attemptId:null,
     token:null,
     snapshot:null,
-    authorizedExternalUntil:0,
+    authorizedExternal:false,
     restrictionEvents:0
   };
 
@@ -26,7 +26,6 @@
   function activityActive(){return !!state.snapshot && !state.snapshot.completed;}
   function fullscreenSupported(){return !!document.documentElement.requestFullscreen;}
   function isFullscreen(){return !!document.fullscreenElement;}
-  function authorizedExternal(){return Date.now() <= state.authorizedExternalUntil;}
 
   async function logEvent(type,metadata={}){
     if(!state.attemptId||!state.token||!cfg.rpc.event)return null;
@@ -170,18 +169,19 @@
     }
   });
 
-  $('openColab')?.addEventListener('click',async e=>{
+  $('openColab')?.addEventListener('click',e=>{
     e.preventDefault();
     if(!enforceFullscreen())return;
-    state.authorizedExternalUntil=Date.now()+7000;
-    await logEvent('COLAB_LAUNCH',{authorized_external_transition:true});
-    const win=window.open(e.currentTarget.href,'ijrColabWorkspace','noopener');
+    state.authorizedExternal=true;
+    const win=window.open(e.currentTarget.href,'ijrColabWorkspace');
     if(!win){
-      state.authorizedExternalUntil=0;
+      state.authorizedExternal=false;
       setStatus('activityStatus','El navegador bloqueó la pestaña de Colab. Permite ventanas emergentes para este sitio.',true);
-    }else{
-      setStatus('activityStatus','Colab abierto. Cuando regreses, la actividad volverá a exigir pantalla completa.');
+      return;
     }
+    try{win.opener=null;}catch(_){ }
+    setStatus('activityStatus','Colab abierto. Cuando regreses, la actividad volverá a exigir pantalla completa.');
+    logEvent('COLAB_LAUNCH',{authorized_external_transition:true});
   });
 
   $('enterFullscreenButton')?.addEventListener('click',enterFullscreen);
@@ -193,7 +193,7 @@
       await logEvent('FULLSCREEN_ENTER',{source:'fullscreenchange'});
       return;
     }
-    const allowed=authorizedExternal();
+    const allowed=state.authorizedExternal;
     showFullscreenGate(allowed?'Regresaste desde Colab. Activa nuevamente pantalla completa para continuar.':'Saliste de pantalla completa. La actividad quedó pausada hasta que regreses.');
     if(!allowed) await logEvent('FULLSCREEN_EXIT',{visibility:document.visibilityState});
   });
@@ -201,10 +201,11 @@
   document.addEventListener('visibilitychange',async()=>{
     if(!activityActive())return;
     if(document.visibilityState==='hidden'){
-      const allowed=authorizedExternal();
-      if(!allowed && isFullscreen()) await logEvent('UNAUTHORIZED_LEAVE',{reason:'visibility_hidden_while_fullscreen'});
-      state.authorizedExternalUntil=0;
+      if(!state.authorizedExternal && isFullscreen()) await logEvent('UNAUTHORIZED_LEAVE',{reason:'visibility_hidden_while_fullscreen'});
     }else{
+      const cameFromAuthorizedColab=state.authorizedExternal;
+      state.authorizedExternal=false;
+      if(cameFromAuthorizedColab) setStatus('activityStatus','Regreso desde Colab confirmado.');
       enforceFullscreen();
     }
   });
