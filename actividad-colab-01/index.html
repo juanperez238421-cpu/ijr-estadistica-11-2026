@@ -4,67 +4,168 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow">
-  <title>Statistics 11 · Colab Lab 01</title>
-  <link rel="stylesheet" href="styles.css?v=20260819-2">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta name="color-scheme" content="light">
+  <title>Statistics 11 · Python Data Lab</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <link rel="stylesheet" href="styles.css?v=20260819-workspace2">
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+  <script defer src="config.js?v=20260819-workspace2"></script>
+  <script defer src="app.js?v=20260819-workspace2"></script>
 </head>
 <body>
-<main class="shell">
-  <header class="topbar">
-    <div><div class="eyebrow">Instituto Jorge Robledo · Statistics 11</div><h1>Colab Lab 01 · Python to Data</h1></div>
-    <div class="badge">8 checkpoints · live grade · guided fullscreen</div>
-  </header>
-
-  <section id="setupPanel" class="panel">
-    <h2>Actividad guiada con Google Colab</h2>
-    <p class="lead">No es una evaluación de memoria. La meta es ejecutar código real, observar resultados y aprender a leer lo que Python devuelve. Puedes corregir y volver a intentar.</p>
-    <div class="notice"><strong>Registro abierto:</strong> selecciona 11A, 11B o 11C y escribe tu nombre. La actividad permite iniciar aunque el texto no coincida con la lista institucional; el nombre ingresado quedará registrado en el panel maestro.</div>
-    <div class="notice info"><strong>Modo de trabajo:</strong> el portal funciona en pantalla completa. Para ir a Google Colab usa siempre el botón <em>Abrir / volver a Colab</em>. Al regresar, el portal te pedirá activar de nuevo la pantalla completa antes de continuar.</div>
-    <form id="registrationForm">
-      <div class="grid" style="margin-top:16px">
-        <div class="field"><label for="groupCode">Grupo</label><select id="groupCode" required><option value="">Selecciona…</option><option>11A</option><option>11B</option><option>11C</option></select></div>
-        <div class="field"><label for="studentName">Nombre completo</label><input id="studentName" autocomplete="name" required placeholder="Escribe tu nombre"></div>
+  <main class="app-shell">
+    <header class="app-bar">
+      <div class="brand-block">
+        <span class="brand-mark">IJR</span>
+        <div>
+          <div class="course-label">Instituto Jorge Robledo · Statistics 11</div>
+          <h1>Python Data Lab</h1>
+        </div>
       </div>
-      <div class="actions"><button id="startButton" type="submit">Iniciar actividad en pantalla completa</button><a class="button secondary" href="../">Volver al curso</a></div>
-      <div id="setupStatus" class="status"></div>
-    </form>
-  </section>
+      <div class="app-status">
+        <span id="runtimeBadge" class="runtime-badge offline"><span class="status-dot"></span>Python runtime</span>
+        <span id="restrictionLabel" class="mode-badge">Guided mode</span>
+      </div>
+    </header>
 
-  <section id="activityPanel" class="panel hidden">
-    <div class="progress-wrap">
-      <div><div class="eyebrow" id="studentLabel"></div><h2 style="margin:.2rem 0">Your Colab checkpoint</h2></div>
-      <div class="score-stack"><div class="score" id="gradeLabel">Nota 1.00 / 5.00</div><div id="restrictionLabel" class="restriction-pill">Modo guiado activo</div></div>
+    <section id="setupPanel" class="setup-screen">
+      <div class="setup-card">
+        <div class="setup-kicker">LAB 01 · FROM PYTHON TO DATA</div>
+        <h2>Un laboratorio, no un cuestionario.</h2>
+        <p>Vas a escribir y ejecutar Python dentro de esta misma página. Cada etapa combina una explicación breve, una celda editable, una consola real de Python en el navegador y una comprobación de aprendizaje.</p>
+        <div class="setup-points">
+          <div><strong>01</strong><span>Lee la guía.</span></div>
+          <div><strong>02</strong><span>Edita y ejecuta la celda.</span></div>
+          <div><strong>03</strong><span>Explora con la terminal.</span></div>
+          <div><strong>04</strong><span>Valida y avanza.</span></div>
+        </div>
+        <form id="registrationForm" class="registration-form">
+          <label>Grupo
+            <select id="groupCode" required>
+              <option value="">Selecciona…</option>
+              <option>11A</option><option>11B</option><option>11C</option>
+            </select>
+          </label>
+          <label>Nombre completo
+            <input id="studentName" autocomplete="name" required placeholder="Escribe tu nombre">
+          </label>
+          <button id="startButton" type="submit" class="primary-action">Entrar al laboratorio</button>
+        </form>
+        <div id="setupStatus" class="inline-status"></div>
+        <p class="privacy-note">El nombre puede ser escrito libremente. Si coincide con el roster institucional, el sistema conserva esa asociación; de lo contrario queda registrado como nombre declarado.</p>
+      </div>
+    </section>
+
+    <section id="workspacePanel" class="workspace hidden" aria-live="polite">
+      <div class="workspace-topline">
+        <div>
+          <span id="studentLabel" class="student-label"></span>
+          <span class="separator">/</span>
+          <span id="stepLabel">Stage 1 of 8</span>
+        </div>
+        <div class="grade-cluster">
+          <span id="progressText">0 / 8 completed</span>
+          <strong id="gradeLabel">1.00 / 5.00</strong>
+        </div>
+      </div>
+      <div class="progress-line"><div id="progressBar" class="progress-fill"></div></div>
+      <div id="stepRail" class="step-rail" aria-label="Progreso del laboratorio"></div>
+
+      <div class="workspace-grid">
+        <aside class="guide-pane">
+          <div class="guide-scroll">
+            <div id="lessonTag" class="lesson-tag">FOUNDATION</div>
+            <h2 id="lessonTitle">Loading…</h2>
+            <div id="lessonConcept" class="lesson-copy"></div>
+            <div class="guide-section">
+              <h3>What you are learning</h3>
+              <div id="lessonGoal" class="lesson-copy"></div>
+            </div>
+            <div class="guide-section task-section">
+              <h3>Your task</h3>
+              <div id="lessonTask" class="lesson-copy"></div>
+            </div>
+            <div class="guide-section explore-section">
+              <h3>Explore</h3>
+              <div id="lessonExplore" class="lesson-copy"></div>
+            </div>
+            <details class="hint-box">
+              <summary>Need a hint?</summary>
+              <div id="lessonHint"></div>
+            </details>
+          </div>
+        </aside>
+
+        <section class="notebook-pane">
+          <div class="notebook-toolbar">
+            <div class="kernel-info"><span class="kernel-dot"></span><span id="kernelLabel">Python 3 · browser runtime</span></div>
+            <div class="toolbar-actions">
+              <button id="resetCodeButton" type="button" class="ghost-button">Reset cell</button>
+              <button id="runCodeButton" type="button" class="run-button">▶ Run</button>
+            </div>
+          </div>
+
+          <div class="code-cell">
+            <div class="cell-gutter">
+              <button id="runCellButton" class="cell-run" type="button" aria-label="Ejecutar celda">▶</button>
+              <span id="executionCount">[ ]</span>
+            </div>
+            <div class="editor-wrap">
+              <textarea id="codeEditor" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Python code editor"></textarea>
+            </div>
+          </div>
+
+          <section class="terminal-card" aria-label="Python terminal">
+            <div class="terminal-head">
+              <span>Python console</span>
+              <button id="clearTerminalButton" type="button">Clear</button>
+            </div>
+            <pre id="terminalOutput" class="terminal-output"><span class="terminal-muted">Initializing Python runtime…</span></pre>
+            <form id="terminalForm" class="terminal-input-row">
+              <span class="terminal-prompt">&gt;&gt;&gt;</span>
+              <input id="terminalCommand" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Try a Python command">
+              <button type="submit">Run</button>
+            </form>
+          </section>
+
+          <div class="validation-bar">
+            <div>
+              <div id="activityStatus" class="validation-status">Run the cell when you are ready.</div>
+              <div class="validation-help">The validator reads the last value printed by your Python code. You do not type the answer into a separate quiz box.</div>
+            </div>
+            <button id="validateButton" type="button" class="validate-button" disabled>Check output &amp; continue</button>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section id="finishPanel" class="finish-screen hidden">
+      <div class="finish-card">
+        <div class="finish-icon">✓</div>
+        <div class="setup-kicker">LAB COMPLETED</div>
+        <h2>Python to Data complete.</h2>
+        <p>Terminaste las ocho etapas. Tu progreso y nota quedaron registrados en el panel maestro.</p>
+        <div class="finish-metrics">
+          <div><span>Stages</span><strong id="finishPoints">8 / 8</strong></div>
+          <div><span>Grade</span><strong id="finishGrade">5.00</strong></div>
+          <div><span>Status</span><strong>Submitted</strong></div>
+        </div>
+        <a class="primary-action link-action" href="../">Volver al curso</a>
+      </div>
+    </section>
+  </main>
+
+  <div id="fullscreenGate" class="fullscreen-gate hidden" role="dialog" aria-modal="true" aria-labelledby="fullscreenGateTitle">
+    <div class="fullscreen-card">
+      <div class="setup-kicker">GUIDED MODE</div>
+      <h2 id="fullscreenGateTitle">Pantalla completa requerida</h2>
+      <p id="fullscreenMessage">El laboratorio está pausado hasta que vuelvas a pantalla completa.</p>
+      <button id="enterFullscreenButton" type="button" class="primary-action">Volver a pantalla completa</button>
+      <p class="gate-note">Los navegadores permiten salir con Esc o cambiar de aplicación. El laboratorio no puede bloquear el sistema operativo, pero sí bloquea el trabajo hasta recuperar pantalla completa y registra la salida observable.</p>
     </div>
-    <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
-    <p class="lead"><span id="progressText">0/8</span> completados. Cada checkpoint correcto suma 0.50 a la nota.</p>
-    <div class="actions">
-      <a id="openColab" class="button" target="ijrColabWorkspace" href="https://colab.research.google.com/github/juanperez238421-cpu/ijr-estadistica-11-2026/blob/main/actividad-colab-01/colab_01_fundamentos.ipynb">Abrir / volver a Colab</a>
-      <a class="button secondary" href="data.csv" download="statistics11_colab01_data.csv">Descargar CSV</a>
-    </div>
-    <div class="notice compact"><strong>Importante:</strong> no uses Ctrl+Tab ni abras otras páginas desde este portal. Usa el botón de Colab para una transición autorizada. Si sales de pantalla completa, la actividad se pausa hasta que regreses.</div>
-    <div id="activityStatus" class="status"></div>
-    <div id="checkpointList" class="checkpoint-list"></div>
-  </section>
-
-  <section id="finishPanel" class="panel hidden">
-    <h2>Actividad completada</h2>
-    <p class="lead">Tu resultado quedó registrado en el panel maestro.</p>
-    <div class="summary"><div class="metric"><span>Checkpoints</span><strong id="finishPoints">8/8</strong></div><div class="metric"><span>Nota</span><strong id="finishGrade">5.00</strong></div><div class="metric"><span>Estado</span><strong>Submitted</strong></div></div>
-    <div class="actions"><a class="button" href="../">Volver al curso</a></div>
-  </section>
-</main>
-
-<div id="fullscreenGate" class="fullscreen-gate hidden" role="dialog" aria-modal="true" aria-labelledby="fullscreenGateTitle">
-  <div class="fullscreen-card">
-    <div class="eyebrow">Modo guiado</div>
-    <h2 id="fullscreenGateTitle">Pantalla completa requerida</h2>
-    <p id="fullscreenMessage">Esta actividad solo puede continuar en pantalla completa.</p>
-    <button id="enterFullscreenButton" type="button">Volver a pantalla completa</button>
-    <p class="gate-note">El navegador puede permitir salir con Esc o con atajos del sistema; el portal se bloquea automáticamente hasta que vuelvas a pantalla completa.</p>
   </div>
-</div>
-
-<script src="config.js?v=20260819-2"></script>
-<script src="app.js?v=20260819-2"></script>
 </body>
 </html>
