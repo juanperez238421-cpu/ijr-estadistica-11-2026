@@ -222,7 +222,6 @@ begin
     v_display := v_names[v_i];
     v_norm := v_norms[v_i];
     v_match_count := 0;
-    v_student := null;
 
     select count(*) into v_match_count
     from public.student_registry s
@@ -239,7 +238,6 @@ begin
       if exists (
         select 1
         from public.learning_activity_attempt_members m
-        join public.learning_activity_attempts other_attempt on other_attempt.id=m.attempt_id
         where m.activity_id=v_activity.id
           and m.student_registry_id=v_student.id
           and m.attempt_id<>v_attempt.id
