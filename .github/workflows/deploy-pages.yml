@@ -87,6 +87,10 @@ jobs:
           node --check evaluacion-conteo-permutaciones/app.js
           node --check evaluacion-conteo-permutaciones/teacher-demo-bank.js
           node --check evaluacion-conteo-permutaciones/teacher-mode.js
+          node --check actividad-colab-01/app.js
+          node --check actividad-colab-01/config.js
+          node --check maestro/app.js
+          node --check maestro/config.js
           python -m py_compile tools/check_backend_readiness.py tools/import_academic_source.py tools/open_assessment.py
 
       - name: Verify static assessment files
@@ -99,11 +103,22 @@ jobs:
           test -s evaluacion-conteo-permutaciones/teacher-mode.js
           test -s evaluacion-conteo-permutaciones/config.js
           test -s evaluacion-conteo-permutaciones/teacher/index.html
+          test -s actividad-colab-01/index.html
+          test -s actividad-colab-01/app.js
+          test -s actividad-colab-01/config.js
+          test -s actividad-colab-01/colab_01_fundamentos.ipynb
+          test -s actividad-colab-01/data.csv
+          test -s maestro/index.html
+          test -s maestro/app.js
+          test -s maestro/config.js
           ! grep -R "REPLACE_WITH_SUPABASE" evaluacion-conteo-permutaciones/config.js
           grep -q "student_start_attempt_v2" evaluacion-conteo-permutaciones/config.js
           grep -q "teacher_code_login" evaluacion-conteo-permutaciones/config.js
           grep -Eq "gradeMin['\"]?:?3(\.0)?|gradeMin.*3\.0" evaluacion-conteo-permutaciones/config.js
           grep -q "studentEmail" evaluacion-conteo-permutaciones/index.html
+          grep -q "student_learning_activity_start" actividad-colab-01/config.js
+          grep -q "student_learning_activity_event" actividad-colab-01/config.js
+          grep -q "teacher_learning_dashboard" maestro/config.js
           touch .nojekyll
 
       - name: Setup Pages
