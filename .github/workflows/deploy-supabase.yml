@@ -94,8 +94,18 @@ jobs:
             --no-verify-jwt \
             --use-api
 
-      - name: Wait for PostgREST schema reload
-        run: sleep 6
+      - name: Deploy Seminar T3 static host Edge Function
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s supabase/functions/seminar-t3-host/index.ts
+          supabase functions deploy seminar-t3-host \
+            --project-ref "$SUPABASE_PROJECT_REF" \
+            --no-verify-jwt \
+            --use-api
+
+      - name: Wait for PostgREST and Edge runtime propagation
+        run: sleep 8
 
       - name: Public production health check
         shell: bash
@@ -142,6 +152,25 @@ jobs:
           print('Statistics 11 backend is READY for student traffic, email outbox and teacher analytics.')
           PY
 
+      - name: Seminar T3 public host smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="$SUPABASE_URL/functions/v1/seminar-t3-host"
+          curl --fail --silent --show-error --location \
+            --retry 6 --retry-delay 3 --retry-all-errors \
+            "$BASE/" > /tmp/seminar_student.html
+          curl --fail --silent --show-error --location \
+            --retry 6 --retry-delay 3 --retry-all-errors \
+            "$BASE/teacher.html" > /tmp/seminar_teacher.html
+          curl --fail --silent --show-error --location \
+            "$BASE/data/course-index.json" > /tmp/seminar_course.json
+          grep -q "Third Period Coding Studio" /tmp/seminar_student.html
+          grep -q "Registro" /tmp/seminar_teacher.html
+          python -m json.tool /tmp/seminar_course.json >/dev/null
+          echo "Student URL: $BASE/"
+          echo "Teacher URL: $BASE/teacher.html"
+
       - name: Deep private readiness check
         if: ${{ env.SUPABASE_SERVICE_ROLE_KEY != '' }}
         run: |
@@ -155,12 +184,15 @@ jobs:
         if: success()
         shell: bash
         run: |
-          echo "### Statistics 11 assessment backend READY" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Statistics 11 + Seminar T3 backend READY" >> "$GITHUB_STEP_SUMMARY"
           echo "- Project: \`$SUPABASE_PROJECT_REF\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Assessment: OPEN" >> "$GITHUB_STEP_SUMMARY"
           echo "- Questions: >= 2,000; >= 500 per topic" >> "$GITHUB_STEP_SUMMARY"
           echo "- Third integrity strike: terminal server-side finalization" >> "$GITHUB_STEP_SUMMARY"
           echo "- Email Edge Function: DEPLOYED" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Seminar T3 static host: DEPLOYED + SMOKE TESTED" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Student: $SUPABASE_URL/functions/v1/seminar-t3-host/" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Teacher: $SUPABASE_URL/functions/v1/seminar-t3-host/teacher.html" >> "$GITHUB_STEP_SUMMARY"
           if [ -n "${RESEND_API_KEY:-}" ]; then
             echo "- Email provider: CONFIGURED" >> "$GITHUB_STEP_SUMMARY"
           else
@@ -181,9 +213,9 @@ jobs:
           if [ "$JOB_STATUS" != "success" ]; then
             label="❌ FAILED"
           elif [ -z "${RESEND_API_KEY:-}" ]; then
-            label="⚠️ CORE READY · EMAIL PROVIDER PENDING"
+            label="⚠️ CORE READY · EMAIL PROVIDER PENDING · SEMINAR T3 HOST READY"
           else
-            label="✅ READY · EMAIL ACTIVE"
+            label="✅ READY · EMAIL ACTIVE · SEMINAR T3 HOST READY"
           fi
           gh issue comment 33 \
             --repo juanperez238421-cpu/ijr-estadistica-11-2026 \
