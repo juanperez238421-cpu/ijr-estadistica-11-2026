@@ -7,13 +7,13 @@
   <meta name="color-scheme" content="light">
   <title>Statistics 11 · Python Data Lab</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
-  <link rel="stylesheet" href="styles.css?v=20260819-workspace3">
+  <link rel="stylesheet" href="styles.css?v=20260819-workspace4">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
-  <script defer src="config.js?v=20260819-workspace3"></script>
-  <script defer src="app.js?v=20260819-workspace3"></script>
+  <script defer src="config.js?v=20260819-workspace4"></script>
+  <script defer src="app.js?v=20260819-workspace4"></script>
 </head>
 <body>
   <main class="app-shell">
@@ -33,14 +33,27 @@
 
     <section id="setupPanel" class="setup-screen">
       <div class="setup-card">
-        <div class="setup-kicker">LAB 01 · FROM PYTHON TO DATA</div>
+        <div class="setup-kicker">LAB 01 · FROM PYTHON TO DATA · ≈ 40 MIN</div>
         <h2>Una estación de trabajo, un equipo, un laboratorio.</h2>
-        <p class="setup-lead">Cada computador será usado por <strong>2 o 3 estudiantes</strong>. El equipo comparte el mismo entorno Python, la misma guía y la misma nota de progreso. Todos los integrantes deben registrarse antes de comenzar.</p>
+        <p class="setup-lead">Cada computador será usado por <strong>2 o 3 estudiantes</strong>. El equipo comparte el entorno Python, el progreso y la nota. La actividad está diseñada para completar sus ocho etapas en aproximadamente una clase de 40 minutos.</p>
+
         <div class="setup-points">
           <div><strong>01</strong><span>Lean juntos la explicación.</span></div>
-          <div><strong>02</strong><span>Completen el código marcado con <code>WRITE_HERE</code>.</span></div>
-          <div><strong>03</strong><span>Ejecuten, observen y discutan la salida.</span></div>
-          <div><strong>04</strong><span>Valide el equipo y avance a la siguiente etapa.</span></div>
+          <div><strong>02</strong><span>Completen <code>WRITE_HERE</code> y ejecuten.</span></div>
+          <div><strong>03</strong><span>Si se bloquean, administren sus 3 ayudas.</span></div>
+          <div><strong>04</strong><span>Pueden avanzar aunque una etapa no quede resuelta.</span></div>
+        </div>
+
+        <div class="grading-policy" aria-label="Reglas de calificación">
+          <div class="policy-title">Cómo funciona la nota</div>
+          <div class="policy-grid">
+            <div><strong>5.00</strong><span>La proyección inicia en 5.00 y baja según el apoyo utilizado.</span></div>
+            <div><strong>3 ayudas</strong><span>Son para todo el laboratorio. Cada ayuda reduce 0.10 de la nota máxima proyectada.</span></div>
+            <div><strong>Error validado</strong><span>Cada salida incorrecta reduce 0.05 de la proyección, hasta 3 errores penalizados por etapa.</span></div>
+            <div><strong>Ver solución</strong><span>La etapa queda completada con 25% de su valor.</span></div>
+            <div><strong>Continuar sin resolver</strong><span>La etapa queda completada con 0% de su valor.</span></div>
+          </div>
+          <p>Los errores de sintaxis al ejecutar Python <strong>no bajan la nota</strong>. Solo se registra penalización cuando el equipo presiona <em>Validar</em> con una salida incorrecta.</p>
         </div>
 
         <form id="registrationForm" class="registration-form team-registration">
@@ -62,28 +75,19 @@
           <fieldset class="team-fieldset">
             <legend>Integrantes del equipo</legend>
             <div class="member-grid">
-              <label>Estudiante 1
-                <input id="studentName1" autocomplete="off" required placeholder="Nombre completo">
-              </label>
-              <label>Estudiante 2
-                <input id="studentName2" autocomplete="off" required placeholder="Nombre completo">
-              </label>
-              <label id="student3Wrap">Estudiante 3
-                <input id="studentName3" autocomplete="off" required placeholder="Nombre completo">
-              </label>
+              <label>Estudiante 1<input id="studentName1" autocomplete="off" required placeholder="Nombre completo"></label>
+              <label>Estudiante 2<input id="studentName2" autocomplete="off" required placeholder="Nombre completo"></label>
+              <label id="student3Wrap">Estudiante 3<input id="studentName3" autocomplete="off" required placeholder="Nombre completo"></label>
             </div>
           </fieldset>
 
           <div class="registration-actions">
-            <div>
-              <strong>Antes de entrar:</strong>
-              <span>verifiquen que los nombres correspondan a quienes están realmente en este PC.</span>
-            </div>
+            <div><strong>Antes de entrar:</strong><span>verifiquen que los nombres correspondan a quienes están realmente en este PC.</span></div>
             <button id="startButton" type="submit" class="primary-action">Entrar al laboratorio</button>
           </div>
         </form>
         <div id="setupStatus" class="inline-status"></div>
-        <p class="privacy-note">Los nombres pueden escribirse libremente. Cuando un nombre coincide de forma inequívoca con el roster institucional, el sistema conserva esa asociación; si no coincide, queda registrado como nombre declarado dentro del equipo.</p>
+        <p class="privacy-note">Los nombres pueden escribirse libremente. Cuando un nombre coincide de forma inequívoca con el roster institucional, el sistema conserva esa asociación.</p>
       </div>
     </section>
 
@@ -92,11 +96,13 @@
         <div class="team-identity">
           <span id="studentLabel" class="student-label"></span>
           <span class="separator">/</span>
-          <span id="stepLabel">Stage 1 of 8</span>
+          <span id="stepLabel">Etapa 1 de 8</span>
         </div>
-        <div class="grade-cluster">
-          <span id="progressText">0 / 8 completed</span>
-          <strong id="gradeLabel">1.00 / 5.00</strong>
+        <div class="live-metrics">
+          <span id="timeLabel" class="time-badge">00:00 / 40:00</span>
+          <span id="helpBadge" class="help-badge">3 ayudas</span>
+          <span id="progressText">0 / 8 completadas</span>
+          <strong id="gradeLabel">Proyección 5.00 / 5.00</strong>
         </div>
       </div>
       <div class="progress-line"><div id="progressBar" class="progress-fill"></div></div>
@@ -105,17 +111,20 @@
       <div class="workspace-grid">
         <aside id="guidePane" class="guide-pane">
           <div class="guide-scroll">
-            <div id="lessonTag" class="lesson-tag">FOUNDATION</div>
+            <div class="lesson-meta-row">
+              <div id="lessonTag" class="lesson-tag">FOUNDATION</div>
+              <div id="lessonTiming" class="lesson-timing">Objetivo: 4 min</div>
+            </div>
             <h2 id="lessonTitle">Loading…</h2>
             <div id="lessonConcept" class="lesson-copy lesson-intro"></div>
 
             <div class="guide-section learning-section">
-              <h3>Qué vas a aprender</h3>
+              <h3>Qué van a aprender</h3>
               <div id="lessonGoal" class="lesson-copy"></div>
             </div>
 
             <div class="guide-section guided-section">
-              <h3>Hazlo paso a paso</h3>
+              <h3>Háganlo paso a paso</h3>
               <ol id="lessonSteps" class="guide-steps"></ol>
             </div>
 
@@ -129,10 +138,14 @@
               <div id="lessonExplore" class="lesson-copy"></div>
             </div>
 
-            <details class="hint-box">
-              <summary>Necesitamos una pista</summary>
-              <div id="lessonHint"></div>
-            </details>
+            <section class="support-card">
+              <div class="support-head">
+                <div><span class="support-kicker">AYUDAS DEL LABORATORIO</span><strong id="helpRemainingText">Quedan 3 de 3</strong></div>
+                <button id="helpButton" type="button" class="support-button">Usar 1 ayuda</button>
+              </div>
+              <div id="helpPanel" class="help-panel hidden"></div>
+              <p class="support-note">Cada ayuda es progresiva y queda registrada. Tienen máximo 3 ayudas para las ocho etapas.</p>
+            </section>
           </div>
         </aside>
 
@@ -147,7 +160,7 @@
 
           <div class="cell-instruction">
             <div class="instruction-number">1</div>
-            <div><strong>Completen primero la celda.</strong><span>No hay un resultado escrito de antemano. Reemplacen cada <code>WRITE_HERE</code> usando la guía.</span></div>
+            <div><strong>Completen primero la celda.</strong><span>Reemplacen cada <code>WRITE_HERE</code> usando la guía. El resultado no está escrito de antemano.</span></div>
           </div>
 
           <div class="code-cell">
@@ -155,21 +168,16 @@
               <button id="runCellButton" class="cell-run" type="button" aria-label="Ejecutar celda">▶</button>
               <span id="executionCount">[ ]</span>
             </div>
-            <div class="editor-wrap">
-              <textarea id="codeEditor" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Python code editor"></textarea>
-            </div>
+            <div class="editor-wrap"><textarea id="codeEditor" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Python code editor"></textarea></div>
           </div>
 
           <div class="cell-instruction compact-instruction">
             <div class="instruction-number">2</div>
-            <div><strong>Ejecuten y lean la salida.</strong><span>Si Python muestra un error, léanlo antes de editar. El error también hace parte del aprendizaje.</span></div>
+            <div><strong>Ejecuten y lean la salida.</strong><span>Un error de Python no resta puntos. Corrijan el código y vuelvan a ejecutar.</span></div>
           </div>
 
           <section class="terminal-card" aria-label="Python terminal">
-            <div class="terminal-head">
-              <span>Python console</span>
-              <button id="clearTerminalButton" type="button">Clear</button>
-            </div>
+            <div class="terminal-head"><span>Python console</span><button id="clearTerminalButton" type="button">Clear</button></div>
             <pre id="terminalOutput" class="terminal-output"><span class="terminal-muted">Initializing Python runtime…</span></pre>
             <form id="terminalForm" class="terminal-input-row">
               <span class="terminal-prompt">&gt;&gt;&gt;</span>
@@ -178,12 +186,23 @@
             </form>
           </section>
 
+          <section id="solutionPanel" class="solution-panel hidden">
+            <div class="solution-head"><div><span>RESPUESTA REVELADA</span><strong>Estudien la solución antes de continuar.</strong></div><span id="solutionCredit" class="credit-pill">25% de la etapa</span></div>
+            <pre id="solutionCode"></pre>
+            <div class="solution-output"><span>Salida correcta:</span><code id="solutionOutput"></code></div>
+            <button id="continueAfterRevealButton" type="button" class="primary-action">Entendimos · continuar</button>
+          </section>
+
           <div class="validation-bar">
-            <div>
+            <div class="validation-copy">
               <div id="activityStatus" class="validation-status">Completen la celda y ejecútenla cuando estén listos.</div>
-              <div class="validation-help">El sistema valida la última salida numérica impresa por su código. No existe una casilla separada con la respuesta.</div>
+              <div id="penaltyStatus" class="validation-help">La proyección solo baja por ayudas, salidas incorrectas validadas, solución revelada o etapa omitida.</div>
             </div>
-            <button id="validateButton" type="button" class="validate-button" disabled>Validar etapa y continuar</button>
+            <div class="validation-actions">
+              <button id="revealButton" type="button" class="text-action">Ver solución correcta</button>
+              <button id="skipButton" type="button" class="danger-outline hidden">Continuar sin resolver</button>
+              <button id="validateButton" type="button" class="validate-button" disabled>Validar salida</button>
+            </div>
           </div>
         </section>
       </div>
@@ -194,11 +213,12 @@
         <div class="finish-icon">✓</div>
         <div class="setup-kicker">LAB COMPLETED</div>
         <h2>Python to Data complete.</h2>
-        <p>El equipo terminó las ocho etapas. El progreso y la nota quedaron registrados para sus integrantes en el panel maestro.</p>
+        <p>El equipo terminó las ocho etapas. La nota final incorpora las ayudas, los errores validados y las decisiones de revelar u omitir etapas.</p>
         <div class="finish-metrics">
-          <div><span>Stages</span><strong id="finishPoints">8 / 8</strong></div>
-          <div><span>Grade</span><strong id="finishGrade">5.00</strong></div>
-          <div><span>Team</span><strong id="finishTeamSize">3</strong></div>
+          <div><span>Etapas</span><strong id="finishPoints">8 / 8</strong></div>
+          <div><span>Nota final</span><strong id="finishGrade">5.00</strong></div>
+          <div><span>Ayudas usadas</span><strong id="finishHelps">0 / 3</strong></div>
+          <div><span>Tiempo</span><strong id="finishTime">00:00</strong></div>
         </div>
         <a class="primary-action link-action" href="../">Volver al curso</a>
       </div>
@@ -209,7 +229,7 @@
     <div class="fullscreen-card">
       <div class="setup-kicker">GUIDED MODE</div>
       <h2 id="fullscreenGateTitle">Pantalla completa requerida</h2>
-      <p id="fullscreenMessage">El laboratorio está pausado hasta que vuelvas a pantalla completa.</p>
+      <p id="fullscreenMessage">El laboratorio está pausado hasta que vuelvan a pantalla completa.</p>
       <button id="enterFullscreenButton" type="button" class="primary-action">Volver a pantalla completa</button>
       <p class="gate-note">El navegador puede permitir salir con Esc o cambiar de aplicación. El laboratorio bloquea el trabajo hasta recuperar pantalla completa y registra la salida observable.</p>
     </div>
