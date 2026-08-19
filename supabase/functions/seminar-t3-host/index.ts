@@ -19,29 +19,35 @@ const MIME: Record<string, string> = {
 
 function headersFor(path: string): Headers {
   const ext = path.split(".").pop()?.toLowerCase() ?? "";
-  const h = new Headers({
+  return new Headers({
     "Content-Type": MIME[ext] ?? "application/octet-stream",
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Access-Control-Allow-Origin": "*",
     "Cache-Control": ext === "html" ? "public, max-age=30" : "public, max-age=300",
   });
-  return h;
 }
 
 function safeRelativePath(url: URL): { path?: string; redirect?: string; error?: string } {
-  const marker = `/functions/v1/${FUNCTION_NAME}`;
-  const i = url.pathname.indexOf(marker);
-  if (i < 0) return { error: "Invalid host path" };
+  const pathname = decodeURIComponent(url.pathname);
+  const markers = [`/functions/v1/${FUNCTION_NAME}`, `/${FUNCTION_NAME}`];
+  let suffix: string | null = null;
 
-  const after = url.pathname.slice(i + marker.length);
-  if (after === "") {
-    const redirect = `${url.origin}${marker}/${url.search}`;
-    return { redirect };
+  for (const marker of markers) {
+    if (pathname === marker) {
+      return { redirect: `${url.origin}${pathname}/${url.search}` };
+    }
+    if (pathname.startsWith(`${marker}/`)) {
+      suffix = pathname.slice(marker.length + 1);
+      break;
+    }
   }
 
-  let path = decodeURIComponent(after.replace(/^\/+/, ""));
-  if (!path) path = "index.html";
+  // Supabase Edge Runtime may expose the path after the function name only,
+  // e.g. "/", "/teacher.html" or "/data/course-index.json".
+  if (suffix === null) suffix = pathname.replace(/^\/+/, "");
+
+  let path = suffix || "index.html";
   if (path.endsWith("/")) path += "index.html";
 
   if (path.includes("..") || path.includes("\\") || path.startsWith("/")) {
@@ -80,7 +86,7 @@ Deno.serve(async (req: Request) => {
   if (route.error || !route.path) return new Response(route.error ?? "Bad request", { status: 400 });
 
   const upstream = await fetch(`${UPSTREAM_BASE}${route.path}`, {
-    headers: { "User-Agent": "IJR-Seminar-T3-Static-Host/1.0" },
+    headers: { "User-Agent": "IJR-Seminar-T3-Static-Host/1.1" },
   });
 
   if (!upstream.ok) {
@@ -97,8 +103,7 @@ Deno.serve(async (req: Request) => {
 
   const ext = route.path.split(".").pop()?.toLowerCase();
   if (ext === "html") {
-    const html = rewriteHtml(await upstream.text());
-    return new Response(html, { status: 200, headers });
+    return new Response(rewriteHtml(await upstream.text()), { status: 200, headers });
   }
 
   return new Response(upstream.body, { status: 200, headers });
