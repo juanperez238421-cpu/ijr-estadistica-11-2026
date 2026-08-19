@@ -1,0 +1,68 @@
+(() => {
+  'use strict';
+  const cfg = window.IJR_COLAB_ACTIVITY_CONFIG;
+  const $ = id => document.getElementById(id);
+  const sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+  const state = {attemptId:null, token:null, snapshot:null};
+
+  async function rpc(name,args={}){const {data,error}=await sb.rpc(name,args);if(error)throw new Error(error.message||'Backend error');return data;}
+  function setStatus(id,msg,bad=false){const el=$(id);el.textContent=msg||'';el.style.color=bad?'#9b2020':'';}
+  function save(){if(!state.attemptId||!state.token)return;sessionStorage.setItem(cfg.sessionStorageKey,JSON.stringify({attemptId:state.attemptId,token:state.token}));}
+  function clear(){sessionStorage.removeItem(cfg.sessionStorageKey);}
+  function fmtGrade(v){return Number(v??1).toFixed(2);}
+  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+  function render(snapshot){
+    state.snapshot=snapshot;
+    $('setupPanel').classList.add('hidden');
+    const completed=Number(snapshot.correct_count||0);
+    const total=Number(snapshot.checkpoint_count||8);
+    const isDone=!!snapshot.completed;
+    $('studentLabel').textContent=`${snapshot.group_code} · ${snapshot.student_label}`;
+    $('gradeLabel').textContent=`Nota ${fmtGrade(snapshot.grade)} / 5.00`;
+    $('progressText').textContent=`${completed}/${total}`;
+    $('progressBar').style.width=`${Math.min(100,completed/Math.max(1,total)*100)}%`;
+    if(isDone){
+      $('activityPanel').classList.add('hidden');$('finishPanel').classList.remove('hidden');
+      $('finishPoints').textContent=`${completed}/${total}`;$('finishGrade').textContent=fmtGrade(snapshot.grade);clear();return;
+    }
+    $('finishPanel').classList.add('hidden');$('activityPanel').classList.remove('hidden');
+    $('checkpointList').innerHTML=(snapshot.checkpoints||[]).map(cp=>{
+      const done=!!cp.correct;
+      return `<article class="checkpoint ${done?'done':''}" data-key="${esc(cp.key)}">
+        <h3>${esc(cp.sequence)}. ${esc(cp.title)}</h3>
+        <p>${esc(cp.prompt)}</p>
+        ${cp.code?`<div class="code">${esc(cp.code)}</div>`:''}
+        ${cp.hint?`<p><strong>Hint:</strong> ${esc(cp.hint)}</p>`:''}
+        ${done?'<div class="result ok">✓ Correcto · registrado</div>':`<div class="answer-row"><input inputmode="decimal" placeholder="Escribe el resultado"><button type="button" data-submit="${esc(cp.key)}">Comprobar</button></div><div class="result" data-result="${esc(cp.key)}"></div>`}
+      </article>`;
+    }).join('');
+    document.querySelectorAll('[data-submit]').forEach(btn=>btn.addEventListener('click',()=>submitCheckpoint(btn.dataset.submit,btn)));
+  }
+
+  async function submitCheckpoint(key,button){
+    const card=button.closest('.checkpoint');const input=card.querySelector('input');const result=card.querySelector(`[data-result="${CSS.escape(key)}"]`);
+    const answer=input.value.trim();if(!answer){result.textContent='Escribe un resultado.';result.className='result bad';return;}
+    button.disabled=true;result.textContent='Verificando…';result.className='result';
+    try{
+      const data=await rpc(cfg.rpc.submit,{p_attempt_id:state.attemptId,p_attempt_token:state.token,p_checkpoint_key:key,p_answer:answer});
+      if(data.correct){result.textContent='✓ Correcto';result.className='result ok';setTimeout(()=>render(data.snapshot),250);}
+      else{result.textContent='Todavía no. Revisa la salida de Colab y vuelve a intentar.';result.className='result bad';button.disabled=false;input.focus();}
+    }catch(err){result.textContent=`No se pudo registrar: ${err.message}`;result.className='result bad';button.disabled=false;}
+  }
+
+  $('registrationForm').addEventListener('submit',async e=>{
+    e.preventDefault();const group=$('groupCode').value;const name=$('studentName').value.trim();if(!group||!name)return;
+    $('startButton').disabled=true;setStatus('setupStatus','Validando nombre e iniciando…');
+    try{
+      const data=await rpc(cfg.rpc.start,{p_activity_slug:cfg.activitySlug,p_student_name:name,p_group_code:group,p_session_id:crypto.randomUUID(),p_user_agent:navigator.userAgent});
+      state.attemptId=data.attempt_id;state.token=data.attempt_token;save();render(data.snapshot);setStatus('setupStatus','');
+    }catch(err){$('startButton').disabled=false;setStatus('setupStatus',`No fue posible iniciar: ${err.message}`,true);}
+  });
+
+  async function restore(){
+    const raw=sessionStorage.getItem(cfg.sessionStorageKey);if(!raw)return;
+    try{const saved=JSON.parse(raw);if(!saved.attemptId||!saved.token)return clear();state.attemptId=saved.attemptId;state.token=saved.token;const data=await rpc(cfg.rpc.resume,{p_attempt_id:state.attemptId,p_attempt_token:state.token});render(data.snapshot);}catch(err){clear();setStatus('setupStatus','La sesión anterior ya no está disponible. Puedes iniciar nuevamente.',true);}
+  }
+  restore();
+})();
