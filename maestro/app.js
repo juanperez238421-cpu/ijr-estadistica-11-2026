@@ -21,11 +21,14 @@
 
   function resultMaps(){
     const activityByStudent=new Map(),examByStudent=new Map(),freeRows=[];
+    // Backend results arrive newest first. Keep the first result for a roster student so
+    // a historical individual attempt cannot overwrite the current team assignment.
     (snapshot.activity_results||[]).forEach(result=>{
       const participants=participantsOf(result);
       participants.forEach((member,index)=>{
         if(member.student_registry_id){
-          activityByStudent.set(`${member.student_registry_id}|${result.activity_slug}`,result);
+          const key=`${member.student_registry_id}|${result.activity_slug}`;
+          if(!activityByStudent.has(key))activityByStudent.set(key,result);
         }else{
           freeRows.push({
             id:`free:${result.attempt_id}:${index}`,
