@@ -5,18 +5,18 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow">
   <meta name="color-scheme" content="light">
-  <title>Statistics 11 · Python Data Lab</title>
+  <title>Statistics 11 · Python Basics to Data</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
-  <link rel="stylesheet" href="styles.css?v=20260819-workspace7">
+  <link rel="stylesheet" href="styles.css?v=20260819-workspace8">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
-  <script defer src="config.js?v=20260819-workspace7"></script>
-  <script defer src="resilience-v7.js?v=20260819-workspace7"></script>
-  <script defer src="app.js?v=20260819-workspace7"></script>
+  <script defer src="config.js?v=20260819-workspace8"></script>
+  <script defer src="resilience-v7.js?v=20260819-workspace8"></script>
+  <script defer src="app.js?v=20260819-workspace8"></script>
 </head>
 <body>
   <main class="app-shell">
@@ -25,7 +25,7 @@
         <span class="brand-mark">IJR</span>
         <div>
           <div class="course-label">Instituto Jorge Robledo · Statistics 11</div>
-          <h1>Python Data Lab</h1>
+          <h1>Python Basics → Data</h1>
         </div>
       </div>
       <div class="app-status">
@@ -37,15 +37,15 @@
 
     <section id="setupPanel" class="setup-screen">
       <div class="setup-card">
-        <div class="setup-kicker">LAB 01 · FROM PYTHON TO DATA · ≈ 40 MIN</div>
-        <h2>One workstation. One team. One data lab.</h2>
-        <p class="setup-lead">Each computer is shared by <strong>2 or 3 students</strong>. Your team shares the Python workspace, progress, and grade. Complete the eight stages together in approximately one class period. <small>Trabajo colaborativo por computador.</small></p>
+        <div class="setup-kicker">LAB 01 · PYTHON BASICS → DATA · 39 GUIDED MIN · ≈ 40 MIN TOTAL</div>
+        <h2>Learn the commands before analyzing the data.</h2>
+        <p class="setup-lead">Each computer is shared by <strong>2 or 3 students</strong>. This is a guided first Python lab, not a one-line quiz. Your team will complete multiple commands in every stage, run them, read the output, and explain what changed. <small>Primero comandos básicos; después análisis de datos.</small></p>
 
-        <div class="setup-points">
-          <div><strong>01</strong><span>Read the explanation together.</span></div>
-          <div><strong>02</strong><span>Complete <code>WRITE_HERE</code> and run the cell.</span></div>
-          <div><strong>03</strong><span>If you get stuck, manage your 3 help tokens.</span></div>
-          <div><strong>04</strong><span>You may continue even if one stage is not solved.</span></div>
+        <div class="setup-points" aria-label="Python command roadmap">
+          <div><strong>01 · VALUES</strong><span><code>=</code> · <code>print()</code> · <code>type()</code> · variables</span></div>
+          <div><strong>02 · OPERATE</strong><span><code>+</code> · <code>-</code> · <code>*</code> · <code>/</code> · <code>**</code></span></div>
+          <div><strong>03 · PROGRAM</strong><span>strings · lists · <code>len()</code> · <code>for</code> · <code>def</code> · <code>if</code></span></div>
+          <div><strong>04 · DATA</strong><span><code>import</code> · CSV · Pandas · filter · mean · describe</span></div>
         </div>
 
         <div class="grading-policy" aria-label="Grading rules">
@@ -57,7 +57,7 @@
             <div><strong>Reveal solution</strong><span>The stage is completed for 25% of its value.</span></div>
             <div><strong>Continue unsolved</strong><span>The stage is completed for 0% of its value.</span></div>
           </div>
-          <p>Python syntax/runtime errors <strong>do not lower your grade</strong>. A penalty is recorded only when the team presses <em>Validate output</em> with an incorrect result. <small>Los errores de sintaxis no restan.</small></p>
+          <p>Python syntax/runtime errors <strong>do not lower your grade</strong>. A penalty is recorded only when the team presses <em>Validate output</em> with an incorrect result. The cell will also check that the required command structure was actually used before it runs. <small>Los errores de sintaxis no restan; deben practicar los comandos indicados.</small></p>
         </div>
 
         <form id="registrationForm" class="registration-form team-registration">
@@ -86,7 +86,7 @@
           </fieldset>
 
           <div class="registration-actions">
-            <div><strong>Before starting:</strong><span>make sure the names match the students actually working at this computer.</span></div>
+            <div><strong>Before starting:</strong><span>make sure the names match the students actually working at this computer. Plan for one complete 40-minute class period.</span></div>
             <button id="startButton" type="submit" class="primary-action">Enter the lab</button>
           </div>
         </form>
@@ -116,8 +116,8 @@
         <aside id="guidePane" class="guide-pane">
           <div class="guide-scroll">
             <div class="lesson-meta-row">
-              <div id="lessonTag" class="lesson-tag">FOUNDATION</div>
-              <div id="lessonTiming" class="lesson-timing">Target: 4 min</div>
+              <div id="lessonTag" class="lesson-tag">PYTHON BASICS</div>
+              <div id="lessonTiming" class="lesson-timing">Target: 5 min</div>
             </div>
             <h2 id="lessonTitle">Loading…</h2>
             <div id="lessonConcept" class="lesson-copy lesson-intro"></div>
@@ -164,7 +164,7 @@
 
           <div class="cell-instruction">
             <div class="instruction-number">1</div>
-            <div><strong>Complete the cell first.</strong><span>Replace every <code>WRITE_HERE</code> using the guide. The answer is not written for you.</span></div>
+            <div><strong>Complete the whole cell first.</strong><span>Replace <strong>every</strong> <code>WRITE_HERE</code>. The stage intentionally contains several basic commands, not only the final answer. <small>Completen todos los espacios.</small></span></div>
           </div>
 
           <div class="code-cell">
@@ -177,7 +177,7 @@
 
           <div class="cell-instruction compact-instruction">
             <div class="instruction-number">2</div>
-            <div><strong>Run and read the output.</strong><span>A Python error does not cost points. Fix the code and run it again. <small>Corrijan y vuelvan a ejecutar.</small></span></div>
+            <div><strong>Run, read, and explain the output.</strong><span>A Python error does not cost points. Fix the code and run it again. Validate only after the team understands the last numeric output. <small>Corrijan y vuelvan a ejecutar.</small></span></div>
           </div>
 
           <section class="terminal-card" aria-label="Python terminal">
@@ -191,7 +191,7 @@
           </section>
 
           <section id="solutionPanel" class="solution-panel hidden">
-            <div class="solution-head"><div><span>SOLUTION REVEALED</span><strong>Study the solution before continuing.</strong></div><span id="solutionCredit" class="credit-pill">25% of stage</span></div>
+            <div class="solution-head"><div><span>SOLUTION REVEALED</span><strong>Study the complete command sequence before continuing.</strong></div><span id="solutionCredit" class="credit-pill">25% of stage</span></div>
             <pre id="solutionCode"></pre>
             <div class="solution-output"><span>Correct output:</span><code id="solutionOutput"></code></div>
             <button id="continueAfterRevealButton" type="button" class="primary-action">We understand · continue</button>
@@ -199,7 +199,7 @@
 
           <div class="validation-bar">
             <div class="validation-copy">
-              <div id="activityStatus" class="validation-status">Complete the cell and run it when your team is ready.</div>
+              <div id="activityStatus" class="validation-status">Complete every WRITE_HERE and run the full cell when your team is ready.</div>
               <div id="penaltyStatus" class="validation-help">Your projection only decreases after help, an incorrect validated output, a revealed solution, or a skipped stage.</div>
             </div>
             <div class="validation-actions">
@@ -216,8 +216,8 @@
       <div class="finish-card">
         <div class="finish-icon">✓</div>
         <div class="setup-kicker">LAB COMPLETED</div>
-        <h2>Python to Data complete.</h2>
-        <p>Your team completed all eight stages. The final grade includes recorded help, incorrect validations, revealed solutions, and skipped stages.</p>
+        <h2>Python Basics → Data complete.</h2>
+        <p>Your team completed all eight stages: variables, commands, operators, lists, a loop, a function, CSV/Pandas, statistics, filtering, and a basic condition. The final grade includes recorded help, incorrect validations, revealed solutions, and skipped stages.</p>
         <div class="finish-metrics">
           <div><span>Stages</span><strong id="finishPoints">8 / 8</strong></div>
           <div><span>Final grade</span><strong id="finishGrade">5.00</strong></div>
