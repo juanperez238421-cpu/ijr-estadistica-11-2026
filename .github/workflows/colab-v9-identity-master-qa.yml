@@ -1,4 +1,4 @@
-name: Statistics 11 Colab Class 01 V10 QA
+name: Statistics 11 Colab Class 01 V11 QA
 
 on:
   pull_request:
@@ -21,7 +21,7 @@ permissions:
   contents: read
 
 jobs:
-  class1-v10-qa:
+  class1-v11-qa:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -36,7 +36,7 @@ jobs:
           node --check actividad-colab-01/app.js
           node --check maestro/config.js
           node --check maestro/app.js
-      - name: Class 01 curriculum, institutional identity and master controls
+      - name: Class 01 V11 randomized bank, identity and master controls
         run: |
           set -euo pipefail
           python -m py_compile qa/check_colab_class1_v10.py
