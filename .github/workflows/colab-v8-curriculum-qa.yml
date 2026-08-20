@@ -4,8 +4,10 @@ on:
   pull_request:
     paths:
       - 'actividad-colab-01/**'
+      - 'maestro/**'
       - 'qa/check_colab_class1_v10.py'
       - 'supabase/migrations/20260820151529_colab_class1_v10_operations_types_arrays_master_controls.sql'
+      - 'supabase/migrations/20260820154120_colab_class1_v11_random_variant_bank_36packs.sql'
       - '.github/workflows/colab-v8-curriculum-qa.yml'
   workflow_dispatch:
 
@@ -31,8 +33,10 @@ jobs:
           node --check actividad-colab-01/config.js
           node --check actividad-colab-01/resilience-v7.js
           node --check actividad-colab-01/sw-v7.js
+          node --check maestro/app.js
+          node --check maestro/config.js
 
-      - name: Class 01 scope and answer QA
+      - name: Class 01 V11 scope, bank and answer QA
         run: |
           set -euo pipefail
           python -m py_compile qa/check_colab_class1_v10.py
@@ -43,8 +47,11 @@ jobs:
           set -euo pipefail
           grep -q '36 GUIDED MIN' actividad-colab-01/index.html
           grep -q 'Operations, data types and arrays' actividad-colab-01/index.html
+          grep -q '36 equivalent problem packs' actividad-colab-01/index.html
           grep -q '@ijr.edu.co' actividad-colab-01/index.html
           grep -q 'No loops, functions, conditions or Pandas' actividad-colab-01/index.html
           grep -q 'class1-v10.css' actividad-colab-01/index.html
+          grep -q 'variantBankSize: 36' actividad-colab-01/config.js
+          grep -q 'student_learning_activity_start_team_email_v11' actividad-colab-01/config.js
           grep -q 'targetMinutes: 40' actividad-colab-01/config.js
           grep -q 'requireFullscreen: false' actividad-colab-01/config.js
