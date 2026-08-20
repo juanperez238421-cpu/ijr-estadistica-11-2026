@@ -7,18 +7,19 @@
   <meta name="color-scheme" content="light">
   <title>Statistics 11 · Live panel</title>
   <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20260820-minimal9">
+  <link rel="stylesheet" href="styles.css?v=20260820-master-v10">
+  <link rel="stylesheet" href="master-v10.css?v=20260820-master-v10">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="config.js?v=20260820-minimal9"></script>
-  <script defer src="app.js?v=20260820-minimal9"></script>
+  <script defer src="config.js?v=20260820-master-v10"></script>
+  <script defer src="app.js?v=20260820-master-v10"></script>
 </head>
 <body>
   <main class="shell">
     <header class="header">
       <div>
         <div class="eyebrow">Instituto Jorge Robledo · Statistics 11</div>
-        <h1>Colab 01 · Live</h1>
-        <p>Progress, answers and projected grades.</p>
+        <h1>Colab Class 01 · Live</h1>
+        <p>Progress, answers, projected grades and registration controls.</p>
       </div>
       <a class="link-button" href="../">Course</a>
     </header>
@@ -69,6 +70,7 @@
                 <th>Last answer</th>
                 <th>Support</th>
                 <th>Updated</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="sessionBody"></tbody>
@@ -76,8 +78,41 @@
         </div>
       </section>
 
-      <p class="footnote">Each row is one registration/session. The same institutional email may appear in more than one row when a new registration is intentionally started. Email domain required: <strong>@ijr.edu.co</strong>.</p>
+      <p class="footnote">Each row is one registration/session. Use <strong>Inspect</strong> for full stage history, <strong>Edit</strong> to correct group or institutional emails, and <strong>Delete</strong> only for invalid/test registrations.</p>
     </section>
   </main>
+
+  <dialog id="registrationDialog" class="master-dialog">
+    <form method="dialog" class="dialog-shell">
+      <div class="dialog-head">
+        <div><span class="eyebrow">Registration</span><h2 id="dialogTitle">Details</h2></div>
+        <button value="cancel" class="quiet">Close</button>
+      </div>
+      <div id="dialogStatus" class="muted"></div>
+
+      <section class="dialog-section">
+        <h3>Registration identity</h3>
+        <div class="edit-grid">
+          <label>Group
+            <select id="editGroup"><option>11A</option><option>11B</option><option>11C</option></select>
+          </label>
+          <label>Student 1 email<input id="editEmail1" type="email" placeholder="student1@ijr.edu.co"></label>
+          <label>Student 2 email<input id="editEmail2" type="email" placeholder="student2@ijr.edu.co"></label>
+          <label>Student 3 email <small>optional</small><input id="editEmail3" type="email" placeholder="student3@ijr.edu.co"></label>
+        </div>
+        <div class="dialog-actions">
+          <button id="saveRegistrationButton" type="button">Save registration</button>
+          <button id="deleteRegistrationButton" type="button" class="danger-button">Delete registration</button>
+        </div>
+      </section>
+
+      <section class="dialog-section">
+        <h3>Detailed inspection</h3>
+        <div id="detailSummary" class="detail-summary"></div>
+        <div id="detailResponses" class="detail-responses"></div>
+        <details class="event-details"><summary>Activity events</summary><div id="detailEvents"></div></details>
+      </section>
+    </form>
+  </dialog>
 </body>
 </html>

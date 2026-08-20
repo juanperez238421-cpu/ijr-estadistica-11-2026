@@ -1,8 +1,8 @@
 window.IJR_COLAB_ACTIVITY_CONFIG = Object.freeze({
-  activitySlug: 'statistics11-colab-basics-01-2026',
+  activitySlug: 'statistics11-colab-class1-basics-types-arrays-2026',
   supabaseUrl: 'https://rlfxnjbqxbozjdzkbwlz.supabase.co',
   supabaseAnonKey: 'sb_publishable_rmVOQ3Orx49KpW_4uMqYew_c2HpcA87',
-  sessionStorageKey: 'ijr-stat11-colab-basics-01-active-v9',
+  sessionStorageKey: 'ijr-stat11-colab-class1-active-v10',
   requireFullscreen: false,
   targetMinutes: 40,
   helpTokenLimit: 3,

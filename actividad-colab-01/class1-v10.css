@@ -1,0 +1,6 @@
+.class1-roadmap{grid-template-columns:repeat(3,1fr)}
+.choice-panel{margin:18px 18px 12px;padding:24px;border:1px solid #d7e5fb;border-radius:12px;background:#f8fafd;display:flex;flex-direction:column;gap:16px;min-height:300px;justify-content:center}
+.choice-kicker{font-size:.72rem;font-weight:700;letter-spacing:.11em;color:#1a73e8;text-transform:uppercase}
+.choice-question{font-size:1.18rem;line-height:1.65;color:#202124}.choice-question p{margin:0}.choice-question code{font-family:Consolas,"Liberation Mono",monospace;background:#e8f0fe;color:#174ea6;padding:2px 6px;border-radius:5px}
+.choice-options{display:grid;grid-template-columns:1fr 1fr;gap:12px}.choice-option{min-height:68px;border:1px solid #bdc1c6;border-radius:10px;background:#fff;color:#202124;padding:12px 14px;display:flex;align-items:center;gap:12px;text-align:left;font-size:1rem;transition:.15s ease}.choice-option:hover{border-color:#1a73e8;background:#f3f7fe}.choice-option>span{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#f1f3f4;color:#5f6368;font-weight:700;font-size:.78rem}.choice-option.selected{border:2px solid #1a73e8;background:#e8f0fe}.choice-option.selected>span{background:#1a73e8;color:#fff}
+@media(max-width:900px){.class1-roadmap{grid-template-columns:1fr}.choice-options{grid-template-columns:1fr}.choice-panel{min-height:240px;margin:12px}}

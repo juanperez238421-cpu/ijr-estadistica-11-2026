@@ -28,7 +28,7 @@ jobs:
         with:
           ref: main
 
-      - name: Static syntax, curriculum, identity and classroom asset gate
+      - name: Static syntax, Class 01 curriculum, identity and master gate
         run: |
           set -euo pipefail
           node --check actividad-colab-01/app.js
@@ -37,14 +37,15 @@ jobs:
           node --check actividad-colab-01/config.js
           node --check maestro/app.js
           node --check maestro/config.js
-          python qa/check_colab_lab_v8.py
-          python qa/check_colab_v9_identity_master.py
-          test -s actividad-colab-01/data.csv
-          grep -q "resilience-v7.js" actividad-colab-01/index.html
-          grep -q "networkBadge" actividad-colab-01/index.html
-          grep -q "39 GUIDED MIN" actividad-colab-01/index.html
-          grep -q "Colab 01 · Live" maestro/index.html
-          grep -q "institutional_email" maestro/app.js
+          python qa/check_colab_class1_v10.py
+          test -s actividad-colab-01/class1-v10.css
+          test -s maestro/master-v10.css
+          grep -q "36 GUIDED MIN" actividad-colab-01/index.html
+          grep -q "@ijr.edu.co" actividad-colab-01/index.html
+          grep -q "No loops, functions, conditions or Pandas" actividad-colab-01/index.html
+          grep -q "Colab Class 01 · Live" maestro/index.html
+          grep -q "Delete registration" maestro/index.html
+          grep -q "teacher_learning_activity_detail_v10" maestro/config.js
 
       - name: Nine simultaneous student page checks
         shell: bash
@@ -57,11 +58,13 @@ jobs:
               set -euo pipefail
               curl --fail --silent --show-error --retry 2 --retry-delay 1 --connect-timeout 6 --max-time 25 \
                 "${LAB_URL}?health=${GITHUB_RUN_ID}-${pc}" -o "/tmp/ijr-nine-pc/pc-${pc}.html"
-              grep -q "Python Basics" "/tmp/ijr-nine-pc/pc-${pc}.html"
-              grep -q "39 GUIDED MIN" "/tmp/ijr-nine-pc/pc-${pc}.html"
+              grep -q "Python Class 01" "/tmp/ijr-nine-pc/pc-${pc}.html"
+              grep -q "36 GUIDED MIN" "/tmp/ijr-nine-pc/pc-${pc}.html"
+              grep -q "type=\"email\"" "/tmp/ijr-nine-pc/pc-${pc}.html"
+              grep -q "No loops, functions, conditions or Pandas" "/tmp/ijr-nine-pc/pc-${pc}.html"
               curl --fail --silent --show-error --retry 2 --connect-timeout 6 --max-time 20 \
-                "${LAB_URL}data.csv?health=${GITHUB_RUN_ID}-${pc}" -o "/tmp/ijr-nine-pc/pc-${pc}.csv"
-              test -s "/tmp/ijr-nine-pc/pc-${pc}.csv"
+                "${LAB_URL}class1-v10.css?health=${GITHUB_RUN_ID}-${pc}" -o "/tmp/ijr-nine-pc/pc-${pc}.css"
+              test -s "/tmp/ijr-nine-pc/pc-${pc}.css"
               echo "PC${pc}=PASS"
             ) > "/tmp/ijr-nine-pc/pc-${pc}.log" 2>&1 &
             pids+=("$!")
@@ -78,8 +81,10 @@ jobs:
         run: |
           set -euo pipefail
           curl --fail --silent --show-error --retry 2 --connect-timeout 6 --max-time 20 "$MASTER_URL" -o /tmp/master.html
-          grep -q "Colab 01 · Live" /tmp/master.html
+          grep -q "Colab Class 01 · Live" /tmp/master.html
           grep -q "Registrations" /tmp/master.html
+          grep -q "Actions" /tmp/master.html
+          grep -q "registrationDialog" /tmp/master.html
           pids=()
           for pc in $(seq 1 9); do
             (
@@ -103,18 +108,18 @@ jobs:
           SUPABASE_KEY="$(sed -n "s/.*supabaseAnonKey: '\([^']*\)'.*/\1/p" actividad-colab-01/config.js | head -1)"
           START_RPC="$(sed -n "s/.*startTeam: '\([^']*\)'.*/\1/p" actividad-colab-01/config.js | head -1)"
           MASTER_RPC="$(sed -n "s/.*dashboard:'\([^']*\)'.*/\1/p" maestro/config.js | head -1)"
+          DETAIL_RPC="$(sed -n "s/.*detail:'\([^']*\)'.*/\1/p" maestro/config.js | head -1)"
           test -n "$SUPABASE_URL"
           test -n "$SUPABASE_KEY"
           test -n "$START_RPC"
           test -n "$MASTER_RPC"
+          test -n "$DETAIL_RPC"
           pids=()
           for pc in $(seq 1 9); do
             (
               code="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
-                --connect-timeout 6 --max-time 20 \
-                -X OPTIONS \
-                -H "apikey: $SUPABASE_KEY" \
-                -H "Authorization: Bearer $SUPABASE_KEY" \
+                --connect-timeout 6 --max-time 20 -X OPTIONS \
+                -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY" \
                 "$SUPABASE_URL/rest/v1/rpc/$START_RPC")"
               case "$code" in 200|204) ;; *) echo "PC${pc} Supabase OPTIONS HTTP $code"; exit 1;; esac
             ) &
@@ -125,11 +130,13 @@ jobs:
             if ! wait "$pid"; then failed=1; fi
           done
           test "$failed" -eq 0
-          code="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
-            --connect-timeout 6 --max-time 20 -X OPTIONS \
-            -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY" \
-            "$SUPABASE_URL/rest/v1/rpc/$MASTER_RPC")"
-          case "$code" in 200|204) ;; *) echo "Master Supabase OPTIONS HTTP $code"; exit 1;; esac
+          for rpc in "$MASTER_RPC" "$DETAIL_RPC"; do
+            code="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+              --connect-timeout 6 --max-time 20 -X OPTIONS \
+              -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY" \
+              "$SUPABASE_URL/rest/v1/rpc/$rpc")"
+            case "$code" in 200|204) ;; *) echo "$rpc Supabase OPTIONS HTTP $code"; exit 1;; esac
+          done
 
       - name: Publish health summary
         if: always()
@@ -140,13 +147,13 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           if [ "$JOB_STATUS" = "success" ]; then
-            label='✅ COLAB 9-PC + V8 CURRICULUM + V9 IDENTITY QA PASS'
+            label='✅ COLAB CLASS 01 V10 · 9-PC QA PASS'
           else
-            label='❌ COLAB 9-PC + V8 CURRICULUM + V9 IDENTITY QA FAIL'
+            label='❌ COLAB CLASS 01 V10 · 9-PC QA FAIL'
           fi
           gh issue comment 33 \
             --repo juanperez238421-cpu/ijr-estadistica-11-2026 \
-            --body "$label · 39-min curriculum + @ijr.edu.co registration + student Pages x9 + Pyodide CDN x9 + Supabase x9 + minimal master panel · run $RUN_ID · commit $SHA · $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            --body "$label · operations + data types + arrays/indexing only · 4 MCQ stages · @ijr.edu.co static registration · student Pages x9 · Pyodide CDN x9 · Supabase x9 · master inspect/edit/delete · run $RUN_ID · commit $SHA · $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
       - name: Upload nine-PC evidence
         if: always()

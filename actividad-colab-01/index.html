@@ -5,18 +5,16 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow">
   <meta name="color-scheme" content="light">
-  <title>Statistics 11 · Python Basics to Data</title>
+  <title>Statistics 11 · Python Class 01</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
-  <link rel="stylesheet" href="styles.css?v=20260819-workspace8">
+  <link rel="stylesheet" href="styles.css?v=20260820-class1-v10">
+  <link rel="stylesheet" href="class1-v10.css?v=20260820-class1-v10">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
-  <script defer src="config.js?v=20260819-workspace8"></script>
-  <script defer src="resilience-v7.js?v=20260819-workspace8"></script>
-  <script defer src="app.js?v=20260819-workspace8"></script>
+  <script defer src="config.js?v=20260820-class1-v10"></script>
+  <script defer src="resilience-v7.js?v=20260820-class1-v10"></script>
+  <script defer src="app.js?v=20260820-class1-v10"></script>
 </head>
 <body>
   <main class="app-shell">
@@ -25,7 +23,7 @@
         <span class="brand-mark">IJR</span>
         <div>
           <div class="course-label">Instituto Jorge Robledo · Statistics 11</div>
-          <h1>Python Basics → Data</h1>
+          <h1>Python Class 01</h1>
         </div>
       </div>
       <div class="app-status">
@@ -37,27 +35,26 @@
 
     <section id="setupPanel" class="setup-screen">
       <div class="setup-card">
-        <div class="setup-kicker">LAB 01 · PYTHON BASICS → DATA · 39 GUIDED MIN · ≈ 40 MIN TOTAL</div>
-        <h2>Learn the commands before analyzing the data.</h2>
-        <p class="setup-lead">Each computer is shared by <strong>2 or 3 students</strong>. This is a guided first Python lab, not a one-line quiz. Your team will complete multiple commands in every stage, run them, read the output, and explain what changed. <small>Primero comandos básicos; después análisis de datos.</small></p>
+        <div class="setup-kicker">CLASS 01 · 36 GUIDED MIN · ≈ 40 MIN TOTAL</div>
+        <h2>Operations, data types and arrays.</h2>
+        <p class="setup-lead">This first class stays intentionally basic. Your team will work only with arithmetic operations, core Python data types, and lists/arrays with simple indexes. <strong>No loops, functions, conditions or Pandas are used in this version.</strong></p>
 
-        <div class="setup-points" aria-label="Python command roadmap">
-          <div><strong>01 · VALUES</strong><span><code>=</code> · <code>print()</code> · <code>type()</code> · variables</span></div>
-          <div><strong>02 · OPERATE</strong><span><code>+</code> · <code>-</code> · <code>*</code> · <code>/</code> · <code>**</code></span></div>
-          <div><strong>03 · PROGRAM</strong><span>strings · lists · <code>len()</code> · <code>for</code> · <code>def</code> · <code>if</code></span></div>
-          <div><strong>04 · DATA</strong><span><code>import</code> · CSV · Pandas · filter · mean · describe</span></div>
+        <div class="setup-points class1-roadmap" aria-label="Class roadmap">
+          <div><strong>01 · OPERATIONS</strong><span><code>+</code> · <code>-</code> · <code>*</code> · <code>/</code> · <code>**</code></span></div>
+          <div><strong>02 · DATA TYPES</strong><span><code>int</code> · <code>float</code> · <code>str</code> · <code>bool</code> · <code>NoneType</code></span></div>
+          <div><strong>03 · ARRAYS / LISTS</strong><span>ordered values · index <code>0</code> · index <code>1</code> · index <code>2</code></span></div>
         </div>
 
-        <div class="grading-policy" aria-label="Grading rules">
+        <div class="grading-policy">
           <div class="policy-title">How your grade works <small>· Cómo funciona la nota</small></div>
           <div class="policy-grid">
-            <div><strong>5.00</strong><span>Your projected maximum starts at 5.00 and decreases only when recorded support or penalties are used.</span></div>
-            <div><strong>3 helps</strong><span>Three help tokens are available for the entire lab. Each help lowers the projected maximum by 0.10.</span></div>
-            <div><strong>Validated error</strong><span>Each incorrect validated output lowers the projection by 0.05, up to 3 penalized errors per stage.</span></div>
-            <div><strong>Reveal solution</strong><span>The stage is completed for 25% of its value.</span></div>
-            <div><strong>Continue unsolved</strong><span>The stage is completed for 0% of its value.</span></div>
+            <div><strong>5.00</strong><span>Your projected maximum starts at 5.00.</span></div>
+            <div><strong>3 helps</strong><span>Help tokens are available across all eight stages.</span></div>
+            <div><strong>Validated error</strong><span>Only an incorrect validated answer is penalized.</span></div>
+            <div><strong>Reveal</strong><span>Revealing closes a stage for partial credit.</span></div>
+            <div><strong>Skip</strong><span>Skipping closes a stage for zero credit.</span></div>
           </div>
-          <p>Python syntax/runtime errors <strong>do not lower your grade</strong>. A penalty is recorded only when the team presses <em>Validate output</em> with an incorrect result. The cell will also check that the required command structure was actually used before it runs. <small>Los errores de sintaxis no restan; deben practicar los comandos indicados.</small></p>
+          <p>Python syntax/runtime errors do not lower the grade. Several stages are multiple-choice concept checks; others use the live Python cell.</p>
         </div>
 
         <form id="registrationForm" class="registration-form team-registration">
@@ -77,21 +74,36 @@
           </div>
 
           <fieldset class="team-fieldset">
-            <legend>Team members <small>· Integrantes del equipo</small></legend>
+            <legend>Institutional emails <small>· Correos institucionales</small></legend>
             <div class="member-grid">
-              <label>Student 1<input id="studentName1" autocomplete="off" required placeholder="Full name"></label>
-              <label>Student 2<input id="studentName2" autocomplete="off" required placeholder="Full name"></label>
-              <label id="student3Wrap">Student 3<input id="studentName3" autocomplete="off" required placeholder="Full name"></label>
+              <label>Student 1 institutional email
+                <input id="studentName1" type="email" inputmode="email" autocomplete="email" required
+                  placeholder="student1@ijr.edu.co" pattern="[A-Za-z0-9.!#$%&amp;'*+/=?^_`{|}~-]+@ijr\.edu\.co"
+                  title="Use the institutional email ending in @ijr.edu.co">
+              </label>
+              <label>Student 2 institutional email
+                <input id="studentName2" type="email" inputmode="email" autocomplete="email" required
+                  placeholder="student2@ijr.edu.co" pattern="[A-Za-z0-9.!#$%&amp;'*+/=?^_`{|}~-]+@ijr\.edu\.co"
+                  title="Use the institutional email ending in @ijr.edu.co">
+              </label>
+              <label id="student3Wrap">Student 3 institutional email
+                <input id="studentName3" type="email" inputmode="email" autocomplete="email" required
+                  placeholder="student3@ijr.edu.co" pattern="[A-Za-z0-9.!#$%&amp;'*+/=?^_`{|}~-]+@ijr\.edu\.co"
+                  title="Use the institutional email ending in @ijr.edu.co">
+              </label>
             </div>
           </fieldset>
 
           <div class="registration-actions">
-            <div><strong>Before starting:</strong><span>make sure the names match the students actually working at this computer. Plan for one complete 40-minute class period.</span></div>
-            <button id="startButton" type="submit" class="primary-action">Enter the lab</button>
+            <div>
+              <strong>Before starting:</strong>
+              <span>Enter the @ijr.edu.co email of each student working at this computer. A student may register again later in a new session if needed.</span>
+            </div>
+            <button id="startButton" type="submit" class="primary-action">Enter the class</button>
           </div>
         </form>
         <div id="setupStatus" class="inline-status"></div>
-        <p class="privacy-note">Names may be typed freely. When a name clearly matches the institutional roster, the system keeps that association. <small>Escriban los nombres completos.</small></p>
+        <p class="privacy-note">Only <strong>@ijr.edu.co</strong> institutional emails are accepted. The backend also validates the domain; this is not only an HTML check.</p>
       </div>
     </section>
 
@@ -110,7 +122,7 @@
         </div>
       </div>
       <div class="progress-line"><div id="progressBar" class="progress-fill"></div></div>
-      <div id="stepRail" class="step-rail" aria-label="Lab progress"></div>
+      <div id="stepRail" class="step-rail" aria-label="Class progress"></div>
 
       <div class="workspace-grid">
         <aside id="guidePane" class="guide-pane">
@@ -123,32 +135,29 @@
             <div id="lessonConcept" class="lesson-copy lesson-intro"></div>
 
             <div class="guide-section learning-section">
-              <h3>What you will learn <small>· Qué aprenderán</small></h3>
+              <h3>What you will learn</h3>
               <div id="lessonGoal" class="lesson-copy"></div>
             </div>
-
             <div class="guide-section guided-section">
-              <h3>Do it step by step <small>· Paso a paso</small></h3>
+              <h3>Do it step by step</h3>
               <ol id="lessonSteps" class="guide-steps"></ol>
             </div>
-
             <div class="guide-section task-section">
               <h3>Stage objective</h3>
               <div id="lessonTask" class="lesson-copy"></div>
             </div>
-
             <div class="guide-section explore-section">
-              <h3>After you get an output</h3>
+              <h3>After you answer</h3>
               <div id="lessonExplore" class="lesson-copy"></div>
             </div>
 
             <section class="support-card">
               <div class="support-head">
-                <div><span class="support-kicker">LAB HELP TOKENS</span><strong id="helpRemainingText">3 of 3 remaining</strong></div>
+                <div><span class="support-kicker">HELP TOKENS</span><strong id="helpRemainingText">3 of 3 remaining</strong></div>
                 <button id="helpButton" type="button" class="support-button">Use 1 help</button>
               </div>
               <div id="helpPanel" class="help-panel hidden"></div>
-              <p class="support-note">Help is progressive and recorded. You have a maximum of 3 help tokens for all eight stages. <small>Máximo 3 ayudas.</small></p>
+              <p class="support-note">Help is progressive and recorded.</p>
             </section>
           </div>
         </aside>
@@ -156,18 +165,24 @@
         <section class="notebook-pane">
           <div class="notebook-toolbar">
             <div class="kernel-info"><span class="kernel-dot"></span><span id="kernelLabel">Python 3 · browser runtime</span></div>
-            <div class="toolbar-actions">
+            <div id="toolbarActions" class="toolbar-actions">
               <button id="resetCodeButton" type="button" class="ghost-button">Reset cell</button>
               <button id="runCodeButton" type="button" class="run-button">▶ Run</button>
             </div>
           </div>
 
-          <div class="cell-instruction">
+          <section id="choicePanel" class="choice-panel hidden" aria-label="Multiple choice stage">
+            <div class="choice-kicker">CONCEPT CHECK · SELECT ONE OPTION</div>
+            <div id="choiceQuestion" class="choice-question"></div>
+            <div id="choiceOptions" class="choice-options"></div>
+          </section>
+
+          <div id="codeInstruction1" class="cell-instruction">
             <div class="instruction-number">1</div>
-            <div><strong>Complete the whole cell first.</strong><span>Replace <strong>every</strong> <code>WRITE_HERE</code>. The stage intentionally contains several basic commands, not only the final answer. <small>Completen todos los espacios.</small></span></div>
+            <div><strong>Complete the cell.</strong><span>Replace every <code>WRITE_HERE</code>, then run the code.</span></div>
           </div>
 
-          <div class="code-cell">
+          <div id="codeCell" class="code-cell">
             <div class="cell-gutter">
               <button id="runCellButton" class="cell-run" type="button" aria-label="Run cell">▶</button>
               <span id="executionCount">[ ]</span>
@@ -175,36 +190,36 @@
             <div class="editor-wrap"><textarea id="codeEditor" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Python code editor"></textarea></div>
           </div>
 
-          <div class="cell-instruction compact-instruction">
+          <div id="codeInstruction2" class="cell-instruction compact-instruction">
             <div class="instruction-number">2</div>
-            <div><strong>Run, read, and explain the output.</strong><span>A Python error does not cost points. Fix the code and run it again. Validate only after the team understands the last numeric output. <small>Corrijan y vuelvan a ejecutar.</small></span></div>
+            <div><strong>Run, read, and explain the output.</strong><span>A Python syntax/runtime error does not cost points.</span></div>
           </div>
 
-          <section class="terminal-card" aria-label="Python terminal">
+          <section id="terminalCard" class="terminal-card" aria-label="Python terminal">
             <div class="terminal-head"><span>Python console</span><button id="clearTerminalButton" type="button">Clear</button></div>
             <pre id="terminalOutput" class="terminal-output"><span class="terminal-muted">Initializing Python runtime…</span></pre>
             <form id="terminalForm" class="terminal-input-row">
               <span class="terminal-prompt">&gt;&gt;&gt;</span>
-              <input id="terminalCommand" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Try an additional Python command here">
+              <input id="terminalCommand" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Try another basic Python command">
               <button type="submit">Run</button>
             </form>
           </section>
 
           <section id="solutionPanel" class="solution-panel hidden">
-            <div class="solution-head"><div><span>SOLUTION REVEALED</span><strong>Study the complete command sequence before continuing.</strong></div><span id="solutionCredit" class="credit-pill">25% of stage</span></div>
+            <div class="solution-head"><div><span>SOLUTION REVEALED</span><strong>Study the answer before continuing.</strong></div><span id="solutionCredit" class="credit-pill">25% of stage</span></div>
             <pre id="solutionCode"></pre>
-            <div class="solution-output"><span>Correct output:</span><code id="solutionOutput"></code></div>
+            <div class="solution-output"><span>Correct answer:</span><code id="solutionOutput"></code></div>
             <button id="continueAfterRevealButton" type="button" class="primary-action">We understand · continue</button>
           </section>
 
           <div class="validation-bar">
             <div class="validation-copy">
-              <div id="activityStatus" class="validation-status">Complete every WRITE_HERE and run the full cell when your team is ready.</div>
-              <div id="penaltyStatus" class="validation-help">Your projection only decreases after help, an incorrect validated output, a revealed solution, or a skipped stage.</div>
+              <div id="activityStatus" class="validation-status">Loading stage…</div>
+              <div id="penaltyStatus" class="validation-help">Only recorded help, incorrect validations, revealed solutions, or skipped stages affect the projection.</div>
             </div>
             <div class="validation-actions">
               <button id="revealButton" type="button" class="text-action">Reveal correct solution</button>
-              <button id="skipButton" type="button" class="danger-outline hidden">Continue without solving</button>
+              <button id="skipButton" type="button" class="danger-outline">Continue without solving</button>
               <button id="validateButton" type="button" class="validate-button" disabled>Validate output</button>
             </div>
           </div>
@@ -215,9 +230,9 @@
     <section id="finishPanel" class="finish-screen hidden">
       <div class="finish-card">
         <div class="finish-icon">✓</div>
-        <div class="setup-kicker">LAB COMPLETED</div>
-        <h2>Python Basics → Data complete.</h2>
-        <p>Your team completed all eight stages: variables, commands, operators, lists, a loop, a function, CSV/Pandas, statistics, filtering, and a basic condition. The final grade includes recorded help, incorrect validations, revealed solutions, and skipped stages.</p>
+        <div class="setup-kicker">CLASS COMPLETED</div>
+        <h2>Class 01 complete.</h2>
+        <p>Your team completed the first Python foundations: basic operations, core data types, and list/array indexing. No loops, functions, conditions or Pandas were part of this version.</p>
         <div class="finish-metrics">
           <div><span>Stages</span><strong id="finishPoints">8 / 8</strong></div>
           <div><span>Final grade</span><strong id="finishGrade">5.00</strong></div>
@@ -229,14 +244,7 @@
     </section>
   </main>
 
-  <div id="fullscreenGate" class="fullscreen-gate hidden" role="dialog" aria-modal="true" aria-labelledby="fullscreenGateTitle">
-    <div class="fullscreen-card">
-      <div class="setup-kicker">FOCUS MODE</div>
-      <h2 id="fullscreenGateTitle">Fullscreen is optional</h2>
-      <p id="fullscreenMessage">You may continue working without fullscreen. Leaving the tab can still be recorded for teacher visibility.</p>
-      <button id="enterFullscreenButton" type="button" class="primary-action">Enter fullscreen</button>
-      <p class="gate-note">Fullscreen is no longer required and the lab will not pause when you leave it. <small>No se pausa al salir de pantalla completa.</small></p>
-    </div>
-  </div>
+  <div id="fullscreenGate" class="fullscreen-gate hidden"></div>
+  <button id="enterFullscreenButton" type="button" class="hidden">Fullscreen</button>
 </body>
 </html>

@@ -1,11 +1,11 @@
-name: Statistics 11 Colab V8 Curriculum QA
+name: Statistics 11 Colab Class 01 Curriculum QA
 
 on:
   pull_request:
     paths:
       - 'actividad-colab-01/**'
-      - 'qa/check_colab_lab_v8.py'
-      - 'supabase/migrations/20260819223500_colab_v8_python_basics_40min.sql'
+      - 'qa/check_colab_class1_v10.py'
+      - 'supabase/migrations/20260820151529_colab_class1_v10_operations_types_arrays_master_controls.sql'
       - '.github/workflows/colab-v8-curriculum-qa.yml'
   workflow_dispatch:
 
@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: statistics11-colab-v8-curriculum-${{ github.ref }}
+  group: statistics11-colab-class1-curriculum-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -32,19 +32,19 @@ jobs:
           node --check actividad-colab-01/resilience-v7.js
           node --check actividad-colab-01/sw-v7.js
 
-      - name: Python curriculum and answer QA
+      - name: Class 01 scope and answer QA
         run: |
           set -euo pipefail
-          python -m py_compile qa/check_colab_lab_v8.py
-          python qa/check_colab_lab_v8.py
+          python -m py_compile qa/check_colab_class1_v10.py
+          python qa/check_colab_class1_v10.py
 
       - name: Static classroom contract
         run: |
           set -euo pipefail
-          grep -q '39 GUIDED MIN' actividad-colab-01/index.html
-          grep -q 'Python Basics' actividad-colab-01/index.html
-          grep -q 'resilience-v7.js' actividad-colab-01/index.html
+          grep -q '36 GUIDED MIN' actividad-colab-01/index.html
+          grep -q 'Operations, data types and arrays' actividad-colab-01/index.html
+          grep -q '@ijr.edu.co' actividad-colab-01/index.html
+          grep -q 'No loops, functions, conditions or Pandas' actividad-colab-01/index.html
+          grep -q 'class1-v10.css' actividad-colab-01/index.html
           grep -q 'targetMinutes: 40' actividad-colab-01/config.js
           grep -q 'requireFullscreen: false' actividad-colab-01/config.js
-          test -s actividad-colab-01/colab_01_fundamentos.ipynb
-          test -s actividad-colab-01/data.csv
