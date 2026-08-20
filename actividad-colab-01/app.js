@@ -10,218 +10,355 @@
 
   const state={
     attemptId:null,token:null,snapshot:null,currentCp:null,pendingNextSnapshot:null,
-    restrictionEvents:0,pyodide:null,runtimePromise:null,pandasReady:false,datasetReady:false,
-    executionCount:0,currentKey:null,currentStarter:'',lastCellOutput:'',lastCellScalar:'',
+    restrictionEvents:0,pyodide:null,runtimePromise:null,executionCount:0,
+    currentKey:null,currentStarter:'',lastCellScalar:'',pendingChoice:'',
     startedAt:null,timerHandle:null
   };
 
   const LESSONS={
-    A1:{minutes:5,tag:'PYTHON BASICS · VARIABLES',title:'Variables, print() and type()',
-      concept:'<p>Python starts with <strong>values</strong>, <strong>variables</strong>, and commands that let us inspect them. The operator <code>=</code> stores a value in a variable, <code>print()</code> displays information, and <code>type()</code> tells us what kind of object Python is using. <small>Variable = nombre que guarda un valor.</small></p><p>In this stage you will write your first assignments and make Python calculate a result instead of typing the answer manually.</p>',
-      goal:'<p>Use <code>=</code>, <code>print()</code>, <code>type()</code>, and <code>+</code> while recognizing the flow <strong>value → variable → operation → output</strong>.</p>',
-      steps:['Replace the first <code>WRITE_HERE</code> with <code>12</code> and the second with <code>5</code>. These are the values stored in <code>a</code> and <code>b</code>.','Read <code>print(type(a))</code>. Run mentally: Python will first evaluate <code>type(a)</code>, then print that information.','Complete <code>result</code> using the <strong>variable names</strong> and the addition operator. Do not write <code>17</code> directly.','Run the complete cell. Read every line of output and identify why the <strong>last line</strong> is the value that will be validated.','In the console, try <code>a</code>, <code>b</code>, <code>type(b)</code>, and <code>a == 12</code> before validating.'],
-      task:'<p>Create two numeric variables, inspect one type, add the variables, and print the final result.</p>',
-      explore:'<p>Console practice: <code>a</code>, <code>type(a)</code>, <code>a == 12</code>, and <code>print("hello")</code>. <small><code>==</code> compara; <code>=</code> asigna.</small></p>',
-      hints:['Start by storing the given numbers: <code>a = 12</code> and <code>b = 5</code>.','The missing arithmetic expression must use <code>a</code>, <code>b</code>, and <code>+</code>.','The final expression is <code>result = a + b</code>.'],
+    A1:{
+      minutes:5,mode:'code',tag:'01 · BASIC OPERATIONS',title:'Variables and basic arithmetic',
+      concept:'<p>Python can store numbers in variables and combine them with arithmetic operators. The symbol <code>=</code> assigns a value; <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, and <code>**</code> perform basic operations.</p>',
+      goal:'<p>Store two integers, add them with their variable names, and print the result.</p>',
+      steps:['Set <code>a = 12</code> and <code>b = 5</code>.','Complete <code>result</code> using <code>a + b</code>.','Run the full cell.','Read the final output and validate only when your team can explain why it is 17.'],
+      task:'<p>Complete a basic addition using variables instead of typing the answer directly.</p>',
+      explore:'<p>In the console try <code>a - b</code>, <code>a * b</code>, and <code>a / b</code>.</p>',
+      hints:['Store the two given integers first.','Use the variable names with the addition operator.','Complete <code>result = a + b</code>.'],
       requirements:[
         {label:'store 12 in a',pattern:/\ba\s*=\s*12\b/},
         {label:'store 5 in b',pattern:/\bb\s*=\s*5\b/},
-        {label:'use type()',pattern:/type\s*\(/},
         {label:'add a + b',pattern:/result\s*=\s*a\s*\+\s*b/},
-        {label:'print the result',pattern:/print\s*\(\s*result\s*\)/}
+        {label:'print result',pattern:/print\s*\(\s*result\s*\)/}
       ],
-      starter:`# 1) Store two values\na = WRITE_HERE\nb = WRITE_HERE\n\n# 2) Inspect a basic Python type\nprint("type of a:", type(a))\n\n# 3) Build the sum with variables\nresult = WRITE_HERE\n\n# Keep the numeric result as the final output\nprint(result)`,
-      solution:`# 1) Store two values\na = 12\nb = 5\n\n# 2) Inspect a basic Python type\nprint("type of a:", type(a))\n\n# 3) Build the sum with variables\nresult = a + b\n\nprint(result)`},
+      starter:`a = WRITE_HERE
+b = WRITE_HERE
 
-    A2:{minutes:5,tag:'PYTHON BASICS · OPERATORS',title:'Arithmetic operators: +, -, *, / and **',
-      concept:'<p>Arithmetic expressions are the basic transformations of numerical data. Python uses <code>+</code> for addition, <code>-</code> for subtraction, <code>*</code> for multiplication, <code>/</code> for division, and <code>**</code> for powers. <small>Operadores = símbolos que transforman valores.</small></p><p>Instead of learning one operator in isolation, you will compare five of them using the same two variables.</p>',
-      goal:'<p>Write and compare the five most useful arithmetic operators, store each result, and distinguish integer-looking and decimal outputs.</p>',
-      steps:['Read the fixed inputs <code>a = 12</code> and <code>b = 5</code>.','Complete <code>sum_value</code> and <code>difference</code> with <code>+</code> and <code>-</code>.','Complete <code>product</code> and <code>quotient</code> with <code>*</code> and <code>/</code>. Notice that division normally produces a decimal value.','Complete <code>power</code> with <code>a ** 2</code>. This means “a squared”.','Run the cell and compare all five outputs. The product is printed again on the final line so the stage can validate it.'],
-      task:'<p>Build five arithmetic expressions from the same inputs and finish with the product of <code>a</code> and <code>b</code>.</p>',
-      explore:'<p>Try <code>17 // 5</code> and <code>17 % 5</code> in the console. <code>//</code> is floor division and <code>%</code> is remainder. <small>Residuo = remainder.</small></p>',
-      hints:['Each variable needs one of the operators shown in the title.','For the product, Python uses the asterisk: <code>a * b</code>. For a power, use <code>**</code>.','The five expressions are <code>a+b</code>, <code>a-b</code>, <code>a*b</code>, <code>a/b</code>, and <code>a**2</code>.'],
-      requirements:[
-        {label:'use +',pattern:/sum_value\s*=\s*a\s*\+\s*b/},
-        {label:'use -',pattern:/difference\s*=\s*a\s*-\s*b/},
-        {label:'use *',pattern:/product\s*=\s*a\s*\*\s*b/},
-        {label:'use /',pattern:/quotient\s*=\s*a\s*\/\s*b/},
-        {label:'use **',pattern:/power\s*=\s*a\s*\*\*\s*2/}
-      ],
-      starter:`a = 12\nb = 5\n\n# Complete all five arithmetic commands\nsum_value = WRITE_HERE\ndifference = WRITE_HERE\nproduct = WRITE_HERE\nquotient = WRITE_HERE\npower = WRITE_HERE\n\nprint("sum:", sum_value)\nprint("difference:", difference)\nprint("product:", product)\nprint("quotient:", quotient)\nprint("power:", power)\n\n# Final numeric output for validation\nprint(product)`,
-      solution:`a = 12\nb = 5\n\nsum_value = a + b\ndifference = a - b\nproduct = a * b\nquotient = a / b\npower = a ** 2\n\nprint("sum:", sum_value)\nprint("difference:", difference)\nprint("product:", product)\nprint("quotient:", quotient)\nprint("power:", power)\nprint(product)`},
+result = WRITE_HERE
+print(result)`,
+      solution:`a = 12
+b = 5
 
-    A3:{minutes:4,tag:'PYTHON BASICS · STRINGS & LISTS',title:'Strings, lists, indexing and len()',
-      concept:'<p>A <strong>string</strong> stores text and a <strong>list</strong> stores several values in order. List positions are called <strong>indexes</strong>, and Python starts counting them at zero. <code>len()</code> returns how many elements a collection contains. <small>Índice = posición; longitud = cantidad de elementos.</small></p>',
-      goal:'<p>Create a text label, access the first and last list items, and use <code>len()</code> instead of counting manually.</p>',
-      steps:['Create the string variable <code>label</code> with the text <code>"scores"</code>. Quotes are required for text.','Use index <code>[0]</code> to select the first number and index <code>[-1]</code> to select the last number.','Use <code>len(numbers)</code> to calculate the list length. Do not type <code>5</code> manually.','Run the cell and read the string, the list type, the first/last values, and finally the count.','Try <code>numbers[1]</code> and <code>numbers[-2]</code> in the console to check your understanding of indexes.'],
-      task:'<p>Use a string plus three basic list operations: first item, last item, and length.</p>',
-      explore:'<p>Try <code>type(label)</code>, <code>type(numbers)</code>, <code>numbers[0]</code>, <code>numbers[-1]</code>, and <code>len(numbers)</code>.</p>',
-      hints:['Text needs quotation marks, for example <code>"scores"</code>.','The first item uses <code>[0]</code>; the last item can use <code>[-1]</code>.','The count is <code>len(numbers)</code>.'],
-      requirements:[
-        {label:'create a string label',pattern:/label\s*=\s*["']scores["']/},
-        {label:'use index [0]',pattern:/first\s*=\s*numbers\s*\[\s*0\s*\]/},
-        {label:'use index [-1]',pattern:/last\s*=\s*numbers\s*\[\s*-1\s*\]/},
-        {label:'use len(numbers)',pattern:/count\s*=\s*len\s*\(\s*numbers\s*\)/}
-      ],
-      starter:`# A string stores text\nlabel = WRITE_HERE\n\n# A list stores several ordered values\nnumbers = [12, 7, 15, 9, 11]\n\nfirst = WRITE_HERE\nlast = WRITE_HERE\ncount = WRITE_HERE\n\nprint("label:", label)\nprint("list type:", type(numbers))\nprint("first / last:", first, last)\n\n# Final numeric output for validation\nprint(count)`,
-      solution:`label = "scores"\nnumbers = [12, 7, 15, 9, 11]\n\nfirst = numbers[0]\nlast = numbers[-1]\ncount = len(numbers)\n\nprint("label:", label)\nprint("list type:", type(numbers))\nprint("first / last:", first, last)\nprint(count)`},
+result = a + b
+print(result)`
+    },
 
-    A4:{minutes:5,tag:'PYTHON BASICS · FOR LOOP',title:'Repeat with for and build an accumulator',
-      concept:'<p>A <code>for</code> loop repeats a block of code once for each item in a collection. An <strong>accumulator</strong> is a variable that keeps a running total. <small><code>for</code> = repetir para cada elemento.</small></p><p>This is the long-form logic behind many functions such as <code>sum()</code>: start at zero, visit each value, and update the total.</p>',
-      goal:'<p>Read the structure of a <code>for</code> loop, understand indentation, and calculate a list total by repeated addition.</p>',
-      steps:['Start with <code>total = 0</code>. This is the accumulator before the loop begins.','Read <code>for value in numbers:</code>. During each repetition, <code>value</code> becomes the next number in the list.','Inside the indented block, replace <code>WRITE_HERE</code> so the new total equals the old total plus the current value.','Run the cell. Compare <code>min()</code>, <code>max()</code>, and the final accumulated total.','In the console, compare your result with <code>sum(numbers)</code>. They should match.'],
-      task:'<p>Use a <code>for</code> loop to reproduce the sum of the list without directly calling <code>sum()</code> in the accumulator.</p>',
-      explore:'<p>Try <code>sum(numbers)</code>. Then read the shorthand <code>total += value</code>, which means the same idea as <code>total = total + value</code>.</p>',
-      hints:['The accumulator must use its previous value.','Inside the loop, combine <code>total</code>, <code>value</code>, and <code>+</code>.','Use <code>total = total + value</code>.'],
-      requirements:[
-        {label:'use a for loop',pattern:/for\s+value\s+in\s+numbers\s*:/},
-        {label:'update the accumulator',pattern:/total\s*=\s*total\s*\+\s*value/},
-        {label:'use min()',pattern:/min\s*\(\s*numbers\s*\)/},
-        {label:'use max()',pattern:/max\s*\(\s*numbers\s*\)/}
-      ],
-      starter:`numbers = [12, 7, 15, 9, 11]\n\n# Start the accumulator at zero\ntotal = 0\n\n# Repeat once for every value\nfor value in numbers:\n    total = WRITE_HERE\n\nprint("minimum:", min(numbers))\nprint("maximum:", max(numbers))\n\n# Final numeric output for validation\nprint(total)`,
-      solution:`numbers = [12, 7, 15, 9, 11]\n\ntotal = 0\nfor value in numbers:\n    total = total + value\n\nprint("minimum:", min(numbers))\nprint("maximum:", max(numbers))\nprint(total)`},
+    A2:{
+      minutes:4,mode:'choice',tag:'01 · BASIC OPERATIONS',title:'Multiple choice · order of operations',
+      concept:'<p>Python follows the usual arithmetic precedence. Multiplication is evaluated before addition unless parentheses change the order.</p>',
+      goal:'<p>Predict a Python arithmetic result without running code.</p>',
+      steps:['Read the expression <code>3 + 4 * 2</code>.','Evaluate the multiplication first.','Then add 3.','Select one answer and validate it.'],
+      task:'<p>What is the value of <code>3 + 4 * 2</code>?</p>',
+      explore:'<p>After answering, compare it with <code>(3 + 4) * 2</code>.</p>',
+      hints:['Multiplication comes before addition.','Calculate <code>4 * 2</code> first.','The result is <code>11</code>.'],
+      choices:['7','11','14','16'],
+      solution:'Correct option: 11'
+    },
 
-    A5:{minutes:6,tag:'PYTHON BASICS · FUNCTIONS',title:'Create a reusable function for the mean',
-      concept:'<p>A <strong>function</strong> groups reusable instructions under a name. Python uses <code>def</code> to define a function and <code>return</code> to send a result back to the caller. <small>Función = bloque reutilizable de instrucciones.</small></p><p>We will connect programming structure with the statistical formula <strong>x̄ = Σxᵢ / n</strong>.</p>',
-      goal:'<p>Use <code>def</code>, parameters, <code>sum()</code>, <code>len()</code>, division, <code>return</code>, and a function call.</p>',
-      steps:['Read <code>def mean(values):</code>. The name is <code>mean</code> and <code>values</code> is the parameter received by the function.','Inside the indented block, calculate <code>total</code> with <code>sum(values)</code>.','Calculate <code>count</code> with <code>len(values)</code>.','Complete <code>return</code> with the statistical relationship “total divided by count”.','Call <code>mean(numbers)</code>, run the cell, and explain why <code>round(..., 1)</code> displays one decimal place.'],
-      task:'<p>Build a reusable <code>mean(values)</code> function and use it on the five-number list.</p>',
-      explore:'<p>Try <code>mean([10, 20, 30])</code> in the console. The function should work with a different list without rewriting its logic.</p>',
-      hints:['Inside the function, the list is called <code>values</code>, not <code>numbers</code>.','Use <code>sum(values)</code> and <code>len(values)</code>.','Return <code>total / count</code>.'],
+    A3:{
+      minutes:5,mode:'code',tag:'02 · DATA TYPES',title:'int, float, str, bool and NoneType',
+      concept:'<p>Python values have programming data types. In this class we use <strong>int</strong> for whole numbers, <strong>float</strong> for decimals, <strong>str</strong> for text, <strong>bool</strong> for <code>True</code>/<code>False</code>, and <strong>NoneType</strong> for <code>None</code>.</p>',
+      goal:'<p>Create one example of each core type and inspect the decimal value with <code>type()</code>.</p>',
+      steps:['Read the five assignments.','Keep quotation marks around the string.','Notice that <code>True</code> and <code>None</code> are Python keywords.','Complete the final line with <code>decimal</code> inside <code>type()</code>.','Run and validate the printed type name.'],
+      task:'<p>Use <code>type()</code> to identify the data type of <code>4.25</code>.</p>',
+      explore:'<p>Try <code>type(whole)</code>, <code>type(label)</code>, <code>type(passed)</code>, and <code>type(missing)</code>.</p>',
+      hints:['The decimal variable is called <code>decimal</code>.','Use <code>type(decimal)</code>.','To print only the type name, use <code>type(decimal).__name__</code>.'],
       requirements:[
-        {label:'define mean(values)',pattern:/def\s+mean\s*\(\s*values\s*\)\s*:/},
-        {label:'use sum(values)',pattern:/total\s*=\s*sum\s*\(\s*values\s*\)/},
-        {label:'use len(values)',pattern:/count\s*=\s*len\s*\(\s*values\s*\)/},
-        {label:'return total / count',pattern:/return\s+total\s*\/\s*count/},
-        {label:'call mean(numbers)',pattern:/mean_value\s*=\s*mean\s*\(\s*numbers\s*\)/}
+        {label:'create an integer',pattern:/whole\s*=\s*28/},
+        {label:'create a float',pattern:/decimal\s*=\s*4\.25/},
+        {label:'create a string',pattern:/label\s*=\s*["']11A["']/},
+        {label:'create a boolean',pattern:/passed\s*=\s*True/},
+        {label:'create None',pattern:/missing\s*=\s*None/},
+        {label:'inspect decimal with type()',pattern:/type\s*\(\s*decimal\s*\)/}
       ],
-      starter:`# Define a reusable function\ndef mean(values):\n    total = WRITE_HERE\n    count = WRITE_HERE\n    return WRITE_HERE\n\nnumbers = [12, 7, 15, 9, 11]\nmean_value = mean(numbers)\n\n# Final numeric output for validation\nprint(round(mean_value, 1))`,
-      solution:`def mean(values):\n    total = sum(values)\n    count = len(values)\n    return total / count\n\nnumbers = [12, 7, 15, 9, 11]\nmean_value = mean(numbers)\nprint(round(mean_value, 1))`},
+      starter:`whole = 28
+decimal = 4.25
+label = "11A"
+passed = True
+missing = None
 
-    A6:{minutes:5,tag:'PANDAS · CSV & DATAFRAME',title:'Import Pandas and read a CSV file',
-      concept:'<p>Real datasets usually live outside the program. <code>import pandas as pd</code> loads the Pandas library, <code>pd.read_csv()</code> reads a CSV file, and the result is a <strong>DataFrame</strong>: a table with rows and columns. <small>DataFrame = tabla de datos.</small></p>',
-      goal:'<p>Use <code>import</code>, <code>pd.read_csv()</code>, <code>head()</code>, <code>columns</code>, <code>dtypes</code>, and <code>shape</code> to inspect a real class dataset.</p>',
-      steps:['Keep <code>import pandas as pd</code>. The alias <code>pd</code> is the conventional short name for Pandas.','Load the file with <code>pd.read_csv("data.csv")</code> and store the DataFrame in <code>df</code>.','Create <code>preview</code> with <code>df.head(3)</code>. Read the first three rows and identify the column names.','Read the supplied <code>df.columns</code> and <code>df.dtypes</code> output. Explain the difference between a column name and a data type.','Use <code>df.shape[0]</code> to obtain only the number of rows, then validate the final numeric output.'],
-      task:'<p>Load <code>data.csv</code>, inspect its structure, and calculate the number of records.</p>',
-      explore:'<p>Try <code>df.shape</code>, <code>df.columns.tolist()</code>, <code>df.dtypes</code>, and <code>df.tail(2)</code> in the console.</p>',
-      hints:['The file-reading command is <code>pd.read_csv("data.csv")</code>.','The preview is <code>df.head(3)</code>. <code>shape</code> returns <code>(rows, columns)</code>.','Use <code>row_count = df.shape[0]</code>.'],
-      requirements:[
-        {label:'use pd.read_csv()',pattern:/df\s*=\s*pd\.read_csv\s*\(\s*["']data\.csv["']\s*\)/},
-        {label:'use df.head(3)',pattern:/preview\s*=\s*df\.head\s*\(\s*3\s*\)/},
-        {label:'inspect columns',pattern:/df\.columns/},
-        {label:'inspect dtypes',pattern:/df\.dtypes/},
-        {label:'use df.shape[0]',pattern:/row_count\s*=\s*df\.shape\s*\[\s*0\s*\]/}
-      ],
-      starter:`import pandas as pd\n\n# Read the external CSV file\ndf = WRITE_HERE\n\n# Preview the first three rows\npreview = WRITE_HERE\nprint(preview)\n\nprint("columns:", df.columns.tolist())\nprint("data types:")\nprint(df.dtypes)\n\n# Number of records\nrow_count = WRITE_HERE\n\n# Final numeric output for validation\nprint(row_count)`,
-      solution:`import pandas as pd\n\ndf = pd.read_csv("data.csv")\npreview = df.head(3)\nprint(preview)\n\nprint("columns:", df.columns.tolist())\nprint("data types:")\nprint(df.dtypes)\n\nrow_count = df.shape[0]\nprint(row_count)`},
+print(type(WRITE_HERE).__name__)`,
+      solution:`whole = 28
+decimal = 4.25
+label = "11A"
+passed = True
+missing = None
 
-    A7:{minutes:4,tag:'PANDAS · COLUMN STATISTICS',title:'Select a column and summarize it',
-      concept:'<p>A DataFrame column can be selected with brackets, for example <code>df["score"]</code>. The selected column is a Pandas <strong>Series</strong> with methods such as <code>.mean()</code> and <code>.describe()</code>. <small>Series = una columna de datos.</small></p>',
-      goal:'<p>Select one variable, compute its mean, and read a compact descriptive-statistics summary.</p>',
-      steps:['Select the <code>score</code> column and store it in <code>scores</code>.','Calculate <code>score_mean</code> with the Series method <code>.mean()</code>.','Create <code>summary</code> with <code>.describe()</code> and run the cell.','Read <em>count</em>, <em>mean</em>, <em>std</em>, <em>min</em>, quartiles, and <em>max</em> from the printed summary.','Confirm that the final printed mean is the value sent to the validator.'],
-      task:'<p>Use Pandas column selection, <code>.mean()</code>, and <code>.describe()</code> on <code>score</code>.</p>',
-      explore:'<p>Try <code>scores.min()</code>, <code>scores.max()</code>, and <code>scores.median()</code> in the console.</p>',
-      hints:['Select a column with <code>df["score"]</code>.','Call <code>.mean()</code> on the selected Series.','Use <code>summary = scores.describe()</code>.'],
-      requirements:[
-        {label:'select df["score"]',pattern:/scores\s*=\s*df\s*\[\s*["']score["']\s*\]/},
-        {label:'use scores.mean()',pattern:/score_mean\s*=\s*scores\.mean\s*\(\s*\)/},
-        {label:'use scores.describe()',pattern:/summary\s*=\s*scores\.describe\s*\(\s*\)/}
-      ],
-      starter:`import pandas as pd\n\ndf = pd.read_csv("data.csv")\n\n# Select one DataFrame column\nscores = WRITE_HERE\n\n# Calculate and summarize\nscore_mean = WRITE_HERE\nsummary = WRITE_HERE\n\nprint(summary)\n\n# Final numeric output for validation\nprint(score_mean)`,
-      solution:`import pandas as pd\n\ndf = pd.read_csv("data.csv")\nscores = df["score"]\nscore_mean = scores.mean()\nsummary = scores.describe()\n\nprint(summary)\nprint(score_mean)`},
+print(type(decimal).__name__)`
+    },
 
-    A8:{minutes:5,tag:'PYTHON + PANDAS · CONDITIONS',title:'Boolean filters and a basic if / else decision',
-      concept:'<p>A comparison such as <code>df["score"] &gt;= 4</code> produces <code>True</code>/<code>False</code> values. Pandas can use that Boolean condition to keep only matching rows. Python can also make a simple decision with <code>if</code> and <code>else</code>. <small>Condición = expresión que puede ser verdadera o falsa.</small></p>',
-      goal:'<p>Combine a comparison, Boolean filtering, <code>len()</code>, and a basic <code>if / else</code> block.</p>',
-      steps:['Create the Boolean condition “score greater than or equal to 4”.','Use <code>df[condition]</code> to create the filtered DataFrame <code>passed</code>.','Count its rows with <code>len(passed)</code>.','Read the <code>if passed_count &gt;= 8:</code> block. Because the condition is true for this dataset, complete <code>message</code> with the text <code>"Most students passed"</code>.','Run the cell. Read the decision message and the filtered student IDs/scores. The final line must remain the numeric count for validation.'],
-      task:'<p>Filter the dataset at a threshold of 4, count matching rows, and use the count in a basic decision.</p>',
-      explore:'<p>Try <code>condition.sum()</code>. In Pandas, <code>True</code> values can be counted this way. Then try a different threshold such as <code>df["score"] &gt;= 4.5</code>.</p>',
-      hints:['The Boolean comparison is <code>df["score"] &gt;= 4</code>.','Filter with <code>passed = df[condition]</code> and count with <code>len(passed)</code>.','The message for the true branch is the string <code>"Most students passed"</code>.'],
+    A4:{
+      minutes:4,mode:'choice',tag:'02 · DATA TYPES',title:'Multiple choice · identify a string',
+      concept:'<p>Quotation marks matter. <code>10</code> is a number, while <code>"10"</code> is text even though the characters look numeric.</p>',
+      goal:'<p>Distinguish a numeric value from a text value.</p>',
+      steps:['Look at the quotation marks around <code>"10"</code>.','Remember that Python calls text <code>str</code>.','Select the data type.','Validate your answer.'],
+      task:'<p>What is the Python data type of <code>"10"</code>?</p>',
+      explore:'<p>Compare <code>type(10)</code> with <code>type("10")</code>.</p>',
+      hints:['Quotation marks create text.','Python text uses the type name <code>str</code>.','The correct option is <code>str</code>.'],
+      choices:['int','float','str','bool'],
+      solution:'Correct option: str'
+    },
+
+    A5:{
+      minutes:4,mode:'choice',tag:'02 · DATA TYPES',title:'Multiple choice · same symbols, different data',
+      concept:'<p>The same operator can behave differently depending on the data type. With integers, <code>+</code> adds numbers. With strings, <code>+</code> joins text.</p>',
+      goal:'<p>Predict how <code>+</code> behaves with two strings.</p>',
+      steps:['Read <code>a = "10"</code> and <code>b = "5"</code>.','Both values are strings because they use quotation marks.','For strings, <code>+</code> concatenates.','Select the resulting text.'],
+      task:'<p>If <code>a = "10"</code> and <code>b = "5"</code>, what does <code>a + b</code> produce?</p>',
+      explore:'<p>Compare this with <code>10 + 5</code>.</p>',
+      hints:['Do not add the values as numbers.','Join the two pieces of text.','The result is <code>"105"</code>.'],
+      choices:['15','105','10 5','Error'],
+      solution:'Correct option: 105'
+    },
+
+    A6:{
+      minutes:5,mode:'code',tag:'03 · ARRAYS / LISTS',title:'Create a list and read index 0',
+      concept:'<p>For this first class, we use a Python <strong>list</strong> as a basic array: an ordered collection of values. Python indexing begins at <strong>0</strong>.</p>',
+      goal:'<p>Create a list and use <code>[0]</code> to read its first element.</p>',
+      steps:['Read the list <code>[12, 7, 15, 9, 11]</code>.','The first position is index <code>0</code>.','Complete <code>first</code> with <code>scores[0]</code>.','Run and validate the printed value.'],
+      task:'<p>Read the first element of <code>scores</code> using index 0.</p>',
+      explore:'<p>Try <code>scores[1]</code> and <code>scores[2]</code> in the console.</p>',
+      hints:['Use square brackets after the list name.','The first index is zero.','Complete <code>first = scores[0]</code>.'],
       requirements:[
-        {label:'build the >= 4 condition',pattern:/condition\s*=\s*df\s*\[\s*["']score["']\s*\]\s*>=\s*4/},
-        {label:'filter with df[condition]',pattern:/passed\s*=\s*df\s*\[\s*condition\s*\]/},
-        {label:'count with len(passed)',pattern:/passed_count\s*=\s*len\s*\(\s*passed\s*\)/},
-        {label:'use if / else',pattern:/if\s+passed_count\s*>=\s*8\s*:/},
-        {label:'set the true-branch message',pattern:/message\s*=\s*["']Most students passed["']/}
+        {label:'create the scores list',pattern:/scores\s*=\s*\[\s*12\s*,\s*7\s*,\s*15\s*,\s*9\s*,\s*11\s*\]/},
+        {label:'use index 0',pattern:/first\s*=\s*scores\s*\[\s*0\s*\]/},
+        {label:'print first',pattern:/print\s*\(\s*first\s*\)/}
       ],
-      starter:`import pandas as pd\n\ndf = pd.read_csv("data.csv")\n\n# 1) Build a Boolean condition\ncondition = WRITE_HERE\n\n# 2) Use it to filter the rows\npassed = WRITE_HERE\npassed_count = WRITE_HERE\n\n# 3) Make one simple Python decision\nif passed_count >= 8:\n    message = WRITE_HERE\nelse:\n    message = "Review needed"\n\nprint(message)\nprint(passed[["student_id", "score"]])\n\n# Final numeric output for validation\nprint(passed_count)`,
-      solution:`import pandas as pd\n\ndf = pd.read_csv("data.csv")\n\ncondition = df["score"] >= 4\npassed = df[condition]\npassed_count = len(passed)\n\nif passed_count >= 8:\n    message = "Most students passed"\nelse:\n    message = "Review needed"\n\nprint(message)\nprint(passed[["student_id", "score"]])\nprint(passed_count)`}
+      starter:`scores = [12, 7, 15, 9, 11]
+
+first = WRITE_HERE
+print(first)`,
+      solution:`scores = [12, 7, 15, 9, 11]
+
+first = scores[0]
+print(first)`
+    },
+
+    A7:{
+      minutes:4,mode:'choice',tag:'03 · ARRAYS / LISTS',title:'Multiple choice · read an index',
+      concept:'<p>Because indexing starts at zero, index <code>2</code> identifies the third element of a list.</p>',
+      goal:'<p>Map a list index to the correct stored value.</p>',
+      steps:['Write the indexes mentally: 0, 1, 2, 3.','Match each index to <code>[8, 13, 21, 34]</code>.','Locate index <code>2</code>.','Select and validate the value.'],
+      task:'<p>For <code>values = [8, 13, 21, 34]</code>, what is <code>values[2]</code>?</p>',
+      explore:'<p>Predict <code>values[0]</code>, <code>values[1]</code>, and <code>values[3]</code>.</p>',
+      hints:['Index 0 points to 8.','Index 1 points to 13, so index 2 is the next value.','The correct option is <code>21</code>.'],
+      choices:['8','13','21','34'],
+      solution:'Correct option: 21'
+    },
+
+    A8:{
+      minutes:5,mode:'code',tag:'03 · ARRAYS / LISTS',title:'Use index 1 to read the second item',
+      concept:'<p>Array/list indexes describe positions, not human counting labels. The second item is index <code>1</code> because the first item is index <code>0</code>.</p>',
+      goal:'<p>Use index 1 to access the second string in an ordered list.</p>',
+      steps:['Read the list of three names.','Map the positions: Ana → 0, Luis → 1, Sara → 2.','Complete <code>second</code> with the correct indexed expression.','Run and validate the printed text.'],
+      task:'<p>Print the second item in the list using its index.</p>',
+      explore:'<p>Try <code>names[0]</code> and <code>names[2]</code>.</p>',
+      hints:['The second item uses index 1.','Use the list name followed by square brackets.','Complete <code>second = names[1]</code>.'],
+      requirements:[
+        {label:'create the names list',pattern:/names\s*=\s*\[\s*["']Ana["']\s*,\s*["']Luis["']\s*,\s*["']Sara["']\s*\]/},
+        {label:'use index 1',pattern:/second\s*=\s*names\s*\[\s*1\s*\]/},
+        {label:'print second',pattern:/print\s*\(\s*second\s*\)/}
+      ],
+      starter:`names = ["Ana", "Luis", "Sara"]
+
+second = WRITE_HERE
+print(second)`,
+      solution:`names = ["Ana", "Luis", "Sara"]
+
+second = names[1]
+print(second)`
+    }
   };
 
-  const GUIDED_MINUTES=Object.values(LESSONS).reduce((sum,lesson)=>sum+Number(lesson.minutes||0),0);
-  if(GUIDED_MINUTES<35||GUIDED_MINUTES>40)console.warn(`Colab pacing QA: ${GUIDED_MINUTES} guided minutes is outside the 35–40 minute target.`);
+  const GUIDED_MINUTES=Object.values(LESSONS).reduce((s,l)=>s+Number(l.minutes||0),0);
+  if(GUIDED_MINUTES<35||GUIDED_MINUTES>40)console.warn(`Class pacing QA: ${GUIDED_MINUTES} guided minutes outside 35–40.`);
 
-  async function rpc(name,args={}){const {data,error}=await sb.rpc(name,args);if(error)throw new Error(error.message||'Backend error');return data;}
-  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  async function rpc(name,args={}){const {data,error}=await sb.rpc(name,args);if(error)throw new Error(error.message||'Backend error');return data}
+  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
   function fmtGrade(v){return Number(v??1).toFixed(2)}
-  function normalizeCode(v){return String(v??'').replace(/\\n/g,'\n')}
-  function save(){if(state.attemptId&&state.token)sessionStorage.setItem(cfg.sessionStorageKey,JSON.stringify({attemptId:state.attemptId,token:state.token}));}
+  function save(){if(state.attemptId&&state.token)sessionStorage.setItem(cfg.sessionStorageKey,JSON.stringify({attemptId:state.attemptId,token:state.token}))}
   function clearSaved(){sessionStorage.removeItem(cfg.sessionStorageKey)}
   function activityActive(){return !!state.snapshot&&!state.snapshot.completed}
-  function fullscreenSupported(){return !!document.documentElement.requestFullscreen}
-  function isFullscreen(){return !!document.fullscreenElement}
-  function setSetupStatus(msg,bad=false){const el=$('setupStatus');el.textContent=msg||'';el.style.color=bad?'#b3261e':''}
-  function setValidation(msg,kind=''){const el=$('activityStatus');el.textContent=msg||'';el.className=`validation-status ${kind}`.trim()}
+  function setSetupStatus(msg,bad=false){const e=$('setupStatus');e.textContent=msg||'';e.style.color=bad?'#b3261e':''}
+  function setValidation(msg,kind=''){const e=$('activityStatus');e.textContent=msg||'';e.className=`validation-status ${kind}`.trim()}
 
-  function setRuntimeBadge(mode,label){const badge=$('runtimeBadge');badge.className=`runtime-badge ${mode}`;badge.innerHTML='<span class="status-dot"></span>'+esc(label);const kernel=$('kernelLabel');const info=document.querySelector('.kernel-info');if(kernel){kernel.textContent=mode==='ready'?'Python 3 · connected in browser':label;info?.classList.toggle('ready',mode==='ready')}}
-  function updateRestrictionLabel(){const el=$('restrictionLabel');if(!el)return;el.textContent=state.restrictionEvents>0?`Exits: ${state.restrictionEvents}`:'Guided mode';el.classList.toggle('attention',state.restrictionEvents>0)}
-  async function logEvent(type,metadata={}){if(!state.attemptId||!state.token||!cfg.rpc.event)return null;try{const data=await rpc(cfg.rpc.event,{p_attempt_id:state.attemptId,p_attempt_token:state.token,p_event_type:type,p_metadata:metadata});if(Number.isFinite(Number(data?.restriction_events))){state.restrictionEvents=Number(data.restriction_events);updateRestrictionLabel()}return data}catch(err){console.warn('activity event log failed',type,err);return null}}
-  function hideFullscreenGate(){$('fullscreenGate')?.classList.add('hidden')}
-  function showFullscreenGate(message){if(!cfg.requireFullscreen){hideFullscreenGate();return}$('fullscreenMessage').textContent=message||'The lab is waiting for fullscreen mode.';$('fullscreenGate').classList.remove('hidden')}
-  async function enterFullscreen(){if(!cfg.requireFullscreen){hideFullscreenGate();return true}if(!fullscreenSupported()){showFullscreenGate('This browser does not support the required fullscreen mode. Use Chrome or Edge on a computer.');return false}if(isFullscreen()){hideFullscreenGate();return true}try{await document.documentElement.requestFullscreen();hideFullscreenGate();await logEvent('FULLSCREEN_ENTER',{source:'student_action'});return true}catch(_){showFullscreenGate('Allow fullscreen mode to continue working in the lab.');return false}}
-  function enforceFullscreen(){if(!cfg.requireFullscreen||!activityActive()){hideFullscreenGate();return true}if(isFullscreen()){hideFullscreenGate();return true}showFullscreenGate('Lab paused. Return to fullscreen mode to continue.');return false}
+  function setRuntimeBadge(mode,label){
+    const badge=$('runtimeBadge');badge.className=`runtime-badge ${mode}`;badge.innerHTML='<span class="status-dot"></span>'+esc(label);
+    const kernel=$('kernelLabel');if(kernel)kernel.textContent=mode==='ready'?'Python 3 · browser runtime':label;
+  }
+  async function logEvent(type,metadata={}){
+    if(!state.attemptId||!state.token||!cfg.rpc.event)return;
+    try{await rpc(cfg.rpc.event,{p_attempt_id:state.attemptId,p_attempt_token:state.token,p_event_type:type,p_metadata:metadata})}catch{}
+  }
 
-  function clearTerminal(message='Python console ready.'){const out=$('terminalOutput');out.textContent=message+'\n';out.scrollTop=out.scrollHeight}
-  function appendTerminal(text){const out=$('terminalOutput');const prefix=out.textContent&&!out.textContent.endsWith('\n')?'\n':'';out.textContent+=prefix+String(text??'')+(String(text??'').endsWith('\n')?'':'\n');out.scrollTop=out.scrollHeight}
-  function lastScalar(output){const lines=String(output||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);return lines.length?lines[lines.length-1]:''}
+  function clearTerminal(message='Python console ready.'){const o=$('terminalOutput');o.textContent=message+'\n'}
+  function appendTerminal(text){const o=$('terminalOutput');o.textContent+=(o.textContent&&!o.textContent.endsWith('\n')?'\n':'')+String(text??'')+'\n';o.scrollTop=o.scrollHeight}
+  function lastScalar(output){const a=String(output||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);return a.length?a[a.length-1]:''}
 
-  async function ensureRuntime(){if(state.pyodide)return state.pyodide;if(state.runtimePromise)return state.runtimePromise;state.runtimePromise=(async()=>{try{setRuntimeBadge('loading','Loading Python…');if(typeof window.loadPyodide!=='function')throw new Error('Pyodide did not load. Check the network connection.');const py=await window.loadPyodide({indexURL:PYODIDE_INDEX});py.setStdin({stdin:()=>window.prompt('Python input:')??null});try{py.FS.mkdirTree('/home/pyodide')}catch(_){}await py.runPythonAsync("import os\nos.chdir('/home/pyodide')");try{const response=await fetch('data.csv',{cache:'no-store'});if(!response.ok)throw new Error(`CSV HTTP ${response.status}`);py.FS.writeFile('/home/pyodide/data.csv',await response.text());state.datasetReady=true}catch(err){state.datasetReady=false;console.warn('dataset preload failed',err)}state.pyodide=py;setRuntimeBadge('ready','Python ready');clearTerminal('Python 3 runtime ready.\nWorkspace ready for your team.');return py}catch(err){state.runtimePromise=null;setRuntimeBadge('error','Python unavailable');clearTerminal(`Runtime error: ${err.message}`);setValidation('Python could not start. Check the connection and reload the page.','bad');throw err}})();return state.runtimePromise}
-  async function ensurePandas(){const py=await ensureRuntime();if(state.pandasReady)return;setRuntimeBadge('loading','Loading Pandas…');appendTerminal('[system] Loading pandas…');await py.loadPackage('pandas');state.pandasReady=true;setRuntimeBadge('ready','Python + Pandas ready');appendTerminal('[system] pandas ready.')}
-  async function executePython(source,{cell=false,terminal=false}={}){if(!enforceFullscreen())return null;const py=await ensureRuntime();if(/(^|\n)\s*(import pandas|from pandas)/.test(source))await ensurePandas();const stdout=[],stderr=[];py.setStdout({batched:msg=>stdout.push(msg)});py.setStderr({batched:msg=>stderr.push(msg)});let result;try{result=await py.runPythonAsync(source);if(result!==undefined&&result!==null){const text=String(result);if(text!=='None')stdout.push(text);if(typeof result.destroy==='function')result.destroy()}}catch(err){stderr.push(String(err?.message||err))}const output=stdout.join('\n').trim(),errors=stderr.join('\n').trim();if(cell){state.executionCount+=1;$('executionCount').textContent=`[${state.executionCount}]`;appendTerminal(`\nIn [${state.executionCount}]:`);if(output)appendTerminal(output);if(errors)appendTerminal(`ERROR\n${errors}`);state.lastCellOutput=errors?'':output;state.lastCellScalar=errors?'':lastScalar(output);$('validateButton').disabled=!state.lastCellScalar;if(errors)setValidation('Python found an error. Read it, fix the code, and run again. This execution error does not cost points.','bad');else if(state.lastCellScalar)setValidation('The cell produced an output. If your team can explain it, press Validate output.');else if(output)setValidation('The last output is not yet a value that can be validated. Check the guide.','bad');else setValidation('The cell did not print an output. Check whether print(...) is missing.','bad')}else if(terminal){if(output)appendTerminal(output);if(errors)appendTerminal(`ERROR\n${errors}`)}return{output,errors}}
+  async function ensureRuntime(){
+    if(state.pyodide)return state.pyodide;
+    if(state.runtimePromise)return state.runtimePromise;
+    state.runtimePromise=(async()=>{
+      try{
+        setRuntimeBadge('loading','Loading Python…');
+        if(typeof window.loadPyodide!=='function')throw new Error('Pyodide did not load.');
+        const py=await window.loadPyodide({indexURL:PYODIDE_INDEX});
+        state.pyodide=py;setRuntimeBadge('ready','Python ready');clearTerminal('Python 3 runtime ready.');return py;
+      }catch(err){
+        state.runtimePromise=null;setRuntimeBadge('error','Python unavailable');clearTerminal(`Runtime error: ${err.message}`);throw err;
+      }
+    })();
+    return state.runtimePromise;
+  }
 
-  function renderMath(){if(typeof window.renderMathInElement!=='function')return;try{window.renderMathInElement($('guidePane'),{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false})}catch(err){console.warn('math render skipped',err)}}
-  function currentCheckpoint(snapshot=state.snapshot){return Array.from(snapshot?.checkpoints||[]).find(cp=>!cp.completed)||null}
-  function formatElapsed(ms){const total=Math.max(0,Math.floor(ms/1000)),m=Math.floor(total/60),s=total%60;return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
+  async function executePython(source){
+    const py=await ensureRuntime(),stdout=[],stderr=[];
+    py.setStdout({batched:m=>stdout.push(m)});py.setStderr({batched:m=>stderr.push(m)});
+    try{
+      let r=await py.runPythonAsync(source);
+      if(r!==undefined&&r!==null){const t=String(r);if(t!=='None')stdout.push(t);if(typeof r.destroy==='function')r.destroy()}
+    }catch(err){stderr.push(String(err?.message||err))}
+    const output=stdout.join('\n').trim(),errors=stderr.join('\n').trim();
+    state.executionCount+=1;$('executionCount').textContent=`[${state.executionCount}]`;appendTerminal(`In [${state.executionCount}]:`);
+    if(output)appendTerminal(output);if(errors)appendTerminal(`ERROR\n${errors}`);
+    state.lastCellScalar=errors?'':lastScalar(output);
+    $('validateButton').disabled=!state.lastCellScalar;
+    if(errors)setValidation('Python found an error. Fix it and run again. Syntax/runtime errors do not lower the grade.','bad');
+    else if(state.lastCellScalar)setValidation('Output ready. Validate when your team can explain it.');
+    else setValidation('The cell did not produce a final value to validate.','bad');
+  }
+
+  function currentCheckpoint(s=state.snapshot){return Array.from(s?.checkpoints||[]).find(cp=>!cp.completed)||null}
+  function formatElapsed(ms){const t=Math.max(0,Math.floor(ms/1000)),m=Math.floor(t/60),s=t%60;return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
   function elapsedMs(){return state.startedAt?Math.max(0,Date.now()-state.startedAt.getTime()):0}
-  function updateTimer(){const el=$('timeLabel');if(!el)return;const ms=elapsedMs(),target=TOTAL_MINUTES*60000;el.textContent=`${formatElapsed(ms)} / ${String(TOTAL_MINUTES).padStart(2,'0')}:00`;el.classList.toggle('warn',ms>=35*60000&&ms<target);el.classList.toggle('over',ms>=target)}
-  function startTimer(startedAt){if(startedAt){const d=new Date(startedAt);if(!Number.isNaN(d.getTime()))state.startedAt=d}if(!state.startedAt)state.startedAt=new Date();clearInterval(state.timerHandle);updateTimer();state.timerHandle=setInterval(updateTimer,1000)}
-  function updateHelpUI(snapshot=state.snapshot){const remaining=Number(snapshot?.help_tokens_remaining??cfg.helpTokenLimit??3),used=Number(snapshot?.help_tokens_used||0);$('helpBadge').textContent=`${remaining} help${remaining===1?'':'s'}`;$('helpBadge').classList.toggle('empty',remaining<=0);$('helpRemainingText').textContent=`${remaining} of ${cfg.helpTokenLimit||3} remaining`;$('helpButton').disabled=remaining<=0||!state.currentCp||!!state.currentCp.completed;$('helpButton').textContent=remaining>0?'Use 1 help':'No helps remaining';$('finishHelps').textContent=`${used} / ${cfg.helpTokenLimit||3}`}
-  function updatePenaltyStatus(cp=state.currentCp){if(!cp){$('penaltyStatus').textContent='';return}const wrong=Number(cp.wrong_attempts||0),helps=Number(cp.help_count||0),potential=Number(cp.stage_potential??cp.points??1);$('penaltyStatus').textContent=`This stage can still earn ${potential.toFixed(2)} / ${Number(cp.points||1).toFixed(2)} points · validated errors: ${wrong} · helps used here: ${helps}.`;$('skipButton').classList.toggle('hidden',wrong<=0||cp.completed)}
-  function updateSnapshotMetrics(snapshot){state.snapshot=snapshot;const checkpoints=Array.from(snapshot.checkpoints||[]),completed=Number(snapshot.completed_count??checkpoints.filter(c=>c.completed).length),total=Number(snapshot.checkpoint_count||checkpoints.length||8);$('gradeLabel').textContent=`Projected ${fmtGrade(snapshot.projected_grade??snapshot.grade)} / 5.00`;$('progressText').textContent=`${completed} / ${total} completed`;$('progressBar').style.width=`${Math.min(100,completed/Math.max(1,total)*100)}%`;updateHelpUI(snapshot);updateRestrictionLabel()}
-  function renderStepRail(checkpoints,currentKey){$('stepRail').innerHTML=checkpoints.map(cp=>{let cls='';if(cp.completed){cls=cp.completion_mode==='revealed'?'revealed':cp.completion_mode==='skipped'?'skipped':'done'}else if(cp.key===currentKey)cls='active';return `<span class="step-dot ${cls}" title="Stage ${esc(cp.sequence)} · ${esc(cp.completion_mode||'pending')}"></span>`}).join('')}
-  function showExistingHelp(cp,lesson){const count=Number(cp?.help_count||0),panel=$('helpPanel');if(count<=0){panel.classList.add('hidden');panel.innerHTML='';return}const index=Math.min(count,lesson.hints.length)-1;panel.innerHTML=`<strong>Help ${count} used on this stage</strong>${lesson.hints[index]}`;panel.classList.remove('hidden')}
+  function updateTimer(){const e=$('timeLabel');if(e)e.textContent=`${formatElapsed(elapsedMs())} / ${String(TOTAL_MINUTES).padStart(2,'0')}:00`}
+  function startTimer(v){if(v){const d=new Date(v);if(!Number.isNaN(d.getTime()))state.startedAt=d}if(!state.startedAt)state.startedAt=new Date();clearInterval(state.timerHandle);updateTimer();state.timerHandle=setInterval(updateTimer,1000)}
 
-  function renderLesson(cp){const lesson=LESSONS[cp.key]||{minutes:4,tag:'PYTHON LAB',title:cp.title,concept:`<p>${esc(cp.prompt)}</p>`,goal:'<p>Run Python and interpret its output.</p>',steps:['Read the task.','Complete the code.','Run it and inspect the output.','Validate when your team can explain the result.'],task:`<p>${esc(cp.prompt)}</p>`,explore:'<p>Use the console to inspect variables.</p>',hints:[esc(cp.hint||'Review the task.'),esc(cp.hint||'Review the task.'),esc(cp.hint||'Review the task.')],requirements:[],starter:normalizeCode(cp.code),solution:normalizeCode(cp.code)};state.currentCp=cp;state.currentKey=cp.key;state.currentStarter=lesson.starter||normalizeCode(cp.code);state.lastCellOutput='';state.lastCellScalar='';state.executionCount=0;state.pendingNextSnapshot=null;$('lessonTag').textContent=lesson.tag;$('lessonTiming').textContent=`Target: ${lesson.minutes} min`;$('lessonTitle').textContent=lesson.title;$('lessonConcept').innerHTML=lesson.concept;$('lessonGoal').innerHTML=lesson.goal;$('lessonSteps').innerHTML=(lesson.steps||[]).map((step,index)=>`<li><span>${index+1}</span><div>${step}</div></li>`).join('');$('lessonTask').innerHTML=lesson.task;$('lessonExplore').innerHTML=lesson.explore;$('codeEditor').value=state.currentStarter;$('validateButton').disabled=true;$('executionCount').textContent='[ ]';$('solutionPanel').classList.add('hidden');$('revealButton').disabled=false;$('runCodeButton').disabled=false;$('runCellButton').disabled=false;$('resetCodeButton').disabled=false;showExistingHelp(cp,lesson);updateHelpUI();updatePenaltyStatus(cp);setValidation('Read the guide, complete every WRITE_HERE, and run the full cell. You can fix Python errors without a penalty.');renderMath()}
+  function updateMetrics(s){
+    state.snapshot=s;const cps=Array.from(s?.checkpoints||[]),done=Number(s?.completed_count??cps.filter(c=>c.completed).length),total=Number(s?.checkpoint_count||cps.length||8);
+    $('progressText').textContent=`${done} / ${total} completed`;$('progressBar').style.width=`${Math.min(100,done/Math.max(1,total)*100)}%`;
+    $('gradeLabel').textContent=`Projected ${fmtGrade(s?.projected_grade??s?.grade)} / 5.00`;
+    const remaining=Number(s?.help_tokens_remaining??3),used=Number(s?.help_tokens_used||0);
+    $('helpBadge').textContent=`${remaining} help${remaining===1?'':'s'}`;$('helpRemainingText').textContent=`${remaining} of 3 remaining`;
+    $('helpButton').disabled=remaining<=0||!state.currentCp||!!state.currentCp.completed;
+    $('finishHelps').textContent=`${used} / 3`;
+  }
 
-  function render(snapshot){updateSnapshotMetrics(snapshot);$('setupPanel').classList.add('hidden');const checkpoints=Array.from(snapshot.checkpoints||[]),completed=Number(snapshot.completed_count??checkpoints.filter(c=>c.completed).length),total=Number(snapshot.checkpoint_count||checkpoints.length||8);$('studentLabel').textContent=`${snapshot.group_code} · ${snapshot.student_label}`;startTimer(snapshot.started_at);if(snapshot.completed){clearInterval(state.timerHandle);$('workspacePanel').classList.add('hidden');$('finishPanel').classList.remove('hidden');$('finishPoints').textContent=`${completed} / ${total}`;$('finishGrade').textContent=fmtGrade(snapshot.grade);$('finishHelps').textContent=`${snapshot.help_tokens_used||0} / ${cfg.helpTokenLimit||3}`;$('finishTime').textContent=formatElapsed(elapsedMs());hideFullscreenGate();clearSaved();if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});return}const current=currentCheckpoint(snapshot)||checkpoints[0];const n=Number(current?.sequence||completed+1);$('stepLabel').textContent=`Stage ${n} of ${total}`;renderStepRail(checkpoints,current?.key);renderLesson(current);$('finishPanel').classList.add('hidden');$('workspacePanel').classList.remove('hidden');enforceFullscreen();ensureRuntime().catch(()=>{})}
+  function renderRail(cps,key){$('stepRail').innerHTML=cps.map(cp=>`<span class="step-dot ${cp.completed?'done':cp.key===key?'active':''}"></span>`).join('')}
 
-  async function runCurrentCell(){if(!enforceFullscreen())return;const source=$('codeEditor').value;if(!source.trim()){setValidation('The cell is empty. Reset it and complete the code.','bad');return}if(source.includes(PLACEHOLDER)){setValidation('There is still a WRITE_HERE marker. Replace every marker before running the cell.','bad');return}const lesson=LESSONS[state.currentKey];const missing=(lesson?.requirements||[]).find(requirement=>!requirement.pattern.test(source));if(missing){setValidation(`One required command is still missing or incomplete: ${missing.label}. Use the guide and correct the cell before running.`,'bad');return}$('runCodeButton').disabled=true;$('runCellButton').disabled=true;try{await executePython(source,{cell:true})}finally{$('runCodeButton').disabled=false;$('runCellButton').disabled=false}}
+  function renderLesson(cp){
+    const l=LESSONS[cp.key];state.currentCp=cp;state.currentKey=cp.key;state.currentStarter=l.starter||'';state.lastCellScalar='';state.pendingChoice='';state.executionCount=0;state.pendingNextSnapshot=null;
+    $('lessonTag').textContent=l.tag;$('lessonTiming').textContent=`Target: ${l.minutes} min`;$('lessonTitle').textContent=l.title;
+    $('lessonConcept').innerHTML=l.concept;$('lessonGoal').innerHTML=l.goal;$('lessonTask').innerHTML=l.task;$('lessonExplore').innerHTML=l.explore;
+    $('lessonSteps').innerHTML=l.steps.map((x,i)=>`<li><span>${i+1}</span><div>${x}</div></li>`).join('');
+    $('helpPanel').classList.add('hidden');$('solutionPanel').classList.add('hidden');$('revealButton').disabled=false;$('validateButton').disabled=true;
 
-  async function validateCurrent(){if(!enforceFullscreen())return;if(!state.currentKey||!state.lastCellScalar){setValidation('First run a cell that produces a validatable output.','bad');return}const btn=$('validateButton');btn.disabled=true;setValidation('Validating your team output…');try{const data=await rpc(cfg.rpc.submit,{p_attempt_id:state.attemptId,p_attempt_token:state.token,p_checkpoint_key:state.currentKey,p_answer:state.lastCellScalar});if(data.correct){setValidation(`Correct. This stage earned ${Number(data.awarded_points||0).toFixed(2)} / 1.00 points.`,'ok');appendTerminal(`✓ Stage validated · ${Number(data.awarded_points||0).toFixed(2)} points.`);await logEvent('LAB_STAGE_COMPLETED',{checkpoint_key:state.currentKey,execution_count:state.executionCount,awarded_points:data.awarded_points,workspace_version:'guided-v8',guided_minutes:GUIDED_MINUTES});setTimeout(()=>render(data.snapshot),900)}else{state.snapshot=data.snapshot;state.currentCp=(data.snapshot.checkpoints||[]).find(cp=>cp.key===state.currentKey)||state.currentCp;updateSnapshotMetrics(data.snapshot);renderStepRail(data.snapshot.checkpoints||[],state.currentKey);updatePenaltyStatus(state.currentCp);setValidation(`Incorrect output recorded. Validated error #${data.wrong_attempts}. You may retry, use a help token, reveal the solution, or continue without solving.`,'bad');appendTerminal(`✗ Incorrect validation #${data.wrong_attempts}. Projected grade updated.`);btn.disabled=false}}catch(err){setValidation(`This stage could not be recorded: ${err.message}`,'bad');btn.disabled=false}}
+    const choice=l.mode==='choice';
+    $('choicePanel').classList.toggle('hidden',!choice);
+    $('codeInstruction1').classList.toggle('hidden',choice);$('codeCell').classList.toggle('hidden',choice);
+    $('codeInstruction2').classList.toggle('hidden',choice);$('terminalCard').classList.toggle('hidden',choice);
+    $('toolbarActions').classList.toggle('hidden',choice);
+    $('kernelLabel').textContent=choice?'Concept check · multiple choice':'Python 3 · browser runtime';
 
-  async function useHelp(){if(!enforceFullscreen()||!state.currentKey)return;const remaining=Number(state.snapshot?.help_tokens_remaining??3);if(remaining<=0)return;if(!window.confirm(`Use one help token on this stage? ${remaining} remain. Each help lowers the projected maximum grade by 0.10.`))return;$('helpButton').disabled=true;try{const data=await rpc(cfg.rpc.help,{p_attempt_id:state.attemptId,p_attempt_token:state.token,p_checkpoint_key:state.currentKey});state.snapshot=data.snapshot;state.currentCp=(data.snapshot.checkpoints||[]).find(cp=>cp.key===state.currentKey)||state.currentCp;updateSnapshotMetrics(data.snapshot);updatePenaltyStatus(state.currentCp);const lesson=LESSONS[state.currentKey],level=Math.min(Number(data.help_level||1),lesson.hints.length);$('helpPanel').innerHTML=`<strong>Help ${level}</strong>${lesson.hints[level-1]}`;$('helpPanel').classList.remove('hidden');renderMath();setValidation(`Help ${data.help_tokens_used} of ${cfg.helpTokenLimit||3} recorded. Read the hint and return to the code.`);await logEvent('HELP_SHOWN',{checkpoint_key:state.currentKey,help_level:level,workspace_version:'guided-v8'})}catch(err){setValidation(`Help could not be used: ${err.message}`,'bad')}finally{updateHelpUI()}}
+    if(choice){
+      $('choiceQuestion').innerHTML=l.task;
+      $('choiceOptions').innerHTML=l.choices.map((option,i)=>`<button type="button" class="choice-option" data-value="${esc(option)}"><span>${String.fromCharCode(65+i)}</span><strong>${esc(option)}</strong></button>`).join('');
+      $('choiceOptions').querySelectorAll('.choice-option').forEach(btn=>btn.addEventListener('click',()=>{
+        $('choiceOptions').querySelectorAll('.choice-option').forEach(x=>x.classList.remove('selected'));btn.classList.add('selected');state.pendingChoice=btn.dataset.value;$('validateButton').disabled=false;setValidation(`Selected: ${state.pendingChoice}. Press Validate answer when ready.`);
+      }));
+      $('validateButton').textContent='Validate answer';
+      setValidation('Read the question, select one option, then validate.');
+    }else{
+      $('codeEditor').value=l.starter;$('executionCount').textContent='[ ]';$('validateButton').textContent='Validate output';
+      setValidation('Complete every WRITE_HERE, run the cell, then validate the final output.');ensureRuntime().catch(()=>{});
+    }
+  }
 
-  async function revealSolution(){if(!enforceFullscreen()||!state.currentKey)return;if(!window.confirm('Revealing the complete solution closes this stage for 25% of its value. Continue?'))return;$('revealButton').disabled=true;try{const key=state.currentKey,data=await rpc(cfg.rpc.reveal,{p_attempt_id:state.attemptId,p_attempt_token:state.token,p_checkpoint_key:key});state.pendingNextSnapshot=data.snapshot;updateSnapshotMetrics(data.snapshot);const lesson=LESSONS[key];$('solutionCode').textContent=lesson.solution;$('solutionOutput').textContent=data.expected_answer;$('solutionCredit').textContent=`${Math.round(Number(data.awarded_points||0)*100)}% of stage`;$('solutionPanel').classList.remove('hidden');$('runCodeButton').disabled=true;$('runCellButton').disabled=true;$('resetCodeButton').disabled=true;$('validateButton').disabled=true;$('helpButton').disabled=true;$('skipButton').classList.add('hidden');setValidation('Solution revealed and recorded. Study each line before continuing.','ok');appendTerminal(`↳ Solution revealed · ${Number(data.awarded_points||0).toFixed(2)} points.`)}catch(err){setValidation(`The solution could not be revealed: ${err.message}`,'bad');$('revealButton').disabled=false}}
+  function render(s){
+    updateMetrics(s);$('setupPanel').classList.add('hidden');const cps=Array.from(s.checkpoints||[]),done=Number(s.completed_count??cps.filter(c=>c.completed).length),total=Number(s.checkpoint_count||cps.length||8);
+    $('studentLabel').textContent=`${s.group_code} · ${s.student_label}`;startTimer(s.started_at);
+    if(s.completed){
+      clearInterval(state.timerHandle);$('workspacePanel').classList.add('hidden');$('finishPanel').classList.remove('hidden');$('finishPoints').textContent=`${done} / ${total}`;$('finishGrade').textContent=fmtGrade(s.grade);$('finishTime').textContent=formatElapsed(elapsedMs());clearSaved();return;
+    }
+    const cp=currentCheckpoint(s)||cps[0];$('stepLabel').textContent=`Stage ${Number(cp.sequence||done+1)} of ${total}`;renderRail(cps,cp.key);renderLesson(cp);
+    $('finishPanel').classList.add('hidden');$('workspacePanel').classList.remove('hidden');
+  }
 
-  async function skipStage(){if(!enforceFullscreen()||!state.currentKey)return;if(!window.confirm('Continuing without solving gives 0% for this stage. Continue?'))return;$('skipButton').disabled=true;try{const data=await rpc(cfg.rpc.skip,{p_attempt_id:state.attemptId,p_attempt_token:state.token,p_checkpoint_key:state.currentKey});appendTerminal('↳ Stage skipped · 0.00 points.');render(data.snapshot)}catch(err){setValidation(`Could not continue: ${err.message}`,'bad');$('skipButton').disabled=false}}
+  async function runCurrentCell(){
+    const l=LESSONS[state.currentKey];if(!l||l.mode==='choice')return;
+    const source=$('codeEditor').value;if(!source.trim()){setValidation('The cell is empty.','bad');return}
+    if(source.includes(PLACEHOLDER)){setValidation('Replace every WRITE_HERE before running.','bad');return}
+    const missing=(l.requirements||[]).find(r=>!r.pattern.test(source));if(missing){setValidation(`Required command missing: ${missing.label}.`,'bad');return}
+    $('runCodeButton').disabled=true;$('runCellButton').disabled=true;try{await executePython(source)}finally{$('runCodeButton').disabled=false;$('runCellButton').disabled=false}
+  }
 
-  function updateTeamSizeUI(){const size=Number($('teamSize').value||3),show=size===3;$('student3Wrap').classList.toggle('hidden-member',!show);$('studentName3').required=show;if(!show)$('studentName3').value=''}
-  function readTeamNames(){const size=Number($('teamSize').value||3),names=[$('studentName1').value.trim(),$('studentName2').value.trim()];if(size===3)names.push($('studentName3').value.trim());return names}
+  async function validateCurrent(){
+    const l=LESSONS[state.currentKey];const answer=l?.mode==='choice'?state.pendingChoice:state.lastCellScalar;
+    if(!answer){setValidation(l?.mode==='choice'?'Select an option first.':'Run the cell first.','bad');return}
+    $('validateButton').disabled=true;setValidation('Validating…');
+    try{
+      const data=await rpc(cfg.rpc.submit,{p_attempt_id:state.attemptId,p_attempt_token:state.token,p_checkpoint_key:state.currentKey,p_answer:String(answer)});
+      if(data.correct){
+        setValidation(`Correct · ${Number(data.awarded_points||0).toFixed(2)} points.`,'ok');await logEvent('LAB_STAGE_COMPLETED',{checkpoint_key:state.currentKey,mode:l.mode,workspace_version:'class1-v10'});setTimeout(()=>render(data.snapshot),650);
+      }else{
+        state.snapshot=data.snapshot;state.currentCp=(data.snapshot.checkpoints||[]).find(cp=>cp.key===state.currentKey)||state.currentCp;updateMetrics(data.snapshot);
+        setValidation(`Incorrect answer recorded. Attempt #${data.wrong_attempts}. Try again or use help.`,'bad');$('validateButton').disabled=false;
+      }
+    }catch(err){setValidation(`Could not record this stage: ${err.message}`,'bad');$('validateButton').disabled=false}
+  }
+
+  async function useHelp(){
+    if(!state.currentKey)return;const remaining=Number(state.snapshot?.help_tokens_remaining??3);if(remaining<=0)return;
+    if(!window.confirm(`Use one help token? ${remaining} remain.`))return;
+    try{
+      const data=await rpc(cfg.rpc.help,{p_attempt_id:state.attemptId,p_attempt_token:state.token,p_checkpoint_key:state.currentKey});
+      state.snapshot=data.snapshot;state.currentCp=(data.snapshot.checkpoints||[]).find(cp=>cp.key===state.currentKey)||state.currentCp;updateMetrics(data.snapshot);
+      const l=LESSONS[state.currentKey],level=Math.min(Number(data.help_level||1),l.hints.length);$('helpPanel').innerHTML=`<strong>Help ${level}</strong>${l.hints[level-1]}`;$('helpPanel').classList.remove('hidden');
+    }catch(err){setValidation(`Help unavailable: ${err.message}`,'bad')}
+  }
+
+  async function revealSolution(){
+    if(!state.currentKey)return;if(!window.confirm('Reveal the correct solution/answer for 25% stage credit?'))return;
+    try{
+      const key=state.currentKey,l=LESSONS[key],data=await rpc(cfg.rpc.reveal,{p_attempt_id:state.attemptId,p_attempt_token:state.token,p_checkpoint_key:key});
+      state.pendingNextSnapshot=data.snapshot;updateMetrics(data.snapshot);$('solutionCode').textContent=l.solution;$('solutionOutput').textContent=data.expected_answer;$('solutionPanel').classList.remove('hidden');
+      $('validateButton').disabled=true;$('revealButton').disabled=true;setValidation('Correct solution revealed. Study it before continuing.','ok');
+    }catch(err){setValidation(`Could not reveal solution: ${err.message}`,'bad')}
+  }
+
+  async function skipStage(){
+    if(!window.confirm('Continue without solving? This stage receives 0% credit.'))return;
+    try{const data=await rpc(cfg.rpc.skip,{p_attempt_id:state.attemptId,p_attempt_token:state.token,p_checkpoint_key:state.currentKey});render(data.snapshot)}catch(err){setValidation(`Could not continue: ${err.message}`,'bad')}
+  }
+
+  function updateTeamSizeUI(){const show=Number($('teamSize').value||3)===3;$('student3Wrap').classList.toggle('hidden-member',!show);$('studentName3').required=show;if(!show)$('studentName3').value=''}
+  function readEmails(){const size=Number($('teamSize').value||3),a=[$('studentName1').value.trim(),$('studentName2').value.trim()];if(size===3)a.push($('studentName3').value.trim());return a}
+  function emailOk(v){return /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@ijr\.edu\.co$/i.test(v)}
+
   $('teamSize').addEventListener('change',updateTeamSizeUI);updateTeamSizeUI();
+  $('registrationForm').addEventListener('submit',async e=>{
+    e.preventDefault();const group=$('groupCode').value,emails=readEmails();
+    if(!group||emails.some(x=>!emailOk(x))){setSetupStatus('Use a valid @ijr.edu.co institutional email for every student.',true);return}
+    const normalized=emails.map(x=>x.toLowerCase());if(new Set(normalized).size!==normalized.length){setSetupStatus('Do not repeat the same institutional email inside one team.',true);return}
+    $('startButton').disabled=true;setSetupStatus('Registering team…');
+    try{
+      const data=await rpc(cfg.rpc.startTeam,{p_activity_slug:cfg.activitySlug,p_student_emails:emails,p_group_code:group,p_session_id:crypto.randomUUID(),p_user_agent:navigator.userAgent});
+      state.attemptId=data.attempt_id;state.token=data.attempt_token;save();render(data.snapshot);setSetupStatus('');await logEvent('ACTIVITY_READY',{identity_mode:'team_email',team_size:emails.length,workspace_version:'class1-v10',guided_minutes:GUIDED_MINUTES});
+    }catch(err){$('startButton').disabled=false;setSetupStatus(`Could not start: ${err.message}`,true)}
+  });
 
-  $('registrationForm').addEventListener('submit',async e=>{e.preventDefault();const group=$('groupCode').value,names=readTeamNames();if(!group||names.some(n=>n.length<2)){setSetupStatus('Complete the group and the full name of each team member.',true);return}const normalized=names.map(x=>x.toLocaleLowerCase('es').replace(/\s+/g,' ').trim());if(new Set(normalized).size!==normalized.length){setSetupStatus('Do not repeat the same name within the team.',true);return}if(cfg.requireFullscreen){if(!fullscreenSupported()){setSetupStatus('This browser does not support required fullscreen mode. Use Chrome or Edge.',true);return}if(!await enterFullscreen())return}$('startButton').disabled=true;setSetupStatus('Registering your team and preparing Python…');try{const data=await rpc(cfg.rpc.startTeam,{p_activity_slug:cfg.activitySlug,p_student_names:names,p_group_code:group,p_session_id:crypto.randomUUID(),p_user_agent:navigator.userAgent});state.attemptId=data.attempt_id;state.token=data.attempt_token;save();render(data.snapshot);setSetupStatus('');await logEvent('ACTIVITY_READY',{identity_mode:'team',team_size:names.length,target_minutes:TOTAL_MINUTES,guided_minutes:GUIDED_MINUTES,workspace_version:'guided-v8'})}catch(err){$('startButton').disabled=false;setSetupStatus(`Could not start the lab: ${err.message}`,true);if(document.fullscreenElement)document.exitFullscreen().catch(()=>{})}});
-
-  $('runCodeButton').addEventListener('click',runCurrentCell);$('runCellButton').addEventListener('click',runCurrentCell);$('validateButton').addEventListener('click',validateCurrent);$('helpButton').addEventListener('click',useHelp);$('revealButton').addEventListener('click',revealSolution);$('skipButton').addEventListener('click',skipStage);$('continueAfterRevealButton').addEventListener('click',()=>{if(state.pendingNextSnapshot)render(state.pendingNextSnapshot)});
-  $('resetCodeButton').addEventListener('click',()=>{if(!enforceFullscreen())return;$('codeEditor').value=state.currentStarter;state.lastCellOutput='';state.lastCellScalar='';state.executionCount=0;$('executionCount').textContent='[ ]';$('validateButton').disabled=true;setValidation('Cell reset. Read the steps and complete every WRITE_HERE again.')});
+  $('runCodeButton').addEventListener('click',runCurrentCell);$('runCellButton').addEventListener('click',runCurrentCell);$('validateButton').addEventListener('click',validateCurrent);
+  $('helpButton').addEventListener('click',useHelp);$('revealButton').addEventListener('click',revealSolution);$('skipButton').addEventListener('click',skipStage);
+  $('continueAfterRevealButton').addEventListener('click',()=>{if(state.pendingNextSnapshot)render(state.pendingNextSnapshot)});
+  $('resetCodeButton').addEventListener('click',()=>{const l=LESSONS[state.currentKey];if(!l||l.mode==='choice')return;$('codeEditor').value=state.currentStarter;state.lastCellScalar='';state.executionCount=0;$('executionCount').textContent='[ ]';$('validateButton').disabled=true});
   $('clearTerminalButton').addEventListener('click',()=>clearTerminal('Python console cleared.'));
-  $('terminalForm').addEventListener('submit',async e=>{e.preventDefault();if(!enforceFullscreen())return;const input=$('terminalCommand'),command=input.value.trim();if(!command)return;input.value='';appendTerminal(`>>> ${command}`);try{await executePython(command,{terminal:true})}catch(err){appendTerminal(`ERROR\n${err.message}`)}});
-  $('codeEditor').addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();const editor=e.currentTarget,start=editor.selectionStart,end=editor.selectionEnd;editor.setRangeText('    ',start,end,'end')}if((e.shiftKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();runCurrentCell()}});
-  $('enterFullscreenButton').addEventListener('click',enterFullscreen);
-  document.addEventListener('fullscreenchange',async()=>{if(!activityActive()||!cfg.requireFullscreen){hideFullscreenGate();return}if(isFullscreen()){hideFullscreenGate();await logEvent('FULLSCREEN_ENTER',{source:'fullscreenchange',workspace_version:'guided-v8'})}else{showFullscreenGate('You left fullscreen mode. Return to fullscreen to continue.');await logEvent('FULLSCREEN_EXIT',{visibility:document.visibilityState,workspace_version:'guided-v8'})}});
-  document.addEventListener('visibilitychange',async()=>{if(!activityActive())return;if(document.visibilityState==='hidden')await logEvent('UNAUTHORIZED_LEAVE',{reason:'visibility_hidden',workspace_version:'guided-v8'});else enforceFullscreen()});
+  $('terminalForm').addEventListener('submit',async e=>{e.preventDefault();const cmd=$('terminalCommand').value.trim();if(!cmd)return;$('terminalCommand').value='';appendTerminal(`>>> ${cmd}`);try{const py=await ensureRuntime();let r=await py.runPythonAsync(cmd);if(r!==undefined&&r!==null){appendTerminal(String(r));if(typeof r.destroy==='function')r.destroy()}}catch(err){appendTerminal(`ERROR\n${err.message}`)}});
+  $('codeEditor').addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();const ed=e.currentTarget,s=ed.selectionStart,t=ed.selectionEnd;ed.setRangeText('    ',s,t,'end')}if((e.shiftKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();runCurrentCell()}});
   window.addEventListener('beforeunload',e=>{if(activityActive()){e.preventDefault();e.returnValue=''}});
 
-  async function restore(){const raw=sessionStorage.getItem(cfg.sessionStorageKey);if(!raw)return;try{const saved=JSON.parse(raw);if(!saved.attemptId||!saved.token)return clearSaved();state.attemptId=saved.attemptId;state.token=saved.token;const data=await rpc(cfg.rpc.resume,{p_attempt_id:state.attemptId,p_attempt_token:state.token});render(data.snapshot);if(activityActive()&&cfg.requireFullscreen)showFullscreenGate('Team session restored. Return to fullscreen mode to continue.');else hideFullscreenGate()}catch(err){clearSaved();setSetupStatus('The previous session is no longer available. You may register the team again.',true)}}
+  async function restore(){
+    const raw=sessionStorage.getItem(cfg.sessionStorageKey);if(!raw)return;
+    try{const saved=JSON.parse(raw);if(!saved.attemptId||!saved.token)return clearSaved();state.attemptId=saved.attemptId;state.token=saved.token;const data=await rpc(cfg.rpc.resume,{p_attempt_id:state.attemptId,p_attempt_token:state.token});render(data.snapshot)}
+    catch{clearSaved();setSetupStatus('Previous session unavailable. Register again if needed.',true)}
+  }
   restore();
 })();
