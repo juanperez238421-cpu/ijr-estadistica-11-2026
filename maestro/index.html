@@ -1,21 +1,83 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
-<title>Statistics 11 · Registro maestro</title>
-<link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
-<link rel="stylesheet" href="styles.css?v=20260819-7">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="color-scheme" content="light">
+  <title>Statistics 11 · Live panel</title>
+  <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
+  <link rel="stylesheet" href="styles.css?v=20260820-minimal9">
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="config.js?v=20260820-minimal9"></script>
+  <script defer src="app.js?v=20260820-minimal9"></script>
 </head>
-<body><main class="shell">
-<header class="topbar"><div><div class="eyebrow">Instituto Jorge Robledo · Statistics 11</div><h1>Registro maestro · Live Gradebook</h1><div class="small">Equipos de Colab · respuestas · proyección de nota · ayudas · errores validados · avance en vivo.</div></div><a class="button secondary" href="../">Volver al curso</a></header>
-<section id="loginPanel" class="panel"><h2>Acceso docente</h2><form id="loginForm" class="field"><input id="teacherCode" type="password" autocomplete="current-password" placeholder="Código docente" required><button>Entrar</button></form><div id="loginStatus" class="small" style="margin-top:8px"></div></section>
-<section id="dashboardPanel" class="panel hidden">
-  <div class="toolbar"><div><h2 style="margin:0">11°A · 11°B · 11°C</h2><div class="live-line"><span id="liveStatus" class="live-status syncing">Conectando…</span><span id="updatedAt" class="small"></span></div></div><div class="field"><select id="groupFilter"><option value="">Todos los grupos</option><option>11A</option><option>11B</option><option>11C</option></select><input id="searchInput" placeholder="Buscar estudiante"><button id="refreshButton" type="button" class="secondary">Actualizar</button><button id="logoutButton" type="button" class="secondary">Salir</button></div></div>
-  <div id="metrics" class="metrics"></div>
-  <h3 class="section-title">Equipos activos / estaciones</h3>
-  <div id="teamBoard" class="team-board"></div>
-  <div class="table-wrap"><table><thead><tr><th>Grupo</th><th>#</th><th>Estudiante</th><th>Equipo / PC</th><th>Permutaciones</th><th>Colab 01</th><th>Progreso</th><th>Nota / proy.</th><th>Última respuesta</th><th>Apoyo / penalización</th><th>Eventos salida</th><th>Última actividad</th></tr></thead><tbody id="gradeBody"></tbody></table></div>
-  <p class="small"><strong>Última respuesta</strong> muestra la salida más reciente enviada al validador y permite desplegar el historial por etapa. <strong>Nota / proy.</strong>: mientras el equipo está activo se muestra la nota máxima que todavía puede alcanzar; al finalizar se convierte en nota final. <strong>A</strong>=ayudas usadas, <strong>E</strong>=salidas incorrectas validadas, <strong>R</strong>=soluciones reveladas, <strong>O</strong>=etapas omitidas.</p>
-</section>
-</main><script src="config.js?v=20260819-1"></script><script src="app.js?v=20260819-7"></script></body></html>
+<body>
+  <main class="shell">
+    <header class="header">
+      <div>
+        <div class="eyebrow">Instituto Jorge Robledo · Statistics 11</div>
+        <h1>Colab 01 · Live</h1>
+        <p>Progress, answers and projected grades.</p>
+      </div>
+      <a class="link-button" href="../">Course</a>
+    </header>
+
+    <section id="loginPanel" class="login-card">
+      <h2>Teacher access</h2>
+      <form id="loginForm" class="login-row">
+        <input id="teacherCode" type="password" autocomplete="current-password" placeholder="Teacher code" required>
+        <button type="submit">Enter</button>
+      </form>
+      <div id="loginStatus" class="muted"></div>
+    </section>
+
+    <section id="dashboardPanel" class="hidden">
+      <div class="control-row">
+        <div class="live-block">
+          <span id="liveStatus" class="live-status syncing">Connecting…</span>
+          <span id="updatedAt" class="muted"></span>
+        </div>
+        <div class="filters">
+          <select id="groupFilter" aria-label="Group filter">
+            <option value="">All groups</option>
+            <option>11A</option><option>11B</option><option>11C</option>
+          </select>
+          <input id="searchInput" type="search" placeholder="Search email or student">
+          <label class="check"><input id="activeOnly" type="checkbox"> Active only</label>
+          <button id="refreshButton" type="button" class="quiet">Refresh</button>
+          <button id="logoutButton" type="button" class="quiet">Logout</button>
+        </div>
+      </div>
+
+      <section id="metrics" class="metrics" aria-label="Live summary"></section>
+
+      <section class="table-card">
+        <div class="table-head">
+          <div><strong>Registrations</strong><span id="rowCount" class="muted"></span></div>
+          <div class="legend"><span>✓ correct</span><span>✗ incorrect</span></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Group</th>
+                <th>Students</th>
+                <th>Status</th>
+                <th>Progress</th>
+                <th>Grade</th>
+                <th>Last answer</th>
+                <th>Support</th>
+                <th>Updated</th>
+              </tr>
+            </thead>
+            <tbody id="sessionBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <p class="footnote">Each row is one registration/session. The same institutional email may appear in more than one row when a new registration is intentionally started. Email domain required: <strong>@ijr.edu.co</strong>.</p>
+    </section>
+  </main>
+</body>
+</html>

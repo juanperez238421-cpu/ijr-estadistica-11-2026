@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ijr-stat11-colab-v7-20260819';
+const CACHE_NAME = 'ijr-stat11-colab-v9-20260820';
 const APP_SHELL = [
   './',
   './index.html',
@@ -24,6 +24,18 @@ self.addEventListener('activate', event => {
       .then(() => self.clients.claim())
   );
 });
+
+async function networkFirst(request) {
+  const cache = await caches.open(CACHE_NAME);
+  try {
+    const response = await fetch(request, {cache:'no-store'});
+    if (response && response.ok) cache.put(request, response.clone()).catch(() => {});
+    return response;
+  } catch (_) {
+    const cached = await cache.match(request, {ignoreSearch:true});
+    return cached || Response.error();
+  }
+}
 
 async function staleWhileRevalidate(request) {
   const cache = await caches.open(CACHE_NAME);
@@ -52,7 +64,9 @@ self.addEventListener('fetch', event => {
   const url = new URL(request.url);
 
   if (url.origin === self.location.origin) {
-    event.respondWith(staleWhileRevalidate(request));
+    const path = url.pathname;
+    const controlFile = path.endsWith('/') || path.endsWith('/index.html') || path.endsWith('/config.js') || path.endsWith('/app.js') || path.endsWith('/resilience-v7.js') || path.endsWith('/styles.css');
+    event.respondWith(controlFile ? networkFirst(request) : staleWhileRevalidate(request));
     return;
   }
 
