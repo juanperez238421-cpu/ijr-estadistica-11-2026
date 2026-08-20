@@ -20,3 +20,16 @@
 @media(max-width:1180px){.policy-grid{grid-template-columns:repeat(3,1fr)}.workspace-grid{grid-template-columns:minmax(350px,43%) minmax(0,57%)}.live-metrics{gap:6px}.live-metrics #progressText{display:none}.validation-bar{align-items:flex-start;flex-direction:column}.validation-actions{width:100%;justify-content:flex-end}}
 @media(max-width:900px){.app-bar{padding:0 12px}.app-status .runtime-badge{display:none}.workspace{padding:10px}.workspace-topline{align-items:flex-start;flex-direction:column}.live-metrics{width:100%;flex-wrap:wrap}.workspace-grid{grid-template-columns:1fr;overflow:auto}.guide-pane{border-right:0;border-bottom:1px solid var(--line)}.guide-scroll{height:auto;padding:22px}.notebook-pane{min-height:720px}.registration-meta,.member-grid{grid-template-columns:1fr}.setup-points{grid-template-columns:repeat(2,1fr)}.policy-grid{grid-template-columns:1fr 1fr}.registration-actions{align-items:stretch;flex-direction:column}.registration-actions button{width:100%}}
 @media(max-width:560px){.app-status{display:none}.course-label{max-width:68vw}.code-cell{grid-template-columns:42px;margin-inline:8px}.terminal-card,.solution-panel{margin-inline:8px}.validation-actions{display:grid;grid-template-columns:1fr}.validation-actions button{width:100%}.setup-card{padding:24px}.setup-card h2{font-size:1.65rem}.finish-metrics,.policy-grid{grid-template-columns:1fr}.lesson-meta-row{align-items:flex-start;flex-direction:column}}
+
+/* V6 classroom layout: prioritize the code editor, keep the console compact. */
+@media(min-width:901px){
+  .code-cell{min-height:clamp(300px,34vh,390px)}
+  #codeEditor{min-height:clamp(300px,34vh,390px)}
+  .terminal-card{flex:0 0 clamp(175px,20vh,230px);min-height:175px}
+  .terminal-output{min-height:72px;max-height:140px}
+}
+@media(max-width:900px){
+  .code-cell,#codeEditor{min-height:260px}
+  .terminal-card{flex:0 0 190px;min-height:160px}
+  .terminal-output{min-height:70px;max-height:110px}
+}
