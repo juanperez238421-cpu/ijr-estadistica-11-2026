@@ -28,7 +28,7 @@ jobs:
         with:
           ref: main
 
-      - name: Static syntax, curriculum and classroom asset gate
+      - name: Static syntax, curriculum, identity and classroom asset gate
         run: |
           set -euo pipefail
           node --check actividad-colab-01/app.js
@@ -38,12 +38,13 @@ jobs:
           node --check maestro/app.js
           node --check maestro/config.js
           python qa/check_colab_lab_v8.py
+          python qa/check_colab_v9_identity_master.py
           test -s actividad-colab-01/data.csv
           grep -q "resilience-v7.js" actividad-colab-01/index.html
           grep -q "networkBadge" actividad-colab-01/index.html
           grep -q "39 GUIDED MIN" actividad-colab-01/index.html
-          grep -q "liveStatus" maestro/index.html
-          grep -q "Última respuesta" maestro/index.html
+          grep -q "Colab 01 · Live" maestro/index.html
+          grep -q "institutional_email" maestro/app.js
 
       - name: Nine simultaneous student page checks
         shell: bash
@@ -77,7 +78,8 @@ jobs:
         run: |
           set -euo pipefail
           curl --fail --silent --show-error --retry 2 --connect-timeout 6 --max-time 20 "$MASTER_URL" -o /tmp/master.html
-          grep -q "Live Gradebook" /tmp/master.html
+          grep -q "Colab 01 · Live" /tmp/master.html
+          grep -q "Registrations" /tmp/master.html
           pids=()
           for pc in $(seq 1 9); do
             (
@@ -99,8 +101,12 @@ jobs:
           set -euo pipefail
           SUPABASE_URL="$(sed -n "s/.*supabaseUrl: '\([^']*\)'.*/\1/p" actividad-colab-01/config.js | head -1)"
           SUPABASE_KEY="$(sed -n "s/.*supabaseAnonKey: '\([^']*\)'.*/\1/p" actividad-colab-01/config.js | head -1)"
+          START_RPC="$(sed -n "s/.*startTeam: '\([^']*\)'.*/\1/p" actividad-colab-01/config.js | head -1)"
+          MASTER_RPC="$(sed -n "s/.*dashboard:'\([^']*\)'.*/\1/p" maestro/config.js | head -1)"
           test -n "$SUPABASE_URL"
           test -n "$SUPABASE_KEY"
+          test -n "$START_RPC"
+          test -n "$MASTER_RPC"
           pids=()
           for pc in $(seq 1 9); do
             (
@@ -109,7 +115,7 @@ jobs:
                 -X OPTIONS \
                 -H "apikey: $SUPABASE_KEY" \
                 -H "Authorization: Bearer $SUPABASE_KEY" \
-                "$SUPABASE_URL/rest/v1/rpc/student_learning_activity_start_team")"
+                "$SUPABASE_URL/rest/v1/rpc/$START_RPC")"
               case "$code" in 200|204) ;; *) echo "PC${pc} Supabase OPTIONS HTTP $code"; exit 1;; esac
             ) &
             pids+=("$!")
@@ -119,6 +125,11 @@ jobs:
             if ! wait "$pid"; then failed=1; fi
           done
           test "$failed" -eq 0
+          code="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+            --connect-timeout 6 --max-time 20 -X OPTIONS \
+            -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY" \
+            "$SUPABASE_URL/rest/v1/rpc/$MASTER_RPC")"
+          case "$code" in 200|204) ;; *) echo "Master Supabase OPTIONS HTTP $code"; exit 1;; esac
 
       - name: Publish health summary
         if: always()
@@ -129,13 +140,13 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           if [ "$JOB_STATUS" = "success" ]; then
-            label='✅ COLAB 9-PC + V8 CURRICULUM QA PASS'
+            label='✅ COLAB 9-PC + V8 CURRICULUM + V9 IDENTITY QA PASS'
           else
-            label='❌ COLAB 9-PC + V8 CURRICULUM QA FAIL'
+            label='❌ COLAB 9-PC + V8 CURRICULUM + V9 IDENTITY QA FAIL'
           fi
           gh issue comment 33 \
             --repo juanperez238421-cpu/ijr-estadistica-11-2026 \
-            --body "$label · 39-min curriculum + student Pages x9 + Pyodide CDN x9 + Supabase reachability x9 + master panel · run $RUN_ID · commit $SHA · $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            --body "$label · 39-min curriculum + @ijr.edu.co registration + student Pages x9 + Pyodide CDN x9 + Supabase x9 + minimal master panel · run $RUN_ID · commit $SHA · $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
       - name: Upload nine-PC evidence
         if: always()
