@@ -81,7 +81,7 @@ jobs:
           path.write_text('window.IJR_ASSESSMENT_CONFIG = Object.freeze(' + json.dumps(config, ensure_ascii=False, separators=(',',':')) + ');\n', encoding='utf-8')
           PY
 
-      - name: Verify application syntax and Class 01 V10 contract
+      - name: Verify application syntax and Class 01 V11 contract
         run: |
           set -euo pipefail
           node --check evaluacion-conteo-permutaciones/app.js
@@ -116,17 +116,20 @@ jobs:
           test -s maestro/app.js
           test -s maestro/config.js
           test -s maestro/master-v10.css
+          test -s supabase/migrations/20260820154120_colab_class1_v11_random_variant_bank_36packs.sql
           ! grep -R "REPLACE_WITH_SUPABASE" evaluacion-conteo-permutaciones/config.js
           grep -q "student_start_attempt_v2" evaluacion-conteo-permutaciones/config.js
           grep -q "teacher_code_login" evaluacion-conteo-permutaciones/config.js
           grep -Eq "gradeMin['\"]?:?3(\.0)?|gradeMin.*3\.0" evaluacion-conteo-permutaciones/config.js
           grep -q "studentEmail" evaluacion-conteo-permutaciones/index.html
-          grep -q "student_learning_activity_start_team_email" actividad-colab-01/config.js
+          grep -q "student_learning_activity_start_team_email_v11" actividad-colab-01/config.js
+          grep -q "variantBankSize: 36" actividad-colab-01/config.js
           grep -q "statistics11-colab-class1-basics-types-arrays-2026" actividad-colab-01/config.js
+          grep -q "36 equivalent problem packs" actividad-colab-01/index.html
           grep -q "@ijr.edu.co" actividad-colab-01/index.html
           grep -q "No loops, functions, conditions or Pandas" actividad-colab-01/index.html
-          grep -q "teacher_learning_activity_dashboard_v10" maestro/config.js
-          grep -q "teacher_learning_activity_detail_v10" maestro/config.js
+          grep -q "teacher_learning_activity_dashboard_v11" maestro/config.js
+          grep -q "teacher_learning_activity_detail_v11" maestro/config.js
           grep -q "teacher_learning_activity_update_registration_v10" maestro/config.js
           grep -q "teacher_learning_activity_delete_v10" maestro/config.js
           touch .nojekyll
