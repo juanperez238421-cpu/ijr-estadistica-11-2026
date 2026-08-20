@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """QA gate for Colab Lab 01 V9 institutional identity + minimal master panel."""
 from pathlib import Path
-import re
 
 ROOT = Path(__file__).resolve().parents[1]
 LAB = ROOT / "actividad-colab-01"
 MASTER = ROOT / "maestro"
 MIGRATION = ROOT / "supabase" / "migrations" / "20260820144500_colab_v9_institutional_email_minimal_master.sql"
+REPEAT_MIGRATION = ROOT / "supabase" / "migrations" / "20260820150000_colab_v9_repeat_registration_session_index.sql"
 
 config = (LAB / "config.js").read_text(encoding="utf-8")
 resilience = (LAB / "resilience-v7.js").read_text(encoding="utf-8")
@@ -15,6 +15,7 @@ master_index = (MASTER / "index.html").read_text(encoding="utf-8")
 master_app = (MASTER / "app.js").read_text(encoding="utf-8")
 master_css = (MASTER / "styles.css").read_text(encoding="utf-8")
 migration = MIGRATION.read_text(encoding="utf-8")
+repeat_migration = REPEAT_MIGRATION.read_text(encoding="utf-8")
 
 
 def require(value: bool, message: str) -> None:
@@ -43,7 +44,9 @@ for fragment in (
 ):
     require(fragment in migration, f"Migration missing required V9 contract: {fragment}")
 require("already registered in another team" not in migration, "V9 must allow later/repeat registrations")
-require("team_key=v_team_key\n  order by" not in migration, "V9 must not reuse attempts merely because the same team registers again")
+require("drop index if exists public.learning_activity_guest_identity_uq" in repeat_migration, "Old one-registration guest index must be removed")
+require("learning_activity_guest_identity_session_uq" in repeat_migration, "Session-scoped unique index is missing")
+require("student_name_normalized, session_id" in repeat_migration, "Repeat registration must be unique by session, not by student/team identity alone")
 
 # Minimal master UI contract.
 require("teacher_learning_activity_dashboard_v9" in master_config, "Master panel must use compact V9 dashboard RPC")
