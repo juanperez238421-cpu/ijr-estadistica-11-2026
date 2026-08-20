@@ -28,7 +28,7 @@ jobs:
         with:
           ref: main
 
-      - name: Static syntax, Class 01 curriculum, identity and master gate
+      - name: Static syntax, V11 bank, identity and master gate
         run: |
           set -euo pipefail
           node --check actividad-colab-01/app.js
@@ -40,12 +40,17 @@ jobs:
           python qa/check_colab_class1_v10.py
           test -s actividad-colab-01/class1-v10.css
           test -s maestro/master-v10.css
+          test -s supabase/migrations/20260820154120_colab_class1_v11_random_variant_bank_36packs.sql
           grep -q "36 GUIDED MIN" actividad-colab-01/index.html
+          grep -q "36 equivalent problem packs" actividad-colab-01/index.html
           grep -q "@ijr.edu.co" actividad-colab-01/index.html
           grep -q "No loops, functions, conditions or Pandas" actividad-colab-01/index.html
+          grep -q "variantBankSize: 36" actividad-colab-01/config.js
+          grep -q "student_learning_activity_start_team_email_v11" actividad-colab-01/config.js
           grep -q "Colab Class 01 · Live" maestro/index.html
           grep -q "Delete registration" maestro/index.html
-          grep -q "teacher_learning_activity_detail_v10" maestro/config.js
+          grep -q "teacher_learning_activity_detail_v11" maestro/config.js
+          grep -q "teacher_learning_activity_dashboard_v11" maestro/config.js
 
       - name: Nine simultaneous student page checks
         shell: bash
@@ -60,6 +65,7 @@ jobs:
                 "${LAB_URL}?health=${GITHUB_RUN_ID}-${pc}" -o "/tmp/ijr-nine-pc/pc-${pc}.html"
               grep -q "Python Class 01" "/tmp/ijr-nine-pc/pc-${pc}.html"
               grep -q "36 GUIDED MIN" "/tmp/ijr-nine-pc/pc-${pc}.html"
+              grep -q "36 equivalent problem packs" "/tmp/ijr-nine-pc/pc-${pc}.html"
               grep -q "type=\"email\"" "/tmp/ijr-nine-pc/pc-${pc}.html"
               grep -q "No loops, functions, conditions or Pandas" "/tmp/ijr-nine-pc/pc-${pc}.html"
               curl --fail --silent --show-error --retry 2 --connect-timeout 6 --max-time 20 \
@@ -100,7 +106,7 @@ jobs:
           done
           test "$failed" -eq 0
 
-      - name: Supabase public RPC endpoint reachability
+      - name: Supabase V11 public RPC endpoint reachability
         shell: bash
         run: |
           set -euo pipefail
@@ -109,11 +115,11 @@ jobs:
           START_RPC="$(sed -n "s/.*startTeam: '\([^']*\)'.*/\1/p" actividad-colab-01/config.js | head -1)"
           MASTER_RPC="$(sed -n "s/.*dashboard:'\([^']*\)'.*/\1/p" maestro/config.js | head -1)"
           DETAIL_RPC="$(sed -n "s/.*detail:'\([^']*\)'.*/\1/p" maestro/config.js | head -1)"
+          test "$START_RPC" = "student_learning_activity_start_team_email_v11"
+          test "$MASTER_RPC" = "teacher_learning_activity_dashboard_v11"
+          test "$DETAIL_RPC" = "teacher_learning_activity_detail_v11"
           test -n "$SUPABASE_URL"
           test -n "$SUPABASE_KEY"
-          test -n "$START_RPC"
-          test -n "$MASTER_RPC"
-          test -n "$DETAIL_RPC"
           pids=()
           for pc in $(seq 1 9); do
             (
@@ -147,13 +153,13 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           if [ "$JOB_STATUS" = "success" ]; then
-            label='✅ COLAB CLASS 01 V10 · 9-PC QA PASS'
+            label='✅ COLAB CLASS 01 V11 · 9-PC RANDOM BANK QA PASS'
           else
-            label='❌ COLAB CLASS 01 V10 · 9-PC QA FAIL'
+            label='❌ COLAB CLASS 01 V11 · 9-PC RANDOM BANK QA FAIL'
           fi
           gh issue comment 33 \
             --repo juanperez238421-cpu/ijr-estadistica-11-2026 \
-            --body "$label · operations + data types + arrays/indexing only · 4 MCQ stages · @ijr.edu.co static registration · student Pages x9 · Pyodide CDN x9 · Supabase x9 · master inspect/edit/delete · run $RUN_ID · commit $SHA · $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            --body "$label · 36 packs / 288 variants · same 8-stage structure with randomized values · operations + data types + arrays/indexing only · 4 MCQ · @ijr.edu.co · student Pages x9 · Pyodide CDN x9 · V11 Supabase RPCs x9 · master inspect/edit/delete · run $RUN_ID · commit $SHA · $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
       - name: Upload nine-PC evidence
         if: always()
