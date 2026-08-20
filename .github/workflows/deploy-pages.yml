@@ -89,9 +89,13 @@ jobs:
           node --check evaluacion-conteo-permutaciones/teacher-mode.js
           node --check actividad-colab-01/app.js
           node --check actividad-colab-01/config.js
+          node --check actividad-colab-01/resilience-v7.js
+          node --check actividad-colab-01/sw-v7.js
           node --check maestro/app.js
           node --check maestro/config.js
           python -m py_compile tools/check_backend_readiness.py tools/import_academic_source.py tools/open_assessment.py
+          python qa/check_colab_lab_v8.py
+          python qa/check_colab_v9_identity_master.py
 
       - name: Verify static assessment files
         run: |
@@ -118,7 +122,7 @@ jobs:
           grep -q "studentEmail" evaluacion-conteo-permutaciones/index.html
           grep -q "student_learning_activity_start" actividad-colab-01/config.js
           grep -q "student_learning_activity_event" actividad-colab-01/config.js
-          grep -q "teacher_learning_dashboard" maestro/config.js
+          grep -Eq "teacher_learning_dashboard|teacher_learning_activity_dashboard_v9" maestro/config.js
           touch .nojekyll
 
       - name: Setup Pages
