@@ -1,4 +1,4 @@
-name: Statistics 11 Colab V9 Identity Master QA
+name: Statistics 11 Colab Class 01 V10 QA
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
       - 'actividad-colab-01/**'
       - 'maestro/**'
       - 'supabase/migrations/**'
-      - 'qa/check_colab_v9_identity_master.py'
+      - 'qa/check_colab_class1_v10.py'
       - '.github/workflows/colab-v9-identity-master-qa.yml'
   push:
     branches: [main]
@@ -14,14 +14,14 @@ on:
       - 'actividad-colab-01/**'
       - 'maestro/**'
       - 'supabase/migrations/**'
-      - 'qa/check_colab_v9_identity_master.py'
+      - 'qa/check_colab_class1_v10.py'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  identity-master-qa:
+  class1-v10-qa:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -32,11 +32,12 @@ jobs:
           set -euo pipefail
           node --check actividad-colab-01/config.js
           node --check actividad-colab-01/resilience-v7.js
+          node --check actividad-colab-01/sw-v7.js
           node --check actividad-colab-01/app.js
           node --check maestro/config.js
           node --check maestro/app.js
-      - name: Institutional identity and minimal master contract
+      - name: Class 01 curriculum, institutional identity and master controls
         run: |
           set -euo pipefail
-          python -m py_compile qa/check_colab_v9_identity_master.py
-          python qa/check_colab_v9_identity_master.py
+          python -m py_compile qa/check_colab_class1_v10.py
+          python qa/check_colab_class1_v10.py
