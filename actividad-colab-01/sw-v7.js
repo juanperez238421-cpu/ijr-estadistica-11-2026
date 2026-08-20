@@ -1,8 +1,9 @@
-const CACHE_NAME = 'ijr-stat11-colab-v9-20260820';
+const CACHE_NAME = 'ijr-stat11-colab-class1-v10-20260820';
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
+  './class1-v10.css',
   './config.js',
   './app.js',
   './resilience-v7.js',
@@ -65,7 +66,7 @@ self.addEventListener('fetch', event => {
 
   if (url.origin === self.location.origin) {
     const path = url.pathname;
-    const controlFile = path.endsWith('/') || path.endsWith('/index.html') || path.endsWith('/config.js') || path.endsWith('/app.js') || path.endsWith('/resilience-v7.js') || path.endsWith('/styles.css');
+    const controlFile = path.endsWith('/') || path.endsWith('/index.html') || path.endsWith('/config.js') || path.endsWith('/app.js') || path.endsWith('/resilience-v7.js') || path.endsWith('/styles.css') || path.endsWith('/class1-v10.css');
     event.respondWith(controlFile ? networkFirst(request) : staleWhileRevalidate(request));
     return;
   }
