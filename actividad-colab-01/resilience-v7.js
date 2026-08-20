@@ -15,9 +15,32 @@
       : 'No internet connection detected. Python already loaded may keep running locally, but grading cannot sync until the connection returns.';
   }
 
+  function configureInstitutionalEmailRegistration() {
+    const inputs = [$('studentName1'), $('studentName2'), $('studentName3')].filter(Boolean);
+    inputs.forEach((input,index) => {
+      input.type = 'email';
+      input.inputMode = 'email';
+      input.autocomplete = 'email';
+      input.placeholder = `student${index + 1}@ijr.edu.co`;
+      input.pattern = '[A-Za-z0-9.!#$%&*+/=?^_`{|}~-]+@ijr\\.edu\\.co';
+      input.title = 'Use the institutional email ending in @ijr.edu.co';
+      const label = input.closest('label');
+      if (label && label.firstChild?.nodeType === Node.TEXT_NODE) {
+        label.firstChild.nodeValue = `Student ${index + 1} institutional email `;
+      }
+    });
+    const legend = document.querySelector('.team-fieldset legend');
+    if (legend) legend.innerHTML = 'Institutional emails <small>· Correos institucionales</small>';
+    const before = document.querySelector('.registration-actions div span');
+    if (before) before.textContent = 'enter the @ijr.edu.co email of each student working at this computer. A student may register again later if a new session is needed.';
+    const privacy = document.querySelector('.privacy-note');
+    if (privacy) privacy.innerHTML = 'Only <strong>@ijr.edu.co</strong> institutional emails are accepted. A new registration creates a new session; network retries reuse the same session safely. <small>Se permite un nuevo registro si es necesario.</small>';
+  }
+
   window.addEventListener('online', setNetworkState);
   window.addEventListener('offline', setNetworkState);
   setNetworkState();
+  configureInstitutionalEmailRegistration();
 
   if (window.supabase?.createClient) {
     const nativeCreateClient = window.supabase.createClient.bind(window.supabase);
@@ -41,11 +64,16 @@
 
       client.rpc = async (name,params={}) => {
         if(name==='student_learning_activity_resume') return resume(params,3);
-        if(name==='student_learning_activity_start_team') {
-          let result=await raw(name,params);
+        if(name==='student_learning_activity_start_team' || name==='student_learning_activity_start_team_email') {
+          const startParams={...params};
+          if(name==='student_learning_activity_start_team_email' && Object.prototype.hasOwnProperty.call(startParams,'p_student_names')) {
+            startParams.p_student_emails=startParams.p_student_names;
+            delete startParams.p_student_names;
+          }
+          let result=await raw(name,startParams);
           if(result?.error&&networkError(result.error)){
             await sleep(450);
-            result=await raw(name,params);
+            result=await raw(name,startParams);
           }
           return result;
         }
