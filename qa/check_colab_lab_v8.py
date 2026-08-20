@@ -5,15 +5,18 @@ from __future__ import annotations
 import ast
 import csv
 import io
+import json
 import re
 from contextlib import redirect_stdout
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-APP = (ROOT / "actividad-colab-01" / "app.js").read_text(encoding="utf-8")
-INDEX = (ROOT / "actividad-colab-01" / "index.html").read_text(encoding="utf-8")
-CONFIG = (ROOT / "actividad-colab-01" / "config.js").read_text(encoding="utf-8")
-DATA = ROOT / "actividad-colab-01" / "data.csv"
+LAB = ROOT / "actividad-colab-01"
+APP = (LAB / "app.js").read_text(encoding="utf-8")
+INDEX = (LAB / "index.html").read_text(encoding="utf-8")
+CONFIG = (LAB / "config.js").read_text(encoding="utf-8")
+DATA = LAB / "data.csv"
+NOTEBOOK_PATH = LAB / "colab_01_fundamentos.ipynb"
 MIGRATION = ROOT / "supabase" / "migrations" / "20260819223500_colab_v8_python_basics_40min.sql"
 
 
@@ -70,13 +73,36 @@ require(APP.count("requirements:[") == 8, "Every stage must have a required-comm
 require(APP.count("WRITE_HERE") >= 24, "V8 must require multiple student edits, not one-line stages")
 require("guided-v8" in APP, "Telemetry must identify the V8 workspace")
 
-# 3) The visible roadmap must match the curriculum.
+# 3) The visible roadmap must match the curriculum and preserve V7 resilience.
 for fragment in ("print()", "type()", "len()", "for", "def", "if", "Pandas", "describe"):
     require(fragment in INDEX, f"Landing-page command roadmap is missing {fragment}")
 require("resilience-v7.js" in INDEX, "Nine-PC resilience layer must remain enabled")
 require("requireFullscreen: false" in CONFIG, "Fullscreen must remain optional")
 
-# 4) Parse all eight revealed Python solutions as valid Python syntax.
+# 4) The downloadable .ipynb must be valid JSON and mirror the V8 command sequence.
+notebook = json.loads(NOTEBOOK_PATH.read_text(encoding="utf-8"))
+require(notebook.get("nbformat") == 4, "Notebook must remain nbformat 4")
+notebook_text = "".join(
+    line
+    for cell in notebook.get("cells", [])
+    for line in cell.get("source", [])
+)
+for fragment in (
+    "39 guided minutes",
+    "a = WRITE_HERE",
+    "sum_value = WRITE_HERE",
+    "numbers[0]",
+    "for value in numbers:",
+    "def mean(values):",
+    "import pandas as pd",
+    "df.columns.tolist()",
+    "scores = WRITE_HERE",
+    "if passed_count >= 8:",
+):
+    require(fragment in notebook_text, f"V8 notebook is missing: {fragment}")
+require(notebook_text.count("WRITE_HERE") >= 20, "Notebook must preserve multi-edit student practice")
+
+# 5) Parse all eight revealed Python solutions as valid Python syntax.
 solution_pairs = re.findall(r"\b(A[1-8]):\{.*?solution:`(.*?)`\}", APP, flags=re.S)
 require(len(solution_pairs) == 8, f"Expected 8 solution blocks, found {len(solution_pairs)}")
 solutions: dict[str, str] = {}
@@ -85,7 +111,7 @@ for key, encoded in solution_pairs:
     ast.parse(code, filename=f"{key}-solution.py")
     solutions[key] = code
 
-# 5) Execute the pure-Python half and verify the existing backend answers remain valid.
+# 6) Execute the pure-Python half and verify the existing backend answers remain valid.
 pure_expected = {"A1": 17.0, "A2": 60.0, "A3": 5.0, "A4": 54.0, "A5": 10.8}
 for key, expected in pure_expected.items():
     namespace: dict[str, object] = {}
@@ -97,7 +123,7 @@ for key, expected in pure_expected.items():
     actual = float(lines[-1])
     require(abs(actual - expected) < 1e-9, f"{key} final output changed: expected {expected}, got {actual}")
 
-# 6) Independently verify the CSV-dependent backend answers without needing Pandas in CI.
+# 7) Independently verify the CSV-dependent backend answers without needing Pandas in CI.
 with DATA.open(newline="", encoding="utf-8") as fh:
     rows = list(csv.DictReader(fh))
 require(len(rows) == 12, f"A6 expected 12 rows, got {len(rows)}")
@@ -105,7 +131,7 @@ scores = [float(row["score"]) for row in rows]
 require(abs(sum(scores) / len(scores) - 4.0) < 1e-9, "A7 expected score mean 4.0")
 require(sum(score >= 4 for score in scores) == 9, "A8 expected 9 scores >= 4")
 
-# 7) Backend metadata migration must not alter scoring/expected answers.
+# 8) Backend metadata migration must not alter scoring/expected answers.
 require(MIGRATION.exists(), "V8 checkpoint metadata migration is missing")
 migration_text = MIGRATION.read_text(encoding="utf-8")
 require(not re.search(r"set\s+expected_text\s*=", migration_text, re.I), "V8 must not change checkpoint expected answers")
@@ -114,4 +140,4 @@ require("statistics11-colab-basics-01-2026" in migration_text, "Migration must t
 
 print("COLAB V8 QA PASS")
 print(f"stages=8 guided_minutes={sum(minutes)} total_timer=40")
-print("basic_commands=PASS python_solutions=PASS dataset_answers=PASS resilience=PASS scoring_unchanged=PASS")
+print("basic_commands=PASS python_solutions=PASS notebook=PASS dataset_answers=PASS resilience=PASS scoring_unchanged=PASS")
