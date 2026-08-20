@@ -10,6 +10,7 @@ REPEAT_MIGRATION = ROOT / "supabase" / "migrations" / "20260820150000_colab_v9_r
 
 config = (LAB / "config.js").read_text(encoding="utf-8")
 resilience = (LAB / "resilience-v7.js").read_text(encoding="utf-8")
+service_worker = (LAB / "sw-v7.js").read_text(encoding="utf-8")
 master_config = (MASTER / "config.js").read_text(encoding="utf-8")
 master_index = (MASTER / "index.html").read_text(encoding="utf-8")
 master_app = (MASTER / "app.js").read_text(encoding="utf-8")
@@ -31,6 +32,8 @@ require("input.type = 'email'" in resilience, "Registration inputs must become e
 require("@ijr\\.edu\\.co" in resilience, "Browser-side institutional domain pattern missing")
 require("p_student_emails=startParams.p_student_names" in resilience, "RPC adapter must send institutional emails")
 require("student_learning_activity_start_team_email" in resilience, "New start RPC must keep safe network retry")
+require("ijr-stat11-colab-v9-20260820" in service_worker, "V9 must invalidate the previous offline shell cache")
+require("networkFirst(request)" in service_worker, "V9 control files must prefer fresh network content with cache fallback")
 
 # Backend contract: domain enforced server-side, retries idempotent, new registrations repeatable.
 for fragment in (
@@ -65,4 +68,4 @@ require(len(master_index) < 5500, "Master HTML is becoming too dense again")
 require(len(master_css) < 9000, "Master CSS is becoming too complex again")
 
 print("COLAB V9 IDENTITY + MINIMAL MASTER QA PASS")
-print("institutional_email=PASS repeat_registration=PASS idempotent_retry=PASS minimal_master=PASS live_3s=PASS")
+print("institutional_email=PASS repeat_registration=PASS idempotent_retry=PASS cache_refresh=PASS minimal_master=PASS live_3s=PASS")
