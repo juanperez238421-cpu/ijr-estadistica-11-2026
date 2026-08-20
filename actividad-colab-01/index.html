@@ -6,14 +6,17 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="color-scheme" content="light">
   <title>Statistics 11 · Python Data Lab</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
-  <link rel="stylesheet" href="styles.css?v=20260819-workspace5">
+  <link rel="stylesheet" href="styles.css?v=20260819-workspace7">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
-  <script defer src="config.js?v=20260819-workspace5"></script>
-  <script defer src="app.js?v=20260819-workspace5-native"></script>
+  <script defer src="config.js?v=20260819-workspace7"></script>
+  <script defer src="resilience-v7.js?v=20260819-workspace7"></script>
+  <script defer src="app.js?v=20260819-workspace7"></script>
 </head>
 <body>
   <main class="app-shell">
@@ -26,6 +29,7 @@
         </div>
       </div>
       <div class="app-status">
+        <span id="networkBadge" class="mode-badge">Online</span>
         <span id="runtimeBadge" class="runtime-badge offline"><span class="status-dot"></span>Python runtime</span>
         <span id="restrictionLabel" class="mode-badge">Guided mode</span>
       </div>
