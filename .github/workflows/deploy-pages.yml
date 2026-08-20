@@ -81,7 +81,7 @@ jobs:
           path.write_text('window.IJR_ASSESSMENT_CONFIG = Object.freeze(' + json.dumps(config, ensure_ascii=False, separators=(',',':')) + ');\n', encoding='utf-8')
           PY
 
-      - name: Verify application syntax
+      - name: Verify application syntax and Class 01 V10 contract
         run: |
           set -euo pipefail
           node --check evaluacion-conteo-permutaciones/app.js
@@ -93,9 +93,8 @@ jobs:
           node --check actividad-colab-01/sw-v7.js
           node --check maestro/app.js
           node --check maestro/config.js
-          python -m py_compile tools/check_backend_readiness.py tools/import_academic_source.py tools/open_assessment.py
-          python qa/check_colab_lab_v8.py
-          python qa/check_colab_v9_identity_master.py
+          python -m py_compile tools/check_backend_readiness.py tools/import_academic_source.py tools/open_assessment.py qa/check_colab_class1_v10.py
+          python qa/check_colab_class1_v10.py
 
       - name: Verify static assessment files
         run: |
@@ -110,19 +109,26 @@ jobs:
           test -s actividad-colab-01/index.html
           test -s actividad-colab-01/app.js
           test -s actividad-colab-01/config.js
-          test -s actividad-colab-01/colab_01_fundamentos.ipynb
-          test -s actividad-colab-01/data.csv
+          test -s actividad-colab-01/resilience-v7.js
+          test -s actividad-colab-01/sw-v7.js
+          test -s actividad-colab-01/class1-v10.css
           test -s maestro/index.html
           test -s maestro/app.js
           test -s maestro/config.js
+          test -s maestro/master-v10.css
           ! grep -R "REPLACE_WITH_SUPABASE" evaluacion-conteo-permutaciones/config.js
           grep -q "student_start_attempt_v2" evaluacion-conteo-permutaciones/config.js
           grep -q "teacher_code_login" evaluacion-conteo-permutaciones/config.js
           grep -Eq "gradeMin['\"]?:?3(\.0)?|gradeMin.*3\.0" evaluacion-conteo-permutaciones/config.js
           grep -q "studentEmail" evaluacion-conteo-permutaciones/index.html
-          grep -q "student_learning_activity_start" actividad-colab-01/config.js
-          grep -q "student_learning_activity_event" actividad-colab-01/config.js
-          grep -Eq "teacher_learning_dashboard|teacher_learning_activity_dashboard_v9" maestro/config.js
+          grep -q "student_learning_activity_start_team_email" actividad-colab-01/config.js
+          grep -q "statistics11-colab-class1-basics-types-arrays-2026" actividad-colab-01/config.js
+          grep -q "@ijr.edu.co" actividad-colab-01/index.html
+          grep -q "No loops, functions, conditions or Pandas" actividad-colab-01/index.html
+          grep -q "teacher_learning_activity_dashboard_v10" maestro/config.js
+          grep -q "teacher_learning_activity_detail_v10" maestro/config.js
+          grep -q "teacher_learning_activity_update_registration_v10" maestro/config.js
+          grep -q "teacher_learning_activity_delete_v10" maestro/config.js
           touch .nojekyll
 
       - name: Setup Pages
