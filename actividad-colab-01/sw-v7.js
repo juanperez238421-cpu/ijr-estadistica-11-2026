@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ijr-stat11-colab-class1-v10-20260820';
+const CACHE_NAME = 'ijr-stat11-colab-class1-v11-20260820';
 const APP_SHELL = [
   './',
   './index.html',
