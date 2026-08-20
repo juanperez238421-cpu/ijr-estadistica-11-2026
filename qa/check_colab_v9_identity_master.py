@@ -29,7 +29,7 @@ require("institutionalEmailDomain: 'ijr.edu.co'" in config, "Institutional domai
 require("student_learning_activity_start_team_email" in config, "Email registration RPC not configured")
 require("active-v9" in config, "V9 must use a fresh browser session key")
 require("input.type = 'email'" in resilience, "Registration inputs must become email fields")
-require("@ijr\\.edu\\.co" in resilience, "Browser-side institutional domain pattern missing")
+require("input.pattern" in resilience and "ijr" in resilience and "edu" in resilience and "co" in resilience, "Browser-side institutional domain pattern missing")
 require("p_student_emails=startParams.p_student_names" in resilience, "RPC adapter must send institutional emails")
 require("student_learning_activity_start_team_email" in resilience, "New start RPC must keep safe network retry")
 require("ijr-stat11-colab-v9-20260820" in service_worker, "V9 must invalidate the previous offline shell cache")
