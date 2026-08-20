@@ -46,15 +46,18 @@
     const nativeCreateClient = window.supabase.createClient.bind(window.supabase);
     const networkError = error => /fetch|network|failed|timeout|connection|abort|load/i.test(String(error?.message||error||''));
     const cpOf = (snapshot,key) => Array.from(snapshot?.checkpoints||[]).find(cp=>cp.key===key)||null;
+    const v11Name = name => String(name||'').endsWith('_v11');
+    const operationOf = name => String(name||'').replace(/_v11$/,'');
 
     window.supabase.createClient = (...args) => {
       const client = nativeCreateClient(...args);
       const nativeRpc = client.rpc.bind(client);
       async function raw(name,params={}) { return await nativeRpc(name,params); }
-      async function resume(params,attempts=3) {
+      async function resume(params,attempts=3,useV11=false) {
         let last;
+        const rpcName=useV11?'student_learning_activity_resume_v11':'student_learning_activity_resume';
         for(let i=0;i<attempts;i++){
-          last=await raw('student_learning_activity_resume',{p_attempt_id:params.p_attempt_id,p_attempt_token:params.p_attempt_token});
+          last=await raw(rpcName,{p_attempt_id:params.p_attempt_id,p_attempt_token:params.p_attempt_token});
           if(!last?.error)return last;
           if(!networkError(last.error))return last;
           await sleep(250+350*i);
@@ -63,10 +66,12 @@
       }
 
       client.rpc = async (name,params={}) => {
-        if(name==='student_learning_activity_resume') return resume(params,3);
-        if(name==='student_learning_activity_start_team' || name==='student_learning_activity_start_team_email') {
+        const base=operationOf(name),useV11=v11Name(name);
+        if(base==='student_learning_activity_resume') return resume(params,3,useV11);
+
+        if(base==='student_learning_activity_start_team' || base==='student_learning_activity_start_team_email') {
           const startParams={...params};
-          if(name==='student_learning_activity_start_team_email' && Object.prototype.hasOwnProperty.call(startParams,'p_student_names')) {
+          if(base==='student_learning_activity_start_team_email' && Object.prototype.hasOwnProperty.call(startParams,'p_student_names')) {
             startParams.p_student_emails=startParams.p_student_names;
             delete startParams.p_student_names;
           }
@@ -78,17 +83,22 @@
           return result;
         }
 
-        const recoverable=new Set(['student_learning_activity_submit','student_learning_activity_use_help','student_learning_activity_reveal_solution','student_learning_activity_skip_stage']);
-        if(!recoverable.has(name)) return raw(name,params);
+        const recoverable=new Set([
+          'student_learning_activity_submit',
+          'student_learning_activity_use_help',
+          'student_learning_activity_reveal_solution',
+          'student_learning_activity_skip_stage'
+        ]);
+        if(!recoverable.has(base)) return raw(name,params);
 
-        const beforeResult=await resume(params,2);
+        const beforeResult=await resume(params,2,useV11);
         const before=beforeResult?.data?.snapshot||null;
         const result=await raw(name,params);
         if(!result?.error||!networkError(result.error))return result;
         if(!before)return result;
 
         await sleep(350);
-        const afterResult=await resume(params,3);
+        const afterResult=await resume(params,3,useV11);
         const after=afterResult?.data?.snapshot||null;
         if(!after)return result;
 
@@ -96,18 +106,18 @@
         const prev=cpOf(before,key),next=cpOf(after,key);
         if(!next)return result;
 
-        if(name==='student_learning_activity_submit'){
+        if(base==='student_learning_activity_submit'){
           const committed=(!prev?.completed&&next.completed)||Number(next.wrong_attempts||0)>Number(prev?.wrong_attempts||0);
           if(committed)return {data:{correct:!!next.correct,awarded_points:Number(next.awarded_points||0),wrong_attempts:Number(next.wrong_attempts||0),stage_potential:Number(next.stage_potential??next.awarded_points??0),snapshot:after,recovered_after_network_error:true},error:null};
         }
-        if(name==='student_learning_activity_use_help'){
+        if(base==='student_learning_activity_use_help'){
           const beforeUsed=Number(before?.help_tokens_used||0),afterUsed=Number(after?.help_tokens_used||0);
           if(afterUsed>beforeUsed)return {data:{help_level:Number(next.help_count||1),help_tokens_used:afterUsed,help_tokens_remaining:Number(after.help_tokens_remaining||0),stage_potential:Number(next.stage_potential??0),snapshot:after,recovered_after_network_error:true},error:null};
         }
-        if(name==='student_learning_activity_reveal_solution'&&next.completed&&next.completion_mode==='revealed'){
-          return {data:{expected_answer:next.expected_answer??next.latest_answer??'',awarded_points:Number(next.awarded_points||0),snapshot:after,recovered_after_network_error:true},error:null};
+        if(base==='student_learning_activity_reveal_solution'&&next.completed&&next.completion_mode==='revealed'){
+          return {data:{expected_answer:'',solution_code:'Solution was recorded before the connection dropped. Continue to the next stage.',awarded_points:Number(next.awarded_points||0),snapshot:after,recovered_after_network_error:true},error:null};
         }
-        if(name==='student_learning_activity_skip_stage'&&next.completed&&next.completion_mode==='skipped'){
+        if(base==='student_learning_activity_skip_stage'&&next.completed&&next.completion_mode==='skipped'){
           return {data:{snapshot:after,recovered_after_network_error:true},error:null};
         }
         return result;

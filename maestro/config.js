@@ -5,8 +5,8 @@ window.IJR_MASTER_CONFIG = Object.freeze({
   rpc: {
     login:'teacher_code_login',
     logout:'teacher_code_logout',
-    dashboard:'teacher_learning_activity_dashboard_v10',
-    detail:'teacher_learning_activity_detail_v10',
+    dashboard:'teacher_learning_activity_dashboard_v11',
+    detail:'teacher_learning_activity_detail_v11',
     updateRegistration:'teacher_learning_activity_update_registration_v10',
     deleteRegistration:'teacher_learning_activity_delete_v10'
   }
