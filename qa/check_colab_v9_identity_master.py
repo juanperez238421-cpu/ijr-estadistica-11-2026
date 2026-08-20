@@ -5,8 +5,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 LAB = ROOT / "actividad-colab-01"
 MASTER = ROOT / "maestro"
-MIGRATION = ROOT / "supabase" / "migrations" / "20260820144500_colab_v9_institutional_email_minimal_master.sql"
-REPEAT_MIGRATION = ROOT / "supabase" / "migrations" / "20260820150000_colab_v9_repeat_registration_session_index.sql"
+MIGRATION = ROOT / "supabase" / "migrations" / "20260820144612_colab_v9_institutional_email_minimal_master.sql"
+REPEAT_MIGRATION = ROOT / "supabase" / "migrations" / "20260820144701_colab_v9_repeat_registration_session_index.sql"
 
 config = (LAB / "config.js").read_text(encoding="utf-8")
 resilience = (LAB / "resilience-v7.js").read_text(encoding="utf-8")
