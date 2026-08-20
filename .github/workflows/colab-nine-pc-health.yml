@@ -28,7 +28,7 @@ jobs:
         with:
           ref: main
 
-      - name: Static syntax and classroom asset gate
+      - name: Static syntax, curriculum and classroom asset gate
         run: |
           set -euo pipefail
           node --check actividad-colab-01/app.js
@@ -37,9 +37,11 @@ jobs:
           node --check actividad-colab-01/config.js
           node --check maestro/app.js
           node --check maestro/config.js
+          python qa/check_colab_lab_v8.py
           test -s actividad-colab-01/data.csv
           grep -q "resilience-v7.js" actividad-colab-01/index.html
           grep -q "networkBadge" actividad-colab-01/index.html
+          grep -q "39 GUIDED MIN" actividad-colab-01/index.html
           grep -q "liveStatus" maestro/index.html
           grep -q "Última respuesta" maestro/index.html
 
@@ -54,7 +56,8 @@ jobs:
               set -euo pipefail
               curl --fail --silent --show-error --retry 2 --retry-delay 1 --connect-timeout 6 --max-time 25 \
                 "${LAB_URL}?health=${GITHUB_RUN_ID}-${pc}" -o "/tmp/ijr-nine-pc/pc-${pc}.html"
-              grep -q "Python Data Lab" "/tmp/ijr-nine-pc/pc-${pc}.html"
+              grep -q "Python Basics" "/tmp/ijr-nine-pc/pc-${pc}.html"
+              grep -q "39 GUIDED MIN" "/tmp/ijr-nine-pc/pc-${pc}.html"
               curl --fail --silent --show-error --retry 2 --connect-timeout 6 --max-time 20 \
                 "${LAB_URL}data.csv?health=${GITHUB_RUN_ID}-${pc}" -o "/tmp/ijr-nine-pc/pc-${pc}.csv"
               test -s "/tmp/ijr-nine-pc/pc-${pc}.csv"
@@ -126,13 +129,13 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           if [ "$JOB_STATUS" = "success" ]; then
-            label='✅ COLAB 9-PC HEALTH PASS'
+            label='✅ COLAB 9-PC + V8 CURRICULUM QA PASS'
           else
-            label='❌ COLAB 9-PC HEALTH FAIL'
+            label='❌ COLAB 9-PC + V8 CURRICULUM QA FAIL'
           fi
           gh issue comment 33 \
             --repo juanperez238421-cpu/ijr-estadistica-11-2026 \
-            --body "$label · student Pages x9 + Pyodide CDN x9 + Supabase reachability x9 + master panel · run $RUN_ID · commit $SHA · $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            --body "$label · 39-min curriculum + student Pages x9 + Pyodide CDN x9 + Supabase reachability x9 + master panel · run $RUN_ID · commit $SHA · $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
       - name: Upload nine-PC evidence
         if: always()
