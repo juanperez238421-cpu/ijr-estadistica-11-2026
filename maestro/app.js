@@ -3,12 +3,64 @@
 
   const cfg=window.IJR_MASTER_CONFIG;
   const $=id=>document.getElementById(id);
-  const sb=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+  const sb=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   const SNAPSHOT_KEY=`${cfg.teacherSessionKey}-class1-v10`;
   const POLL_VISIBLE_MS=3000,POLL_HIDDEN_MS=12000,MAX_BACKOFF_MS=30000;
-  let token=sessionStorage.getItem(cfg.teacherSessionKey)||'',snapshot=null,timer=null,loading=false,failures=0,lastSuccessAt=0,selectedAttemptId=null;
+  let token='',snapshot=null,timer=null,loading=false,failures=0,lastSuccessAt=0,selectedAttemptId=null,pendingFactorId='',pendingChallengeId='';
 
-  async function rpc(name,args={}){const {data,error}=await sb.rpc(name,args);if(error)throw new Error(error.message||'Backend error');return data}
+  const RPC_OPERATION={
+    teacher_learning_activity_dashboard_v11:'statistics_dashboard',
+    teacher_learning_activity_detail_v11:'statistics_detail',
+    teacher_learning_activity_update_registration_v10:'statistics_update_registration',
+    teacher_learning_activity_delete_v10:'statistics_delete_registration'
+  };
+  async function rpc(name,args={}){
+    const operation=RPC_OPERATION[name];
+    if(!operation)throw new Error('Operación docente no permitida');
+    const {data,error}=await sb.functions.invoke('teacher-auth-gateway',{body:{operation,args}});
+    if(error)throw new Error(error.message||'Backend error');
+    if(data?.error)throw new Error(data.error);
+    return data?.data;
+  }
+  async function beginMfa(){
+    const {data:aal,error:aalError}=await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+    if(aalError)throw aalError;
+    if(aal?.currentLevel==='aal2'){
+      const {data:{session}}=await sb.auth.getSession();
+      token=session?.access_token||'';
+      if(!token)throw new Error('Sesión no disponible');
+      $('mfaPanel').classList.add('hidden');
+      $('loginStatus').textContent='';
+      restoreCachedSnapshot();
+      await load(true);
+      return;
+    }
+    const {data:factors,error:factorsError}=await sb.auth.mfa.listFactors();
+    if(factorsError)throw factorsError;
+    let factor=(factors?.totp||[]).find(item=>item.status==='verified');
+    if(!factor){
+      const {data:enrolled,error:enrollError}=await sb.auth.mfa.enroll({factorType:'totp',friendlyName:'Panel docente IJR'});
+      if(enrollError)throw enrollError;
+      factor=enrolled;
+      $('mfaQr').src=enrolled.totp.qr_code;
+      $('mfaQr').classList.remove('hidden');
+      $('mfaHelp').textContent='Escanea el QR con tu aplicación autenticadora y escribe el código de seis dígitos.';
+    }else{
+      $('mfaQr').classList.add('hidden');
+      $('mfaHelp').textContent='Escribe el código de seis dígitos de tu aplicación autenticadora.';
+    }
+    pendingFactorId=factor.id;
+    const {data:challenge,error:challengeError}=await sb.auth.mfa.challenge({factorId:pendingFactorId});
+    if(challengeError)throw challengeError;
+    pendingChallengeId=challenge.id;
+    $('mfaPanel').classList.remove('hidden');
+    $('mfaCode').focus();
+  }
+  async function bootstrapAuth(){
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session)return;
+    try{await beginMfa()}catch(err){$('loginStatus').textContent=`Acceso pendiente: ${err.message}`}
+  }
   function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
   function fmtGrade(v){return v==null||!Number.isFinite(Number(v))?'—':Number(v).toFixed(2)}
   function fmtTime(v,full=false){if(!v)return'—';try{return new Date(v).toLocaleString('es-CO',full?{dateStyle:'short',timeStyle:'medium'}:{hour:'2-digit',minute:'2-digit',second:'2-digit'})}catch{return'—'}}
@@ -125,10 +177,32 @@
     finally{loading=false}
   }
 
-  $('loginForm').addEventListener('submit',async e=>{e.preventDefault();$('loginStatus').textContent='Signing in…';try{const data=await rpc(cfg.rpc.login,{p_code:$('teacherCode').value,p_user_agent:navigator.userAgent});token=data.teacher_token;sessionStorage.setItem(cfg.teacherSessionKey,token);$('teacherCode').value='';$('loginStatus').textContent='';await load(true)}catch(err){$('loginStatus').textContent=`Could not sign in: ${err.message}`}});
+  $('loginForm').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const email=$('teacherEmail').value.trim().toLowerCase();
+    if(!email.endsWith('@ijr.edu.co')){$('loginStatus').textContent='Usa la cuenta institucional docente @ijr.edu.co.';return}
+    $('loginStatus').textContent='Verificando cuenta institucional…';
+    try{
+      const {error}=await sb.auth.signInWithPassword({email,password:$('teacherPassword').value});
+      if(error)throw error;
+      $('teacherPassword').value='';
+      await beginMfa();
+    }catch(err){$('loginStatus').textContent=`No fue posible iniciar sesión: ${err.message}`}
+  });
+  $('mfaButton').addEventListener('click',async()=>{
+    const code=$('mfaCode').value.trim();
+    if(!pendingFactorId||!pendingChallengeId||!/^[0-9]{6}$/.test(code)){$('loginStatus').textContent='Escribe un código MFA válido de seis dígitos.';return}
+    $('loginStatus').textContent='Verificando segundo factor…';
+    try{
+      const {error}=await sb.auth.mfa.verify({factorId:pendingFactorId,challengeId:pendingChallengeId,code});
+      if(error)throw error;
+      $('mfaCode').value='';
+      await beginMfa();
+    }catch(err){$('loginStatus').textContent=`MFA no verificado: ${err.message}`}
+  });
   ['groupFilter','activeOnly'].forEach(id=>$(id).addEventListener('change',render));$('searchInput').addEventListener('input',render);$('refreshButton').addEventListener('click',()=>load(true));
   $('saveRegistrationButton').addEventListener('click',saveRegistration);$('deleteRegistrationButton').addEventListener('click',()=>deleteRegistration());
-  $('logoutButton').addEventListener('click',async()=>{try{await rpc(cfg.rpc.logout,{p_teacher_token:token})}catch{}token='';snapshot=null;clearTimeout(timer);sessionStorage.removeItem(cfg.teacherSessionKey);sessionStorage.removeItem(SNAPSHOT_KEY);$('dashboardPanel').classList.add('hidden');$('loginPanel').classList.remove('hidden')});
+  $('logoutButton').addEventListener('click',async()=>{await sb.auth.signOut({scope:'local'});token='';snapshot=null;clearTimeout(timer);sessionStorage.removeItem(SNAPSHOT_KEY);$('dashboardPanel').classList.add('hidden');$('loginPanel').classList.remove('hidden')});
   document.addEventListener('visibilitychange',()=>{if(!token)return;document.hidden?schedule(POLL_HIDDEN_MS):load(true)});window.addEventListener('online',()=>{if(token)load(true)});window.addEventListener('offline',()=>{if(token)setLive('offline','Offline · last data')});
-  if(token){restoreCachedSnapshot();$('loginPanel').classList.add('hidden');$('dashboardPanel').classList.remove('hidden');load(true)}
+  bootstrapAuth();
 })();
