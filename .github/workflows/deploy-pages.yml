@@ -85,6 +85,7 @@ jobs:
         run: |
           set -euo pipefail
           node --check evaluacion-conteo-permutaciones/app.js
+          node --check evaluacion-conteo-permutaciones/teacher/app.js
           node --check actividad-colab-01/app.js
           node --check actividad-colab-01/config.js
           node --check actividad-colab-01/resilience-v7.js
@@ -102,6 +103,8 @@ jobs:
           test -s evaluacion-conteo-permutaciones/app.js
           test -s evaluacion-conteo-permutaciones/config.js
           test -s evaluacion-conteo-permutaciones/teacher/index.html
+          test -s evaluacion-conteo-permutaciones/teacher/app.js
+          test -s evaluacion-conteo-permutaciones/teacher/teacher.css
           test -s actividad-colab-01/index.html
           test -s actividad-colab-01/app.js
           test -s actividad-colab-01/config.js
@@ -119,6 +122,9 @@ jobs:
           grep -Eq "gradeMin['\"]?:?3(\.0)?|gradeMin.*3\.0" evaluacion-conteo-permutaciones/config.js
           grep -q "studentEmail" evaluacion-conteo-permutaciones/index.html
           grep -q "teacherAccessButton" evaluacion-conteo-permutaciones/index.html
+          grep -q "teacherCode" evaluacion-conteo-permutaciones/teacher/index.html
+          grep -q "teacher_dashboard_snapshot" evaluacion-conteo-permutaciones/teacher/app.js
+          grep -q "teacher_attempt_detail" evaluacion-conteo-permutaciones/config.js
           grep -q "student_learning_activity_start_team_email_v11" actividad-colab-01/config.js
           grep -q "variantBankSize: 36" actividad-colab-01/config.js
           grep -q "statistics11-colab-class1-basics-types-arrays-2026" actividad-colab-01/config.js
