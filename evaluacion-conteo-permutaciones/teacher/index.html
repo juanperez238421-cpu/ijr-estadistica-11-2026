@@ -2,12 +2,116 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta http-equiv="refresh" content="0; url=../?teacher=1">
-  <title>Assessment Operations · Statistics 11</title>
-  <script>location.replace('../?teacher=1');</script>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="color-scheme" content="light">
+  <title>Statistics 11 · Counting & Permutations · Teacher Records</title>
+  <link rel="stylesheet" href="teacher.css?v=20260825-records-v1">
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="../config.js?v=20260825-records-v1"></script>
+  <script defer src="app.js?v=20260825-records-v1"></script>
 </head>
 <body>
-  <p>Redirigiendo al modo docente… <a href="../?teacher=1">Continuar</a></p>
+  <main class="shell">
+    <header class="header">
+      <div>
+        <div class="eyebrow">Instituto Jorge Robledo · Statistics 11</div>
+        <h1>Counting &amp; Permutations · Teacher Records</h1>
+        <p>Intentos, calificaciones, progreso y trazabilidad de integridad del cuestionario.</p>
+      </div>
+      <a class="button secondary" href="../">Volver al cuestionario</a>
+    </header>
+
+    <section id="loginPanel" class="card login-card">
+      <h2>Acceso maestro</h2>
+      <p>Ingresa el código maestro docente para revisar los registros oficiales.</p>
+      <form id="loginForm" class="login-row">
+        <input id="teacherCode" type="password" autocomplete="current-password" placeholder="Código maestro" required>
+        <button type="submit" class="button">Entrar</button>
+      </form>
+      <p id="loginStatus" class="status" aria-live="polite"></p>
+    </section>
+
+    <section id="dashboardPanel" class="hidden">
+      <div class="toolbar card">
+        <div>
+          <strong id="assessmentTitle">Assessment</strong>
+          <span id="assessmentStatus" class="badge">—</span>
+          <span id="updatedAt" class="muted"></span>
+        </div>
+        <div class="toolbar-actions">
+          <button id="refreshButton" class="button secondary" type="button">Actualizar</button>
+          <button id="logoutButton" class="button secondary" type="button">Cerrar sesión</button>
+        </div>
+      </div>
+
+      <section id="metrics" class="metrics" aria-label="Resumen"></section>
+
+      <section class="card filters-card">
+        <div class="filters">
+          <input id="searchInput" type="search" placeholder="Buscar estudiante o correo">
+          <select id="groupFilter" aria-label="Filtrar grupo">
+            <option value="">Todos los grupos</option>
+            <option value="11A">11A</option>
+            <option value="11B">11B</option>
+            <option value="11C">11C</option>
+          </select>
+          <select id="statusFilter" aria-label="Filtrar estado">
+            <option value="">Todos los estados</option>
+            <option value="active">Activos</option>
+            <option value="submitted">Finalizados</option>
+            <option value="invalidated">Anulados</option>
+          </select>
+          <select id="riskFilter" aria-label="Filtrar integridad">
+            <option value="">Toda integridad</option>
+            <option value="OK">OK</option>
+            <option value="ATTENTION">Atención</option>
+            <option value="REVIEW">Revisar</option>
+            <option value="BLOCKED">Bloqueado</option>
+          </select>
+        </div>
+        <p id="attemptCount" class="muted"></p>
+      </section>
+
+      <section class="card table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Estudiante</th>
+                <th>Correo</th>
+                <th>Grupo</th>
+                <th>Estado</th>
+                <th>Progreso</th>
+                <th>Puntaje</th>
+                <th>Nota</th>
+                <th>Correctas</th>
+                <th>Strikes</th>
+                <th>Integridad</th>
+                <th>Inicio</th>
+                <th>Actividad</th>
+              </tr>
+            </thead>
+            <tbody id="attemptBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="detailPanel" class="card detail-card hidden">
+        <div class="detail-head">
+          <div><span class="eyebrow">Auditoría del intento</span><h2 id="detailTitle">Detalle</h2></div>
+          <button id="closeDetail" type="button" class="button secondary">Cerrar</button>
+        </div>
+        <p id="detailStatus" class="status"></p>
+        <div id="detailSummary" class="detail-summary"></div>
+        <h3>Respuestas</h3>
+        <div id="detailResponses" class="response-list"></div>
+        <details class="events-block">
+          <summary>Timeline de eventos de integridad</summary>
+          <div id="detailEvents" class="event-list"></div>
+        </details>
+      </section>
+    </section>
+  </main>
 </body>
 </html>
