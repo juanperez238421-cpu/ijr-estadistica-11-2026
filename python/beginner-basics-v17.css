@@ -1,0 +1,67 @@
+/* V17 — beginner-first Python toolbox for Topic 01 theory + workshop. */
+.beginner-basics-v17{margin-top:54px}
+.beginner-heading-v17{max-width:1040px}
+.beginner-heading-v17>p:not(.eyebrow){font-size:1.08rem;line-height:1.7;color:#2c2c2c}
+
+.function-anatomy-v17{border:2px solid #111;background:#fff;padding:28px;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(160px,.34fr);gap:18px;align-items:center;margin:22px 0 18px}
+.function-call-v17{min-height:108px;border:1px solid #111;display:flex;align-items:center;justify-content:center;gap:9px;font:700 clamp(1.45rem,2.4vw,2.35rem)/1.1 ui-monospace,SFMono-Regular,Consolas,monospace;overflow:hidden}
+.function-call-v17 b{background:#111;color:#fff;padding:10px 12px}
+.function-call-v17 strong{border-bottom:3px solid #111;padding:9px 4px}
+.function-call-v17 span{font-size:1.55em;font-weight:400}
+.function-arrow-v17{font-size:2.2rem;font-weight:800;animation:v17-arrow 1.9s ease-in-out infinite}
+.function-result-v17{min-height:108px;border:2px solid #111;background:#111;color:#fff;display:grid;place-items:center;align-content:center;gap:5px}
+.function-result-v17 small{font-size:.68rem;letter-spacing:.15em}
+.function-result-v17 strong{font:800 2.5rem/1 ui-monospace,SFMono-Regular,Consolas,monospace}
+.function-legend-v17{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid #d8d8d8;margin-top:4px;padding-top:18px;gap:10px}
+.function-legend-v17 div{border:1px solid #dedede;padding:13px;display:grid;gap:4px}
+.function-legend-v17 b{font:800 .92rem/1.2 ui-monospace,SFMono-Regular,Consolas,monospace}
+.function-legend-v17 span{font-size:.78rem;color:#666}
+
+.beginner-function-grid-v17{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.beginner-function-card-v17{border:1px solid #d6d6d6;background:#fff;padding:18px;display:grid;gap:10px;min-height:190px;align-content:start;transition:transform .16s ease,border-color .16s ease}
+.beginner-function-card-v17:hover{transform:translateY(-2px);border-color:#111}
+.beginner-function-card-v17>span{font-size:.68rem;letter-spacing:.13em;font-weight:800;color:#666}
+.beginner-function-card-v17>code{font:800 1.12rem/1.3 ui-monospace,SFMono-Regular,Consolas,monospace;color:#111;word-break:break-word}
+.beginner-function-card-v17>p{font-size:.98rem;line-height:1.55;color:#292929;margin:0}
+.beginner-function-card-v17>small{margin-top:auto;border-top:1px solid #e1e1e1;padding-top:9px;font:.78rem/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;color:#555}
+.beginner-rule-v17{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.beginner-rule-v17>div{border-left:5px solid #111;background:#f6f6f6;padding:18px 20px}
+.beginner-rule-v17 strong{font-size:1.05rem}
+.beginner-rule-v17 p{margin:8px 0 0;font-size:.96rem;line-height:1.55;color:#383838}
+.beginner-rule-v17 code,.beginner-later-v17 code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#fff;border:1px solid #d7d7d7;padding:1px 5px}
+.beginner-later-v17{margin-top:14px;border:1px dashed #777;padding:16px 18px;display:grid;grid-template-columns:minmax(180px,.35fr) minmax(0,1fr);gap:16px;align-items:start;background:#fff}
+.beginner-later-v17 strong{font-size:.98rem}
+.beginner-later-v17 span{font-size:.92rem;line-height:1.55;color:#555}
+
+/* Workshop: compact reference, not another large sidebar. */
+.workshop-basics-v17{margin-top:10px;border:2px solid #111;background:#fff;padding:16px 18px;display:grid;grid-template-columns:minmax(280px,.8fr) minmax(0,1.5fr) auto;gap:18px;align-items:center}
+.workshop-basics-copy-v17{display:grid;gap:5px}
+.workshop-basics-copy-v17 .eyebrow{margin:0!important}
+.workshop-basics-copy-v17>strong{font-size:1.08rem;line-height:1.3}
+.workshop-basics-copy-v17>span{font-size:.88rem;line-height:1.45;color:#505050}
+.workshop-basics-chips-v17{display:flex;flex-wrap:wrap;gap:7px}
+.workshop-basics-chips-v17>span{border:1px solid #cfcfcf;padding:8px 10px;display:grid;gap:2px;min-width:92px;background:#fafafa}
+.workshop-basics-chips-v17 code{font:800 .88rem/1.1 ui-monospace,SFMono-Regular,Consolas,monospace;color:#111}
+.workshop-basics-chips-v17 small{font-size:.68rem;color:#666}
+.workshop-function-model-v17{border-left:4px solid #111;padding:9px 0 9px 13px;display:grid;grid-template-columns:auto auto;gap:3px 9px;align-items:center;white-space:nowrap}
+.workshop-function-model-v17 code{grid-column:1/-1;font:800 .88rem/1.2 ui-monospace,SFMono-Regular,Consolas,monospace}
+.workshop-function-model-v17 span{font-size:1.25rem;font-weight:800}
+.workshop-function-model-v17 b{font-size:.74rem}
+
+@keyframes v17-arrow{0%,100%{transform:translateX(0)}50%{transform:translateX(6px)}}
+@media(max-width:1180px){
+  .beginner-function-grid-v17{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .function-legend-v17{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .workshop-basics-v17{grid-template-columns:1fr}
+  .workshop-function-model-v17{grid-template-columns:auto 1fr;justify-self:start}
+}
+@media(max-width:760px){
+  .function-anatomy-v17{grid-template-columns:1fr;padding:18px}
+  .function-arrow-v17{transform:rotate(90deg);justify-self:center;animation:none}
+  .function-result-v17{min-height:88px}
+  .function-legend-v17,.beginner-function-grid-v17,.beginner-rule-v17{grid-template-columns:1fr}
+  .beginner-later-v17{grid-template-columns:1fr}
+  .workshop-basics-v17{padding:14px}
+  .workshop-basics-chips-v17>span{min-width:calc(50% - 4px);flex:1}
+}
+@media(prefers-reduced-motion:reduce){.function-arrow-v17,.beginner-function-card-v17{animation:none!important;transition:none!important}}
