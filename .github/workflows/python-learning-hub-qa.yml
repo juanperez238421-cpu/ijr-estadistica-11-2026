@@ -1,6 +1,6 @@
 name: Python Learning Hub QA
 
-# V14: split architecture + deep theory QA + proven Colab runtime + universal black terminal + literal STEP-by-STEP guidance for all stages.
+# V15: split architecture + deep theory QA + proven Colab runtime + universal black terminal + explicit guidance + compact stage rail.
 on:
   pull_request:
     paths:
@@ -13,6 +13,7 @@ on:
       - 'qa/check_workshop_terminal_v12.py'
       - 'qa/check_workshop_guidance_v13.py'
       - 'qa/check_workshop_guidance_v14.py'
+      - 'qa/check_workshop_layout_v15.py'
       - 'qa/workshop_colab_smoke_v11.cjs'
       - 'actividad-colab-01/app.js'
       - 'supabase/migrations/*python_learning_hub*.sql'
@@ -29,6 +30,7 @@ on:
       - 'qa/check_workshop_terminal_v12.py'
       - 'qa/check_workshop_guidance_v13.py'
       - 'qa/check_workshop_guidance_v14.py'
+      - 'qa/check_workshop_layout_v15.py'
       - 'qa/workshop_colab_smoke_v11.cjs'
       - 'actividad-colab-01/app.js'
       - 'supabase/migrations/*python_learning_hub*.sql'
@@ -57,10 +59,11 @@ jobs:
           node --check python/workshop-terminal-v12.js
           node --check python/workshop-guidance-v13.js
           node --check python/workshop-guidance-v14.js
+          node --check python/workshop-layout-v15.js
           node --check qa/workshop_colab_smoke_v11.cjs
       - name: Static course contracts
         run: |
-          python -m py_compile qa/check_python_hub_split_pages.py qa/check_python_hub_visual_v8.py qa/check_operations_visual_v9.py qa/check_workshop_colab_v11.py qa/check_workshop_terminal_v12.py qa/check_workshop_guidance_v13.py qa/check_workshop_guidance_v14.py
+          python -m py_compile qa/check_python_hub_split_pages.py qa/check_python_hub_visual_v8.py qa/check_operations_visual_v9.py qa/check_workshop_colab_v11.py qa/check_workshop_terminal_v12.py qa/check_workshop_guidance_v13.py qa/check_workshop_guidance_v14.py qa/check_workshop_layout_v15.py
           python qa/check_python_hub_split_pages.py
           python qa/check_python_hub_visual_v8.py
           python qa/check_operations_visual_v9.py
@@ -68,6 +71,7 @@ jobs:
           python qa/check_workshop_terminal_v12.py
           python qa/check_workshop_guidance_v13.py
           python qa/check_workshop_guidance_v14.py
+          python qa/check_workshop_layout_v15.py
       - name: Verify production Pyodide asset
         run: curl --fail --silent --show-error --location --head https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js >/dev/null
       - name: Real proven Pyodide workshop smoke
