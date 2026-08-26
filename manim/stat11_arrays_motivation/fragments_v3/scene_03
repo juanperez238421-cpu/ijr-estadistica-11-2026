@@ -1,0 +1,140 @@
+        self.wait(PAUSE_WORK)
+        self.clear_stage()
+
+        self.set_header(
+            2,
+            "THE REAL ISSUE IS ORGANIZATION",
+            "Separate variables are possible, but they do not describe the dataset in a natural way.",
+        )
+        cards = self.process_map(
+            [
+                ("1", "30 students → 30 variable names"),
+                ("2", "The code grows too much"),
+                ("3", "It becomes harder to read"),
+                ("4", "The data no longer looks grouped"),
+            ],
+            card_width=5.8,
+            card_height=1.10,
+            columns=2,
+        )
+        cards.move_to(DOWN * 0.1)
+        sentence = self.formula_panel(
+            r"\text{We need one structure for many related values}",
+            width=9.0,
+            height=1.05,
+            font_size=36,
+        )
+        sentence.move_to(DOWN * 3.32)
+        self.assert_content_safe(VGroup(cards, sentence), "organization issue")
+
+        self.play(LaggedStart(*[FadeIn(card) for card in cards], lag_ratio=0.12), run_time=RUN_SLOW * 1.7)
+        self.wait(PAUSE_WORK)
+        self.play(FadeIn(sentence), run_time=RUN_NORMAL)
+        self.wait(PAUSE_SUMMARY)
+        self.clear_stage()
+
+    def define_array_concept(self) -> None:
+        self.set_header(
+            3,
+            "ARRAY CONCEPT FOR THIS CLASS",
+            "In our Colab workshop, we will use a Python list as the basic array idea: one variable can store many ordered values.",
+        )
+
+        old_cell = self.colab_cell([
+            "score_1 = 4.2",
+            "score_2 = 3.8",
+            "score_3 = 4.5",
+            "score_4 = 3.2",
+            "score_5 = 4.0",
+        ], cell_id="3", title="BEFORE", width=6.4, line_size=22, min_height=3.2)
+
+        new_cell = self.colab_cell([
+            "scores = [4.2, 3.8, 4.5, 3.2, 4.0]",
+        ], cell_id="3", title="AFTER", width=6.7, line_size=24, min_height=1.95)
+
+        definition = self.note_panel(
+            "DEFINITION",
+            [
+                "An array/list is one variable",
+                "that stores multiple values",
+                "in a specific order.",
+            ],
+            width=5.2,
+            title_size=24,
+            body_size=22,
+        )
+        diagram = self.array_boxes("scores", SCORES, show_indexes=False)
+        right = VGroup(diagram, definition).arrange(DOWN, buff=0.42)
+        layout = self.split_layout(old_cell, right, center_y=-0.35)
+        self.assert_content_safe(layout.group, "array concept before")
+
+        self.type_colab_cell(old_cell, line_time=0.48, between=0.15, zoom_width=7.8)
+        self.wait(PAUSE_READ)
+        self.build_array_visual(diagram, show_indexes=False)
+        self.wait(PAUSE_READ)
+        self.play(FadeIn(definition), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+
+        # Replace the five assignments with one fresh Colab cell and type the list live.
+        new_cell.move_to(old_cell)
+        self.play(FadeOut(old_cell), run_time=RUN_QUICK)
+        self.type_colab_cell(new_cell, line_time=1.25, between=0.25, zoom_width=8.4)
+        self.run_pulse(new_cell)
+        self.wait(PAUSE_EXPLAIN)
+        self.focus_on(new_cell, width=8.2, pause=PAUSE_WORK)
+        self.clear_stage()
+
+    def advantages_for_data(self) -> None:
+        self.set_header(
+            4,
+            "WHY IS THIS BETTER FOR DATA?",
+            "The advantage is not magic. The advantage is that the structure now matches the meaning of the data.",
+        )
+
+        cards = self.advantage_cards()
+        cards.move_to(UP * 0.10)
+        note = self.note_panel(
+            "SENIOR QA MESSAGE",
+            [
+                "A list does not change the values.",
+                "It changes how well we organize them.",
+                "Better structure means clearer data work.",
+            ],
+            width=8.7,
+            title_size=25,
+            body_size=23,
+        )
+        note.move_to(DOWN * 2.72)
+        self.assert_content_safe(VGroup(cards, note), "advantages")
+
+        self.play(LaggedStart(*[FadeIn(card, shift=UP * 0.08) for card in cards], lag_ratio=0.13), run_time=RUN_SLOW * 1.7)
+        self.wait(PAUSE_WORK)
+        self.play(FadeIn(note), run_time=RUN_NORMAL)
+        self.wait(PAUSE_SUMMARY)
+        self.clear_stage()
+
+    def colab_examples(self) -> None:
+        self.set_header(
+            5,
+            "COLAB LAYOUT — DEFINE, SHOW, ACCESS",
+            "Use the same notebook logic students will see in class: first define the list, then display it, then access a specific position.",
+        )
+
+        c1 = self.colab_cell([
+            "temperatures = [22.1, 22.8, 23.0, 22.6]",
+        ], cell_id="4", title="DEFINE THE DATASET", width=8.2, line_size=24, min_height=1.95)
+        o1 = self.colab_output(["[22.1, 22.8, 23.0, 22.6]"], width=5.8)
+
+        c2 = self.colab_cell([
+            "temperatures[1]",
+        ], cell_id="5", title="ACCESS THE SECOND VALUE", width=5.6, line_size=25, min_height=1.85)
+        o2 = self.colab_output(["22.8"], width=2.9)
+
+        strip = self.array_boxes("temperatures", TEMPERATURES, show_indexes=True, highlight_index=1)
+        strip.scale(0.94)
+
+        left_stack = VGroup(c1, o1, c2, o2).arrange(DOWN, aligned_edge=LEFT, buff=0.20)
+        right_stack = VGroup(
+            strip,
+            self.text("Second human value → index 1", 26, BOLD),
+        ).arrange(DOWN, buff=0.32)
