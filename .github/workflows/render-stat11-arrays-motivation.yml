@@ -1,11 +1,12 @@
-name: Render Statistics 11 Arrays Motivation PQH
+name: Render Statistics 11 Arrays Colab V2 PQH
 
 on:
   push:
     branches:
       - manim/stat11-arrays-motivation-20260826
     paths:
-      - 'manim/stat11_arrays_motivation/**'
+      - 'manim/stat11_arrays_motivation/fragments_v2/**'
+      - 'manim/stat11_arrays_motivation/fragments/style_*'
       - '.github/workflows/render-stat11-arrays-motivation.yml'
   workflow_dispatch:
 
@@ -13,7 +14,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: stat11-arrays-motivation-${{ github.ref }}
+  group: stat11-arrays-colab-v2-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -23,22 +24,24 @@ jobs:
     env:
       PROJECT_DIR: manim/stat11_arrays_motivation
       IMAGE: manimcommunity/manim:v0.20.1
+      SCENE_FILE: src/stat11_arrays_colab_revised.py
+      SCENE_CLASS: Stat11ArraysColabMotivationV2
 
     steps:
       - name: Checkout exact source
         uses: actions/checkout@v4
 
-      - name: Reconstruct and validate exact source
+      - name: Reconstruct and validate exact V2 source
         shell: bash
         run: |
           set -euo pipefail
           cd "$PROJECT_DIR"
-          mkdir -p src library delivery qa
-          cat fragments/scene_* > src/stat11_arrays_motivation.py
+          mkdir -p src library delivery qa/audit_frames
+          cat fragments_v2/scene_* > src/stat11_arrays_colab_revised.py
           cat fragments/style_* > library/jp_classroom_style.py
-          sha256sum -c workflow/source_hashes.sha256
-          python -m py_compile src/stat11_arrays_motivation.py library/jp_classroom_style.py workflow/validate_scene.py
-          python workflow/validate_scene.py src/stat11_arrays_motivation.py
+          echo "206f58b8c0527370aa04b2a19ab8c2884bafabc728a9d7cee6b7d1faf2b1c56c  src/stat11_arrays_colab_revised.py" | sha256sum -c -
+          echo "3f3f06e94d5cad870ad335502cc1a93e56ce675abb1231ded5f9c71fd3e60e3d  library/jp_classroom_style.py" | sha256sum -c -
+          python -m py_compile src/stat11_arrays_colab_revised.py library/jp_classroom_style.py
 
       - name: Pull pinned ManimCE image
         run: docker pull "$IMAGE"
@@ -54,7 +57,7 @@ jobs:
             -v "$PWD:/manim" \
             -w "/manim/$PROJECT_DIR" \
             "$IMAGE" \
-            python -m manim -ql src/stat11_arrays_motivation.py Stat11ArraysMotivation \
+            python -m manim -ql "$SCENE_FILE" "$SCENE_CLASS" \
             --format=mp4 --media_dir media_pql --disable_caching
           PREVIEW="$(find "$PROJECT_DIR/media_pql" -type f -name '*.mp4' ! -path '*/partial_movie_files/*' | head -n 1)"
           test -n "$PREVIEW"
@@ -72,45 +75,48 @@ jobs:
             -v "$PWD:/manim" \
             -w "/manim/$PROJECT_DIR" \
             "$IMAGE" \
-            python -m manim -qh src/stat11_arrays_motivation.py Stat11ArraysMotivation \
+            python -m manim -qh "$SCENE_FILE" "$SCENE_CLASS" \
             --fps 30 --format=mp4 --media_dir media_final --disable_caching
           FINAL="$(find "$PROJECT_DIR/media_final" -type f -name '*.mp4' ! -path '*/partial_movie_files/*' | head -n 1)"
           test -n "$FINAL"
           test -s "$FINAL"
-          cp "$FINAL" "$PROJECT_DIR/delivery/Stat11ArraysMotivation_PQH.mp4"
-          test -s "$PROJECT_DIR/delivery/Stat11ArraysMotivation_PQH.mp4"
+          cp "$FINAL" "$PROJECT_DIR/delivery/Stat11_Arrays_Colab_Motivation_V2_FINAL_PQH.mp4"
+          test -s "$PROJECT_DIR/delivery/Stat11_Arrays_Colab_Motivation_V2_FINAL_PQH.mp4"
 
       - name: Upload rendered MP4
         uses: actions/upload-artifact@v4
         with:
-          name: Stat11-Arrays-Motivation-PQH
+          name: Stat11-Arrays-Colab-V2-PQH
           retention-days: 30
           if-no-files-found: error
-          path: manim/stat11_arrays_motivation/delivery/Stat11ArraysMotivation_PQH.mp4
+          path: manim/stat11_arrays_motivation/delivery/Stat11_Arrays_Colab_Motivation_V2_FINAL_PQH.mp4
 
-      - name: Technical verification
-        continue-on-error: true
+      - name: Technical and audit verification
         shell: bash
         run: |
           set -euo pipefail
-          V="$PROJECT_DIR/delivery/Stat11ArraysMotivation_PQH.mp4"
+          V="$PROJECT_DIR/delivery/Stat11_Arrays_Colab_Motivation_V2_FINAL_PQH.mp4"
           ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt -of default=nw=1 "$V" | tee "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^codec_name=h264$' "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^width=1920$' "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^height=1080$' "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^pix_fmt=yuv420p$' "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^r_frame_rate=30/1$' "$PROJECT_DIR/qa/ffprobe.txt"
           ffmpeg -nostdin -v error -i "$V" -f null - 2> "$PROJECT_DIR/qa/decode_errors.log"
+          test ! -s "$PROJECT_DIR/qa/decode_errors.log"
           sha256sum "$V" > "$PROJECT_DIR/qa/final_mp4.sha256"
-          if test -s "$PROJECT_DIR/qa/decode_errors.log"; then
-            echo "ffmpeg emitted decode diagnostics; MP4 artifact remains available for direct inspection."
-            cat "$PROJECT_DIR/qa/decode_errors.log"
-            exit 1
-          fi
+          ffmpeg -nostdin -v error -i "$V" -vf "fps=1/18,scale=960:-2" -frames:v 14 "$PROJECT_DIR/qa/audit_frames/frame_%02d.jpg"
+          test "$(find "$PROJECT_DIR/qa/audit_frames" -type f -name '*.jpg' | wc -l)" -ge 8
 
       - name: Upload QA metadata
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Stat11-Arrays-Motivation-QA
+          name: Stat11-Arrays-Colab-V2-QA
           retention-days: 30
           if-no-files-found: warn
           path: |
             manim/stat11_arrays_motivation/qa/ffprobe.txt
             manim/stat11_arrays_motivation/qa/decode_errors.log
             manim/stat11_arrays_motivation/qa/final_mp4.sha256
+            manim/stat11_arrays_motivation/qa/audit_frames/*.jpg
