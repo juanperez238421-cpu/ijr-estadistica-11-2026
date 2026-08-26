@@ -3,14 +3,7 @@ name: Render Statistics 11 Comparisons Protocol V2 FINAL PQH
 on:
   push:
     branches:
-      - main
-    paths:
-      - 'manim/stat11_comparisons_protocol_v2/**'
-      - 'manim/stat11_arrays_motivation/fragments/style_*'
-      - '.github/workflows/render-stat11-comparisons-protocol-v2-after-hub-qa.yml'
-  pull_request:
-    branches:
-      - main
+      - render/stat11-comparisons-protocol-v2-final-20260826
     paths:
       - 'manim/stat11_comparisons_protocol_v2/**'
       - 'manim/stat11_arrays_motivation/fragments/style_*'
@@ -21,7 +14,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: stat11-comparisons-protocol-v2-final-${{ github.event.pull_request.number || github.ref }}
+  group: stat11-comparisons-protocol-v2-final-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -88,13 +81,20 @@ jobs:
           test -n "$FINAL"
           test -s "$FINAL"
           cp "$FINAL" "$PROJECT_DIR/delivery/$FINAL_NAME"
+          test -s "$PROJECT_DIR/delivery/$FINAL_NAME"
+
+      - name: Upload final rendered MP4
+        uses: actions/upload-artifact@v4
+        with:
+          name: Stat11-Comparisons-Protocol-V2-FINAL-PQH
+          retention-days: 30
+          if-no-files-found: error
+          path: manim/stat11_comparisons_protocol_v2/delivery/Stat11_Comparisons_Protocol_V2_FINAL_PQH.mp4
 
       - name: Technical QA and visual audit extraction
         shell: bash
         run: |
           set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg
           V="$PROJECT_DIR/delivery/$FINAL_NAME"
           ffprobe -v error \
             -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt \
@@ -123,14 +123,6 @@ jobs:
           PQH: python -m manim -qh src/stat11_comparisons_protocol_v2.py Stat11ComparisonsProtocolV2 --fps 30
           Expected final: 1920x1080 · 30 fps · H.264 · yuv420p
           EOF
-
-      - name: Upload final rendered MP4
-        uses: actions/upload-artifact@v4
-        with:
-          name: Stat11-Comparisons-Protocol-V2-FINAL-PQH
-          retention-days: 30
-          if-no-files-found: error
-          path: manim/stat11_comparisons_protocol_v2/delivery/Stat11_Comparisons_Protocol_V2_FINAL_PQH.mp4
 
       - name: Upload exact source and QA package
         if: always()
