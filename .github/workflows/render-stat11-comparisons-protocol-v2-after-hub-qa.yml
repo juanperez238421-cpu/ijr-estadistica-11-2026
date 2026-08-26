@@ -4,6 +4,8 @@ on:
   workflow_run:
     workflows: ["Deploy Statistics 11 Assessment"]
     types: [completed]
+  issue_comment:
+    types: [created]
   workflow_dispatch:
 
 permissions:
@@ -15,7 +17,7 @@ concurrency:
 
 jobs:
   render:
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'issue_comment' && contains(github.event.comment.body, '[render-stat11-comparisons-protocol-v2]')) || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
