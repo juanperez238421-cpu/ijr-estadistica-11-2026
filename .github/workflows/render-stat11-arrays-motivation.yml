@@ -1,0 +1,141 @@
+name: Render Statistics 11 Arrays Motivation PQH
+
+on:
+  push:
+    branches:
+      - manim/stat11-arrays-motivation-20260826
+    paths:
+      - 'manim/stat11_arrays_motivation/**'
+      - '.github/workflows/render-stat11-arrays-motivation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stat11-arrays-motivation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      PROJECT_DIR: manim/stat11_arrays_motivation
+      SCENE_FILE: src/stat11_arrays_motivation.py
+      SCENE_CLASS: Stat11ArraysMotivation
+      IMAGE: manimcommunity/manim:v0.20.1
+      FINAL_NAME: Stat11ArraysMotivation.mp4
+
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct exact scene and style
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT_DIR"
+          mkdir -p src library delivery qa
+          cat fragments/scene_* > src/stat11_arrays_motivation.py
+          cat fragments/style_* > library/jp_classroom_style.py
+          sha256sum -c workflow/source_hashes.sha256
+          python -m py_compile src/stat11_arrays_motivation.py library/jp_classroom_style.py workflow/validate_scene.py
+          python workflow/validate_scene.py src/stat11_arrays_motivation.py
+
+      - name: Pull pinned ManimCE image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull "$IMAGE"
+
+      - name: PQL validation render
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$PROJECT_DIR/media_pql"
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -v "$PWD:/manim" \
+            -w "/manim/$PROJECT_DIR" \
+            --entrypoint bash \
+            "$IMAGE" \
+            -lc 'mkdir -p /tmp/preview-bin; printf "#!/bin/sh\nexit 0\n" > /tmp/preview-bin/xdg-open; chmod +x /tmp/preview-bin/xdg-open; export PATH="/tmp/preview-bin:$PATH"; manim -pql src/stat11_arrays_motivation.py Stat11ArraysMotivation --format=mp4 --media_dir media_pql --disable_caching'
+          PREVIEW="$(find "$PROJECT_DIR/media_pql" -type f -name "$FINAL_NAME" | head -n 1)"
+          test -n "$PREVIEW" -a -s "$PREVIEW"
+          ffprobe -v error -show_entries stream=width,height,r_frame_rate -of default=nw=1 "$PREVIEW"
+
+      - name: PQH final render
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$PROJECT_DIR/media"
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -v "$PWD:/manim" \
+            -w "/manim/$PROJECT_DIR" \
+            --entrypoint bash \
+            "$IMAGE" \
+            -lc 'mkdir -p /tmp/preview-bin; printf "#!/bin/sh\nexit 0\n" > /tmp/preview-bin/xdg-open; chmod +x /tmp/preview-bin/xdg-open; export PATH="/tmp/preview-bin:$PATH"; manim -pqh src/stat11_arrays_motivation.py Stat11ArraysMotivation --format=mp4 --media_dir media --disable_caching'
+          RAW="$(find "$PROJECT_DIR/media" -type f -name "$FINAL_NAME" | head -n 1)"
+          test -n "$RAW" -a -s "$RAW"
+          echo "RAW=$RAW" >> "$GITHUB_ENV"
+
+      - name: Normalize and verify delivery
+        shell: bash
+        run: |
+          set -euo pipefail
+          FINAL="$PROJECT_DIR/delivery/$FINAL_NAME"
+          ffmpeg -y -v error -i "$RAW" -an -c:v libx264 -pix_fmt yuv420p -r 30 -movflags +faststart "$FINAL"
+          test -s "$FINAL"
+          CODEC="$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of csv=p=0 "$FINAL")"
+          PIX="$(ffprobe -v error -select_streams v:0 -show_entries stream=pix_fmt -of csv=p=0 "$FINAL")"
+          WIDTH="$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$FINAL")"
+          HEIGHT="$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$FINAL")"
+          RATE="$(ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -of csv=p=0 "$FINAL")"
+          test "$CODEC" = "h264"
+          test "$PIX" = "yuv420p"
+          test "$WIDTH" = "1920"
+          test "$HEIGHT" = "1080"
+          test "$RATE" = "30/1"
+          : > "$PROJECT_DIR/qa/decode_errors.log"
+          ffmpeg -v error -i "$FINAL" -f null - 2> "$PROJECT_DIR/qa/decode_errors.log"
+          test ! -s "$PROJECT_DIR/qa/decode_errors.log"
+          ffprobe -v error -show_format -show_streams -of json "$FINAL" > "$PROJECT_DIR/qa/ffprobe.json"
+          sha256sum "$FINAL" > "$PROJECT_DIR/qa/final_mp4.sha256"
+          ffmpeg -y -v error -ss 00:00:12 -i "$FINAL" -frames:v 1 "$PROJECT_DIR/qa/poster.png"
+
+      - name: Commit verified MP4 to feature branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$PROJECT_DIR/src/stat11_arrays_motivation.py" \
+                  "$PROJECT_DIR/library/jp_classroom_style.py" \
+                  "$PROJECT_DIR/delivery/$FINAL_NAME" \
+                  "$PROJECT_DIR/qa/ffprobe.json" \
+                  "$PROJECT_DIR/qa/final_mp4.sha256" \
+                  "$PROJECT_DIR/qa/poster.png"
+          if git diff --cached --quiet; then
+            echo "Verified render already committed."
+          else
+            git commit -m "Render Statistics 11 arrays motivation PQH [skip ci]"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+
+      - name: Upload verified MP4 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Stat11-AIT-Arrays-Motivation-PQH
+          retention-days: 30
+          if-no-files-found: error
+          path: |
+            manim/stat11_arrays_motivation/delivery/Stat11ArraysMotivation.mp4
+            manim/stat11_arrays_motivation/qa/ffprobe.json
+            manim/stat11_arrays_motivation/qa/final_mp4.sha256
+            manim/stat11_arrays_motivation/qa/poster.png
