@@ -1,0 +1,15 @@
+{
+  "topic": "operations",
+  "version": "topic01-v5",
+  "released": "2026-08-26",
+  "pedagogy": "blank-cell-student-authored-code",
+  "theory": [
+    "python-vs-colab",
+    "calculator-vs-notebook",
+    "cell-anatomy",
+    "execution-sequence",
+    "error-feedback-loop",
+    "statistics-bridge"
+  ],
+  "animations": "minimal-black-white-reduced-motion-compatible"
+}
