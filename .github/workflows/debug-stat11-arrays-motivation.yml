@@ -1,0 +1,63 @@
+name: Debug Statistics 11 Arrays Motivation
+
+on:
+  push:
+    branches:
+      - manim/stat11-arrays-motivation-20260826
+    paths:
+      - '.github/workflows/debug-stat11-arrays-motivation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  debug-pql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reconstruct sources
+        run: |
+          set -euo pipefail
+          cd manim/stat11_arrays_motivation
+          mkdir -p src library qa
+          cat fragments/scene_* > src/stat11_arrays_motivation.py
+          cat fragments/style_* > library/jp_classroom_style.py
+          sha256sum -c workflow/source_hashes.sha256
+      - name: Pull Manim image
+        run: docker pull manimcommunity/manim:v0.20.1
+      - name: Run PQL and capture complete log
+        id: pql
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          PROJECT_DIR=manim/stat11_arrays_motivation
+          mkdir -p "$PROJECT_DIR/qa"
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -v "$PWD:/manim" \
+            -w "/manim/$PROJECT_DIR" \
+            --entrypoint bash \
+            manimcommunity/manim:v0.20.1 \
+            -lc 'manim -ql src/stat11_arrays_motivation.py Stat11ArraysMotivation --format=mp4 --media_dir media_debug --disable_caching' \
+            > "$PROJECT_DIR/qa/pql.log" 2>&1
+          CODE=$?
+          echo "exit_code=$CODE" > "$PROJECT_DIR/qa/status.txt"
+          cat "$PROJECT_DIR/qa/pql.log"
+          exit $CODE
+      - name: Upload debug log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Stat11-Arrays-PQL-Debug
+          path: |
+            manim/stat11_arrays_motivation/qa/pql.log
+            manim/stat11_arrays_motivation/qa/status.txt
+          if-no-files-found: error
+          retention-days: 7
+      - name: Fail job if PQL failed
+        if: steps.pql.outcome == 'failure'
+        run: exit 1
