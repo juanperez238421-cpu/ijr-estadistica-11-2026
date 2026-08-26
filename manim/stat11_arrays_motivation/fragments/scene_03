@@ -1,0 +1,180 @@
+            ],
+            width=6.2,
+            title_size=24,
+            body_size=22,
+        )
+        body = self.split_layout(solution1, reflection, center_y=-0.85)
+        group = VGroup(p1, body.group)
+        self.assert_content_safe(group, "workshop exercise 1 layout")
+
+        self.play(FadeIn(p1), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+        self.play(FadeIn(solution1), run_time=RUN_NORMAL)
+        self.wait(PAUSE_EXPLAIN)
+        self.play(FadeIn(reflection), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+        self.clear_stage()
+
+        # Exercise 2 — reorganize the exact same values.
+        self.set_header(
+            6,
+            "MINI WORKSHOP — REORGANIZE THE SAME DATA",
+            "Do not change the values. Change only the structure used to store them.",
+        )
+        p2 = self.prompt_card(
+            "2",
+            "Use one variable named temperatures to store all four measurements.",
+            width=13.2,
+            body_size=26,
+        )
+        p2.move_to(UP * 1.80)
+        list_answer = self.code_panel(
+            ["temperatures = [22.1, 22.8, 23.0, 22.6]"],
+            width=7.2,
+            title="ONE VARIABLE · FOUR VALUES",
+            line_size=28,
+            min_height=2.05,
+        )
+        temp_strip = self.array_strip("temperatures", TEMPERATURES, show_indexes=True)
+        temp_strip.scale(0.88)
+        pair = VGroup(list_answer, temp_strip).arrange(DOWN, buff=0.48)
+        pair.move_to(DOWN * 0.55)
+        self.fit(pair, 13.8, 4.55)
+        total = VGroup(p2, pair)
+        self.assert_content_safe(total, "workshop exercise 2 layout")
+
+        self.play(FadeIn(p2), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+        self.play(FadeIn(list_answer), run_time=RUN_NORMAL)
+        self.wait(PAUSE_EXPLAIN)
+        self.play(FadeIn(temp_strip), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+        self.clear_stage()
+
+        # Exercise 3 — use the new positional model without adding new concepts.
+        self.set_header(
+            6,
+            "MINI WORKSHOP — READ A POSITION",
+            "The values are organized. Now use only the list name and an index to read one measurement.",
+        )
+        p3 = self.prompt_card(
+            "3",
+            "What Python expression reads the second temperature? Predict the value before revealing it.",
+            width=13.2,
+            body_size=26,
+        )
+        p3.move_to(UP * 1.80)
+        temp_strip2 = self.array_strip("temperatures", TEMPERATURES, show_indexes=True)
+        temp_strip2.scale(0.92)
+        temp_strip2.move_to(UP * 0.35)
+        answer = self.formula_panel(
+            r"\texttt{temperatures[1]} \Rightarrow 22.8",
+            width=7.0,
+            height=1.18,
+            font_size=38,
+        )
+        answer.move_to(DOWN * 1.45)
+        check = self.text("Second human position → index 1", 28, BOLD)
+        check.to_edge(DOWN, buff=0.36)
+        total3 = VGroup(p3, temp_strip2, answer, check)
+        self.assert_content_safe(total3, "workshop exercise 3 layout")
+
+        self.play(FadeIn(p3), run_time=RUN_NORMAL)
+        self.play(FadeIn(temp_strip2), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+        self.play(FadeIn(answer), run_time=RUN_NORMAL)
+        self.wait(PAUSE_EXPLAIN)
+        self.play(FadeIn(check), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+        self.clear_stage()
+
+        # Exercise 4 — transfer to a new dataset.
+        self.set_header(
+            6,
+            "TRANSFER — SAME IDEA, NEW DATA",
+            "A list is useful because the structure transfers to any set of related ordered values.",
+        )
+        p4 = self.prompt_card(
+            "4",
+            "Create one variable heights for: 161, 168, 173, 159, 176, 170. Then read the second value.",
+            width=13.2,
+            body_size=25,
+        )
+        p4.move_to(UP * 1.75)
+        height_code = self.code_panel(
+            [
+                "heights = [161, 168, 173, 159, 176, 170]",
+                "heights[1]  →  168",
+            ],
+            width=8.3,
+            title="TARGET STRUCTURE",
+            line_size=27,
+            min_height=2.45,
+        )
+        height_strip = self.array_strip("heights", HEIGHTS, show_indexes=True, box_width=1.08)
+        height_strip.scale(0.92)
+        exercise_group = VGroup(height_code, height_strip).arrange(DOWN, buff=0.50)
+        exercise_group.move_to(DOWN * 0.65)
+        total4 = VGroup(p4, exercise_group)
+        self.assert_content_safe(total4, "workshop exercise 4 layout")
+
+        self.play(FadeIn(p4), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+        self.play(FadeIn(height_code), run_time=RUN_NORMAL)
+        self.wait(PAUSE_EXPLAIN)
+        self.play(FadeIn(height_strip), run_time=RUN_NORMAL)
+        self.wait(PAUSE_SUMMARY)
+        self.clear_stage()
+
+    # ------------------------------------------------------------------
+    # 07 — Reproducible conceptual map
+    # ------------------------------------------------------------------
+    def summary(self) -> None:
+        self.set_header(
+            7,
+            "THE IDEA TO TAKE INTO COLAB",
+            "Use the structure that matches the problem: one value can use one variable; related ordered values belong together.",
+        )
+
+        route = self.process_map(
+            [
+                ("1", "ONE VALUE → VARIABLE"),
+                ("2", "MANY RELATED VALUES → LIST"),
+                ("3", "ORDER → INDEX"),
+            ],
+            card_width=4.45,
+            card_height=1.25,
+            columns=3,
+        )
+        route.move_to(UP * 0.85)
+
+        final_code = self.code_panel(
+            [
+                "data = [value0, value1, value2, ...]",
+                "data[0]  # first value",
+                "data[1]  # second value",
+            ],
+            width=8.8,
+            title="THE PATTERN",
+            line_size=27,
+            min_height=2.75,
+        )
+        final_code.move_to(DOWN * 1.10)
+        self.assert_content_safe(VGroup(route, final_code), "summary layout")
+
+        self.play(
+            LaggedStart(*[FadeIn(card, shift=UP * 0.10) for card in route], lag_ratio=0.14),
+            run_time=RUN_SLOW * 1.7,
+        )
+        self.wait(PAUSE_WORK)
+        self.play(FadeIn(final_code), run_time=RUN_NORMAL)
+        self.wait(PAUSE_FINAL)
+        self.standard_closing(
+            "A list is not more data. It is a better structure for related data."
+        )
+
+
+# Preview gate:
+#   manim -pql src/stat11_arrays_motivation.py Stat11ArraysMotivation --format=mp4 --disable_caching
+# Final gate:
+#   manim -pqh src/stat11_arrays_motivation.py Stat11ArraysMotivation --format=mp4 --disable_caching
