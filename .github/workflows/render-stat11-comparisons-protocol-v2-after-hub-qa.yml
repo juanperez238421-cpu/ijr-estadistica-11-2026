@@ -8,13 +8,20 @@ on:
       - 'manim/stat11_comparisons_protocol_v2/**'
       - 'manim/stat11_arrays_motivation/fragments/style_*'
       - '.github/workflows/render-stat11-comparisons-protocol-v2-after-hub-qa.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'manim/stat11_comparisons_protocol_v2/**'
+      - 'manim/stat11_arrays_motivation/fragments/style_*'
+      - '.github/workflows/render-stat11-comparisons-protocol-v2-after-hub-qa.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: stat11-comparisons-protocol-v2-final-${{ github.ref }}
+  group: stat11-comparisons-protocol-v2-final-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
 
 jobs:
