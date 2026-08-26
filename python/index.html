@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="light">
-  <meta name="description" content="Statistics 11 Python Learning Hub with separate theory and workshop pages, registered progress and prerequisite gating.">
+  <meta name="description" content="Statistics 11 Python Learning Hub with separate theory and workshop pages, registered individual/team progress and prerequisite gating.">
   <title>Statistics 11 · Python Learning Hub</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
@@ -13,9 +13,9 @@
   <link rel="stylesheet" href="split-layout.css?v=20260826-split-v7a">
   <link rel="stylesheet" href="classroom-visual-v8.css?v=20260826-v8">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="config-v2.js?v=20260826-hub-v3"></script>
+  <script defer src="config-v2.js?v=20260826-progress-v20"></script>
   <script defer src="course-data-v4.js?v=20260826-split-v7a"></script>
-  <script defer src="hub-router.js?v=20260826-split-v7a"></script>
+  <script defer src="hub-router.js?v=20260826-progress-v20"></script>
 </head>
 <body>
   <header class="topbar">
@@ -25,7 +25,7 @@
     </a>
     <div class="top-actions">
       <span id="sessionBadge" class="session-badge hidden">Not registered</span>
-      <button id="changeRegistrationButton" class="button button-light hidden" type="button">Change registration</button>
+      <button id="changeRegistrationButton" class="button button-light hidden" type="button">Switch registration</button>
       <a class="button button-dark" href="../actividad-colab-01/">Open graded Class 01</a>
     </div>
   </header>
@@ -33,8 +33,8 @@
   <section id="registrationPanel" class="registration-screen">
     <div class="registration-card">
       <p class="eyebrow">REGISTERED LEARNING PATH · RUTA CON PROGRESO</p>
-      <h1>Learn one topic at a time.</h1>
-      <p class="registration-lead">Each unlocked topic now has two separate destinations: a full theory page for concepts and diagrams, and a full workshop page for practice and validation. The next topic unlocks only when the previous workshop is complete.</p>
+      <h1>Register once. Keep learning.</h1>
+      <p class="registration-lead">Choose an individual registration or the exact team working at this computer. Correct workshop stages are saved to that registered student or team and the next topic unlocks only when the previous workshop is complete.</p>
 
       <div class="sequence-rule" aria-label="Course prerequisite rule">
         <strong>Prerequisite rule</strong>
@@ -70,15 +70,14 @@
           </div>
         </fieldset>
 
-        <div class="resume-code-field">
-          <label>Progress code <small>· Código de progreso · only when resuming this exact registration on another browser/device</small>
-            <input id="progressCode" type="text" inputmode="text" autocomplete="off" maxlength="8" placeholder="Example: A7F91C2D">
-          </label>
-          <p>A new individual/team registration receives one 8-character code. This keeps the current cross-device resume behavior unchanged while the learning interface is being redesigned.</p>
+        <div class="sequence-rule" aria-label="Progress saving model">
+          <strong>No progress PIN</strong>
+          <span>Progress is attached to the exact group + institutional-email registration and saves after each validated stage.</span>
+          <small>This browser remembers registrations used here and resumes them automatically. If you need to continue on a different device, ask the teacher to recover the registration from the secure teacher master page.</small>
         </div>
 
         <div class="registration-actions">
-          <div><strong>How the new layout works</strong><span>Enter once, choose an unlocked topic, study its Theory page, then complete its Workshop page. Workshop validation controls the percentage and the next unlock.</span></div>
+          <div><strong>Individual or classroom team</strong><span>If 2–3 students work together, register every student in that team before starting. One validated stage is then recorded for the complete registered team.</span></div>
           <button id="registerButton" class="button button-dark" type="submit">Enter learning path</button>
         </div>
         <p id="registrationStatus" class="inline-status" role="status" aria-live="polite"></p>
@@ -93,7 +92,7 @@
         <h1>Study the idea. Then solve the workshop.</h1>
         <p id="identitySummary">Registered learning path</p>
         <p>Every subject is separated into two focused pages: <strong>Theory</strong> contains explanations, official resources and animated diagrams; <strong>Workshop</strong> contains the complete practice layout, execution and validation.</p>
-        <div id="resumeCodeNotice" class="resume-code-notice hidden" role="status" aria-live="polite"><div><strong>Save your private progress code</strong><span>You will need it to reopen this exact path on another device.</span></div><code id="resumeCodeValue"></code></div>
+        <div class="sequence-rule"><strong>Automatic saving</strong><span>Your validated workshop progress is saved to this individual/team registration.</span><small>No progress code is required. Use <strong>Switch registration</strong> when another student or team uses this computer.</small></div>
       </div>
       <div class="global-progress-card"><span>Overall workshop progress</span><strong id="globalPercent">0%</strong><div class="progress-track"><span id="globalProgressBar"></span></div><small id="globalProgressCopy">0 workshop stages correct</small></div>
     </section>
