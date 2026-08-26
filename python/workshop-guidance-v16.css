@@ -1,0 +1,212 @@
+/* V16 — QA repair for explicit STEP guidance.
+   Fixes legacy circular STEP badges, clipped labels, weak contrast and narrow task-guide proportions. */
+
+/* Reclaim a little more room for the current topic name in the compact stage rail. */
+.workshop-stage-nav.workshop-stage-rail{
+  grid-template-columns:minmax(260px,320px) minmax(0,1fr)!important;
+  gap:16px!important;
+  padding:10px 14px!important;
+}
+.workshop-stage-rail .workshop-stage-nav-head h2{
+  font-size:1rem!important;
+  line-height:1.2!important;
+  color:#111!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+.workshop-stage-rail .workshop-stage-nav-head p{
+  font-size:.78rem!important;
+  color:#4a4a4a!important;
+}
+.workshop-stage-rail .workshop-nav-button{
+  flex-basis:46px!important;
+  width:46px!important;
+  min-width:46px!important;
+  max-width:46px!important;
+  height:46px!important;
+  min-height:46px!important;
+  border-radius:6px!important;
+}
+
+/* Two-column classroom composition: explicit guide + executable notebook. */
+.guided-stage-layout{
+  grid-template-columns:minmax(420px,480px) minmax(0,1fr)!important;
+  gap:24px!important;
+}
+.task-guide-panel-v14{
+  border:1px solid #111!important;
+  box-shadow:none!important;
+  background:#fff!important;
+  color:#111!important;
+}
+.task-guide-panel-v14 .task-guide-top{
+  padding:14px 16px!important;
+  border-bottom:2px solid #111!important;
+  background:#fff!important;
+}
+.task-guide-panel-v14 .task-guide-kicker{
+  color:#111!important;
+  font-size:.7rem!important;
+}
+.task-guide-panel-v14 .task-guide-top strong{
+  font-size:1.16rem!important;
+  color:#111!important;
+}
+.task-guide-panel-v14 .task-guide-mode{
+  background:#111!important;
+  color:#fff!important;
+  border-color:#111!important;
+  padding:7px 10px!important;
+}
+
+/* The full prompt already appears in the main exercise panel. Hiding the duplicate copy
+   gives the numbered steps immediate visual priority. */
+.task-guide-panel-v14 .task-guide-objective{display:none!important}
+.task-guide-panel-v14 .task-guide-section:nth-of-type(2){
+  padding:16px 18px 18px!important;
+  border-bottom:1px solid #d7d7d7!important;
+}
+.task-guide-panel-v14 .task-guide-section:nth-of-type(2) h3{
+  margin:0 0 14px!important;
+  font-size:1.08rem!important;
+  line-height:1.25!important;
+  letter-spacing:.07em!important;
+  color:#111!important;
+}
+
+/* Critical regression fix: V13 gave every direct step span a 32px circular shape.
+   V16 explicitly resets that legacy geometry so STEP 1 / STEP 2 can never clip. */
+.task-guide-panel-v14 .task-guide-steps{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:10px!important;
+  margin:0!important;
+  padding:0!important;
+}
+.task-guide-panel-v14 .task-guide-steps li.task-step-v14{
+  display:grid!important;
+  grid-template-columns:92px minmax(0,1fr)!important;
+  gap:14px!important;
+  align-items:center!important;
+  min-height:68px!important;
+  margin:0!important;
+  padding:12px 14px!important;
+  border:1px solid #dedede!important;
+  border-left:4px solid #111!important;
+  border-radius:0!important;
+  background:#fff!important;
+}
+.task-guide-panel-v14 .task-guide-steps li.task-step-v14:first-child{
+  border-top:1px solid #dedede!important;
+  border-left:4px solid #111!important;
+}
+.task-guide-panel-v14 .task-guide-steps li.task-step-v14>span.task-step-label-v14{
+  width:auto!important;
+  height:auto!important;
+  min-width:78px!important;
+  min-height:38px!important;
+  max-width:none!important;
+  padding:8px 10px!important;
+  margin:0!important;
+  border:1px solid #111!important;
+  border-radius:4px!important;
+  background:#111!important;
+  color:#fff!important;
+  display:inline-grid!important;
+  place-items:center!important;
+  justify-self:start!important;
+  font:800 .8rem/1 Arial,Roboto,Helvetica,sans-serif!important;
+  letter-spacing:.065em!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+}
+.task-guide-panel-v14 .task-guide-steps li.task-step-v14 p{
+  margin:0!important;
+  color:#111!important;
+  font-size:1.08rem!important;
+  line-height:1.48!important;
+  font-weight:500!important;
+}
+
+/* Secondary guidance stays readable without competing with the steps. */
+.task-guide-panel-v14 .task-guide-check{
+  padding:15px 18px!important;
+  background:#f7f7f7!important;
+  color:#111!important;
+  gap:9px!important;
+}
+.task-guide-panel-v14 .task-guide-check h3,
+.task-guide-panel-v14 .task-guide-memory h3{
+  color:#111!important;
+  font-size:.78rem!important;
+}
+.task-guide-panel-v14 .task-guide-check label{
+  color:#222!important;
+  font-size:.95rem!important;
+  line-height:1.42!important;
+}
+.task-guide-panel-v14 .task-guide-memory{
+  padding:15px 18px!important;
+  background:#fff!important;
+}
+.task-guide-panel-v14 .task-guide-memory p:first-of-type{
+  color:#222!important;
+  font-size:.9rem!important;
+}
+.task-guide-panel-v14 .task-guide-hint{
+  color:#444!important;
+  font-size:.92rem!important;
+}
+.task-guide-panel-v14 .task-guide-theory{
+  margin:14px 18px 18px!important;
+  padding:12px 14px!important;
+}
+
+/* Main-panel reminder is useful, but it should not behave like another large card. */
+.stage-step-summary-v14{
+  margin:14px 0 0!important;
+  padding:11px 14px!important;
+  border-left:4px solid #111!important;
+  background:#f7f7f7!important;
+  gap:3px!important;
+}
+.stage-step-summary-v14>span{font-size:.68rem!important;color:#444!important}
+.stage-step-summary-v14>strong{font-size:1rem!important;color:#111!important}
+.stage-step-summary-v14>small{font-size:.86rem!important;color:#4a4a4a!important}
+
+/* Keep the problem itself visually dominant and improve classroom readability. */
+.guided-stage-main .stage-problem h2{
+  font-size:clamp(2.35rem,3.6vw,4rem)!important;
+  line-height:1.04!important;
+  color:#111!important;
+}
+.guided-stage-main .stage-problem>p{
+  font-size:1.06rem!important;
+  line-height:1.62!important;
+  color:#303030!important;
+}
+
+@media(max-width:1320px){
+  .guided-stage-layout{grid-template-columns:minmax(380px,430px) minmax(0,1fr)!important;gap:20px!important}
+  .task-guide-panel-v14 .task-guide-steps li.task-step-v14 p{font-size:1.03rem!important}
+}
+@media(max-width:1180px){
+  .workshop-stage-nav.workshop-stage-rail{grid-template-columns:1fr!important}
+  .guided-stage-layout{grid-template-columns:1fr!important}
+  .task-guide-panel-v14{width:100%!important}
+  .task-guide-panel-v14 .task-guide-steps{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+  .task-guide-panel-v14 .task-guide-steps li.task-step-v14{grid-template-columns:86px minmax(0,1fr)!important}
+}
+@media(max-width:760px){
+  .workshop-stage-nav.workshop-stage-rail{padding:8px 9px!important}
+  .workshop-stage-rail .workshop-stage-nav-head h2{font-size:.94rem!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  .workshop-stage-rail .workshop-nav-button{flex-basis:44px!important;width:44px!important;min-width:44px!important;max-width:44px!important;height:44px!important;min-height:44px!important}
+  .task-guide-panel-v14 .task-guide-steps{grid-template-columns:1fr!important}
+  .task-guide-panel-v14 .task-guide-steps li.task-step-v14{grid-template-columns:82px minmax(0,1fr)!important;gap:11px!important;min-height:64px!important;padding:11px 12px!important}
+  .task-guide-panel-v14 .task-guide-steps li.task-step-v14>span.task-step-label-v14{min-width:72px!important;min-height:36px!important;font-size:.74rem!important;padding:7px 8px!important}
+  .task-guide-panel-v14 .task-guide-steps li.task-step-v14 p{font-size:1rem!important;line-height:1.45!important}
+  .task-guide-panel-v14 .task-guide-section:nth-of-type(2){padding:14px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .workshop-stage-rail .workshop-nav-button{transition:none!important}
+}
