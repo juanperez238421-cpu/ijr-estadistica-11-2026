@@ -1,0 +1,2 @@
+Final fixed render trigger after senior QA compatibility patch.
+Use src/stat11_comparisons_colab_final.py / Stat11ComparisonsColabClassFinal.
