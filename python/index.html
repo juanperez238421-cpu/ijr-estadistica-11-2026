@@ -82,6 +82,18 @@
         </div>
         <p id="registrationStatus" class="inline-status" role="status" aria-live="polite"></p>
       </form>
+
+      <details class="sequence-rule" id="recoveryPanel">
+        <summary><strong>Using a different device?</strong> Teacher-assisted recovery</summary>
+        <span>Ask the teacher to open the secure master page and issue a one-time recovery token for your exact registration. It expires after 10 minutes and can be used only once.</span>
+        <div class="registration-actions">
+          <label style="flex:1">One-time recovery token
+            <input id="recoveryToken" type="text" autocomplete="off" inputmode="text" maxlength="24" placeholder="Paste the teacher-issued token">
+          </label>
+          <button id="recoverButton" class="button button-dark" type="button">Recover this registration</button>
+        </div>
+        <p id="recoveryStatus" class="inline-status" role="status" aria-live="polite"></p>
+      </details>
     </div>
   </section>
 
@@ -92,7 +104,7 @@
         <h1>Study the idea. Then solve the workshop.</h1>
         <p id="identitySummary">Registered learning path</p>
         <p>Every subject is separated into two focused pages: <strong>Theory</strong> contains explanations, official resources and animated diagrams; <strong>Workshop</strong> contains the complete practice layout, execution and validation.</p>
-        <div class="sequence-rule"><strong>Automatic saving</strong><span>Your validated workshop progress is saved to this individual/team registration.</span><small>No progress code is required. Use <strong>Switch registration</strong> when another student or team uses this computer.</small></div>
+        <div class="sequence-rule"><strong>Automatic saving</strong><span>Your validated workshop progress is saved to this individual/team registration.</span><small>No persistent progress code is required. Use <strong>Switch registration</strong> when another student or team uses this computer.</small></div>
       </div>
       <div class="global-progress-card"><span>Overall workshop progress</span><strong id="globalPercent">0%</strong><div class="progress-track"><span id="globalProgressBar"></span></div><small id="globalProgressCopy">0 workshop stages correct</small></div>
     </section>
