@@ -4,12 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="light">
-  <meta name="description" content="Statistics 11 Python learning hub for Instituto Jorge Robledo: concise lessons, examples and browser-based practice by topic.">
+  <meta name="description" content="Statistics 11 Python Learning Hub with registered individual/team progress and prerequisite-gated workshops.">
   <title>Statistics 11 · Python Learning Hub</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
   <link rel="stylesheet" href="styles.css?v=20260826-hub-v1">
+  <link rel="stylesheet" href="gated.css?v=20260826-hub-v3">
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
-  <script defer src="app.js?v=20260826-hub-v1"></script>
+  <script defer src="config-v2.js?v=20260826-hub-v3"></script>
+  <script defer src="gated-app.js?v=20260826-hub-v3"></script>
 </head>
 <body>
   <header class="topbar">
@@ -21,67 +25,124 @@
       </span>
     </a>
     <div class="top-actions">
-      <a class="text-link" href="#reference">Command reference</a>
+      <span id="sessionBadge" class="session-badge hidden">Not registered</span>
+      <button id="changeRegistrationButton" class="button button-light hidden" type="button">Change registration</button>
       <a class="button button-dark" href="../actividad-colab-01/">Open graded Class 01</a>
     </div>
   </header>
 
-  <div class="app-layout">
+  <section id="registrationPanel" class="registration-screen">
+    <div class="registration-card">
+      <p class="eyebrow">REGISTERED LEARNING PATH · RUTA CON PROGRESO</p>
+      <h1>Learn one topic at a time.</h1>
+      <p class="registration-lead">Register as one student or as a workstation team. Your completed workshops are stored in the course backend. A topic unlocks only when the previous workshop is complete.</p>
+
+      <div class="sequence-rule" aria-label="Course prerequisite rule">
+        <strong>Prerequisite rule</strong>
+        <span>01 Operations → 02 Variable Types → 03 Arrays → 04 Logic → 05 Conditions → 06 Loops → 07 Functions → 08 Statistics</span>
+        <small>Example: Arrays remain locked until Operations and Variable Types are complete.</small>
+      </div>
+
+      <form id="registrationForm" class="hub-registration-form">
+        <div class="registration-grid">
+          <label>Registration mode <small>· Modalidad</small>
+            <select id="registrationMode" required>
+              <option value="individual">Individual · 1 student</option>
+              <option value="team">Team · 2–3 students</option>
+            </select>
+          </label>
+          <label>Group <small>· Grupo</small>
+            <select id="groupCode" required>
+              <option value="">Select…</option>
+              <option>11A</option><option>11B</option><option>11C</option>
+            </select>
+          </label>
+          <label id="teamSizeWrap" class="hidden">Students at this computer
+            <select id="teamSize">
+              <option value="2">2 students</option>
+              <option value="3">3 students</option>
+            </select>
+          </label>
+        </div>
+
+        <fieldset class="member-fieldset">
+          <legend>Institutional emails <small>· Correos institucionales</small></legend>
+          <div class="member-grid">
+            <label>Student 1
+              <input id="memberEmail1" type="email" inputmode="email" autocomplete="email" required placeholder="student1@ijr.edu.co">
+            </label>
+            <label id="member2Wrap" class="hidden">Student 2
+              <input id="memberEmail2" type="email" inputmode="email" placeholder="student2@ijr.edu.co">
+            </label>
+            <label id="member3Wrap" class="hidden">Student 3
+              <input id="memberEmail3" type="email" inputmode="email" placeholder="student3@ijr.edu.co">
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="resume-code-field">
+          <label>Progress code <small>· Código de progreso · only when resuming this exact registration on another browser/device</small>
+            <input id="progressCode" type="text" inputmode="text" autocomplete="off" maxlength="8" placeholder="Example: A7F91C2D">
+          </label>
+          <p>A new individual/team registration receives one 8-character code. Keep it private: the same group + email combination cannot be reopened on a new device without that code.</p>
+        </div>
+
+        <div class="registration-actions">
+          <div>
+            <strong>How progress works</strong>
+            <span>The exact group + email combination owns one learning path. This browser resumes automatically; a different browser must also provide the private progress code.</span>
+          </div>
+          <button id="registerButton" class="button button-dark" type="submit">Enter learning path</button>
+        </div>
+        <p id="registrationStatus" class="inline-status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+
+  <div id="hubPanel" class="app-layout hidden">
     <aside class="sidebar" aria-label="Python topics">
       <div class="sidebar-head">
         <p class="eyebrow">LEARN BY SUBJECT</p>
         <h2>Python foundations</h2>
-        <p>Choose one topic. Read the idea, inspect the example, then run the practice directly in the page.</p>
+        <p id="identitySummary">Registered learning path</p>
       </div>
       <nav id="topicNav" class="topic-nav" aria-label="Course topics"></nav>
       <div class="progress-card">
-        <div class="progress-copy"><span>Reviewed</span><strong id="progressText">0 / 8</strong></div>
+        <div class="progress-copy"><span>Completed topics</span><strong id="progressText">0 / 8</strong></div>
         <div class="progress-track" aria-hidden="true"><span id="progressBar"></span></div>
-        <p>Progress is stored only in this browser.</p>
+        <p>Progress is stored in Supabase for this individual/team registration.</p>
       </div>
     </aside>
 
     <main class="main-content">
-      <section class="hero" aria-labelledby="pageTitle">
+      <section class="hero gated-hero" aria-labelledby="pageTitle">
         <p class="eyebrow">PYTHON · STATISTICS 11</p>
-        <h1 id="pageTitle">One page. One topic at a time.</h1>
-        <p class="hero-copy">A minimal course map for learning Python without losing the thread: concept → syntax → visual idea → example → practice.</p>
+        <h1 id="pageTitle">One topic. One complete workshop.</h1>
+        <p class="hero-copy">Each page follows the same learning pattern: concept → syntax → visual model → worked example → complete workshop. The backend controls what unlocks next.</p>
+        <div id="resumeCodeNotice" class="resume-code-notice hidden" role="status" aria-live="polite">
+          <div>
+            <strong>Save your private progress code</strong>
+            <span>You will need it to reopen this exact individual/team path on another device.</span>
+          </div>
+          <code id="resumeCodeValue"></code>
+        </div>
         <div class="hero-actions">
-          <button id="continueButton" class="button button-dark" type="button">Start with Topic 01</button>
-          <a class="button button-light" href="#reference">See essential commands</a>
+          <button id="continueButton" class="button button-dark" type="button">Continue learning</button>
+          <a class="button button-light" href="#reference">Current command reference</a>
         </div>
-        <div class="path-strip" aria-label="Learning path">
-          <span>01 Operations</span><i></i><span>02 Types</span><i></i><span>03 Arrays</span><i></i><span>04 Logic</span><i></i><span>05 Conditions</span><i></i><span>06 Loops</span><i></i><span>07 Functions</span><i></i><span>08 Statistics</span>
-        </div>
+        <div id="pathStrip" class="path-strip" aria-label="Learning path"></div>
       </section>
 
       <section id="lessonMount" class="lesson-shell" aria-live="polite"></section>
 
       <section id="reference" class="reference-section" aria-labelledby="referenceTitle">
         <div class="section-heading">
-          <p class="eyebrow">QUICK REFERENCE</p>
-          <h2 id="referenceTitle">Essential Python commands</h2>
-          <p>Keep this section open when you forget a symbol. The examples are intentionally short.</p>
+          <p class="eyebrow">CURRENT REFERENCE</p>
+          <h2 id="referenceTitle">Commands released so far</h2>
+          <p>Only commands from completed topics and the current unlocked topic appear here.</p>
         </div>
-        <div class="reference-grid">
-          <article><span>Store a value</span><code>x = 10</code></article>
-          <article><span>Print</span><code>print(x)</code></article>
-          <article><span>Check type</span><code>type(x)</code></article>
-          <article><span>Add / subtract</span><code>a + b &nbsp; a - b</code></article>
-          <article><span>Multiply / divide</span><code>a * b &nbsp; a / b</code></article>
-          <article><span>Power</span><code>x ** 2</code></article>
-          <article><span>Square root</span><code>x ** 0.5</code></article>
-          <article><span>Remainder</span><code>x % 2</code></article>
-          <article><span>Greater / equal</span><code>x &gt;= 10</code></article>
-          <article><span>Equal / different</span><code>x == 10 &nbsp; x != 10</code></article>
-          <article><span>Logic</span><code>and &nbsp; or &nbsp; not</code></article>
-          <article><span>List</span><code>values = [4, 7, 9]</code></article>
-          <article><span>Read index</span><code>values[0]</code></article>
-          <article><span>Length</span><code>len(values)</code></article>
-          <article><span>Total</span><code>sum(values)</code></article>
-          <article><span>Mean</span><code>sum(values) / len(values)</code></article>
-        </div>
-        <div class="reference-note"><strong>Remember:</strong> in Python, <code>=</code> assigns a value, <code>==</code> compares equality, and <code>**</code> is power. The symbol <code>^</code> is not exponentiation.</div>
+        <div id="referenceGrid" class="reference-grid"></div>
+        <div class="reference-note"><strong>Progress rule:</strong> opening or reading a topic is not enough. The next topic unlocks only after every required workshop stage is correct.</div>
       </section>
 
       <footer class="footer">
