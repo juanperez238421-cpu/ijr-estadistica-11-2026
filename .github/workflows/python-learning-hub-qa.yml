@@ -6,7 +6,7 @@ on:
       - 'python/**'
       - 'index.html'
       - 'qa/check_python_hub.py'
-      - 'supabase/migrations/20260826133521_python_learning_hub_gated_progress_v2.sql'
+      - 'supabase/migrations/*python_learning_hub*.sql'
       - '.github/workflows/python-learning-hub-qa.yml'
   push:
     branches: [main]
@@ -14,7 +14,7 @@ on:
       - 'python/**'
       - 'index.html'
       - 'qa/check_python_hub.py'
-      - 'supabase/migrations/20260826133521_python_learning_hub_gated_progress_v2.sql'
+      - 'supabase/migrations/*python_learning_hub*.sql'
       - '.github/workflows/python-learning-hub-qa.yml'
   workflow_dispatch:
 
