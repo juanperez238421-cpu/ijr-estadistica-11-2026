@@ -1,0 +1,180 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""JP Classroom ManimCE Style Library.
+
+Reusable base architecture derived from the class-layout conventions used in
+`statistics10_frequency_variance_layout_v10(1).py`.
+
+Design contract
+---------------
+- Horizontal Full HD 16:9, 1920x1080, 30 fps.
+- White background.
+- Black text / MathTex and neutral gray hierarchy.
+- Persistent numbered section header + subtitle.
+- Safe-layout fitting before animation.
+- Custom tables with independently addressable cells/rows/columns.
+- Controlled MovingCameraScene focus that temporarily hides the header.
+- Centralized timing and LESSON_TIME_SCALE for QA previews.
+- Geometry, equations and tables should coexist when pedagogically useful.
+- Numerical/data claims should be validated before rendering.
+
+Compatible target: Manim Community Edition 0.20.x.
+"""
+
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable, Iterable, Sequence
+
+import numpy as np
+from manim import *
+
+
+# =============================================================================
+# RENDER CONFIGURATION — PROJECT DEFAULT
+# =============================================================================
+config.pixel_width = 1920
+config.pixel_height = 1080
+config.frame_width = 16
+config.frame_height = 9
+config.frame_rate = 30
+config.background_color = WHITE
+
+
+# =============================================================================
+# VISUAL SYSTEM — MONOCHROME CLASSROOM
+# =============================================================================
+BLACK_TEXT = BLACK
+BLACK_LINE = BLACK
+DARK_GRAY = "#303030"
+MID_GRAY = "#787878"
+LIGHT_GRAY = "#D7D7D7"
+VERY_LIGHT_GRAY = "#F0F0F0"
+PAPER_GRAY = "#F8F8F8"
+WHITE_FILL = WHITE
+
+FRAME_WIDTH = 16.0
+FRAME_HEIGHT = 9.0
+SAFE_WIDTH = 14.75
+SAFE_HEIGHT = 7.65
+CONTENT_TOP_Y = 2.60
+CONTENT_BOTTOM_Y = -4.05
+
+TIME_SCALE = float(os.getenv("LESSON_TIME_SCALE", "1.0"))
+
+RUN_QUICK = 0.70
+RUN_NORMAL = 1.00
+RUN_SLOW = 1.35
+RUN_CAMERA = 1.25
+
+PAUSE_SHORT = 0.85
+PAUSE_READ = 1.80
+PAUSE_EXPLAIN = 2.80
+PAUSE_WORK = 3.80
+PAUSE_SUMMARY = 4.60
+PAUSE_FINAL = 5.20
+
+
+# =============================================================================
+# STRUCTURED RETURN OBJECTS
+# =============================================================================
+@dataclass
+class TableDiagram:
+    """Structured access to a custom table and its visual components."""
+
+    group: VGroup
+    rectangles: list[list[Rectangle]]
+    entries: list[list[Mobject]]
+    rows: list[VGroup]
+    columns: list[VGroup]
+    header: VGroup
+    body: VGroup
+
+
+@dataclass
+class FigurePanel:
+    """A figure plus optional title/caption and its containing panel."""
+
+    group: VGroup
+    box: RoundedRectangle
+    figure: Mobject
+    title: Mobject | None
+    caption: Mobject | None
+
+
+@dataclass
+class SplitLayout:
+    """Two-column composition for visual + mathematical explanation."""
+
+    group: VGroup
+    left: Mobject
+    right: Mobject
+
+
+# =============================================================================
+# BASE SCENE
+# =============================================================================
+class JPClassroomScene(MovingCameraScene):
+    """Base scene for all classroom videos using the consolidated visual style.
+
+    Subclasses normally override:
+        - validate_lesson_data()
+        - construct()
+
+    Typical scene flow:
+        opening -> vocabulary -> visual model -> equations -> worked example
+        -> checks -> interpretation -> summary.
+    """
+
+    def setup(self) -> None:
+        super().setup()
+        self.validate_lesson_data()
+        self.camera.background_color = WHITE
+        self.camera.frame.set(width=FRAME_WIDTH).move_to(ORIGIN)
+        self.header_group: VGroup | None = None
+        self.subtitle_group: Mobject | None = None
+
+    # ---------------------------------------------------------------------
+    # Data validation hook
+    # ---------------------------------------------------------------------
+    def validate_lesson_data(self) -> None:
+        """Override in each lesson to assert every displayed numerical claim.
+
+        Example:
+            assert abs(sum(values) / len(values) - EXPECTED_MEAN) < 1e-12
+        """
+
+    # ---------------------------------------------------------------------
+    # Global timing wrappers
+    # ---------------------------------------------------------------------
+    def play(self, *animations, **kwargs):
+        if kwargs.get("run_time") is not None:
+            kwargs["run_time"] *= TIME_SCALE
+        return super().play(*animations, **kwargs)
+
+    def wait(self, duration: float = DEFAULT_WAIT_TIME, *args, **kwargs):
+        return super().wait(duration * TIME_SCALE, *args, **kwargs)
+
+    # ---------------------------------------------------------------------
+    # Typography
+    # ---------------------------------------------------------------------
+    def text(
+        self,
+        content: str,
+        size: int = 30,
+        weight=NORMAL,
+        **kwargs,
+    ) -> Text:
+        return Text(
+            content,
+            font_size=size,
+            color=BLACK_TEXT,
+            weight=weight,
+            line_spacing=0.92,
+            **kwargs,
+        )
+
+    def math(self, expression: str, size: int = 38, **kwargs) -> MathTex:
+        return MathTex(expression, font_size=size, color=BLACK_TEXT, **kwargs)
