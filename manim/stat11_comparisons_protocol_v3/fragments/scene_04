@@ -1,0 +1,115 @@
+                "score = 4.2",
+                "passed = score >= 3.0",
+                "print(passed)",
+                "print(type(passed).__name__)",
+            ],
+            width=9.6,
+            line_size=26,
+            min_height=2.35,
+        )
+        cell.move_to(LEFT * 2.45 + DOWN * 0.32)
+
+        note = self.note_panel(
+            "WHY THIS MATTERS",
+            [
+                "A Boolean can be stored in a variable.",
+                "Later it can support counting or filtering.",
+                "The comparison is now part of the dataset logic.",
+            ],
+            width=5.0,
+            title_size=26,
+            body_size=23,
+        )
+        note.move_to(RIGHT * 4.75 + DOWN * 0.30)
+        self.assert_content_safe(VGroup(cell, note), "scene 05 cell and note")
+
+        self.type_code_cell(cell, line_time=0.82)
+        self.execute_cell(cell, 2)
+        output = self.output_block(["True", "bool"], width=4.3, line_size=28)
+        output.next_to(cell, DOWN, aligned_edge=LEFT, buff=0.25)
+        self.reveal_output(output, pause=PAUSE_EXPLAIN)
+        self.play(FadeIn(note, shift=LEFT * 0.10), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+        self.clear_stage()
+
+    # ------------------------------------------------------------------
+    # Scene 06 — list/index context
+    # ------------------------------------------------------------------
+    def compare_list_values(self) -> None:
+        self.set_header(
+            6,
+            "COMPARE VALUES INSIDE A LIST",
+            "Select observations by index first. Then compare the selected values using exactly the same operators.",
+        )
+
+        strip = self.indexed_list(SCORES)
+        strip.move_to(UP * 0.45)
+        self.assert_content_safe(strip, "scene 06 indexed list")
+        self.play(FadeIn(strip[0]), GrowArrow(strip[1]), run_time=RUN_NORMAL)
+        for box, value, index in zip(strip[2], strip[3], strip[4]):
+            self.play(Create(box), FadeIn(value), FadeIn(index), run_time=0.55)
+        self.wait(PAUSE_EXPLAIN)
+
+        pick_left = SurroundingRectangle(strip[2][1], color=BLACK_LINE, stroke_width=3.0, buff=0.06)
+        pick_right = SurroundingRectangle(strip[2][3], color=BLACK_LINE, stroke_width=3.0, buff=0.06)
+        self.play(Create(pick_left), Create(pick_right), run_time=RUN_NORMAL)
+        self.wait(PAUSE_READ)
+
+        selected = self.mono("scores[3]  >  scores[1]", 34, BOLD)
+        values = self.mono("4.5  >  2.8", 34, BOLD)
+        result = self.result_badge("True")
+        chain = VGroup(selected, values, result).arrange(DOWN, buff=0.30)
+        chain.move_to(DOWN * 1.72)
+        self.assert_content_safe(chain, "scene 06 comparison chain")
+
+        self.play(Write(selected), run_time=RUN_SLOW)
+        self.wait(PAUSE_EXPLAIN)
+        self.play(Write(values), run_time=RUN_SLOW)
+        self.wait(PAUSE_EXPLAIN)
+        self.play(Create(result[0]), Write(result[1]), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+        self.focus_on(VGroup(strip, chain), width=12.8, pause=PAUSE_READ)
+        self.clear_stage()
+
+    # ------------------------------------------------------------------
+    # Scene 07 — guided workshop, one problem at a time
+    # ------------------------------------------------------------------
+    def guided_workshop(self) -> None:
+        self.set_header(
+            7,
+            "GUIDED WORKSHOP: THINK → RUN → INTERPRET",
+            "For each question, decide the expected Boolean result before executing the comparison in Colab.",
+        )
+
+        self.workshop_problem(
+            1,
+            "Is the second score below the pass mark?",
+            "scores[1] < 3.0",
+            "True",
+            "2.8 is below 3.0.",
+            exec_number=3,
+        )
+        self.clear_stage()
+
+        self.workshop_problem(
+            2,
+            "Is the third score exactly the pass mark?",
+            "scores[2] == 3.0",
+            "True",
+            "3.0 equals 3.0.",
+            exec_number=4,
+        )
+        self.clear_stage()
+
+        self.workshop_problem(
+            3,
+            "Is the first score different from 4.2?",
+            "scores[0] != 4.2",
+            "False",
+            "4.2 is not different from 4.2.",
+            exec_number=5,
+        )
+        self.clear_stage()
+
+    def workshop_problem(
+        self,
