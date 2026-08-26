@@ -1,0 +1,2 @@
+Protocol V3 senior QA render trigger — 2026-08-26.
+Registered workflow on main before this second trigger.

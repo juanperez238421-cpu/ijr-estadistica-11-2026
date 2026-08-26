@@ -1,0 +1,115 @@
+            fill_opacity=0.78,
+        )
+        run_circle = Circle(
+            radius=0.20,
+            stroke_color=BLACK_LINE,
+            stroke_width=1.6,
+            fill_color=WHITE_FILL,
+            fill_opacity=1.0,
+        )
+        run_triangle = Triangle(
+            stroke_color=BLACK_LINE,
+            stroke_width=1.1,
+            fill_color=BLACK_LINE,
+            fill_opacity=1.0,
+        ).scale(0.067).rotate(-PI / 2)
+        run_icon = VGroup(run_circle, run_triangle)
+        count = self.mono(exec_label, 16, MEDIUM)
+        gutter = VGroup(run_icon, count).arrange(DOWN, buff=0.14)
+        gutter.move_to(box.get_left() + RIGHT * 0.50)
+
+        line_mobs.move_to(box)
+        line_mobs.align_to(box, LEFT).shift(RIGHT * 1.10)
+        return VGroup(box, gutter, line_mobs)
+
+    def type_code_cell(self, cell: VGroup, *, line_time: float = 1.05) -> None:
+        box, gutter, lines = cell
+        self.play(Create(box), FadeIn(gutter), run_time=RUN_NORMAL)
+        for line in lines:
+            self.play(Write(line, rate_func=linear), run_time=line_time)
+            self.wait(PAUSE_SHORT)
+
+    def execute_cell(self, cell: VGroup, number: int) -> None:
+        run_icon = cell[1][0]
+        old_count = cell[1][1]
+        new_count = self.mono(f"[{number}]", 16, MEDIUM).move_to(old_count)
+        self.play(Indicate(run_icon, color=BLACK, scale_factor=1.17), run_time=0.55)
+        self.play(Transform(old_count, new_count), run_time=0.40)
+        self.wait(PAUSE_SHORT)
+
+    def output_block(self, lines: list[str], *, width: float = 6.0, line_size: int = 29) -> VGroup:
+        text_group = VGroup(*[self.mono(line, line_size) for line in lines])
+        text_group.arrange(DOWN, aligned_edge=LEFT, buff=0.12)
+        self.fit(text_group, width - 0.62, 1.5)
+        box = RoundedRectangle(
+            width=width,
+            height=max(0.82, text_group.height + 0.42),
+            corner_radius=0.08,
+            stroke_color=LIGHT_GRAY,
+            stroke_width=1.35,
+            fill_color=WHITE_FILL,
+            fill_opacity=1.0,
+        )
+        text_group.move_to(box)
+        text_group.align_to(box, LEFT).shift(RIGHT * 0.30)
+        return VGroup(box, text_group)
+
+    def reveal_output(self, output: VGroup, *, pause: float = PAUSE_READ) -> None:
+        self.play(Create(output[0]), run_time=RUN_QUICK)
+        self.play(LaggedStart(*[Write(line) for line in output[1]], lag_ratio=0.18), run_time=RUN_NORMAL)
+        self.wait(pause)
+
+    def operator_card(self, symbol: str, question: str, example: str, result: str) -> VGroup:
+        symbol_mob = self.mono(symbol, 34, BOLD)
+        question_mob = self.text(question, 20, BOLD)
+        example_mob = self.mono(example, 19, MEDIUM)
+        result_mob = self.mono(result, 20, BOLD)
+        content = VGroup(symbol_mob, question_mob, example_mob, result_mob)
+        content.arrange(DOWN, buff=0.08)
+        box = RoundedRectangle(
+            width=4.35,
+            height=1.78,
+            corner_radius=0.12,
+            stroke_color=BLACK_LINE,
+            stroke_width=1.55,
+            fill_color=WHITE_FILL,
+            fill_opacity=1.0,
+        )
+        self.fit(content, 4.0, 1.52)
+        content.move_to(box)
+        return VGroup(box, content)
+
+    def indexed_list(self, values: list[float]) -> VGroup:
+        boxes = VGroup()
+        value_mobs = VGroup()
+        index_mobs = VGroup()
+        for index, value in enumerate(values):
+            box = RoundedRectangle(
+                width=1.38,
+                height=0.92,
+                corner_radius=0.08,
+                stroke_color=BLACK_LINE,
+                stroke_width=1.7,
+                fill_color=WHITE_FILL,
+                fill_opacity=1.0,
+            )
+            val = self.mono(str(value), 27, BOLD)
+            idx = self.mono(str(index), 17, MEDIUM)
+            boxes.add(box)
+            value_mobs.add(val)
+            index_mobs.add(idx)
+        boxes.arrange(RIGHT, buff=0.12)
+        for i, box in enumerate(boxes):
+            value_mobs[i].move_to(box)
+            index_mobs[i].next_to(box, DOWN, buff=0.09)
+        label = self.mono("scores", 28, BOLD)
+        label.next_to(boxes, LEFT, buff=0.34)
+        arrow = Arrow(label.get_right(), boxes.get_left(), buff=0.08, color=BLACK_LINE, stroke_width=1.9)
+        return VGroup(label, arrow, boxes, value_mobs, index_mobs)
+
+    def prompt_panel(self, number: int, question: str, expression: str) -> VGroup:
+        badge = RoundedRectangle(
+            width=0.66,
+            height=0.58,
+            corner_radius=0.08,
+            stroke_color=BLACK_LINE,

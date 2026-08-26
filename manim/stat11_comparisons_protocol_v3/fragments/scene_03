@@ -1,0 +1,115 @@
+        layout = VGroup(cell, route)
+        self.assert_content_safe(layout, "scene 02 code and route")
+
+        self.type_code_cell(cell, line_time=1.25)
+        self.wait(PAUSE_READ)
+        self.execute_cell(cell, 1)
+
+        output = self.output_block(["True"], width=4.3, line_size=32)
+        output.next_to(cell, DOWN, aligned_edge=LEFT, buff=0.25)
+        self.reveal_output(output, pause=PAUSE_EXPLAIN)
+
+        self.play(LaggedStart(*[FadeIn(card, shift=LEFT * 0.10) for card in route], lag_ratio=0.18), run_time=RUN_SLOW)
+        self.wait(PAUSE_WORK)
+        self.focus_on(VGroup(cell, output), width=11.0, pause=PAUSE_READ)
+        self.clear_stage()
+
+    # ------------------------------------------------------------------
+    # Scene 03 — = versus ==
+    # ------------------------------------------------------------------
+    def assignment_vs_comparison(self) -> None:
+        self.set_header(
+            3,
+            "ASSIGNMENT IS NOT COMPARISON",
+            "One equals sign stores a value. Two equals signs ask whether two values are equal.",
+        )
+
+        store_label = self.text("STORE A VALUE", 28, BOLD)
+        store_formula = self.formula_panel(r"\texttt{score = 4.2}", width=6.25, height=1.35, font_size=40)
+        store_note = self.note_panel(
+            "MEANING",
+            ["The variable score now contains 4.2."],
+            width=6.25,
+            title_size=25,
+            body_size=24,
+        )
+        store = VGroup(store_label, store_formula, store_note).arrange(DOWN, buff=0.27)
+
+        ask_label = self.text("ASK A QUESTION", 28, BOLD)
+        ask_formula = self.formula_panel(r"\texttt{score == 4.2}", width=6.25, height=1.35, font_size=40)
+        ask_result = self.result_badge("True", width=2.6)
+        ask = VGroup(ask_label, ask_formula, ask_result).arrange(DOWN, buff=0.27)
+
+        layout = self.split_layout(store, ask, left_width=6.6, right_width=6.6, center_y=-0.48)
+        self.assert_content_safe(layout.group, "scene 03 assignment comparison")
+
+        self.play(FadeIn(store_label), run_time=RUN_QUICK)
+        self.play(FadeIn(store_formula), run_time=RUN_NORMAL)
+        self.wait(PAUSE_EXPLAIN)
+        self.play(FadeIn(store_note), run_time=RUN_NORMAL)
+        self.wait(PAUSE_READ)
+
+        self.play(FadeIn(ask_label), run_time=RUN_QUICK)
+        self.play(FadeIn(ask_formula), run_time=RUN_NORMAL)
+        self.wait(PAUSE_EXPLAIN)
+        self.play(Create(ask_result[0]), Write(ask_result[1]), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+
+        contrast = self.mono("=  stores        ==  compares", 29, BOLD)
+        contrast.to_edge(DOWN, buff=0.34)
+        self.assert_content_safe(contrast, "scene 03 contrast")
+        self.play(Write(contrast), run_time=RUN_SLOW)
+        self.wait(PAUSE_SUMMARY)
+        self.clear_stage()
+
+    # ------------------------------------------------------------------
+    # Scene 04 — six operators
+    # ------------------------------------------------------------------
+    def operator_family(self) -> None:
+        self.set_header(
+            4,
+            "THE SIX COMPARISON OPERATORS",
+            "Each symbol asks one precise question and returns exactly one Boolean result: True or False.",
+        )
+
+        cards = VGroup(
+            self.operator_card(">", "greater than", "4.2 > 3.0", "True"),
+            self.operator_card("<", "less than", "2.8 < 3.0", "True"),
+            self.operator_card(">=", "greater or equal", "3.0 >= 3.0", "True"),
+            self.operator_card("<=", "less or equal", "2.8 <= 3.0", "True"),
+            self.operator_card("==", "equal to", "3.0 == 3.0", "True"),
+            self.operator_card("!=", "not equal to", "4.2 != 3.0", "True"),
+        )
+        cards.arrange_in_grid(rows=2, cols=3, buff=(0.28, 0.30))
+        cards.move_to(DOWN * 0.52)
+        self.fit_content_zone(cards, max_width=14.3, max_height=5.15)
+        self.assert_content_safe(cards, "scene 04 operator grid")
+
+        for pair in (cards[0:2], cards[2:4], cards[4:6]):
+            self.play(LaggedStart(*[FadeIn(card, shift=UP * 0.10) for card in pair], lag_ratio=0.25), run_time=RUN_SLOW)
+            self.wait(PAUSE_EXPLAIN)
+
+        reminder = self.note_panel(
+            "READ THE SYMBOL AS A QUESTION",
+            ["Do not memorize isolated symbols; connect each operator to its meaning."],
+            width=9.4,
+            title_size=24,
+            body_size=22,
+        )
+        reminder.to_edge(DOWN, buff=0.22)
+        self.play(FadeIn(reminder, shift=UP * 0.08), run_time=RUN_NORMAL)
+        self.wait(PAUSE_SUMMARY)
+        self.clear_stage()
+
+    # ------------------------------------------------------------------
+    # Scene 05 — Boolean data
+    # ------------------------------------------------------------------
+    def boolean_is_data(self) -> None:
+        self.set_header(
+            5,
+            "TRUE AND FALSE ARE DATA TOO",
+            "Python stores comparison results as Boolean values. That makes them usable in later analysis.",
+        )
+
+        cell = self.code_cell(
+            [
