@@ -13,7 +13,7 @@ def require(ok, msg):
 
 require('operations-enrichment.js' in index, 'Topic 01 JS not loaded')
 require('operations-enrichment.css' in index, 'Topic 01 CSS not loaded')
-for term in ('What are Python and Google Colab?', 'Python is a programming language', 'CALCULATOR VS PYTHON / COLAB', 'ANATOMY OF A COLAB CELL', 'WHY THIS MATTERS FOR STATISTICS'):
+for term in ('What are Python and Google Colab?', '<strong>Python</strong> is a programming language', 'CALCULATOR VS PYTHON / COLAB', 'ANATOMY OF A COLAB CELL', 'WHY THIS MATTERS FOR STATISTICS'):
     require(term in js, f'Missing theory block: {term}')
 for stage in range(1, 7):
     require(f'{stage}:' in js, f'Missing explicit stage instructions: {stage}')
