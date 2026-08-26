@@ -128,7 +128,7 @@
         examples.move_to(DOWN * 1.15)
 
         reminder = self.text("human position 1, 2, 3  →  Python index 0, 1, 2", 26, BOLD)
-        reminder.to_edge(DOWN, buff=0.34)
+        reminder.move_to(DOWN * 3.75)
 
         group = VGroup(strip, examples, reminder)
         self.assert_content_safe(group, "section 5 layout")
