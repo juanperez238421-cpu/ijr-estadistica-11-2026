@@ -75,7 +75,7 @@
         )
         answer.move_to(DOWN * 1.45)
         check = self.text("Second human position → index 1", 28, BOLD)
-        check.to_edge(DOWN, buff=0.36)
+        check.move_to(DOWN * 3.72)
         total3 = VGroup(p3, temp_strip2, answer, check)
         self.assert_content_safe(total3, "workshop exercise 3 layout")
 
