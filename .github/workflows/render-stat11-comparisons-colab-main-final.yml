@@ -8,13 +8,16 @@ on:
       - 'manim/stat11_comparisons_colab/**'
       - 'manim/stat11_arrays_motivation/fragments/style_*'
       - '.github/workflows/render-stat11-comparisons-colab-main-final.yml'
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
 
 concurrency:
-  group: stat11-comparisons-main-final
-  cancel-in-progress: false
+  group: stat11-comparisons-main-final-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   render:
