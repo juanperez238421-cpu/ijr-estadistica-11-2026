@@ -1,0 +1,180 @@
+            "We are not looking for a shorter trick. We need a data structure that matches what the values mean together.",
+        )
+
+        lead = self.text("Our dataset needs:", 34, BOLD)
+        lead.move_to(UP * 1.75)
+
+        cards = self.process_map(
+            [
+                ("1", "ONE VARIABLE NAME"),
+                ("2", "MANY RELATED VALUES"),
+                ("3", "PRESERVED ORDER"),
+                ("4", "A WAY TO READ A POSITION"),
+            ],
+            card_width=6.25,
+            card_height=1.15,
+            columns=2,
+        )
+        cards.move_to(DOWN * 0.15)
+        self.fit(cards, 13.4, 3.2)
+
+        takeaway = self.formula_panel(
+            r"\text{one dataset} \Rightarrow \text{one organized object}",
+            width=8.8,
+            height=1.05,
+            font_size=36,
+        )
+        takeaway.to_edge(DOWN, buff=0.38)
+        group = VGroup(lead, cards, takeaway)
+        self.assert_content_safe(group, "section 3 layout")
+
+        self.play(FadeIn(lead), run_time=RUN_NORMAL)
+        self.play(
+            LaggedStart(*[FadeIn(card, shift=UP * 0.10) for card in cards], lag_ratio=0.14),
+            run_time=RUN_SLOW * 1.8,
+        )
+        self.wait(PAUSE_WORK)
+        self.play(FadeIn(takeaway), run_time=RUN_NORMAL)
+        self.wait(PAUSE_SUMMARY)
+        self.clear_stage()
+
+    # ------------------------------------------------------------------
+    # 04 — Introduce the list as the answer to the previously stated need
+    # ------------------------------------------------------------------
+    def introduce_list(self) -> None:
+        self.set_header(
+            4,
+            "ONE NAME, MANY ORDERED VALUES",
+            "For this class, a Python list is our basic array model: one variable stores an ordered collection of values.",
+        )
+
+        old_code = self.code_panel(
+            [
+                "score_1 = 4.2",
+                "score_2 = 3.8",
+                "score_3 = 4.5",
+                "score_4 = 3.2",
+                "score_5 = 4.0",
+            ],
+            width=6.25,
+            title="SEPARATE VARIABLES",
+            line_size=25,
+        )
+        new_code = self.code_panel(
+            ["scores = [4.2, 3.8, 4.5, 3.2, 4.0]"],
+            width=6.25,
+            title="ONE LIST / BASIC ARRAY",
+            line_size=27,
+            min_height=2.0,
+        )
+        list_visual = self.array_strip("scores", SCORES, show_indexes=False)
+        list_visual.scale(0.92)
+        meaning = self.note_panel(
+            "WHAT CHANGED?",
+            [
+                "The five values did not disappear.",
+                "They now live inside one ordered object.",
+                "The variable name describes the dataset.",
+            ],
+            width=6.2,
+            title_size=24,
+            body_size=22,
+        )
+        right = VGroup(list_visual, meaning).arrange(DOWN, buff=0.42)
+        initial = self.split_layout(old_code, right, center_y=-0.45)
+        self.assert_content_safe(initial.group, "section 4 initial layout")
+
+        self.play(FadeIn(old_code), run_time=RUN_NORMAL)
+        self.play(FadeIn(list_visual), run_time=RUN_NORMAL)
+        self.wait(PAUSE_EXPLAIN)
+        self.play(FadeIn(meaning), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+
+        new_code.move_to(old_code)
+        self.play(ReplacementTransform(old_code, new_code), run_time=RUN_SLOW)
+        self.wait(PAUSE_EXPLAIN)
+        self.focus_on(new_code, width=7.3, pause=PAUSE_WORK)
+        self.clear_stage()
+
+    # ------------------------------------------------------------------
+    # 05 — Indexing follows naturally from preserved order
+    # ------------------------------------------------------------------
+    def indexing_bridge(self) -> None:
+        self.set_header(
+            5,
+            "ORDER GIVES US AN INDEX",
+            "Python starts counting list positions at 0, so the first value uses index 0 and the third value uses index 2.",
+        )
+
+        strip = self.array_strip("scores", SCORES, show_indexes=True)
+        strip.scale(0.94)
+        strip.move_to(UP * 1.05)
+
+        expr0 = self.code_panel(
+            ["scores[0]", "→ 4.2"],
+            width=4.2,
+            title="FIRST VALUE",
+            line_size=28,
+            min_height=2.05,
+        )
+        expr2 = self.code_panel(
+            ["scores[2]", "→ 4.5"],
+            width=4.2,
+            title="THIRD VALUE",
+            line_size=28,
+            min_height=2.05,
+        )
+        examples = VGroup(expr0, expr2).arrange(RIGHT, buff=0.55)
+        examples.move_to(DOWN * 1.15)
+
+        reminder = self.text("human position 1, 2, 3  →  Python index 0, 1, 2", 26, BOLD)
+        reminder.to_edge(DOWN, buff=0.34)
+
+        group = VGroup(strip, examples, reminder)
+        self.assert_content_safe(group, "section 5 layout")
+
+        self.play(FadeIn(strip), run_time=RUN_NORMAL)
+        self.wait(PAUSE_EXPLAIN)
+        self.play(FadeIn(expr0), run_time=RUN_NORMAL)
+        self.wait(PAUSE_READ)
+        self.play(FadeIn(expr2), run_time=RUN_NORMAL)
+        self.wait(PAUSE_READ)
+        self.play(FadeIn(reminder), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+        self.clear_stage()
+
+    # ------------------------------------------------------------------
+    # 06 — Practice creates the need, then uses the new structure
+    # ------------------------------------------------------------------
+    def mini_workshop(self) -> None:
+        self.set_header(
+            6,
+            "MINI WORKSHOP — BUILD THE NEED YOURSELF",
+            "Each task begins from variable assignment, then asks whether one organized list describes the data more naturally.",
+        )
+
+        # Exercise 1 — only prior knowledge first.
+        p1 = self.prompt_card(
+            "1",
+            "Measurements: 22.1, 22.8, 23.0, 22.6. Store them using only separate variables.",
+            width=13.2,
+            body_size=25,
+        )
+        p1.move_to(UP * 1.80)
+        solution1 = self.code_panel(
+            [
+                "t1 = 22.1",
+                "t2 = 22.8",
+                "t3 = 23.0",
+                "t4 = 22.6",
+            ],
+            width=6.2,
+            title="USING ONLY PRIOR KNOWLEDGE",
+            line_size=26,
+        )
+        reflection = self.note_panel(
+            "REFLECT",
+            [
+                "All four values measure the same variable.",
+                "Why should they need four different names?",
+                "What would happen with 100 measurements?",
