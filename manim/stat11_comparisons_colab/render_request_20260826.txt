@@ -1,0 +1,5 @@
+Senior-QA full render request.
+Scene: Stat11ComparisonsColabClass
+Target: ManimCE 0.20.1
+Quality: PQL smoke + PQH final, 1920x1080, 30 fps, H.264/yuv420p.
+Focus: Colab interface, live typing, comparison operators, Boolean outputs, arrays/list connection, workshop.
