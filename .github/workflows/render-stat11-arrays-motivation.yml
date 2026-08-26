@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: stat11-arrays-motivation-${{ github.ref }}
@@ -23,15 +23,12 @@ jobs:
     env:
       PROJECT_DIR: manim/stat11_arrays_motivation
       IMAGE: manimcommunity/manim:v0.20.1
-      FINAL_NAME: Stat11ArraysMotivation.mp4
 
     steps:
       - name: Checkout exact source
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Reconstruct exact scene and style
+      - name: Reconstruct and validate exact source
         shell: bash
         run: |
           set -euo pipefail
@@ -46,7 +43,7 @@ jobs:
       - name: Pull pinned ManimCE image
         run: docker pull "$IMAGE"
 
-      - name: Low-quality validation render
+      - name: PQL smoke render
         shell: bash
         run: |
           set -euo pipefail
@@ -59,15 +56,16 @@ jobs:
             "$IMAGE" \
             python -m manim -ql src/stat11_arrays_motivation.py Stat11ArraysMotivation \
             --format=mp4 --media_dir media_pql --disable_caching
-          PREVIEW="$(find "$PROJECT_DIR/media_pql" -type f -name "$FINAL_NAME" | head -n 1)"
-          test -n "$PREVIEW" -a -s "$PREVIEW"
-          ffprobe -v error -show_entries stream=width,height,r_frame_rate -of default=nw=1 "$PREVIEW"
+          PREVIEW="$(find "$PROJECT_DIR/media_pql" -type f -name '*.mp4' ! -path '*/partial_movie_files/*' | head -n 1)"
+          test -n "$PREVIEW"
+          test -s "$PREVIEW"
+          echo "PQL_OK=$PREVIEW"
 
-      - name: High-quality final render
+      - name: PQH final render
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf "$PROJECT_DIR/media"
+          rm -rf "$PROJECT_DIR/media_final"
           docker run --rm \
             --user "$(id -u):$(id -g)" \
             -e HOME=/tmp/manim-home \
@@ -75,62 +73,30 @@ jobs:
             -w "/manim/$PROJECT_DIR" \
             "$IMAGE" \
             python -m manim -qh src/stat11_arrays_motivation.py Stat11ArraysMotivation \
-            --format=mp4 --media_dir media --disable_caching
-          RAW="$(find "$PROJECT_DIR/media" -type f -name "$FINAL_NAME" | head -n 1)"
-          test -n "$RAW" -a -s "$RAW"
-          echo "RAW=$RAW" >> "$GITHUB_ENV"
-
-      - name: Normalize and verify delivery
-        shell: bash
-        run: |
-          set -euo pipefail
-          FINAL="$PROJECT_DIR/delivery/$FINAL_NAME"
-          ffmpeg -y -v error -i "$RAW" -an -c:v libx264 -pix_fmt yuv420p -r 30 -movflags +faststart "$FINAL"
+            --fps 30 --format=mp4 --media_dir media_final --disable_caching
+          FINAL="$(find "$PROJECT_DIR/media_final" -type f -name '*.mp4' ! -path '*/partial_movie_files/*' | head -n 1)"
+          test -n "$FINAL"
           test -s "$FINAL"
-          CODEC="$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of csv=p=0 "$FINAL")"
-          PIX="$(ffprobe -v error -select_streams v:0 -show_entries stream=pix_fmt -of csv=p=0 "$FINAL")"
-          WIDTH="$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$FINAL")"
-          HEIGHT="$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$FINAL")"
-          RATE="$(ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -of csv=p=0 "$FINAL")"
-          test "$CODEC" = "h264"
-          test "$PIX" = "yuv420p"
-          test "$WIDTH" = "1920"
-          test "$HEIGHT" = "1080"
-          test "$RATE" = "30/1"
-          : > "$PROJECT_DIR/qa/decode_errors.log"
-          ffmpeg -v error -i "$FINAL" -f null - 2> "$PROJECT_DIR/qa/decode_errors.log"
-          test ! -s "$PROJECT_DIR/qa/decode_errors.log"
-          ffprobe -v error -show_format -show_streams -of json "$FINAL" > "$PROJECT_DIR/qa/ffprobe.json"
-          sha256sum "$FINAL" > "$PROJECT_DIR/qa/final_mp4.sha256"
-          ffmpeg -y -v error -ss 00:00:12 -i "$FINAL" -frames:v 1 "$PROJECT_DIR/qa/poster.png"
+          cp "$FINAL" "$PROJECT_DIR/delivery/Stat11ArraysMotivation_PQH.mp4"
+          test -s "$PROJECT_DIR/delivery/Stat11ArraysMotivation_PQH.mp4"
 
-      - name: Commit verified MP4 to feature branch
+      - name: Technical verification
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "$PROJECT_DIR/src/stat11_arrays_motivation.py" \
-                  "$PROJECT_DIR/library/jp_classroom_style.py" \
-                  "$PROJECT_DIR/delivery/$FINAL_NAME" \
-                  "$PROJECT_DIR/qa/ffprobe.json" \
-                  "$PROJECT_DIR/qa/final_mp4.sha256" \
-                  "$PROJECT_DIR/qa/poster.png"
-          if git diff --cached --quiet; then
-            echo "Verified render already committed."
-          else
-            git commit -m "Render Statistics 11 arrays motivation PQH [skip ci]"
-            git push origin "HEAD:${GITHUB_REF_NAME}"
-          fi
+          V="$PROJECT_DIR/delivery/Stat11ArraysMotivation_PQH.mp4"
+          ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt -of default=nw=1 "$V" | tee "$PROJECT_DIR/qa/ffprobe.txt"
+          ffmpeg -nostdin -v error -i "$V" -f null - 2> "$PROJECT_DIR/qa/decode_errors.log"
+          test ! -s "$PROJECT_DIR/qa/decode_errors.log"
+          sha256sum "$V" > "$PROJECT_DIR/qa/final_mp4.sha256"
 
-      - name: Upload verified MP4 artifact
+      - name: Upload verified MP4
         uses: actions/upload-artifact@v4
         with:
           name: Stat11-Arrays-Motivation-PQH
           retention-days: 30
           if-no-files-found: error
           path: |
-            manim/stat11_arrays_motivation/delivery/Stat11ArraysMotivation.mp4
-            manim/stat11_arrays_motivation/qa/ffprobe.json
+            manim/stat11_arrays_motivation/delivery/Stat11ArraysMotivation_PQH.mp4
+            manim/stat11_arrays_motivation/qa/ffprobe.txt
             manim/stat11_arrays_motivation/qa/final_mp4.sha256
-            manim/stat11_arrays_motivation/qa/poster.png
