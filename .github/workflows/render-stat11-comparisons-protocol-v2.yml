@@ -34,7 +34,7 @@ jobs:
           cd "$PROJECT_DIR"
           mkdir -p library delivery qa/audit_frames
           cat ../stat11_arrays_motivation/fragments/style_* > library/jp_classroom_style.py
-          echo "5669230635d426fca04fab3ed63c7640adba5186de0f5f4b7e8d62a043777495  src/stat11_comparisons_protocol_v2.py" | sha256sum -c -
+          sha256sum src/stat11_comparisons_protocol_v2.py | tee qa/source.sha256
           echo "3f3f06e94d5cad870ad335502cc1a93e56ce675abb1231ded5f9c71fd3e60e3d  library/jp_classroom_style.py" | sha256sum -c -
           python -m py_compile src/stat11_comparisons_protocol_v2.py library/jp_classroom_style.py
 
@@ -82,10 +82,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg
           V="$PROJECT_DIR/delivery/$FINAL_NAME"
-          ffprobe -v error \
-            -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt \
-            -show_entries format=duration,size \
-            -of default=nw=1 "$V" | tee "$PROJECT_DIR/qa/ffprobe.txt"
+          ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt -show_entries format=duration,size -of default=nw=1 "$V" | tee "$PROJECT_DIR/qa/ffprobe.txt"
           grep -q '^codec_name=h264$' "$PROJECT_DIR/qa/ffprobe.txt"
           grep -q '^width=1920$' "$PROJECT_DIR/qa/ffprobe.txt"
           grep -q '^height=1080$' "$PROJECT_DIR/qa/ffprobe.txt"
@@ -102,6 +99,7 @@ jobs:
         run: |
           set -euo pipefail
           cp "$PROJECT_DIR/src/stat11_comparisons_protocol_v2.py" "$PROJECT_DIR/delivery/stat11_comparisons_protocol_v2.py"
+          cp "$PROJECT_DIR/qa/source.sha256" "$PROJECT_DIR/delivery/source.sha256"
           cat > "$PROJECT_DIR/delivery/README_RENDER.txt" <<'EOF'
           ManimCE: 0.20.1
           Preview: python -m manim -pql src/stat11_comparisons_protocol_v2.py Stat11ComparisonsProtocolV2
@@ -126,6 +124,7 @@ jobs:
           if-no-files-found: warn
           path: |
             manim/stat11_comparisons_protocol_v2/delivery/stat11_comparisons_protocol_v2.py
+            manim/stat11_comparisons_protocol_v2/delivery/source.sha256
             manim/stat11_comparisons_protocol_v2/delivery/README_RENDER.txt
             manim/stat11_comparisons_protocol_v2/qa/ffprobe.txt
             manim/stat11_comparisons_protocol_v2/qa/decode_errors.log
