@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Statistics 11 Python theory page with visual diagrams, official resources and prerequisite-aware progress.">
+  <title>Statistics 11 · Python Theory</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://www.python.org" crossorigin>
+  <link rel="preconnect" href="https://colab.research.google.com" crossorigin>
+  <link rel="stylesheet" href="styles.css?v=20260826-hub-v1">
+  <link rel="stylesheet" href="gated.css?v=20260826-hub-v3">
+  <link rel="stylesheet" href="split-layout.css?v=20260826-split-v7">
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="config-v2.js?v=20260826-hub-v3"></script>
+  <script defer src="course-data-v4.js?v=20260826-split-v7"></script>
+  <script defer src="theory-page.js?v=20260826-split-v7"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Back to Python Learning Hub">
+      <span class="brand-mark">IJR</span>
+      <span><small>Instituto Jorge Robledo · Statistics 11</small><strong>Python Learning Hub</strong></span>
+    </a>
+    <div class="top-actions">
+      <span id="sessionBadge" class="session-badge">Loading progress…</span>
+      <a class="button button-light" href="./">All topics</a>
+      <a id="workshopTopLink" class="button button-dark" href="workshop.html">Open workshop</a>
+    </div>
+  </header>
+
+  <main class="split-main theory-main">
+    <section id="accessPanel" class="split-access hidden"></section>
+    <div id="theoryApp" class="hidden">
+      <nav class="split-breadcrumb" aria-label="Breadcrumb"><a href="./">Python Hub</a><span>→</span><span id="crumbTopic">Theory</span></nav>
+      <section id="theoryHero" class="theory-hero"></section>
+      <section id="resourceSection" class="resource-section hidden"></section>
+      <section id="conceptSection" class="theory-concepts"></section>
+      <section class="theory-diagrams-section">
+        <div class="section-heading"><p class="eyebrow">VISUAL THEORY</p><h2>Diagrams that explain the model</h2><p>Each diagram represents one mental model. Read the description first, then follow the animated figure.</p></div>
+        <div id="diagramGrid" class="diagram-grid"></div>
+      </section>
+      <section id="syntaxSection" class="theory-reference"></section>
+      <section id="pitfallSection" class="theory-pitfalls"></section>
+      <section class="theory-next"><div><p class="eyebrow">WHEN YOU ARE READY</p><h2>Move from understanding to practice.</h2><p>The workshop is a separate page. Your progress percentage comes from validated workshop stages, not from simply opening the theory.</p></div><a id="workshopBottomLink" class="button button-dark" href="workshop.html">Go to workshop</a></section>
+      <footer class="footer"><span>Instituto Jorge Robledo · Statistics / Programming 11° · 2026-2</span><a href="./">Python Hub</a></footer>
+    </div>
+  </main>
+</body>
+</html>
