@@ -26,6 +26,7 @@ rm -rf "$PROJECT_DIR/media_pql"
 docker run --rm \
   --user "$(id -u):$(id -g)" \
   -e HOME=/tmp/manim-home \
+  -e PYTHONPATH="/manim/$PROJECT_DIR" \
   -e SCENE_FILE="$SCENE_FILE" \
   -e SCENE_CLASS="$SCENE_CLASS" \
   -v "$PWD:/manim" \
@@ -47,6 +48,7 @@ rm -rf "$PROJECT_DIR/media_pqh"
 docker run --rm \
   --user "$(id -u):$(id -g)" \
   -e HOME=/tmp/manim-home \
+  -e PYTHONPATH="/manim/$PROJECT_DIR" \
   -e SCENE_FILE="$SCENE_FILE" \
   -e SCENE_CLASS="$SCENE_CLASS" \
   -v "$PWD:/manim" \
