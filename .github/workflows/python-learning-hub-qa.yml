@@ -1,6 +1,6 @@
 name: Python Learning Hub QA
 
-# V10: split architecture + deep theory QA + real workshop Python runtime smoke.
+# V11: split architecture + deep theory QA + proven Colab/Python workshop runtime.
 on:
   pull_request:
     paths:
@@ -9,8 +9,9 @@ on:
       - 'qa/check_python_hub_split_pages.py'
       - 'qa/check_python_hub_visual_v8.py'
       - 'qa/check_operations_visual_v9.py'
-      - 'qa/check_workshop_runtime_v10.py'
-      - 'qa/workshop_runtime_smoke_v10.cjs'
+      - 'qa/check_workshop_colab_v11.py'
+      - 'qa/workshop_colab_smoke_v11.cjs'
+      - 'actividad-colab-01/app.js'
       - 'supabase/migrations/*python_learning_hub*.sql'
       - '.github/workflows/python-learning-hub-qa.yml'
   push:
@@ -21,8 +22,9 @@ on:
       - 'qa/check_python_hub_split_pages.py'
       - 'qa/check_python_hub_visual_v8.py'
       - 'qa/check_operations_visual_v9.py'
-      - 'qa/check_workshop_runtime_v10.py'
-      - 'qa/workshop_runtime_smoke_v10.cjs'
+      - 'qa/check_workshop_colab_v11.py'
+      - 'qa/workshop_colab_smoke_v11.cjs'
+      - 'actividad-colab-01/app.js'
       - 'supabase/migrations/*python_learning_hub*.sql'
       - '.github/workflows/python-learning-hub-qa.yml'
   workflow_dispatch:
@@ -45,19 +47,18 @@ jobs:
           node --check python/theory-page.js
           node --check python/theory-visual-v8.js
           node --check python/theory-visual-v9.js
-          node --check python/workshop-runtime-v10.js
           node --check python/workshop-page.js
-          node --check qa/workshop_runtime_smoke_v10.cjs
+          node --check qa/workshop_colab_smoke_v11.cjs
       - name: Static course contracts
         run: |
-          python -m py_compile qa/check_python_hub_split_pages.py qa/check_python_hub_visual_v8.py qa/check_operations_visual_v9.py qa/check_workshop_runtime_v10.py
+          python -m py_compile qa/check_python_hub_split_pages.py qa/check_python_hub_visual_v8.py qa/check_operations_visual_v9.py qa/check_workshop_colab_v11.py
           python qa/check_python_hub_split_pages.py
           python qa/check_python_hub_visual_v8.py
           python qa/check_operations_visual_v9.py
-          python qa/check_workshop_runtime_v10.py
+          python qa/check_workshop_colab_v11.py
       - name: Verify production Pyodide asset
         run: curl --fail --silent --show-error --location --head https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js >/dev/null
-      - name: Real Pyodide workshop smoke
+      - name: Real proven Pyodide workshop smoke
         run: |
           npm install --no-save --no-package-lock pyodide@0.27.7
-          node qa/workshop_runtime_smoke_v10.cjs
+          node qa/workshop_colab_smoke_v11.cjs
