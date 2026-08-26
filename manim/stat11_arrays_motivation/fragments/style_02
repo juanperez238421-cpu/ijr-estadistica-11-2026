@@ -1,0 +1,180 @@
+
+    # ---------------------------------------------------------------------
+    # Camera and frame safety
+    # ---------------------------------------------------------------------
+    def assert_within_frame(self, mob: Mobject, label: str, margin: float = 0.03) -> None:
+        left, right = mob.get_left()[0], mob.get_right()[0]
+        bottom, top = mob.get_bottom()[1], mob.get_top()[1]
+        if left < -FRAME_WIDTH / 2 + margin or right > FRAME_WIDTH / 2 - margin:
+            raise ValueError(
+                f"{label} exceeds horizontal frame bounds: left={left:.3f}, right={right:.3f}"
+            )
+        if bottom < -FRAME_HEIGHT / 2 + margin or top > FRAME_HEIGHT / 2 - margin:
+            raise ValueError(
+                f"{label} exceeds vertical frame bounds: bottom={bottom:.3f}, top={top:.3f}"
+            )
+
+    def assert_content_safe(self, mob: Mobject, label: str) -> None:
+        self.assert_within_frame(mob, label, margin=0.15)
+        if mob.get_top()[1] > CONTENT_TOP_Y:
+            raise ValueError(f"{label} overlaps the persistent header zone")
+        if mob.get_bottom()[1] < CONTENT_BOTTOM_Y:
+            raise ValueError(f"{label} exceeds the safe lower content zone")
+
+    def focus_on(self, mob: Mobject, width: float = 8.0, pause: float = PAUSE_READ) -> None:
+        persistent = [
+            item for item in (self.header_group, self.subtitle_group) if item is not None
+        ]
+        if persistent:
+            self.play(*[FadeOut(item) for item in persistent], run_time=RUN_QUICK)
+
+        self.camera.frame.save_state()
+        target_width = max(width, mob.width + 0.8)
+        self.play(
+            self.camera.frame.animate.set(width=target_width).move_to(mob),
+            run_time=RUN_CAMERA,
+        )
+        self.wait(pause)
+        self.play(Restore(self.camera.frame), run_time=RUN_CAMERA)
+
+        if persistent:
+            self.play(*[FadeIn(item) for item in persistent], run_time=RUN_QUICK)
+
+    def focus_sequence(
+        self,
+        objects: Sequence[Mobject],
+        widths: Sequence[float] | None = None,
+        pause: float = PAUSE_READ,
+    ) -> None:
+        widths = widths or [8.0] * len(objects)
+        for mob, width in zip(objects, widths):
+            self.focus_on(mob, width=width, pause=pause)
+
+    # ---------------------------------------------------------------------
+    # Custom tables
+    # ---------------------------------------------------------------------
+    def build_table(
+        self,
+        headers: Sequence[str],
+        body_rows: Sequence[Sequence[str]],
+        column_widths: Sequence[float],
+        *,
+        math_columns: Iterable[int] = (),
+        row_height: float = 0.62,
+        header_height: float = 0.72,
+        body_font_size: int = 25,
+        header_font_size: int = 23,
+    ) -> TableDiagram:
+        if len(headers) != len(column_widths):
+            raise ValueError("headers and column_widths must have equal length")
+        if any(len(row) != len(headers) for row in body_rows):
+            raise ValueError("every body row must match the header length")
+
+        math_column_set = set(math_columns)
+        row_count = 1 + len(body_rows)
+        column_count = len(headers)
+        total_width = sum(column_widths)
+        total_height = header_height + len(body_rows) * row_height
+
+        rectangles: list[list[Rectangle]] = []
+        entries: list[list[Mobject]] = []
+        row_groups: list[VGroup] = []
+
+        left_edge = -total_width / 2
+        top_edge = total_height / 2
+
+        for row_index in range(row_count):
+            current_height = header_height if row_index == 0 else row_height
+            y_center = top_edge - current_height / 2
+            if row_index > 0:
+                y_center -= header_height + (row_index - 1) * row_height
+
+            row_rectangles: list[Rectangle] = []
+            row_entries: list[Mobject] = []
+            x_cursor = left_edge
+
+            for column_index, column_width in enumerate(column_widths):
+                x_center = x_cursor + column_width / 2
+                is_header = row_index == 0
+
+                rectangle = Rectangle(
+                    width=column_width,
+                    height=current_height,
+                    stroke_color=BLACK_LINE,
+                    stroke_width=1.25,
+                    fill_color=VERY_LIGHT_GRAY if is_header else WHITE_FILL,
+                    fill_opacity=1.0,
+                )
+                rectangle.move_to([x_center, y_center, 0])
+
+                content = headers[column_index] if is_header else body_rows[row_index - 1][column_index]
+                if is_header:
+                    is_math_header = any(marker in content for marker in ("_", "^", "\\", "="))
+                    entry = (
+                        self.math(content, header_font_size)
+                        if is_math_header
+                        else self.text(content, header_font_size, BOLD)
+                    )
+                elif column_index in math_column_set:
+                    entry = self.math(content, body_font_size)
+                else:
+                    entry = self.text(content, body_font_size)
+
+                self.fit(entry, column_width - 0.18, current_height - 0.12)
+                entry.move_to(rectangle)
+
+                row_rectangles.append(rectangle)
+                row_entries.append(entry)
+                x_cursor += column_width
+
+            rectangles.append(row_rectangles)
+            entries.append(row_entries)
+            row_groups.append(VGroup(*row_rectangles, *row_entries))
+
+        column_groups: list[VGroup] = []
+        for column_index in range(column_count):
+            column_items: list[Mobject] = []
+            for row_index in range(row_count):
+                column_items.extend(
+                    [rectangles[row_index][column_index], entries[row_index][column_index]]
+                )
+            column_groups.append(VGroup(*column_items))
+
+        header_group = row_groups[0]
+        body_group = VGroup(*row_groups[1:])
+        full_group = VGroup(*row_groups)
+
+        return TableDiagram(
+            group=full_group,
+            rectangles=rectangles,
+            entries=entries,
+            rows=row_groups,
+            columns=column_groups,
+            header=header_group,
+            body=body_group,
+        )
+
+    def shade_cells(
+        self,
+        table: TableDiagram,
+        coordinates: Sequence[tuple[int, int]],
+        opacity: float = 1.0,
+    ) -> AnimationGroup:
+        animations = []
+        for row_index, column_index in coordinates:
+            animations.append(
+                table.rectangles[row_index][column_index].animate.set_fill(
+                    LIGHT_GRAY, opacity=opacity
+                )
+            )
+        return AnimationGroup(*animations, lag_ratio=0.08)
+
+    def animate_table_rows(
+        self,
+        table: TableDiagram,
+        *,
+        direction: np.ndarray = RIGHT,
+        pause: float = PAUSE_SHORT,
+        include_header: bool = True,
+    ) -> None:
+        start = 0 if include_header else 1
