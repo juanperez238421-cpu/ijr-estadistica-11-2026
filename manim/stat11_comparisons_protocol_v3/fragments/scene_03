@@ -56,7 +56,7 @@
         self.wait(PAUSE_WORK)
 
         contrast = self.mono("=  stores        ==  compares", 29, BOLD)
-        contrast.to_edge(DOWN, buff=0.34)
+        contrast.move_to(DOWN * 3.35)
         self.assert_content_safe(contrast, "scene 03 contrast")
         self.play(Write(contrast), run_time=RUN_SLOW)
         self.wait(PAUSE_SUMMARY)
@@ -96,7 +96,8 @@
             title_size=24,
             body_size=22,
         )
-        reminder.to_edge(DOWN, buff=0.22)
+        reminder.move_to(DOWN * 3.10)
+        self.assert_content_safe(reminder, "scene 04 reminder")
         self.play(FadeIn(reminder, shift=UP * 0.08), run_time=RUN_NORMAL)
         self.wait(PAUSE_SUMMARY)
         self.clear_stage()
