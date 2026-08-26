@@ -1,0 +1,20 @@
+            font_size=36,
+        )
+        slogan.move_to(DOWN * 3.45)
+
+        self.assert_content_safe(VGroup(route, final_cell, slogan), "summary")
+        self.play(LaggedStart(*[FadeIn(card) for card in route], lag_ratio=0.14), run_time=RUN_SLOW * 1.8)
+        self.wait(PAUSE_WORK)
+        self.play(FadeIn(final_cell), run_time=RUN_NORMAL)
+        self.wait(PAUSE_EXPLAIN)
+        self.play(FadeIn(slogan), run_time=RUN_NORMAL)
+        self.wait(PAUSE_FINAL)
+        self.standard_closing(
+            "An array/list is useful because it keeps related data together, ordered, and easier to use."
+        )
+
+
+# Preview gate:
+# manim -pql stat11_arrays_colab_revised.py Stat11ArraysColabMotivationV2 --format=mp4 --disable_caching
+# Final gate:
+# manim -pqh stat11_arrays_colab_revised.py Stat11ArraysColabMotivationV2 --format=mp4 --disable_caching
