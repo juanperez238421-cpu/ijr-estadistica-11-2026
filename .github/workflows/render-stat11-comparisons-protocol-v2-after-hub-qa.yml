@@ -1,23 +1,24 @@
-name: Render Statistics 11 Comparisons Protocol V2 After Hub QA
+name: Render Statistics 11 Comparisons Protocol V2 FINAL PQH
 
 on:
-  workflow_run:
-    workflows: ["Deploy Statistics 11 Assessment", "pages build and deployment"]
-    types: [completed]
-  issue_comment:
-    types: [created]
+  push:
+    branches:
+      - main
+    paths:
+      - 'manim/stat11_comparisons_protocol_v2/**'
+      - 'manim/stat11_arrays_motivation/fragments/style_*'
+      - '.github/workflows/render-stat11-comparisons-protocol-v2-after-hub-qa.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: stat11-comparisons-protocol-v2-render
+  group: stat11-comparisons-protocol-v2-final-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   render:
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'issue_comment' && contains(github.event.comment.body, '[render-stat11-comparisons-protocol-v2]')) || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
@@ -28,12 +29,10 @@ jobs:
       FINAL_NAME: Stat11_Comparisons_Protocol_V2_FINAL_PQH.mp4
 
     steps:
-      - name: Checkout protocol source from main
+      - name: Checkout exact source
         uses: actions/checkout@v4
-        with:
-          ref: main
 
-      - name: Reconstruct exact classroom style and validate source
+      - name: Reconstruct JP classroom style and validate exact source
         shell: bash
         run: |
           set -euo pipefail
@@ -44,10 +43,10 @@ jobs:
           echo "3f3f06e94d5cad870ad335502cc1a93e56ce675abb1231ded5f9c71fd3e60e3d  library/jp_classroom_style.py" | sha256sum -c -
           python -m py_compile src/stat11_comparisons_protocol_v2.py library/jp_classroom_style.py
 
-      - name: Pull pinned ManimCE 0.20.1
+      - name: Pull pinned ManimCE 0.20.1 image
         run: docker pull "$IMAGE"
 
-      - name: Literal protocol PQL smoke render
+      - name: PQL protocol smoke render
         shell: bash
         run: |
           set -euo pipefail
@@ -58,12 +57,14 @@ jobs:
             -v "$PWD:/manim" \
             -w "/manim/$PROJECT_DIR" \
             "$IMAGE" \
-            bash -lc 'mkdir -p /tmp/manim-bin; printf "#!/bin/sh\nexit 0\n" > /tmp/manim-bin/xdg-open; chmod +x /tmp/manim-bin/xdg-open; export PATH="/tmp/manim-bin:$PATH"; python -m manim -pql "$SCENE_FILE" "$SCENE_CLASS" --format=mp4 --media_dir media_pql --disable_caching'
+            python -m manim -ql "$SCENE_FILE" "$SCENE_CLASS" \
+            --format=mp4 --media_dir media_pql --disable_caching
           PREVIEW="$(find "$PROJECT_DIR/media_pql" -type f -name '*.mp4' ! -path '*/partial_movie_files/*' | head -n 1)"
           test -n "$PREVIEW"
           test -s "$PREVIEW"
+          echo "PQL_OK=$PREVIEW"
 
-      - name: Literal protocol PQH final render
+      - name: PQH protocol final render
         shell: bash
         run: |
           set -euo pipefail
@@ -74,7 +75,8 @@ jobs:
             -v "$PWD:/manim" \
             -w "/manim/$PROJECT_DIR" \
             "$IMAGE" \
-            bash -lc 'mkdir -p /tmp/manim-bin; printf "#!/bin/sh\nexit 0\n" > /tmp/manim-bin/xdg-open; chmod +x /tmp/manim-bin/xdg-open; export PATH="/tmp/manim-bin:$PATH"; python -m manim -pqh "$SCENE_FILE" "$SCENE_CLASS" --fps 30 --format=mp4 --media_dir media_final --disable_caching'
+            python -m manim -qh "$SCENE_FILE" "$SCENE_CLASS" \
+            --fps 30 --format=mp4 --media_dir media_final --disable_caching
           FINAL="$(find "$PROJECT_DIR/media_final" -type f -name '*.mp4' ! -path '*/partial_movie_files/*' | head -n 1)"
           test -n "$FINAL"
           test -s "$FINAL"
@@ -87,7 +89,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg
           V="$PROJECT_DIR/delivery/$FINAL_NAME"
-          ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt -show_entries format=duration,size -of default=nw=1 "$V" | tee "$PROJECT_DIR/qa/ffprobe.txt"
+          ffprobe -v error \
+            -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt \
+            -show_entries format=duration,size \
+            -of default=nw=1 "$V" | tee "$PROJECT_DIR/qa/ffprobe.txt"
           grep -q '^codec_name=h264$' "$PROJECT_DIR/qa/ffprobe.txt"
           grep -q '^width=1920$' "$PROJECT_DIR/qa/ffprobe.txt"
           grep -q '^height=1080$' "$PROJECT_DIR/qa/ffprobe.txt"
@@ -99,20 +104,20 @@ jobs:
           ffmpeg -nostdin -v error -i "$V" -vf "fps=1/18,scale=960:-2" -frames:v 24 "$PROJECT_DIR/qa/audit_frames/frame_%02d.jpg"
           test "$(find "$PROJECT_DIR/qa/audit_frames" -type f -name '*.jpg' | wc -l)" -ge 12
 
-      - name: Preserve exact source and commands
+      - name: Preserve exact source and render commands
         shell: bash
         run: |
           set -euo pipefail
           cp "$PROJECT_DIR/src/stat11_comparisons_protocol_v2.py" "$PROJECT_DIR/delivery/stat11_comparisons_protocol_v2.py"
           cp "$PROJECT_DIR/qa/source.sha256" "$PROJECT_DIR/delivery/source.sha256"
           cat > "$PROJECT_DIR/delivery/README_RENDER.txt" <<'EOF'
-          ManimCE 0.20.1
-          Preview: python -m manim -pql src/stat11_comparisons_protocol_v2.py Stat11ComparisonsProtocolV2
-          Final: python -m manim -pqh src/stat11_comparisons_protocol_v2.py Stat11ComparisonsProtocolV2 --fps 30
-          1920x1080 · 30fps · H.264 · yuv420p
+          ManimCE: 0.20.1
+          PQL: python -m manim -ql src/stat11_comparisons_protocol_v2.py Stat11ComparisonsProtocolV2
+          PQH: python -m manim -qh src/stat11_comparisons_protocol_v2.py Stat11ComparisonsProtocolV2 --fps 30
+          Expected final: 1920x1080 · 30 fps · H.264 · yuv420p
           EOF
 
-      - name: Upload final MP4
+      - name: Upload final rendered MP4
         uses: actions/upload-artifact@v4
         with:
           name: Stat11-Comparisons-Protocol-V2-FINAL-PQH
@@ -120,7 +125,7 @@ jobs:
           if-no-files-found: error
           path: manim/stat11_comparisons_protocol_v2/delivery/Stat11_Comparisons_Protocol_V2_FINAL_PQH.mp4
 
-      - name: Upload QA package
+      - name: Upload exact source and QA package
         if: always()
         uses: actions/upload-artifact@v4
         with:
