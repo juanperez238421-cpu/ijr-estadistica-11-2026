@@ -1,0 +1,4 @@
+Final render trigger after prompt-card senior QA repair.
+Scene: src/stat11_comparisons_colab_final.py
+Class: Stat11ComparisonsColabClassFinal
+Expected wrapper SHA256: 4ee896ff419963578dde2fd44f0ed1834a7e57089b07146f0cf3b1dd9c2110c3
