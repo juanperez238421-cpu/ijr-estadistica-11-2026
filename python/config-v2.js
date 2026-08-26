@@ -10,6 +10,7 @@
     rpc: Object.freeze({
       register: 'python_hub_register_v3',
       resume: 'python_hub_resume_v1',
+      recover: 'python_hub_recover_v1',
       submit: 'python_hub_submit_v1'
     })
   });
