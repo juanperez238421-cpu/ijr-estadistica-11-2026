@@ -9,11 +9,11 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
   <link rel="stylesheet" href="styles.css?v=20260826-hub-v1">
-  <link rel="stylesheet" href="gated.css?v=20260826-hub-v2">
+  <link rel="stylesheet" href="gated.css?v=20260826-hub-v3">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
-  <script defer src="config-v2.js?v=20260826-hub-v2"></script>
-  <script defer src="gated-app.js?v=20260826-hub-v2"></script>
+  <script defer src="config-v2.js?v=20260826-hub-v3"></script>
+  <script defer src="gated-app.js?v=20260826-hub-v3"></script>
 </head>
 <body>
   <header class="topbar">
@@ -80,10 +80,17 @@
           </div>
         </fieldset>
 
+        <div class="resume-code-field">
+          <label>Progress code <small>· Código de progreso · only when resuming this exact registration on another browser/device</small>
+            <input id="progressCode" type="text" inputmode="text" autocomplete="off" maxlength="8" placeholder="Example: A7F91C2D">
+          </label>
+          <p>A new individual/team registration receives one 8-character code. Keep it private: the same group + email combination cannot be reopened on a new device without that code.</p>
+        </div>
+
         <div class="registration-actions">
           <div>
             <strong>How progress works</strong>
-            <span>Re-entering the same group + email combination resumes the same learning path. Team progress belongs to that exact team combination.</span>
+            <span>The exact group + email combination owns one learning path. This browser resumes automatically; a different browser must also provide the private progress code.</span>
           </div>
           <button id="registerButton" class="button button-dark" type="submit">Enter learning path</button>
         </div>
@@ -112,6 +119,13 @@
         <p class="eyebrow">PYTHON · STATISTICS 11</p>
         <h1 id="pageTitle">One topic. One complete workshop.</h1>
         <p class="hero-copy">Each page follows the same learning pattern: concept → syntax → visual model → worked example → complete workshop. The backend controls what unlocks next.</p>
+        <div id="resumeCodeNotice" class="resume-code-notice hidden" role="status" aria-live="polite">
+          <div>
+            <strong>Save your private progress code</strong>
+            <span>You will need it to reopen this exact individual/team path on another device.</span>
+          </div>
+          <code id="resumeCodeValue"></code>
+        </div>
         <div class="hero-actions">
           <button id="continueButton" class="button button-dark" type="button">Continue learning</button>
           <a class="button button-light" href="#reference">Current command reference</a>
