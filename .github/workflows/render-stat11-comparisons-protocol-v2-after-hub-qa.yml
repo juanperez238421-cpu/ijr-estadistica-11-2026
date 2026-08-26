@@ -2,7 +2,7 @@ name: Render Statistics 11 Comparisons Protocol V2 After Hub QA
 
 on:
   workflow_run:
-    workflows: ["Python Learning Hub QA"]
+    workflows: ["Deploy Statistics 11 Assessment"]
     types: [completed]
   workflow_dispatch:
 
