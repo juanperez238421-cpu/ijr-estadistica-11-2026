@@ -1,0 +1,206 @@
+:root{
+  --ink:#111;
+  --muted:#676767;
+  --line:#dddddd;
+  --line-strong:#b9b9b9;
+  --paper:#ffffff;
+  --soft:#f7f7f5;
+  --soft-2:#f1f1ef;
+  --ok:#235b32;
+  --bad:#8b2525;
+  --radius:18px;
+  --shadow:0 12px 40px rgba(0,0,0,.045);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,textarea{font:inherit}
+a{color:inherit}
+code,.code-font{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace}
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:30;
+  min-height:70px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px;
+  padding:10px 24px;
+  border-bottom:1px solid var(--line);
+  background:rgba(255,255,255,.94);
+  backdrop-filter:blur(14px);
+}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;min-width:0}
+.brand-mark{
+  width:38px;height:38px;border-radius:10px;background:#111;color:#fff;
+  display:grid;place-items:center;font-size:13px;font-weight:800;letter-spacing:.04em;flex:0 0 auto;
+}
+.brand small{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.065em;white-space:nowrap}
+.brand strong{display:block;font-size:16px;line-height:1.2}
+.top-actions{display:flex;align-items:center;gap:14px}
+.text-link{font-size:13px;color:var(--muted);text-underline-offset:4px}
+.button{
+  border:1px solid #111;border-radius:999px;padding:10px 16px;min-height:40px;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;
+  font-weight:750;font-size:13px;cursor:pointer;transition:transform .2s ease,background .2s ease,color .2s ease,border-color .2s ease;
+}
+.button:hover{transform:translateY(-1px)}
+.button-dark{background:#111;color:#fff}
+.button-dark:hover{background:#2c2c2c}
+.button-light{background:#fff;color:#111;border-color:var(--line-strong)}
+.button-light:hover{background:var(--soft)}
+.app-layout{display:grid;grid-template-columns:310px minmax(0,1fr);max-width:1500px;margin:0 auto;min-height:calc(100vh - 70px)}
+.sidebar{
+  position:sticky;top:70px;height:calc(100vh - 70px);overflow:auto;
+  border-right:1px solid var(--line);padding:34px 24px 28px;background:#fff;
+}
+.sidebar-head{padding-bottom:20px;border-bottom:1px solid var(--line)}
+.eyebrow{margin:0 0 8px;font-size:11px;font-weight:850;letter-spacing:.12em;color:#555;text-transform:uppercase}
+.sidebar h2{margin:0;font-size:24px;line-height:1.15;letter-spacing:-.025em}
+.sidebar p{margin:9px 0 0;color:var(--muted);font-size:13px}
+.topic-nav{display:grid;gap:4px;padding:18px 0}
+.topic-button{
+  position:relative;width:100%;display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:8px;
+  border:0;background:transparent;text-align:left;padding:10px 8px;border-radius:11px;color:#444;cursor:pointer;
+  transition:background .2s ease,color .2s ease,transform .2s ease;
+}
+.topic-button:hover{background:var(--soft);color:#111;transform:translateX(2px)}
+.topic-button.active{background:#111;color:#fff}
+.topic-number{font-size:11px;font-weight:800;letter-spacing:.06em;opacity:.72}
+.topic-name{font-size:13px;font-weight:720}
+.topic-check{width:18px;height:18px;border:1px solid currentColor;border-radius:50%;display:grid;place-items:center;font-size:10px;opacity:.55}
+.topic-button.reviewed .topic-check{opacity:1;background:currentColor}
+.topic-button.reviewed .topic-check::after{content:"✓";color:#fff}
+.topic-button.active.reviewed .topic-check{background:#fff}
+.topic-button.active.reviewed .topic-check::after{color:#111}
+.progress-card{border-top:1px solid var(--line);padding-top:18px}
+.progress-copy{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
+.progress-copy strong{color:#111}
+.progress-track{height:5px;background:var(--soft-2);border-radius:99px;margin-top:10px;overflow:hidden}
+.progress-track span{display:block;height:100%;width:0;background:#111;border-radius:99px;transition:width .45s cubic-bezier(.22,1,.36,1)}
+.progress-card p{font-size:11px;margin-top:8px}
+.main-content{min-width:0;padding:0 50px 72px}
+.hero{padding:72px 0 52px;border-bottom:1px solid var(--line);max-width:1080px}
+.hero h1{margin:0;max-width:800px;font-size:clamp(42px,6vw,82px);line-height:.98;letter-spacing:-.055em;font-weight:820}
+.hero-copy{margin:24px 0 0;max-width:680px;font-size:18px;color:var(--muted)}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+.path-strip{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:40px;color:#777;font-size:11px;font-weight:700;letter-spacing:.03em}
+.path-strip i{width:20px;height:1px;background:#bbb;display:inline-block}
+.lesson-shell{max-width:1080px;padding:56px 0 16px;min-height:500px}
+.lesson-shell.swap-in{animation:floatIn .36s cubic-bezier(.22,1,.36,1)}
+.lesson-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:end;padding-bottom:28px;border-bottom:1px solid var(--line)}
+.lesson-index{display:inline-flex;align-items:center;gap:8px;color:#666;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+.lesson-title{margin:0;font-size:clamp(34px,4.5vw,58px);line-height:1;letter-spacing:-.045em}
+.lesson-lead{margin:18px 0 0;color:var(--muted);font-size:17px;max-width:720px}
+.review-button{white-space:nowrap}
+.review-button.done{background:#fff;color:#111;border-color:#111}
+.lesson-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);gap:22px;margin-top:28px;align-items:start}
+.panel{border:1px solid var(--line);border-radius:var(--radius);background:#fff;padding:24px;box-shadow:var(--shadow)}
+.panel.soft{background:var(--soft);box-shadow:none}
+.panel h3{margin:0 0 12px;font-size:18px;letter-spacing:-.02em}
+.panel p{margin:0;color:var(--muted)}
+.definition{font-size:18px;color:#222!important;line-height:1.6}
+.syntax-list{display:grid;gap:8px;margin-top:18px}
+.syntax-row{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.syntax-row span{font-size:13px;color:#555}
+.syntax-row code{font-size:13px;background:#fff;border:1px solid var(--line);padding:4px 7px;border-radius:7px;color:#111;white-space:nowrap}
+.figure-panel{min-height:265px;display:grid;align-content:center}
+.figure-label{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#777;margin-bottom:8px}
+.figure{width:100%;max-height:260px;overflow:visible}
+.figure *{vector-effect:non-scaling-stroke}
+.figure .stroke{stroke:#111;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.figure .soft-stroke{stroke:#aaa;stroke-width:1.2;fill:none;stroke-dasharray:4 6}
+.figure .fill{fill:#111}
+.figure .paper{fill:#fff;stroke:#111;stroke-width:1.5}
+.figure .shade{fill:#f2f2ef;stroke:#111;stroke-width:1.3}
+.figure text{fill:#111;font-family:Inter,Arial,sans-serif;font-size:12px}
+.lesson-shell.swap-in .figure .trace{stroke-dasharray:500;stroke-dashoffset:500;animation:draw 1.1s .08s ease forwards}
+.example-block{margin-top:22px;border-top:1px solid var(--line);padding-top:22px}
+.example-block h3{margin:0 0 10px;font-size:16px}
+.code-card{position:relative;background:#111;color:#f7f7f7;border-radius:14px;padding:18px 18px 16px;overflow:auto}
+.code-card pre{margin:0;font:13px/1.65 "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;white-space:pre-wrap}
+.code-caption{margin-top:9px!important;font-size:12px!important;color:#777!important}
+.practice-section{margin-top:22px;border:1px solid #111;border-radius:var(--radius);overflow:hidden;background:#fff}
+.practice-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding:22px 24px;border-bottom:1px solid var(--line)}
+.practice-head h3{margin:0;font-size:20px}
+.practice-head p{margin:5px 0 0;color:var(--muted);font-size:13px}
+.runtime-badge{font-size:11px;border:1px solid var(--line-strong);border-radius:999px;padding:6px 9px;white-space:nowrap;color:#666;background:#fff}
+.runtime-badge.ready{border-color:#111;color:#111}
+.exercise-tabs{display:flex;gap:4px;padding:12px 16px;border-bottom:1px solid var(--line);overflow:auto}
+.exercise-tab{border:0;background:transparent;border-radius:999px;padding:8px 11px;font-size:12px;color:#666;cursor:pointer;white-space:nowrap}
+.exercise-tab:hover{background:var(--soft)}
+.exercise-tab.active{background:#111;color:#fff}
+.exercise-body{display:grid;grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr);min-height:330px}
+.exercise-instructions{padding:24px;border-right:1px solid var(--line)}
+.exercise-kicker{font-size:11px;font-weight:800;letter-spacing:.08em;color:#777;text-transform:uppercase}
+.exercise-instructions h4{font-size:21px;line-height:1.2;margin:8px 0 10px;letter-spacing:-.02em}
+.exercise-instructions p{font-size:13px;color:var(--muted);margin:0}
+.expected{margin-top:18px;padding:12px;background:var(--soft);border-radius:10px;font-size:12px;color:#555}
+.expected code{color:#111}
+.editor-wrap{display:flex;flex-direction:column;min-width:0;background:#fbfbfa}
+.editor-toolbar{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);font-size:11px;color:#777}
+.editor-actions{display:flex;gap:7px}
+.small-button{border:1px solid var(--line-strong);background:#fff;color:#111;border-radius:8px;padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer}
+.small-button:hover{background:var(--soft)}
+.small-button.primary{background:#111;color:#fff;border-color:#111}
+.code-editor{width:100%;min-height:170px;resize:vertical;border:0;border-bottom:1px solid var(--line);outline:none;padding:17px 18px;background:#fbfbfa;color:#111;font:13px/1.65 "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;tab-size:4}
+.code-editor:focus{box-shadow:inset 3px 0 0 #111}
+.output-wrap{padding:13px 16px 16px;background:#fff;min-height:90px}
+.output-label{display:flex;justify-content:space-between;align-items:center;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#777;font-weight:800}
+.output{margin:8px 0 0;min-height:40px;white-space:pre-wrap;word-break:break-word;font:12px/1.55 "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;color:#111}
+.exercise-feedback{font-size:11px;text-transform:none;letter-spacing:0;font-weight:700}
+.exercise-feedback.ok{color:var(--ok)}
+.exercise-feedback.bad{color:var(--bad)}
+.topic-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
+.topic-footer span{font-size:12px;color:#777}
+.next-button{border:0;background:transparent;color:#111;font-weight:800;cursor:pointer;padding:8px 0}
+.next-button:hover{text-decoration:underline;text-underline-offset:4px}
+.reference-section{max-width:1080px;margin-top:56px;padding:56px 0;border-top:1px solid var(--line)}
+.section-heading h2{margin:0;font-size:clamp(32px,4vw,50px);line-height:1;letter-spacing:-.04em}
+.section-heading>p:last-child{margin:16px 0 0;color:var(--muted);max-width:640px}
+.reference-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:26px}
+.reference-grid article{min-height:94px;border:1px solid var(--line);border-radius:13px;padding:14px;background:#fff;transition:transform .2s ease,border-color .2s ease}
+.reference-grid article:hover{transform:translateY(-2px);border-color:#999}
+.reference-grid span{display:block;color:#777;font-size:11px;margin-bottom:10px}
+.reference-grid code{display:block;color:#111;font-size:12px;white-space:nowrap;overflow:auto}
+.reference-note{margin-top:16px;border-left:3px solid #111;padding:13px 16px;background:var(--soft);font-size:13px;color:#555}
+.reference-note code{color:#111}
+.footer{max-width:1080px;border-top:1px solid var(--line);padding-top:22px;display:flex;justify-content:space-between;gap:18px;color:#777;font-size:12px}
+.footer a{text-underline-offset:3px}
+@keyframes floatIn{from{opacity:0;transform:translateY(11px)}to{opacity:1;transform:translateY(0)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@media(max-width:1050px){
+  .app-layout{grid-template-columns:250px minmax(0,1fr)}
+  .main-content{padding-left:34px;padding-right:34px}
+  .lesson-grid{grid-template-columns:1fr}
+  .reference-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .exercise-body{grid-template-columns:1fr}
+  .exercise-instructions{border-right:0;border-bottom:1px solid var(--line)}
+}
+@media(max-width:780px){
+  .topbar{padding:9px 14px}.brand small{display:none}.top-actions .text-link{display:none}.top-actions .button{padding:8px 11px;font-size:11px}
+  .app-layout{display:block}.sidebar{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:20px 16px 14px;overflow:visible}
+  .sidebar-head p:last-child,.progress-card{display:none}.sidebar-head{padding-bottom:10px;border-bottom:0}.sidebar h2{font-size:20px}
+  .topic-nav{display:flex;overflow:auto;gap:6px;padding:8px 0 4px;scrollbar-width:none}.topic-nav::-webkit-scrollbar{display:none}
+  .topic-button{width:auto;grid-template-columns:auto auto;padding:9px 12px;white-space:nowrap;border:1px solid var(--line)}.topic-button:hover{transform:none}.topic-check{display:none}
+  .main-content{padding:0 18px 50px}.hero{padding:44px 0 36px}.hero h1{font-size:48px}.hero-copy{font-size:16px}.path-strip{display:none}
+  .lesson-shell{padding-top:38px}.lesson-header{grid-template-columns:1fr;align-items:start}.review-button{justify-self:start}
+  .panel{padding:18px}.figure-panel{min-height:220px}.practice-head{padding:18px;display:block}.runtime-badge{display:inline-block;margin-top:10px}
+  .exercise-instructions{padding:18px}.reference-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.footer{display:block}.footer a{display:inline-block;margin-top:8px}
+}
+@media(max-width:480px){
+  .brand strong{font-size:14px}.brand-mark{width:34px;height:34px}.top-actions .button{max-width:120px;text-align:center;line-height:1.1}
+  .hero h1{font-size:40px}.hero-actions{display:grid}.hero-actions .button{width:100%}
+  .lesson-title{font-size:38px}.reference-grid{grid-template-columns:1fr}.topic-footer{align-items:flex-start;flex-direction:column}.next-button{padding:0}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
