@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 HUB = ROOT / "python"
 
 index = (HUB / "index.html").read_text(encoding="utf-8")
-css = "\n".join((HUB / name).read_text(encoding="utf-8") for name in ("styles.css", "gated.css", "resume-code.css"))
+css = "\n".join((HUB / name).read_text(encoding="utf-8") for name in ("styles.css", "gated.css", "resume-code.css", "operations-enrichment.css"))
 app = (HUB / "gated-app.js").read_text(encoding="utf-8")
 config = (HUB / "config-v2.js").read_text(encoding="utf-8")
 home = (ROOT / "index.html").read_text(encoding="utf-8")
@@ -45,7 +45,9 @@ for topic_id, (slug, title) in enumerate((
     require(title in app, f"Topic title missing: {title}")
 
 exercise_keys = re.findall(r"key:'(?:op|type|arr|logic|cond|loop|fn|stat)-\d{2}'", app)
-require(len(exercise_keys) >= 48, f"Expected at least 48 workshop stages, found {len(exercise_keys)}")
+require(len(exercise_keys) >= 52, f"Expected at least 52 workshop stages after Topic 01 expansion, found {len(exercise_keys)}")
+for n in range(1, 11):
+    require(f"key:'op-{n:02d}'" in app, f"Topic 01 stage op-{n:02d} missing")
 
 for fragment in (
     "python_hub_register_v2",
@@ -62,7 +64,7 @@ for fragment in (
     "runPythonAsync",
     "setStdout",
     "Validate output",
-    "Progress is stored in Supabase",
+    "Progress is stored in the course backend",
 ):
     require(fragment in (app + index + config), f"Gated behavior missing: {fragment}")
 
@@ -111,5 +113,5 @@ for fragment in (
 ):
     require(fragment in sql_v3, f"Resume/security hardening missing: {fragment}")
 
-print("PYTHON LEARNING HUB V3 QA PASS")
-print("topics=8 workshop_stages>=48 registration=PASS individual_team_progress=PASS prerequisites=PASS protected_resume=PASS server_validation=PASS rls=PASS pyodide=PASS responsive=PASS")
+print("PYTHON LEARNING HUB V6 QA PASS")
+print("topics=8 workshop_stages>=52 topic01=10 registration=PASS individual_team_progress=PASS prerequisites=PASS protected_resume=PASS server_validation=PASS rls=PASS pyodide=PASS responsive=PASS")

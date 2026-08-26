@@ -14,21 +14,25 @@
   const topics = [
     {
       slug:'operations', sequence:1, title:'Colab interface and general operations', nav:'Interface & operations', figure:'cell-flow',
-      lead:'Learn the notebook workflow first: read a cell, edit only what is requested, run it, inspect the output, and correct the code before validating.',
-      definition:'A Python notebook is a sequence of code cells. Variables store values, operators transform them, and print(...) makes a result visible. Execution is top-to-bottom inside the cell, so the order of instructions matters.',
-      goals:['Identify the code cell, Run control and output area.','Use assignment with = and arithmetic operators + - * /.','Use ** for powers and square roots.','Read errors as feedback instead of guessing.'],
+      lead:'Before calculating, understand the tool: Python is the programming language, Google Colab is the notebook interface, and a code cell describes a repeatable process rather than only displaying a final number.',
+      definition:'A Python notebook is a sequence of executable code cells. Variables store values, operators transform them, and print(...) makes a result visible. Colab sends the instructions in a cell to a Python runtime and then displays either an output or an error. Execution inside a cell follows the written order, so an instruction can use values created by earlier instructions.',
+      goals:['Explain the difference between Python and Google Colab.','Identify the code cell, Run control and output area.','Use assignment with = and arithmetic operators + - * /.','Use ** for powers and square roots and % for remainder.','Read errors as feedback instead of guessing.','Distinguish a one-off calculator result from a reusable Python process.'],
       syntax:[['Store a value','x = 10'],['Show a value','print(x)'],['Arithmetic','a + b   a - b   a * b   a / b'],['Power','x ** 2'],['Square root','x ** 0.5'],['Remainder','x % 2']],
       example:'a = 20\nb = 5\nresult = (a + b) / 5\nprint(result)',
-      caption:'The cell stores values, computes an expression, then prints one output. Run the complete cell after each correction.',
-      pitfalls:['Using ^ instead of ** for exponentiation.','Changing several lines at once and losing track of the error.','Reading a syntax error as a wrong mathematical result.'],
-      intro:'Complete every stage. The next topic stays locked until all six required stages are correct.',
+      caption:'The notebook preserves the instructions as well as the result. Run the complete cell, inspect what Python returns, and correct the cell when necessary.',
+      pitfalls:['Using ^ instead of ** for exponentiation.','Changing several lines at once and losing track of the error.','Reading a syntax error as a wrong mathematical result.','Typing only a final number instead of describing the process with Python instructions.'],
+      intro:'Complete all ten required stages. Coding stages start blank: read the instruction, design the Python steps yourself, run the cell, inspect the output, and then validate it. The next topic stays locked until all 10 stages are correct.',
       exercises:[
-        {key:'op-01',title:'Assignment + addition',prompt:'Create result from a and b, then print it.',mode:'code',code:'a = 17\nb = 8\n# create result using a and b\nresult = a + b\nprint(result)'},
-        {key:'op-02',title:'Order of operations',prompt:'Print the result of 2 + 3 * 4 without adding unnecessary parentheses.',mode:'code',code:'print(2 + 3 * 4)'},
-        {key:'op-03',title:'Power',prompt:'Print 9 squared using **.',mode:'code',code:'x = 9\nprint(x ** 2)'},
-        {key:'op-04',title:'Square root',prompt:'Print the square root of 81 using ** 0.5.',mode:'code',code:'x = 81\nprint(x ** 0.5)'},
-        {key:'op-05',title:'Operator meaning',prompt:'Which symbol is exponentiation in Python?',mode:'choice',choices:['^','**','//','%%']},
-        {key:'op-06',title:'Notebook workflow',prompt:'Which sequence is the best workflow after editing a code cell?',mode:'choice',choices:['Validate first → run later','Run → inspect output → correct if needed','Copy the answer → run','Refresh the browser after every line']}
+        {key:'op-01',title:'Build two variables and add them',prompt:'Start from a blank Python cell. Create one variable with the value 17 and a second variable with the value 8. Create a third variable that stores the sum of the first two values. Finally, display only the final result. Do not type the final numerical answer directly: the cell must show the complete process.',mode:'code',code:''},
+        {key:'op-02',title:'Write one arithmetic expression',prompt:'Start from a blank cell. Write one Python instruction that evaluates 2 plus 3 multiplied by 4 and displays the result. Let Python apply its normal order of operations. Do not type the final numerical answer directly.',mode:'code',code:''},
+        {key:'op-03',title:'Represent a power in Python',prompt:'Start from a blank cell. Store the value 9 in a variable. Then calculate the square of that variable using Python exponentiation and display the result. The purpose is to construct the operation, not to type 81 directly.',mode:'code',code:''},
+        {key:'op-04',title:'Represent a square root in Python',prompt:'Start from a blank cell. Store the value 81 in a variable. Calculate its square root using a fractional exponent and display the result. Build the complete expression yourself from the theory above.',mode:'code',code:''},
+        {key:'op-05',title:'Recognize Python exponentiation',prompt:'Choose the symbol Python uses for exponentiation. Think about the difference between mathematical notation and programming notation.',mode:'choice',choices:['^','**','//','%%']},
+        {key:'op-06',title:'Choose the correct notebook workflow',prompt:'Choose the workflow that best represents how a student should work in Colab: write or edit the cell, run it, inspect the output or error, correct the cell if necessary, and only then validate the activity.',mode:'choice',choices:['Validate first → run later','Run → inspect output → correct if needed','Copy the answer → run','Refresh the browser after every line']},
+        {key:'op-07',title:'Use the remainder operator',prompt:'Start from a blank cell. Store 29 in a variable that represents a total number of items and store 6 in another variable that represents the size of each complete group. Use the Python remainder operator to determine how many items are left over, and display only that remainder.',mode:'code',code:''},
+        {key:'op-08',title:'Divide a total into equal parts',prompt:'Start from a blank cell. Store 84 as a total and 7 as the number of equal parts. Create a new variable that stores the result of dividing the total by the number of parts, then display that result.',mode:'code',code:''},
+        {key:'op-09',title:'Control order with parentheses',prompt:'Start from a blank cell. Store 10 in one variable and 4 in another. Add the two stored values first, then multiply that sum by 2. Use parentheses so the intended order is explicit, and display the final result.',mode:'code',code:''},
+        {key:'op-10',title:'Use a previous result in a later step',prompt:'Start from a blank cell. Store 6 in one variable and 3 in another. Create a third variable containing their product. Then use that third variable in a new expression that adds 2, and display only the final result. This stage checks that you understand top-to-bottom execution and reuse of stored values.',mode:'code',code:''}
       ]
     },
     {
@@ -329,6 +333,110 @@
     return '<div class="stats-visual"><div><span>count</span><strong>len(values)</strong></div><div><span>mean</span><strong>sum / len</strong></div><div><span>range</span><strong>max - min</strong></div></div>';
   }
 
+  function renderOperationsFoundation(){
+    return `
+      <section class="op-foundation" data-topic01-foundation>
+        <div class="op-foundation-hero">
+          <div class="op-course-mark" aria-label="Python notebook learning mark">
+            <svg viewBox="0 0 120 120" role="img" aria-label="Minimal Python notebook icon">
+              <rect x="14" y="14" width="92" height="92" rx="22" class="mark-frame"></rect>
+              <path d="M34 39h32c10 0 15 5 15 15v7H53c-10 0-16 5-16 15v8" class="mark-path"></path>
+              <path d="M86 81H54c-10 0-15-5-15-15v-7h28c10 0 16-5 16-15v-8" class="mark-path second"></path>
+              <circle cx="52" cy="35" r="3.5" class="mark-dot"></circle>
+              <circle cx="68" cy="85" r="3.5" class="mark-dot"></circle>
+            </svg>
+            <div><strong>PYTHON</strong><span>NOTEBOOK LAB · TOPIC 01</span></div>
+          </div>
+          <div class="op-foundation-copy">
+            <p class="eyebrow">START HERE · BEFORE THE WORKSHOP</p>
+            <h3>What are Python and Google Colab?</h3>
+            <p><strong>Python</strong> is a programming language: a formal way to write instructions that a computer can interpret and execute. It can be used for calculations, automation, data analysis, statistics, scientific computing, websites, artificial intelligence and many other tasks.</p>
+            <p><strong>Google Colab</strong> is a browser-based notebook environment. It gives you a page made of cells where you can write Python, run it, inspect the result, correct the instructions and document the process. Colab is not Python: <strong>Python is the language; Colab is one interface where you can use that language.</strong></p>
+          </div>
+        </div>
+
+        <div class="op-concept-grid">
+          <article class="op-concept-card">
+            <div class="op-card-label">01 · LANGUAGE</div>
+            <h4>Python describes a process</h4>
+            <p>A Python program is a sequence of instructions. Those instructions can store data, transform values, make decisions, repeat procedures and reuse previous results. A simple arithmetic exercise is the first step toward describing a complete statistical procedure.</p>
+            <div class="op-motion op-python-flow" aria-hidden="true"><span>INSTRUCTION</span><i></i><span>PYTHON</span><i></i><span>RESULT</span></div>
+          </article>
+
+          <article class="op-concept-card">
+            <div class="op-card-label">02 · NOTEBOOK</div>
+            <h4>Colab organizes Python into cells</h4>
+            <p>A code cell is an editable block containing Python instructions. Pressing Run sends the complete cell to the Python runtime. Colab then places the returned output or error immediately below the cell.</p>
+            <div class="op-notebook-demo" aria-hidden="true">
+              <div class="op-browser-bar"><b></b><b></b><b></b><span>COLAB NOTEBOOK</span></div>
+              <div class="op-cell-demo"><span class="op-run-dot">▶</span><div class="op-code-lines"><i></i><i></i><i></i></div></div>
+              <div class="op-output-demo"><span>OUTPUT</span><b></b></div>
+            </div>
+          </article>
+
+          <article class="op-concept-card">
+            <div class="op-card-label">03 · EXECUTION</div>
+            <h4>Order matters</h4>
+            <p>Inside one cell, Python executes instructions from top to bottom. A later line can reuse a value created by an earlier line. Running the complete cell again reproduces the same process with the current instructions.</p>
+            <div class="op-sequence" aria-hidden="true"><span>1</span><i></i><span>2</span><i></i><span>3</span><i></i><span>OUTPUT</span></div>
+          </article>
+        </div>
+
+        <article class="op-compare-panel">
+          <div class="op-section-copy">
+            <p class="eyebrow">CALCULATOR VS PYTHON / COLAB</p>
+            <h3>Both can calculate. A notebook also preserves and scales the procedure.</h3>
+            <p>A calculator is designed to obtain a direct result quickly. A Python notebook can also calculate, but its major advantage is that the instructions, variable names and intermediate steps remain visible and reusable. Change the input data and the same procedure can run again without rebuilding the calculation from scratch.</p>
+          </div>
+          <div class="op-compare-grid">
+            <div class="op-compare-card calculator">
+              <span class="op-compare-title">CALCULATOR</span>
+              <div class="calc-display">14</div>
+              <div class="calc-keys" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <ul><li>Excellent for a direct one-time calculation.</li><li>Usually emphasizes the final numerical result.</li><li>The complete procedure is not normally stored as a reusable program.</li></ul>
+            </div>
+            <div class="op-vs">VS</div>
+            <div class="op-compare-card notebook">
+              <span class="op-compare-title">PYTHON / COLAB</span>
+              <div class="notebook-process" aria-hidden="true"><span>DATA</span><i></i><span>INSTRUCTIONS</span><i></i><span>OUTPUT</span></div>
+              <ul><li>Stores named values and a sequence of instructions.</li><li>Repeats the same procedure with different data.</li><li>Scales from one calculation to lists, datasets, graphs and statistical analysis.</li></ul>
+            </div>
+          </div>
+        </article>
+
+        <div class="op-theory-split">
+          <article class="op-theory-panel">
+            <p class="eyebrow">ANATOMY OF A COLAB CELL</p>
+            <h3>Know what each part of the interface does.</h3>
+            <div class="op-anatomy" aria-label="Animated notebook cell anatomy">
+              <div class="anatomy-run"><span>1</span><b>Run</b><small>Executes the complete code cell.</small></div>
+              <div class="anatomy-cell"><span>2</span><b>Code cell</b><small>Where you write and edit Python instructions.</small><i></i><i></i><i></i></div>
+              <div class="anatomy-output"><span>3</span><b>Output</b><small>Where Colab shows printed values, results or errors.</small></div>
+            </div>
+          </article>
+
+          <article class="op-theory-panel">
+            <p class="eyebrow">THE PROGRAMMING FEEDBACK LOOP</p>
+            <h3>An error is information, not the end of the task.</h3>
+            <p>A useful beginner workflow is iterative: write a small step, run it, read the output or error, correct one thing, and run again. This is different from guessing repeatedly without reading what Python reports.</p>
+            <div class="op-loop-diagram" aria-hidden="true"><span>WRITE</span><i></i><span>RUN</span><i></i><span>READ</span><i></i><span>CORRECT</span><i></i></div>
+          </article>
+        </div>
+
+        <article class="op-why-panel">
+          <div><p class="eyebrow">WHY THIS MATTERS FOR STATISTICS</p><h3>Today: a few values. Later: an entire dataset.</h3></div>
+          <div class="op-scale-animation" aria-hidden="true"><span class="one-value">1 VALUE</span><i></i><span class="many-values">100 VALUES</span><i></i><span class="dataset">DATASET</span><i></i><span class="analysis">ANALYSIS</span></div>
+          <p>The objective is not simply to make Python behave like a calculator. The objective is to learn to express a procedure clearly enough that the computer can reproduce it. The same habit used here for addition, division and powers will later be used for arrays, descriptive statistics, graphs and data analysis.</p>
+        </article>
+
+        <div class="op-workshop-rule"><strong>Workshop rule · 10 required stages</strong><span>The coding cell intentionally starts blank. The instructions explain what the program must do, but the student must construct the Python. Run the cell, inspect the output, correct it if needed, and validate only after the current code has been executed.</span></div>
+      </section>`;
+  }
+
+  function renderTopicFoundation(topic){
+    return topic.slug === 'operations' ? renderOperationsFoundation() : '';
+  }
+
   function renderLesson(){
     const topic=bySlug[state.activeSlug]; const progress=topicProgress(topic.slug);
     if(!topic || !progress || progress.status==='locked'){
@@ -340,6 +448,7 @@
     $('lessonMount').classList.remove('swap-in'); void $('lessonMount').offsetWidth; $('lessonMount').classList.add('swap-in');
     $('lessonMount').innerHTML=`
       <header class="lesson-header"><div><div class="lesson-index">Topic ${String(topic.sequence).padStart(2,'0')} · ${escapeHtml(progress.status.replace('_',' '))}</div><h2 class="lesson-title">${escapeHtml(topic.title)}</h2><p class="lesson-lead">${escapeHtml(topic.lead)}</p></div><div><strong>${progress.percent}%</strong><div class="topic-status-line">${progress.correct_count}/${progress.total_count} workshop stages</div></div></header>
+      ${renderTopicFoundation(topic)}
       <div class="lesson-grid">
         <article class="panel"><h3>Core idea</h3><p class="definition">${escapeHtml(topic.definition)}</p><h3 style="margin-top:22px">Learning goals</h3><ul class="learning-goals">${goals}</ul><div class="syntax-list">${syntax}</div></article>
         <article class="panel soft figure-panel"><div class="figure-label">Visual model</div>${renderFigure(topic.figure)}<div class="example-block"><h3>Worked example</h3><div class="code-card"><pre>${escapeHtml(topic.example)}</pre></div><p class="code-caption">${escapeHtml(topic.caption)}</p></div></article>
@@ -372,12 +481,16 @@
     const feedback=state.lastValidation && state.lastValidation.topic===topic.slug && state.lastValidation.key===ex.key ? state.lastValidation : null;
     let work='';
     if(ex.mode==='code'){
-      work=`<div class="workspace-column"><div class="editor-toolbar"><strong>Python cell</strong><div class="editor-actions"><button id="resetCode" class="small-button" type="button">Reset</button><button id="runCode" class="small-button primary" type="button">▶ Run</button></div></div><textarea id="codeEditor" class="code-editor" spellcheck="false">${escapeHtml(ex.code)}</textarea><div class="output-wrap"><div class="output-label"><span>Output</span><span id="runtimeStatus" class="runtime-badge">Python runtime</span></div><pre id="codeOutput" class="output">${escapeHtml(state.lastCode===ex.code?state.lastOutput:'Run the cell to inspect its output.')}</pre></div><div class="validate-row"><span>Validation happens on the course backend; expected answers are not stored in this page.</span><button id="validateCode" class="button button-dark" type="button">Validate output</button></div></div>`;
+      const blankStart = topic.slug === 'operations';
+      const resetLabel = blankStart ? 'Clear cell' : 'Reset';
+      const placeholder = blankStart ? 'Write your complete Python solution here. This cell intentionally starts blank.' : '';
+      const blankNote = blankStart ? '<div class="op-blank-note"><strong>Blank-cell challenge</strong><span>No starter solution is provided. Translate the instructions into Python yourself.</span></div>' : '';
+      work=`<div class="workspace-column"><div class="editor-toolbar"><strong>${blankStart?'Student Python cell · starts blank':'Python cell'}</strong><div class="editor-actions"><button id="resetCode" class="small-button" type="button">${resetLabel}</button><button id="runCode" class="small-button primary" type="button">▶ Run</button></div></div>${blankNote}<textarea id="codeEditor" class="code-editor" spellcheck="false" placeholder="${placeholder}">${escapeHtml(ex.code)}</textarea><div class="output-wrap"><div class="output-label"><span>Output</span><span id="runtimeStatus" class="runtime-badge">Python runtime</span></div><pre id="codeOutput" class="output">${escapeHtml(state.lastCode===ex.code && ex.code ? state.lastOutput : 'Run the cell to inspect its output.')}</pre></div><div class="validate-row"><span>Validation happens on the course backend; expected answers are not stored in this page.</span><button id="validateCode" class="button button-dark" type="button">Validate output</button></div></div>`;
     } else {
-      const choices=ex.choices.map((choice,i)=>`<label class="choice-option"><input type="radio" name="choice" value="${escapeHtml(choice)}"><span>${escapeHtml(choice)}</span></label>`).join('');
+      const choices=ex.choices.map(choice=>`<label class="choice-option"><input type="radio" name="choice" value="${escapeHtml(choice)}"><span>${escapeHtml(choice)}</span></label>`).join('');
       work=`<div class="workspace-column"><div class="choice-list">${choices}</div><div class="validate-row"><span>Select one answer, then validate it with the backend.</span><button id="validateChoice" class="button button-dark" type="button">Validate answer</button></div></div>`;
     }
-    $('stageMount').innerHTML=`<div class="stage-body"><div class="stage-instructions"><div class="stage-kicker">Stage ${state.stageIndex+1} of ${topic.exercises.length}</div><h4>${escapeHtml(ex.title)}</h4><p>${escapeHtml(ex.prompt)}</p><div class="stage-status ${item.correct?'ok':''}">${item.correct?'✓ Completed correctly':`Attempts: ${item.tries||0} · This stage must be correct to count.`}</div>${feedback?`<div class="stage-status ${feedback.correct?'ok':''}">${feedback.correct?'Correct. Progress saved.':'Not correct yet. Inspect the code/output and try again.'}</div>`:''}</div>${work}</div>`;
+    $('stageMount').innerHTML=`<div class="stage-body ${topic.slug==='operations'?'topic01-stage':''}"><div class="stage-instructions"><div class="stage-kicker">Stage ${state.stageIndex+1} of ${topic.exercises.length}</div><h4>${escapeHtml(ex.title)}</h4><p>${escapeHtml(ex.prompt)}</p><div class="stage-status ${item.correct?'ok':''}">${item.correct?'✓ Completed correctly':`Attempts: ${item.tries||0} · This stage must be correct to count.`}</div>${feedback?`<div class="stage-status ${feedback.correct?'ok':''}">${feedback.correct?'Correct. Progress saved.':'Not correct yet. Inspect the code/output and try again.'}</div>`:''}</div>${work}</div>`;
     if(ex.mode==='code') bindCodeStage(topic,ex); else bindChoiceStage(topic,ex);
   }
 
@@ -403,7 +516,7 @@
   function bindCodeStage(topic,ex){
     const editor=$('codeEditor');
     editor.addEventListener('keydown',event=>{if(event.key==='Tab'){event.preventDefault();const start=editor.selectionStart,end=editor.selectionEnd;editor.value=editor.value.slice(0,start)+'    '+editor.value.slice(end);editor.selectionStart=editor.selectionEnd=start+4;}});
-    $('resetCode').addEventListener('click',()=>{editor.value=ex.code;state.lastOutput='';state.lastCode='';$('codeOutput').textContent='Code reset. Run the cell again.';});
+    $('resetCode').addEventListener('click',()=>{editor.value=topic.slug==='operations'?'':ex.code;state.lastOutput='';state.lastCode='';$('codeOutput').textContent=topic.slug==='operations'?'Cell cleared. Write your solution, then run it.':'Code reset. Run the cell again.';});
     $('runCode').addEventListener('click',async()=>{
       const badge=$('runtimeStatus'); badge.textContent='Loading / running…';badge.classList.add('loading');$('runCode').disabled=true;
       try{const code=editor.value;const output=await runPython(code);state.lastOutput=output;state.lastCode=code;$('codeOutput').textContent=output || '(no printed output)';badge.textContent='Python ready';badge.className='runtime-badge ready';}
@@ -411,6 +524,7 @@
       finally{$('runCode').disabled=false;}
     });
     $('validateCode').addEventListener('click',async()=>{
+      if(!editor.value.trim()){$('codeOutput').textContent='Write your Python solution before running and validating it.';return;}
       if(state.lastCode!==editor.value){$('codeOutput').textContent='Run the current code before validating it.';return;}
       await validateStage(topic,ex,state.lastOutput,editor.value);
     });
