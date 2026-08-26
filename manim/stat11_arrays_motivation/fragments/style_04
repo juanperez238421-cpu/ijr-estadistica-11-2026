@@ -1,0 +1,144 @@
+        *,
+        box_size: float = 0.78,
+        font_size: int = 38,
+        buff: float = 0.12,
+    ) -> VGroup:
+        boxes = VGroup(*[
+            Square(
+                side_length=box_size,
+                stroke_color=BLACK_LINE,
+                stroke_width=1.7,
+                fill_color=WHITE_FILL,
+                fill_opacity=1.0,
+            )
+            for _ in values
+        ])
+        boxes.arrange(RIGHT, buff=buff)
+        texts = VGroup(*[self.math(str(value), font_size) for value in values])
+        for box, value in zip(boxes, texts):
+            self.fit(value, box_size - 0.12, box_size - 0.12)
+            value.move_to(box)
+        return VGroup(boxes, texts)
+
+    def process_map(
+        self,
+        steps: Sequence[tuple[str, str]],
+        *,
+        card_width: float = 4.3,
+        card_height: float = 1.10,
+        columns: int = 3,
+    ) -> VGroup:
+        """Create a compact method/recipe map for final summaries."""
+        cards = VGroup()
+        for number, text_value in steps:
+            badge = RoundedRectangle(
+                width=0.66,
+                height=0.50,
+                corner_radius=0.08,
+                stroke_color=BLACK_LINE,
+                stroke_width=1.5,
+                fill_color=VERY_LIGHT_GRAY,
+                fill_opacity=1,
+            )
+            badge_text = self.text(number, 19, BOLD).move_to(badge)
+            body = self.text(text_value, 21, BOLD)
+            content = VGroup(VGroup(badge, badge_text), body).arrange(RIGHT, buff=0.18)
+            self.fit(content, card_width - 0.35, card_height - 0.20)
+            box = RoundedRectangle(
+                width=card_width,
+                height=card_height,
+                corner_radius=0.10,
+                stroke_color=BLACK_LINE,
+                stroke_width=1.5,
+                fill_color=WHITE_FILL,
+                fill_opacity=1,
+            )
+            content.move_to(box)
+            cards.add(VGroup(box, content))
+        cards.arrange_in_grid(cols=columns, buff=(0.25, 0.25))
+        return cards
+
+    # ---------------------------------------------------------------------
+    # Standard opening/closing
+    # ---------------------------------------------------------------------
+    def standard_opening(
+        self,
+        course_label: str,
+        title: str,
+        subtitle: str,
+        promise: str,
+    ) -> None:
+        label = self.text(course_label, 28, BOLD)
+        title_mob = self.text(title, 50, BOLD)
+        rule = Line(LEFT * 5.5, RIGHT * 5.5, color=BLACK_LINE, stroke_width=2.2)
+        subtitle_mob = self.text(subtitle, 27)
+        promise_mob = self.text(promise, 25, MEDIUM)
+        group = VGroup(label, title_mob, rule, subtitle_mob, promise_mob)
+        group.arrange(DOWN, buff=0.30)
+        self.fit(group, 14.4, 6.6)
+
+        self.play(FadeIn(label, shift=UP * 0.18), run_time=RUN_NORMAL)
+        self.play(Write(title_mob), run_time=RUN_SLOW)
+        self.play(Create(rule), FadeIn(subtitle_mob), run_time=RUN_NORMAL)
+        self.wait(PAUSE_EXPLAIN)
+        self.play(FadeIn(promise_mob, shift=UP * 0.15), run_time=RUN_NORMAL)
+        self.wait(PAUSE_FINAL)
+        self.play(FadeOut(group), run_time=RUN_NORMAL)
+
+    def standard_closing(self, sentence: str) -> None:
+        closing = self.text(sentence, 34, BOLD)
+        self.fit(closing, 13.8, 1.2)
+        closing.move_to(ORIGIN)
+        self.play(*[FadeOut(mob) for mob in list(self.mobjects)], run_time=RUN_NORMAL)
+        self.play(FadeIn(closing), run_time=RUN_SLOW)
+        self.wait(PAUSE_FINAL)
+        self.play(FadeOut(closing), run_time=RUN_NORMAL)
+
+
+# =============================================================================
+# OPTIONAL SPECIALIZED BASES
+# =============================================================================
+class JPMathClassroomScene(JPClassroomScene):
+    """Alias base for mathematics/statistics/physics 2D classroom lessons."""
+
+
+class JPThreeDClassroomScene(ThreeDScene):
+    """3D companion with the same visual constants.
+
+    Use when a scene genuinely needs ThreeDScene. For mixed 2D/3D lessons,
+    keep 3D segments separate and preserve the same monochrome hierarchy.
+    """
+
+    def setup(self) -> None:
+        super().setup()
+        self.camera.background_color = WHITE
+
+    def text(self, content: str, size: int = 30, weight=NORMAL, **kwargs) -> Text:
+        return Text(content, font_size=size, color=BLACK_TEXT, weight=weight, **kwargs)
+
+    def math(self, expression: str, size: int = 38, **kwargs) -> MathTex:
+        return MathTex(expression, font_size=size, color=BLACK_TEXT, **kwargs)
+
+
+# =============================================================================
+# UTILITY VALIDATORS FOR LESSON DATA
+# =============================================================================
+def assert_close(actual: float, expected: float, *, tol: float = 1e-10, label: str = "value") -> None:
+    if abs(actual - expected) > tol:
+        raise AssertionError(f"{label}: expected {expected}, got {actual}")
+
+
+def validate_relative_asset(path: str | Path) -> Path:
+    path = Path(path)
+    if path.is_absolute():
+        raise ValueError(f"Absolute asset path is not portable: {path}")
+    if not path.exists():
+        raise FileNotFoundError(path)
+    return path
+
+
+def validate_all(checks: Sequence[tuple[str, Callable[[], bool]]]) -> None:
+    """Run named lesson checks with useful failure messages."""
+    failed = [name for name, check in checks if not check()]
+    if failed:
+        raise AssertionError("Lesson validation failed: " + ", ".join(failed))
