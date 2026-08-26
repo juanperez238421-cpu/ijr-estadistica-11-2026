@@ -1,0 +1,180 @@
+    def opening(self) -> None:
+        self.standard_opening(
+            "STATISTICS 11 · PYTHON / COLAB",
+            "FROM VARIABLES TO ARRAYS",
+            "Why one variable is not enough for a dataset",
+            "Create the need first. Introduce the list second.",
+        )
+
+    # ------------------------------------------------------------------
+    # 01 — Activate prior knowledge
+    # ------------------------------------------------------------------
+    def one_variable_one_value(self) -> None:
+        self.set_header(
+            1,
+            "START WITH WHAT YOU ALREADY KNOW",
+            "A variable gives one value a name. That model is perfect while the problem contains only one value.",
+        )
+
+        code = self.code_panel(
+            ["score = 4.2", "print(score)"],
+            width=6.0,
+            title="WHAT YOU KNOW NOW",
+            line_size=31,
+        )
+        relation = VGroup(
+            self.text("score", 34, BOLD),
+            Arrow(LEFT, RIGHT, color=BLACK_LINE, stroke_width=2.4).scale(0.65),
+            RoundedRectangle(
+                width=2.0,
+                height=1.05,
+                corner_radius=0.10,
+                stroke_color=BLACK_LINE,
+                stroke_width=2.0,
+                fill_color=WHITE_FILL,
+                fill_opacity=1.0,
+            ),
+        )
+        relation.arrange(RIGHT, buff=0.25)
+        value = self.text("4.2", 36, BOLD).move_to(relation[2])
+        relation.add(value)
+
+        note = self.note_panel(
+            "CURRENT MODEL",
+            [
+                "1 variable name",
+                "1 stored value",
+                "Easy to read and reuse",
+            ],
+            width=5.7,
+            title_size=25,
+            body_size=24,
+        )
+        right = VGroup(relation, note).arrange(DOWN, buff=0.42)
+        layout = self.split_layout(code, right, center_y=-0.45)
+        self.assert_content_safe(layout.group, "section 1 layout")
+
+        self.play(FadeIn(code), run_time=RUN_NORMAL)
+        self.wait(PAUSE_READ)
+        self.play(FadeIn(relation, shift=UP * 0.12), run_time=RUN_NORMAL)
+        self.wait(PAUSE_EXPLAIN)
+        self.play(FadeIn(note), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+        self.clear_stage()
+
+    # ------------------------------------------------------------------
+    # 02 — Let the old model become cumbersome
+    # ------------------------------------------------------------------
+    def dataset_grows(self) -> None:
+        self.set_header(
+            2,
+            "NOW THE DATASET GROWS",
+            "The same idea still works, but repeated variable names begin to describe the bookkeeping instead of the data.",
+        )
+
+        prompt = self.prompt_card(
+            "A",
+            "Store the scores of five students using only variable assignments.",
+            width=13.0,
+            body_size=27,
+        )
+        prompt.move_to(UP * 1.85)
+
+        separate_lines = [
+            "score_1 = 4.2",
+            "score_2 = 3.8",
+            "score_3 = 4.5",
+            "score_4 = 3.2",
+            "score_5 = 4.0",
+        ]
+        separate_code = self.code_panel(
+            separate_lines,
+            width=6.2,
+            title="A CORRECT SOLUTION — FOR NOW",
+            line_size=27,
+        )
+
+        score_strip = self.array_strip("five values", SCORES, show_indexes=False)
+        question = self.note_panel(
+            "THIS WORKS. SO WHAT IS THE PROBLEM?",
+            [
+                "Five values require five names.",
+                "The values belong to one dataset,",
+                "but the code stores them separately.",
+            ],
+            width=6.1,
+            title_size=23,
+            body_size=22,
+        )
+        right = VGroup(score_strip, question).arrange(DOWN, buff=0.40)
+        body = self.split_layout(separate_code, right, center_y=-0.95)
+        group = VGroup(prompt, body.group)
+        self.assert_content_safe(group, "section 2 main layout")
+
+        self.play(FadeIn(prompt), run_time=RUN_NORMAL)
+        self.wait(PAUSE_EXPLAIN)
+        for line_mob in separate_code[1][1]:
+            self.play(FadeIn(line_mob, shift=RIGHT * 0.12), run_time=RUN_QUICK)
+            self.wait(PAUSE_SHORT)
+        self.play(FadeIn(separate_code[0]), FadeIn(separate_code[1][0]), run_time=RUN_QUICK)
+        self.play(FadeIn(score_strip), run_time=RUN_NORMAL)
+        self.wait(PAUSE_READ)
+        self.play(FadeIn(question), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+
+        # Scale the exact same bookkeeping problem from 5 to a realistic class.
+        self.clear_stage()
+        self.set_header(
+            2,
+            "WHAT IF THE CLASS HAS 30 STUDENTS?",
+            "Nothing is mathematically wrong with separate variables. The structure simply stops being practical.",
+        )
+
+        labels = VGroup(*[
+            self.text(f"score_{i} = ...", 23, MEDIUM)
+            for i in range(1, 16)
+        ])
+        labels.arrange_in_grid(rows=5, cols=3, buff=(0.55, 0.28))
+        labels.move_to(LEFT * 2.85 + DOWN * 0.50)
+
+        scale_card = VGroup(
+            self.text("30 students", 31, BOLD),
+            self.text("→", 34, BOLD),
+            self.text("30 variable names", 31, BOLD),
+        ).arrange(RIGHT, buff=0.28)
+        scale_box = RoundedRectangle(
+            width=6.0,
+            height=1.35,
+            corner_radius=0.12,
+            stroke_color=BLACK_LINE,
+            stroke_width=2.0,
+            fill_color=PAPER_GRAY,
+            fill_opacity=1.0,
+        )
+        scale_card.move_to(scale_box)
+        scale_group = VGroup(scale_box, scale_card).move_to(RIGHT * 3.75 + DOWN * 0.35)
+
+        tail = self.text("... score_30 = ...", 27, BOLD)
+        tail.next_to(labels, DOWN, buff=0.28)
+
+        clutter = VGroup(labels, tail, scale_group)
+        self.assert_content_safe(clutter, "section 2 scale layout")
+        self.play(
+            LaggedStart(*[FadeIn(label) for label in labels], lag_ratio=0.06),
+            run_time=RUN_SLOW * 2.0,
+        )
+        self.play(FadeIn(tail), run_time=RUN_NORMAL)
+        self.wait(PAUSE_READ)
+        self.play(FadeIn(scale_group), run_time=RUN_NORMAL)
+        self.wait(PAUSE_EXPLAIN)
+        self.focus_on(scale_group, width=7.4, pause=PAUSE_EXPLAIN)
+        self.wait(PAUSE_WORK)
+        self.clear_stage()
+
+    # ------------------------------------------------------------------
+    # 03 — State the design requirements before giving syntax
+    # ------------------------------------------------------------------
+    def extract_the_need(self) -> None:
+        self.set_header(
+            3,
+            "DEFINE THE NEED BEFORE THE NEW SYNTAX",
