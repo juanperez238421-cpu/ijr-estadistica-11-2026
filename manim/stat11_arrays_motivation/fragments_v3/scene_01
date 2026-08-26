@@ -1,0 +1,140 @@
+        divider = Line(LEFT * (width / 2 - 0.20), RIGHT * (width / 2 - 0.20), color=LIGHT_GRAY, stroke_width=1.6)
+        divider.next_to(header, DOWN, buff=0.20)
+        content = VGroup(header, divider, body).arrange(DOWN, aligned_edge=LEFT, buff=0.22)
+        self.fit(content, width - 0.55, 5.1)
+        content.move_to(panel).align_to(panel, UP).shift(DOWN * 0.18)
+        content.align_to(panel, LEFT).shift(RIGHT * 0.28)
+        group = VGroup(panel, content)
+        return group
+
+    def prompt_card(
+        self,
+        number: str,
+        prompt: str,
+        *,
+        width: float = 6.4,
+        body_size: int = 25,
+    ) -> VGroup:
+        """Classroom-safe prompt banner used before each coding task."""
+        badge = RoundedRectangle(
+            width=0.64,
+            height=0.52,
+            corner_radius=0.09,
+            stroke_color=BLACK_LINE,
+            stroke_width=1.6,
+            fill_color=VERY_LIGHT_GRAY,
+            fill_opacity=1.0,
+        )
+        badge_text = self.text(number, 20, BOLD).move_to(badge)
+        body = self.text(prompt, body_size, MEDIUM)
+        self.fit(body, width - 1.35, 1.15)
+        row = VGroup(VGroup(badge, badge_text), body).arrange(RIGHT, buff=0.20)
+        box = RoundedRectangle(
+            width=width,
+            height=max(1.05, row.height + 0.42),
+            corner_radius=0.10,
+            stroke_color=BLACK_LINE,
+            stroke_width=1.5,
+            fill_color=WHITE_FILL,
+            fill_opacity=1.0,
+        )
+        row.move_to(box).align_to(box, LEFT).shift(RIGHT * 0.22)
+        return VGroup(box, row)
+
+    def type_colab_cell(
+        self,
+        cell: VGroup,
+        *,
+        has_title: bool = True,
+        line_time: float = 0.78,
+        between: float = 0.26,
+        zoom_width: float | None = None,
+    ) -> None:
+        """Reveal a Colab cell like live typing instead of fading in finished code."""
+        prompt_group = cell[0]
+        cell_body = cell[1]
+        box = cell_body[0]
+        content = cell_body[1]
+
+        self.play(FadeIn(prompt_group, shift=RIGHT * 0.08), Create(box), run_time=RUN_QUICK)
+        if has_title:
+            title = content[0]
+            code_lines = content[1]
+            self.play(FadeIn(title), run_time=RUN_QUICK)
+        else:
+            code_lines = content
+
+        if zoom_width is not None:
+            self.camera.frame.save_state()
+            self.play(self.camera.frame.animate.set(width=zoom_width).move_to(cell), run_time=RUN_CAMERA)
+
+        for line in code_lines:
+            # Write() produces a visible left-to-right construction instead of
+            # revealing the completed line at once.
+            self.play(Write(line), run_time=line_time)
+            self.wait(between)
+
+        if zoom_width is not None:
+            self.play(Restore(self.camera.frame), run_time=RUN_CAMERA)
+
+    def reveal_colab_output(self, output: VGroup, *, pause: float = PAUSE_READ) -> None:
+        """Simulate a notebook result appearing after a cell is executed."""
+        tag_group = output[0]
+        output_body = output[1]
+        box = output_body[0]
+        lines = output_body[1]
+        self.play(FadeIn(tag_group), Create(box), run_time=RUN_QUICK)
+        self.play(LaggedStart(*[Write(line) for line in lines], lag_ratio=0.20), run_time=RUN_NORMAL)
+        self.wait(pause)
+
+    def run_pulse(self, cell: VGroup) -> None:
+        """Short visual cue representing pressing Run in Colab."""
+        cue = Circle(radius=0.18, stroke_color=BLACK_LINE, stroke_width=2.0, fill_color=VERY_LIGHT_GRAY, fill_opacity=1.0)
+        triangle = Triangle(stroke_color=BLACK_LINE, fill_color=BLACK_LINE, fill_opacity=1.0).scale(0.07).rotate(-PI / 2)
+        icon = VGroup(cue, triangle).move_to(cell[0])
+        self.play(FadeIn(icon), run_time=0.18)
+        self.play(icon.animate.scale(1.18), run_time=0.18)
+        self.play(FadeOut(icon), run_time=0.18)
+
+    def build_array_visual(self, strip: VGroup, *, show_indexes: bool = True) -> None:
+        """Construct an array visually one slot at a time."""
+        label, arrow, boxes, values = strip[0], strip[1], strip[2], strip[3]
+        self.play(FadeIn(label), GrowArrow(arrow), run_time=RUN_NORMAL)
+        for i, (box, value) in enumerate(zip(boxes, values)):
+            self.play(Create(box), Write(value), run_time=0.48)
+            if show_indexes and len(strip) > 4:
+                self.play(FadeIn(strip[4][i]), run_time=0.20)
+        if show_indexes and len(strip) > 5:
+            self.play(FadeIn(strip[5]), run_time=RUN_QUICK)
+
+    def array_boxes(
+        self,
+        name: str,
+        values: list[float | int],
+        *,
+        show_indexes: bool = True,
+        highlight_index: int | None = None,
+        box_width: float = 1.10,
+        box_height: float = 0.84,
+    ) -> VGroup:
+        label = self.text(name, 28, BOLD)
+        boxes = VGroup()
+        values_group = VGroup()
+        indexes = VGroup()
+        for i, val in enumerate(values):
+            fill = VERY_LIGHT_GRAY if highlight_index == i else WHITE_FILL
+            box = RoundedRectangle(
+                width=box_width,
+                height=box_height,
+                corner_radius=0.08,
+                stroke_color=BLACK_LINE,
+                stroke_width=1.7,
+                fill_color=fill,
+                fill_opacity=1.0,
+            )
+            value_mob = self.text(str(val), 25, BOLD).move_to(box)
+            boxes.add(box)
+            values_group.add(value_mob)
+            if show_indexes:
+                idx = self.text(str(i), 18, BOLD)
+                idx.next_to(box, DOWN, buff=0.10)
