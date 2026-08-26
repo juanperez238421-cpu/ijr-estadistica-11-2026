@@ -42,7 +42,10 @@
       script.async = true;
       script.crossOrigin = 'anonymous';
       script.dataset.ijrPyodideRuntime = 'v10';
+      const wait = waitForScript(script);
       document.head.appendChild(script);
+      await wait;
+      return;
     }
     await waitForScript(script);
   }
@@ -52,7 +55,10 @@
       setPhase('ready', 'Python ready', onStatus);
       return runtimeState.runtime;
     }
-    if (runtimeState.promise) return runtimeState.promise;
+    if (runtimeState.promise) {
+      setPhase(runtimeState.phase, runtimeState.detail, onStatus);
+      return runtimeState.promise;
+    }
 
     runtimeState.promise = (async () => {
       try {
@@ -122,6 +128,9 @@
       const message = stderr.length ? stderr.join('\n') : (error?.message || String(error));
       setPhase('error', 'Python error', onStatus);
       throw new Error(message);
+    } finally {
+      try { runtime.setStdout(); } catch {}
+      try { runtime.setStderr(); } catch {}
     }
   }
 
