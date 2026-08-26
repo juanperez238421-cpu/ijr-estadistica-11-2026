@@ -1,0 +1,61 @@
+name: Render Statistics 11 Comparisons Protocol V3 PR PQH
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'manim/stat11_comparisons_protocol_v3/**'
+      - '.github/workflows/render-stat11-comparisons-protocol-v3-pr.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stat11-comparisons-protocol-v3-pr-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout exact PR source
+        uses: actions/checkout@v4
+
+      - name: Run canonical literal PQL/PQH protocol
+        shell: bash
+        run: bash manim/stat11_comparisons_protocol_v3/render_protocol_v3.sh
+
+      - name: Upload final rendered MP4
+        uses: actions/upload-artifact@v4
+        with:
+          name: Stat11-Comparisons-Protocol-V3-FINAL-PQH
+          retention-days: 30
+          if-no-files-found: error
+          path: manim/stat11_comparisons_protocol_v3/delivery/Stat11_Comparisons_Protocol_V3_FINAL_PQH.mp4
+
+      - name: Upload canonical PQH package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Stat11-Comparisons-Protocol-V3-PQH-PACKAGE
+          retention-days: 30
+          if-no-files-found: error
+          path: manim/stat11_comparisons_protocol_v3/delivery/Stat11_Comparisons_Protocol_V3_PQH_PACKAGE.zip
+
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Stat11-Comparisons-Protocol-V3-QA
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            manim/stat11_comparisons_protocol_v3/qa/ffprobe.txt
+            manim/stat11_comparisons_protocol_v3/qa/decode_errors.log
+            manim/stat11_comparisons_protocol_v3/qa/final_mp4.sha256
+            manim/stat11_comparisons_protocol_v3/qa/source.sha256
+            manim/stat11_comparisons_protocol_v3/qa/style.sha256
+            manim/stat11_comparisons_protocol_v3/qa/audit_summary.txt
+            manim/stat11_comparisons_protocol_v3/qa/audit_frames/*.jpg
