@@ -13,7 +13,7 @@ mkdir -p src library delivery qa/audit_frames
 cat fragments/scene_* > src/stat11_comparisons_protocol_v3.py
 cat ../stat11_arrays_motivation/fragments/style_* > library/jp_classroom_style.py
 
-echo "7f331c6a06c33d5045931b77e24fbadab6e8ee053ce747d8dd45971e1aaa8c8d  src/stat11_comparisons_protocol_v3.py" | sha256sum -c -
+echo "5dbb7e429fc33738d34399eac9c0f109fc573f42021a8971f1e996716c4178ab  src/stat11_comparisons_protocol_v3.py" | sha256sum -c -
 echo "3f3f06e94d5cad870ad335502cc1a93e56ce675abb1231ded5f9c71fd3e60e3d  library/jp_classroom_style.py" | sha256sum -c -
 python -m py_compile src/stat11_comparisons_protocol_v3.py library/jp_classroom_style.py
 sha256sum src/stat11_comparisons_protocol_v3.py > qa/source.sha256
