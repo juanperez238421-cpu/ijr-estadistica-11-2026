@@ -4,7 +4,7 @@ window.IJR_PYTHON_HUB_CONFIG = Object.freeze({
   institutionalEmailDomain: 'ijr.edu.co',
   sessionStorageKey: 'ijr-stat11-python-hub-session-v2',
   rpc: Object.freeze({
-    register: 'python_hub_register_v1',
+    register: 'python_hub_register_v2',
     resume: 'python_hub_resume_v1',
     submit: 'python_hub_submit_v1'
   })
