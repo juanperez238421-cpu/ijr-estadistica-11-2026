@@ -4,26 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="light">
-  <meta name="description" content="Statistics 11 Python Learning Hub with registered individual/team progress and prerequisite-gated workshops.">
+  <meta name="description" content="Statistics 11 Python Learning Hub with separate theory and workshop pages, registered progress and prerequisite gating.">
   <title>Statistics 11 · Python Learning Hub</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
   <link rel="stylesheet" href="styles.css?v=20260826-hub-v1">
   <link rel="stylesheet" href="gated.css?v=20260826-hub-v3">
-  <link rel="stylesheet" href="operations-enrichment.css?v=20260826-topic01-v6">
+  <link rel="stylesheet" href="split-layout.css?v=20260826-split-v7">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
   <script defer src="config-v2.js?v=20260826-hub-v3"></script>
-  <script defer src="gated-app.js?v=20260826-topic01-v6"></script>
+  <script defer src="course-data-v4.js?v=20260826-split-v7"></script>
+  <script defer src="hub-router.js?v=20260826-split-v7"></script>
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="../" aria-label="Back to Statistics 11 home">
       <span class="brand-mark">IJR</span>
-      <span>
-        <small>Instituto Jorge Robledo · Statistics 11</small>
-        <strong>Python Learning Hub</strong>
-      </span>
+      <span><small>Instituto Jorge Robledo · Statistics 11</small><strong>Python Learning Hub</strong></span>
     </a>
     <div class="top-actions">
       <span id="sessionBadge" class="session-badge hidden">Not registered</span>
@@ -36,12 +33,12 @@
     <div class="registration-card">
       <p class="eyebrow">REGISTERED LEARNING PATH · RUTA CON PROGRESO</p>
       <h1>Learn one topic at a time.</h1>
-      <p class="registration-lead">Register as one student or as a workstation team. Your completed workshops are stored in the course backend. A topic unlocks only when the previous workshop is complete.</p>
+      <p class="registration-lead">Each unlocked topic now has two separate destinations: a full theory page for concepts and diagrams, and a full workshop page for practice and validation. The next topic unlocks only after the previous workshop is complete.</p>
 
       <div class="sequence-rule" aria-label="Course prerequisite rule">
         <strong>Prerequisite rule</strong>
         <span>01 Operations → 02 Variable Types → 03 Arrays → 04 Logic → 05 Conditions → 06 Loops → 07 Functions → 08 Statistics</span>
-        <small>Example: Arrays remain locked until Operations and Variable Types are complete.</small>
+        <small>Theory and workshop access follow the same prerequisite path.</small>
       </div>
 
       <form id="registrationForm" class="hub-registration-form">
@@ -59,25 +56,16 @@
             </select>
           </label>
           <label id="teamSizeWrap" class="hidden">Students at this computer
-            <select id="teamSize">
-              <option value="2">2 students</option>
-              <option value="3">3 students</option>
-            </select>
+            <select id="teamSize"><option value="2">2 students</option><option value="3">3 students</option></select>
           </label>
         </div>
 
         <fieldset class="member-fieldset">
           <legend>Institutional emails <small>· Correos institucionales</small></legend>
           <div class="member-grid">
-            <label>Student 1
-              <input id="memberEmail1" type="email" inputmode="email" autocomplete="email" required placeholder="student1@ijr.edu.co">
-            </label>
-            <label id="member2Wrap" class="hidden">Student 2
-              <input id="memberEmail2" type="email" inputmode="email" placeholder="student2@ijr.edu.co">
-            </label>
-            <label id="member3Wrap" class="hidden">Student 3
-              <input id="memberEmail3" type="email" inputmode="email" placeholder="student3@ijr.edu.co">
-            </label>
+            <label>Student 1<input id="memberEmail1" type="email" inputmode="email" autocomplete="email" required placeholder="student1@ijr.edu.co"></label>
+            <label id="member2Wrap" class="hidden">Student 2<input id="memberEmail2" type="email" inputmode="email" placeholder="student2@ijr.edu.co"></label>
+            <label id="member3Wrap" class="hidden">Student 3<input id="memberEmail3" type="email" inputmode="email" placeholder="student3@ijr.edu.co"></label>
           </div>
         </fieldset>
 
@@ -85,14 +73,11 @@
           <label>Progress code <small>· Código de progreso · only when resuming this exact registration on another browser/device</small>
             <input id="progressCode" type="text" inputmode="text" autocomplete="off" maxlength="8" placeholder="Example: A7F91C2D">
           </label>
-          <p>A new individual/team registration receives one 8-character code. Keep it private: the same group + email combination cannot be reopened on a new device without that code.</p>
+          <p>A new individual/team registration receives one 8-character code. This keeps the current cross-device resume behavior unchanged while the learning interface is being redesigned.</p>
         </div>
 
         <div class="registration-actions">
-          <div>
-            <strong>How progress works</strong>
-            <span>The exact group + email combination owns one learning path. This browser resumes automatically; a different browser must also provide the private progress code.</span>
-          </div>
+          <div><strong>How the new layout works</strong><span>Enter once, choose an unlocked topic, study its Theory page, then complete its Workshop page. Workshop validation controls the percentage and the next unlock.</span></div>
           <button id="registerButton" class="button button-dark" type="submit">Enter learning path</button>
         </div>
         <p id="registrationStatus" class="inline-status" role="status" aria-live="polite"></p>
@@ -100,57 +85,22 @@
     </div>
   </section>
 
-  <div id="hubPanel" class="app-layout hidden">
-    <aside class="sidebar" aria-label="Python topics">
-      <div class="sidebar-head">
-        <p class="eyebrow">LEARN BY SUBJECT</p>
-        <h2>Python foundations</h2>
-        <p id="identitySummary">Registered learning path</p>
-      </div>
-      <nav id="topicNav" class="topic-nav" aria-label="Course topics"></nav>
-      <div class="progress-card">
-        <div class="progress-copy"><span>Completed topics</span><strong id="progressText">0 / 8</strong></div>
-        <div class="progress-track" aria-hidden="true"><span id="progressBar"></span></div>
-        <p>Progress is stored in the course backend for this individual/team registration.</p>
-      </div>
-    </aside>
-
-    <main class="main-content">
-      <section class="hero gated-hero" aria-labelledby="pageTitle">
+  <main id="hubPanel" class="hub-shell hidden">
+    <section class="hub-overview">
+      <div>
         <p class="eyebrow">PYTHON · STATISTICS 11</p>
-        <h1 id="pageTitle">One topic. One complete workshop.</h1>
-        <p class="hero-copy">Each page follows the same learning pattern: concept → theory → visual model → worked example → complete workshop. The backend controls what unlocks next.</p>
-        <div id="resumeCodeNotice" class="resume-code-notice hidden" role="status" aria-live="polite">
-          <div>
-            <strong>Save your private progress code</strong>
-            <span>You will need it to reopen this exact individual/team path on another device.</span>
-          </div>
-          <code id="resumeCodeValue"></code>
-        </div>
-        <div class="hero-actions">
-          <button id="continueButton" class="button button-dark" type="button">Continue learning</button>
-          <a class="button button-light" href="#reference">Current command reference</a>
-        </div>
-        <div id="pathStrip" class="path-strip" aria-label="Learning path"></div>
-      </section>
+        <h1>Study the idea. Then solve the workshop.</h1>
+        <p id="identitySummary">Registered learning path</p>
+        <p>Every subject is separated into two focused pages: <strong>Theory</strong> contains explanations, official resources and animated diagrams; <strong>Workshop</strong> contains the complete practice layout, execution and validation.</p>
+        <div id="resumeCodeNotice" class="resume-code-notice hidden" role="status" aria-live="polite"><div><strong>Save your private progress code</strong><span>You will need it to reopen this exact path on another device.</span></div><code id="resumeCodeValue"></code></div>
+      </div>
+      <div class="global-progress-card"><span>Overall workshop progress</span><strong id="globalPercent">0%</strong><div class="progress-track"><span id="globalProgressBar"></span></div><small id="globalProgressCopy">0 workshop stages correct</small></div>
+    </section>
 
-      <section id="lessonMount" class="lesson-shell" aria-live="polite"></section>
+    <section class="topic-grid-heading"><p class="eyebrow">LEARN BY SUBJECT</p><h2>One topic · two dedicated pages</h2><p>Theory does not change your mastery percentage. Correct workshop stages do.</p></section>
+    <section id="topicGrid" class="hub-topic-grid" aria-live="polite"></section>
 
-      <section id="reference" class="reference-section" aria-labelledby="referenceTitle">
-        <div class="section-heading">
-          <p class="eyebrow">CURRENT REFERENCE</p>
-          <h2 id="referenceTitle">Commands released so far</h2>
-          <p>Only commands from completed topics and the current unlocked topic appear here.</p>
-        </div>
-        <div id="referenceGrid" class="reference-grid"></div>
-        <div class="reference-note"><strong>Progress rule:</strong> opening or reading a topic is not enough. The next topic unlocks only after every required workshop stage is correct.</div>
-      </section>
-
-      <footer class="footer">
-        <span>Instituto Jorge Robledo · Statistics / Programming 11° · 2026-2</span>
-        <a href="../">Course home</a>
-      </footer>
-    </main>
-  </div>
+    <footer class="footer"><span>Instituto Jorge Robledo · Statistics / Programming 11° · 2026-2</span><a href="../">Course home</a></footer>
+  </main>
 </body>
 </html>
