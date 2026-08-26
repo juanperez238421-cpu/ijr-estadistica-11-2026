@@ -8,13 +8,15 @@
   <title>Statistics 11 · Python Class 01</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20260820-class1-v11">
-  <link rel="stylesheet" href="class1-v10.css?v=20260820-class1-v11">
+  <link rel="stylesheet" href="styles.css?v=20260826-class1-v12">
+  <link rel="stylesheet" href="class1-v10.css?v=20260826-class1-v12">
+  <link rel="stylesheet" href="guidance-v12.css?v=20260826-class1-v12">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
-  <script defer src="config.js?v=20260820-class1-v11"></script>
-  <script defer src="resilience-v7.js?v=20260820-class1-v11"></script>
-  <script defer src="app.js?v=20260820-class1-v11"></script>
+  <script defer src="config.js?v=20260826-class1-v12"></script>
+  <script defer src="resilience-v7.js?v=20260826-class1-v12"></script>
+  <script defer src="app.js?v=20260826-class1-v12"></script>
+  <script defer src="guidance-v12.js?v=20260826-class1-v12"></script>
 </head>
 <body>
   <main class="app-shell">
@@ -37,7 +39,8 @@
       <div class="setup-card">
         <div class="setup-kicker">CLASS 01 · 36 GUIDED MIN · ≈ 40 MIN TOTAL</div>
         <h2>Operations, data types and arrays.</h2>
-        <p class="setup-lead">This first class stays intentionally basic. Your team will work only with arithmetic operations, core Python data types, and lists/arrays with simple indexes. <strong>No loops, functions, conditions or Pandas are used in this version.</strong></p>
+        <p class="setup-lead">This first class stays intentionally basic. Your team will work only with arithmetic operations, core Python data types, and lists/arrays with simple indexes. <strong>No loops, functions, conditions or Pandas are used in the graded stages.</strong></p>
+        <p class="setup-lead"><strong>Need a command reminder?</strong> Use the <strong>Python commands</strong> button in the top bar at any time. The reference includes arithmetic, powers, square roots, comparisons such as <code>&gt;=</code>, logical operators, lists, <code>sum()</code>, <code>len()</code>, and common mistakes. Reference-only commands are available even when they are not graded in this class.</p>
         <p class="setup-lead"><strong>Randomized classroom bank:</strong> the class contains 36 equivalent problem packs. Each workstation receives one persistent pack with the same learning structure but different numbers and answer options; simultaneous computers are assigned different packs before any pack is reused.</p>
 
         <div class="setup-points class1-roadmap" aria-label="Class roadmap">
@@ -55,7 +58,7 @@
             <div><strong>Reveal</strong><span>Revealing closes a stage for partial credit.</span></div>
             <div><strong>Skip</strong><span>Skipping closes a stage for zero credit.</span></div>
           </div>
-          <p>Python syntax/runtime errors do not lower the grade. Several stages are multiple-choice concept checks; others use the live Python cell.</p>
+          <p><strong>Work in this order:</strong> read the Stage objective → edit only what is requested → run the cell if it is a code stage → read the console → validate only after checking the result. Python syntax/runtime errors do not lower the grade.</p>
         </div>
 
         <form id="registrationForm" class="registration-form team-registration">
@@ -180,7 +183,7 @@
 
           <div id="codeInstruction1" class="cell-instruction">
             <div class="instruction-number">1</div>
-            <div><strong>Complete the cell.</strong><span>Replace every <code>WRITE_HERE</code>, then run the code.</span></div>
+            <div><strong>Edit only the requested part.</strong><span>Keep the provided values and variable names. Replace every <code>WRITE_HERE</code>; do not erase the rest of the cell unless the Stage objective explicitly tells you to.</span></div>
           </div>
 
           <div id="codeCell" class="code-cell">
@@ -193,7 +196,7 @@
 
           <div id="codeInstruction2" class="cell-instruction compact-instruction">
             <div class="instruction-number">2</div>
-            <div><strong>Run, read, and explain the output.</strong><span>A Python syntax/runtime error does not cost points.</span></div>
+            <div><strong>Press ▶ Run, then read the console.</strong><span>Python executes the whole cell. Read the last output line. If you see <code>ERROR</code>, correct the code and run again; a syntax/runtime error does not cost points.</span></div>
           </div>
 
           <section id="terminalCard" class="terminal-card" aria-label="Python terminal">
@@ -216,7 +219,7 @@
           <div class="validation-bar">
             <div class="validation-copy">
               <div id="activityStatus" class="validation-status">Loading stage…</div>
-              <div id="penaltyStatus" class="validation-help">Only recorded help, incorrect validations, revealed solutions, or skipped stages affect the projection.</div>
+              <div id="penaltyStatus" class="validation-help"><strong>Order:</strong> edit/select → run if needed → read/check the result → validate. Only recorded help, incorrect validations, revealed solutions, or skipped stages affect the projection.</div>
             </div>
             <div class="validation-actions">
               <button id="revealButton" type="button" class="text-action">Reveal correct solution</button>
@@ -233,7 +236,7 @@
         <div class="finish-icon">✓</div>
         <div class="setup-kicker">CLASS COMPLETED</div>
         <h2>Class 01 complete.</h2>
-        <p>Your team completed the first Python foundations: basic operations, core data types, and list/array indexing. No loops, functions, conditions or Pandas were part of this version.</p>
+        <p>Your team completed the first Python foundations: basic operations, core data types, and list/array indexing. The Python command reference remains available for additional practice.</p>
         <div class="finish-metrics">
           <div><span>Stages</span><strong id="finishPoints">8 / 8</strong></div>
           <div><span>Final grade</span><strong id="finishGrade">5.00</strong></div>
