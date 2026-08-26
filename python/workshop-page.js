@@ -10,8 +10,8 @@
   if(!config || !window.supabase || !topic){ document.body.innerHTML='<main style="padding:40px;font-family:sans-serif">Workshop could not be loaded.</main>'; return; }
 
   const client=window.supabase.createClient(config.supabaseUrl,config.supabasePublishableKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
-  const state={snapshot:null,registration:null,stageIndex:0,lastOutput:'',lastCode:'',lastValidation:null,pyodide:null,pyodidePromise:null};
-  const draftKey=`ijr-python-hub-workshop-drafts-v7:${topic.slug}`;
+  const state={snapshot:null,registration:null,stageIndex:0,lastOutput:'',lastCode:'',lastRunKey:null,lastRunOk:false,lastValidation:null,runtimeWarmStarted:false};
+  const draftKey=`ijr-python-hub-workshop-drafts-v10:${topic.slug}`;
 
   function getSession(){ try{return JSON.parse(localStorage.getItem(config.sessionStorageKey)||'null');}catch{return null;} }
   function readDrafts(){ try{return JSON.parse(sessionStorage.getItem(draftKey)||'{}');}catch{return {};} }
@@ -19,6 +19,7 @@
   async function rpc(name,args){ const {data,error}=await client.rpc(name,args); if(error) throw new Error(error.message||'Backend request failed'); return data; }
   function topicProgress(){ return state.snapshot?.topics?.find(item=>item.slug===topic.slug)||null; }
   function serverItem(key){ return topicProgress()?.items?.find(item=>item.key===key)||null; }
+  function resetRunState(){ state.lastOutput='';state.lastCode='';state.lastRunKey=null;state.lastRunOk=false; }
 
   async function resume(){
     const saved=getSession(); if(!saved?.registrationId||!saved?.accessToken) return false;
@@ -44,7 +45,7 @@
     $('stageNavTitle').textContent=topic.nav;
     $('stageNavProgress').textContent=`${Number(p.correct_count||0)} / ${Number(p.total_count||topic.exercises.length)} correct`;
     $('stageButtons').innerHTML=topic.exercises.map((ex,i)=>{const item=serverItem(ex.key);return `<button type="button" data-stage="${i}" class="workshop-nav-button ${i===state.stageIndex?'active':''} ${item?.correct?'correct':''}"><span>${String(i+1).padStart(2,'0')}</span><div><strong>${escapeHtml(ex.title)}</strong><small>${item?.correct?'Completed':`${Number(item?.tries||0)} attempt${Number(item?.tries||0)===1?'':'s'}`}</small></div></button>`;}).join('');
-    $('stageButtons').querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{state.stageIndex=Number(btn.dataset.stage);state.lastOutput='';state.lastCode='';state.lastValidation=null;render();}));
+    $('stageButtons').querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{state.stageIndex=Number(btn.dataset.stage);resetRunState();state.lastValidation=null;render();}));
     renderStage();
     if(p.status==='completed') renderCompletion(); else $('completionPanel').classList.add('hidden');
     $('workshopApp').classList.remove('hidden');
@@ -66,44 +67,93 @@
       const isBlankContract=topic.slug==='operations';
       workspace=`<div class="code-workspace ${isBlankContract?'blank-contract':''}">
         ${isBlankContract?'<div class="blank-contract-note"><strong>Blank-cell challenge</strong><span>No starter solution is provided. Build the instructions from the theory page and the problem statement.</span></div>':''}
-        <div class="editor-toolbar"><div><strong>Python cell</strong><small>${isBlankContract?'student-authored code':'editable starter code'}</small></div><div class="editor-actions"><button id="resetCode" class="small-button" type="button">${isBlankContract?'Clear cell':'Reset'}</button><button id="runCode" class="small-button primary" type="button">▶ Run</button></div></div>
-        <textarea id="codeEditor" class="code-editor workshop-editor" spellcheck="false">${escapeHtml(initial)}</textarea>
-        <div class="output-wrap"><div class="output-label"><span>Output</span><span id="runtimeStatus" class="runtime-badge">Python loads when needed</span></div><pre id="codeOutput" class="output">Run the current cell to inspect its output.</pre></div>
+        <div class="editor-toolbar"><div><strong>Python cell</strong><small>${isBlankContract?'student-authored code':'editable starter code'}</small></div><div class="editor-actions"><button id="resetCode" class="small-button" type="button">${isBlankContract?'Clear cell':'Reset'}</button><button id="runCode" class="small-button primary" type="button" aria-label="Run Python cell">▶ Run cell</button></div></div>
+        <textarea id="codeEditor" class="code-editor workshop-editor" spellcheck="false" aria-label="Python code editor">${escapeHtml(initial)}</textarea>
+        <div class="output-wrap"><div class="output-label"><span>Output</span><span id="runtimeStatus" class="runtime-badge" role="status" aria-live="polite">Runtime not started</span></div><pre id="codeOutput" class="output" aria-live="polite">Press ▶ Run cell to execute the current Python code.</pre></div>
         <div class="validate-row"><span>Expected answers remain on the course backend, not in this page.</span><button id="validateCode" class="button button-dark" type="button">Validate output</button></div>
       </div>`;
     }else{
       workspace=`<div class="choice-workspace"><div class="choice-list">${ex.choices.map(choice=>`<label class="choice-option"><input type="radio" name="choice" value="${escapeHtml(choice)}"><span>${escapeHtml(choice)}</span></label>`).join('')}</div><div class="validate-row"><span>Select one answer and validate it.</span><button id="validateChoice" class="button button-dark" type="button">Validate answer</button></div></div>`;
     }
-    $('stageMount').innerHTML=`<article class="workshop-stage-card"><div class="stage-problem"><div class="stage-kicker">Stage ${state.stageIndex+1} of ${topic.exercises.length}</div><h2>${escapeHtml(ex.title)}</h2><p>${escapeHtml(ex.prompt)}</p><div class="stage-status-row"><span class="stage-status ${item.correct?'ok':''}">${item.correct?'✓ Completed correctly':`Attempts: ${Number(item.tries||0)} · Correct validation required`}</span>${feedback?`<span class="stage-status ${feedback.correct?'ok':'error'}">${feedback.correct?'Correct. Progress saved.':'Not correct yet. Read the output and try again.'}</span>`:''}</div></div>${workspace}<div class="stage-footer-nav"><button id="previousStage" class="button button-light" type="button" ${state.stageIndex===0?'disabled':''}>Previous</button><button id="nextStage" class="button button-light" type="button" ${state.stageIndex===topic.exercises.length-1?'disabled':''}>Next</button></div></article>`;
-    $('previousStage').addEventListener('click',()=>{if(state.stageIndex>0){state.stageIndex--;state.lastValidation=null;state.lastOutput='';state.lastCode='';render();}});
-    $('nextStage').addEventListener('click',()=>{if(state.stageIndex<topic.exercises.length-1){state.stageIndex++;state.lastValidation=null;state.lastOutput='';state.lastCode='';render();}});
+    $('stageMount').innerHTML=`<article class="workshop-stage-card"><div class="stage-problem"><div class="stage-kicker">Stage ${state.stageIndex+1} of ${topic.exercises.length}</div><h2>${escapeHtml(ex.title)}</h2><p>${escapeHtml(ex.prompt)}</p><div class="stage-status-row"><span class="stage-status ${item.correct?'ok':''}">${item.correct?'✓ Completed correctly':`Attempts: ${Number(item.tries||0)} · Correct validation required`}</span>${feedback?`<span class="stage-status ${feedback.correct?'ok':'error'}">${feedback.correct?'Correct. Progress saved.':escapeHtml(feedback.message||'Not correct yet. Read the output and try again.')}</span>`:''}</div></div>${workspace}<div class="stage-footer-nav"><button id="previousStage" class="button button-light" type="button" ${state.stageIndex===0?'disabled':''}>Previous</button><button id="nextStage" class="button button-light" type="button" ${state.stageIndex===topic.exercises.length-1?'disabled':''}>Next</button></div></article>`;
+    $('previousStage').addEventListener('click',()=>{if(state.stageIndex>0){state.stageIndex--;state.lastValidation=null;resetRunState();render();}});
+    $('nextStage').addEventListener('click',()=>{if(state.stageIndex<topic.exercises.length-1){state.stageIndex++;state.lastValidation=null;resetRunState();render();}});
     if(ex.mode==='code') bindCode(ex); else bindChoice(ex);
   }
 
-  async function ensurePyodide(){
-    if(state.pyodide) return state.pyodide;
-    if(!state.pyodidePromise){ state.pyodidePromise=(async()=>{ if(typeof window.loadPyodide!=='function') throw new Error('Python runtime could not be loaded.'); const runtime=await window.loadPyodide(); state.pyodide=runtime; return runtime; })(); }
-    return state.pyodidePromise;
+  function setRuntimeBadge(status){
+    const badge=$('runtimeStatus');
+    if(!badge) return;
+    const detail=typeof status==='string'?status:status?.detail;
+    const phase=typeof status==='string'?'idle':status?.phase;
+    badge.textContent=detail||'Python runtime';
+    badge.className=`runtime-badge ${phase==='ready'?'ready':phase==='running'||phase==='initializing'||phase==='downloading'||phase==='checking'?'loading':''}`.trim();
   }
-  async function runPython(code){
-    const runtime=await ensurePyodide(); const stdout=[]; const stderr=[];
-    runtime.setStdout({batched:text=>stdout.push(text)}); runtime.setStderr({batched:text=>stderr.push(text)});
-    await runtime.runPythonAsync(code); if(stderr.length) throw new Error(stderr.join('\n'));
-    return stdout.join('\n').replace(/\s+$/,'');
+
+  function warmRuntime(){
+    if(state.runtimeWarmStarted || !window.IJR_PYODIDE_RUNTIME) return;
+    state.runtimeWarmStarted=true;
+    window.IJR_PYODIDE_RUNTIME.prepare(status=>setRuntimeBadge(status)).catch(()=>{
+      state.runtimeWarmStarted=false;
+    });
   }
 
   function bindCode(ex){
     const editor=$('codeEditor');
-    editor.addEventListener('input',()=>saveDraft(state.stageIndex,editor.value));
-    editor.addEventListener('keydown',event=>{if(event.key==='Tab'){event.preventDefault();const start=editor.selectionStart,end=editor.selectionEnd;editor.value=editor.value.slice(0,start)+'    '+editor.value.slice(end);editor.selectionStart=editor.selectionEnd=start+4;saveDraft(state.stageIndex,editor.value);}});
-    $('resetCode').addEventListener('click',()=>{editor.value=topic.slug==='operations'?'':(ex.code||'');saveDraft(state.stageIndex,editor.value);state.lastOutput='';state.lastCode='';$('codeOutput').textContent=topic.slug==='operations'?'Cell cleared. Build your solution from the instructions.':'Starter code restored. Run the cell again.';});
-    $('runCode').addEventListener('click',async()=>{
-      const badge=$('runtimeStatus'); const button=$('runCode'); button.disabled=true; badge.textContent='Loading / running…'; badge.className='runtime-badge loading';
-      try{const code=editor.value;const output=await runPython(code);state.lastCode=code;state.lastOutput=output;$('codeOutput').textContent=output||'(no printed output)';badge.textContent='Python ready';badge.className='runtime-badge ready';}
-      catch(error){state.lastCode='';state.lastOutput='';$('codeOutput').textContent=error.message;badge.textContent='Python error';badge.className='runtime-badge';}
-      finally{button.disabled=false;}
+    const runButton=$('runCode');
+    const output=$('codeOutput');
+    editor.addEventListener('input',()=>{saveDraft(state.stageIndex,editor.value);resetRunState();});
+    editor.addEventListener('keydown',event=>{if(event.key==='Tab'){event.preventDefault();const start=editor.selectionStart,end=editor.selectionEnd;editor.value=editor.value.slice(0,start)+'    '+editor.value.slice(end);editor.selectionStart=editor.selectionEnd=start+4;saveDraft(state.stageIndex,editor.value);resetRunState();}});
+    $('resetCode').addEventListener('click',()=>{editor.value=topic.slug==='operations'?'':(ex.code||'');saveDraft(state.stageIndex,editor.value);resetRunState();output.textContent=topic.slug==='operations'?'Cell cleared. Build your solution from the instructions.':'Starter code restored. Run the cell again.';});
+
+    runButton.addEventListener('click',async()=>{
+      const code=editor.value;
+      if(!code.trim()){
+        resetRunState();
+        output.textContent='The Python cell is empty. Write your solution before pressing Run.';
+        setRuntimeBadge({phase:'idle',detail:'Waiting for code'});
+        return;
+      }
+      if(!window.IJR_PYODIDE_RUNTIME){
+        resetRunState();
+        output.textContent='Python runtime module is unavailable. Reload the workshop and try again.';
+        setRuntimeBadge({phase:'error',detail:'Runtime module missing'});
+        return;
+      }
+
+      runButton.disabled=true;
+      const originalLabel=runButton.textContent;
+      runButton.textContent='Running…';
+      output.textContent='Executing Python…';
+      try{
+        const result=await window.IJR_PYODIDE_RUNTIME.run(code,{onStatus:status=>setRuntimeBadge(status)});
+        state.lastCode=code;
+        state.lastOutput=result.output;
+        state.lastRunKey=ex.key;
+        state.lastRunOk=true;
+        output.textContent=result.output||'(cell executed successfully with no visible output)';
+        setRuntimeBadge({phase:'ready',detail:'Python ready'});
+      }catch(error){
+        resetRunState();
+        output.textContent=error?.message||String(error);
+        setRuntimeBadge({phase:'error',detail:'Python error'});
+      }finally{
+        runButton.disabled=false;
+        runButton.textContent=originalLabel;
+      }
     });
-    $('validateCode').addEventListener('click',async()=>{if(state.lastCode!==editor.value){$('codeOutput').textContent='Run the current code before validating it.';return;} await validate(ex,state.lastOutput,editor.value);});
+
+    $('validateCode').addEventListener('click',async()=>{
+      if(!state.lastRunOk || state.lastRunKey!==ex.key || state.lastCode!==editor.value){
+        output.textContent='Run this exact version of the cell successfully before validating it.';
+        return;
+      }
+      await validate(ex,state.lastOutput,editor.value);
+    });
+
+    const runtimeStatus=window.IJR_PYODIDE_RUNTIME?.getStatus?.();
+    if(runtimeStatus?.ready) setRuntimeBadge({phase:'ready',detail:'Python ready'});
+    else warmRuntime();
   }
 
   function bindChoice(ex){
@@ -118,6 +168,7 @@
       if(data.correct){
         const next=topic.exercises.findIndex(item=>!serverItem(item.key)?.correct);
         if(next>=0) state.stageIndex=next;
+        resetRunState();
       }
       render();
     }catch(error){state.lastValidation={key:ex.key,correct:false,message:error.message};render();}
