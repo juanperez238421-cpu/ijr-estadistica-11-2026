@@ -3,6 +3,7 @@ name: Render Statistics 11 Comparisons Protocol V3 FINAL PQH
 on:
   push:
     branches:
+      - stat11-comparisons-protocol-v3-20260826
       - manim/stat11-comparisons-protocol-v3-20260826
     paths:
       - 'manim/stat11_comparisons_protocol_v3/**'
