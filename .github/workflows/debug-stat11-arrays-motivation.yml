@@ -27,7 +27,7 @@ jobs:
           sha256sum -c workflow/source_hashes.sha256
       - name: Pull Manim image
         run: docker pull manimcommunity/manim:v0.20.1
-      - name: Run direct-entrypoint PQL and capture log
+      - name: Run Python-module Manim and capture log
         id: pql
         continue-on-error: true
         shell: bash
@@ -41,7 +41,7 @@ jobs:
             -v "$PWD:/manim" \
             -w "/manim/$PROJECT_DIR" \
             manimcommunity/manim:v0.20.1 \
-            -ql src/stat11_arrays_motivation.py Stat11ArraysMotivation \
+            python -m manim -ql src/stat11_arrays_motivation.py Stat11ArraysMotivation \
             --format=mp4 --media_dir media_debug --disable_caching \
             > "$PROJECT_DIR/qa/pql.log" 2>&1
           CODE=$?
@@ -52,7 +52,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Stat11-Arrays-PQL-Debug-Direct
+          name: Stat11-Arrays-PQL-Debug-PythonModule
           path: |
             manim/stat11_arrays_motivation/qa/pql.log
             manim/stat11_arrays_motivation/qa/status.txt
