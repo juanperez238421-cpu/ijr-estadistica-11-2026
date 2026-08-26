@@ -1,0 +1,180 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Statistics 11 — motivation for arrays/lists from prior knowledge of variables.
+
+Pedagogical intent
+------------------
+Students begin only with the idea ``variable = value``. The scene deliberately
+lets that model succeed for one value, become cumbersome for a small dataset,
+and then introduces a Python list as the structural solution: one variable name
+holding multiple ordered values. No loops, functions, conditions, NumPy or
+Pandas are required.
+
+Target: Manim Community Edition 0.20.1.
+"""
+
+from __future__ import annotations
+
+from library.jp_classroom_style import *
+
+
+# =============================================================================
+# LESSON DATA — deliberately mirrors the current Colab workshop level
+# =============================================================================
+SCORES = [4.2, 3.8, 4.5, 3.2, 4.0]
+TEMPERATURES = [22.1, 22.8, 23.0, 22.6]
+HEIGHTS = [161, 168, 173, 159, 176, 170]
+
+
+class Stat11ArraysMotivation(JPMathClassroomScene):
+    """Bridge lesson: one variable -> many variables -> one ordered list."""
+
+    # ------------------------------------------------------------------
+    # Data QA
+    # ------------------------------------------------------------------
+    def validate_lesson_data(self) -> None:
+        assert len(SCORES) == 5
+        assert SCORES[0] == 4.2
+        assert SCORES[2] == 4.5
+        assert len(TEMPERATURES) == 4
+        assert TEMPERATURES[1] == 22.8
+        assert len(HEIGHTS) == 6
+        assert HEIGHTS[1] == 168
+
+    # ------------------------------------------------------------------
+    # Local visual helpers
+    # ------------------------------------------------------------------
+    def code_panel(
+        self,
+        lines: list[str],
+        *,
+        width: float = 6.25,
+        title: str = "PYTHON CELL",
+        line_size: int = 28,
+        min_height: float = 1.55,
+    ) -> VGroup:
+        """Large classroom-safe code card using the consolidated visual system."""
+        title_mob = self.text(title, 21, BOLD)
+        code_lines = VGroup(*[self.text(line, line_size, MEDIUM) for line in lines])
+        code_lines.arrange(DOWN, aligned_edge=LEFT, buff=0.16)
+
+        content = VGroup(title_mob, code_lines).arrange(
+            DOWN, aligned_edge=LEFT, buff=0.24
+        )
+        self.fit(content, width - 0.62, 4.80)
+        height = max(min_height, content.height + 0.68)
+
+        box = RoundedRectangle(
+            width=width,
+            height=height,
+            corner_radius=0.12,
+            stroke_color=BLACK_LINE,
+            stroke_width=1.8,
+            fill_color=PAPER_GRAY,
+            fill_opacity=1.0,
+        )
+        content.move_to(box).align_to(box, LEFT).shift(RIGHT * 0.31)
+        return VGroup(box, content)
+
+    def array_strip(
+        self,
+        name: str,
+        values: list[float | int],
+        *,
+        show_indexes: bool = False,
+        box_width: float = 1.12,
+        box_height: float = 0.90,
+    ) -> VGroup:
+        """Ordered-value strip that makes the name/value/index relation explicit."""
+        boxes = VGroup()
+        value_texts = VGroup()
+        index_texts = VGroup()
+
+        for index, value in enumerate(values):
+            box = RoundedRectangle(
+                width=box_width,
+                height=box_height,
+                corner_radius=0.08,
+                stroke_color=BLACK_LINE,
+                stroke_width=1.8,
+                fill_color=WHITE_FILL,
+                fill_opacity=1.0,
+            )
+            value_mob = self.text(str(value), 28, BOLD).move_to(box)
+            boxes.add(box)
+            value_texts.add(value_mob)
+
+        boxes.arrange(RIGHT, buff=0.10)
+        for box, value_mob in zip(boxes, value_texts):
+            value_mob.move_to(box)
+
+        if show_indexes:
+            for index, box in enumerate(boxes):
+                idx = self.text(str(index), 20, BOLD)
+                idx.next_to(box, DOWN, buff=0.13)
+                index_texts.add(idx)
+
+        name_mob = self.text(name, 30, BOLD)
+        name_mob.next_to(boxes, LEFT, buff=0.28)
+        arrow = Arrow(
+            name_mob.get_right(), boxes.get_left(),
+            buff=0.10, stroke_width=2.0, color=BLACK_LINE,
+            max_tip_length_to_length_ratio=0.16,
+        )
+
+        group = VGroup(name_mob, arrow, boxes, value_texts)
+        if show_indexes:
+            index_label = self.text("index", 19, MEDIUM)
+            index_label.next_to(index_texts, LEFT, buff=0.20)
+            group.add(index_texts, index_label)
+        return group
+
+    def prompt_card(
+        self,
+        number: str,
+        prompt: str,
+        *,
+        width: float = 6.4,
+        body_size: int = 25,
+    ) -> VGroup:
+        badge = RoundedRectangle(
+            width=0.64,
+            height=0.52,
+            corner_radius=0.09,
+            stroke_color=BLACK_LINE,
+            stroke_width=1.6,
+            fill_color=VERY_LIGHT_GRAY,
+            fill_opacity=1.0,
+        )
+        badge_text = self.text(number, 20, BOLD).move_to(badge)
+        body = self.text(prompt, body_size, MEDIUM)
+        self.fit(body, width - 1.35, 1.15)
+        row = VGroup(VGroup(badge, badge_text), body).arrange(RIGHT, buff=0.20)
+        box = RoundedRectangle(
+            width=width,
+            height=max(1.05, row.height + 0.42),
+            corner_radius=0.10,
+            stroke_color=BLACK_LINE,
+            stroke_width=1.5,
+            fill_color=WHITE_FILL,
+            fill_opacity=1.0,
+        )
+        row.move_to(box).align_to(box, LEFT).shift(RIGHT * 0.22)
+        return VGroup(box, row)
+
+    # ------------------------------------------------------------------
+    # Scene orchestration
+    # ------------------------------------------------------------------
+    def construct(self) -> None:
+        self.opening()
+        self.one_variable_one_value()
+        self.dataset_grows()
+        self.extract_the_need()
+        self.introduce_list()
+        self.indexing_bridge()
+        self.mini_workshop()
+        self.summary()
+
+    # ------------------------------------------------------------------
+    # 00 — Opening
+    # ------------------------------------------------------------------
