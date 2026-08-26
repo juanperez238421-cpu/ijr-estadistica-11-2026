@@ -1,0 +1,140 @@
+        layout = self.split_layout(left_stack, right_stack, center_y=-0.65)
+        self.assert_content_safe(layout.group, "colab examples")
+
+        self.type_colab_cell(c1, line_time=1.20, between=0.28, zoom_width=9.2)
+        self.run_pulse(c1)
+        self.reveal_colab_output(o1, pause=PAUSE_READ)
+        self.build_array_visual(strip, show_indexes=True)
+        self.wait(PAUSE_EXPLAIN)
+        self.type_colab_cell(c2, line_time=0.95, between=0.24, zoom_width=7.0)
+        # Highlight the requested index before displaying the result.
+        self.play(Indicate(strip[2][1], scale_factor=1.16), Indicate(strip[3][1], scale_factor=1.16), run_time=RUN_NORMAL)
+        self.run_pulse(c2)
+        self.reveal_colab_output(o2, pause=PAUSE_READ)
+        self.wait(PAUSE_READ)
+        self.play(FadeIn(right_stack[1]), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+        self.clear_stage()
+
+    def mini_workshop(self) -> None:
+        self.set_header(
+            6,
+            "MINI WORKSHOP",
+            "The goal is to make students compare both structures and justify why the array/list is more convenient for data.",
+        )
+
+        exercise1 = self.prompt_card(
+            "1",
+            "Write four separate variables for the measurements 22.1, 22.8, 23.0, 22.6. Then say why that is not the best structure.",
+            width=13.3,
+            body_size=24,
+        )
+        exercise1.move_to(UP * 1.85)
+        answer1 = self.colab_cell([
+            "t1 = 22.1",
+            "t2 = 22.8",
+            "t3 = 23.0",
+            "t4 = 22.6",
+        ], cell_id="6", title="POSSIBLE ANSWER", width=6.7, line_size=24, min_height=2.85)
+        reason1 = self.note_panel(
+            "EXPECTED IDEA",
+            [
+                "The values are related.",
+                "Using four names is less organized.",
+                "A list groups the data better.",
+            ],
+            width=5.8,
+            title_size=23,
+            body_size=21,
+        )
+        body1 = self.split_layout(answer1, reason1, center_y=-0.88)
+        self.assert_content_safe(VGroup(exercise1, body1.group), "workshop 1")
+        self.play(FadeIn(exercise1), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+        self.type_colab_cell(answer1, line_time=0.62, between=0.18, zoom_width=8.0)
+        self.wait(PAUSE_READ)
+        self.play(FadeIn(reason1), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+        self.clear_stage()
+
+        self.set_header(
+            6,
+            "MINI WORKSHOP — REWRITE USING ONE ARRAY",
+            "Now students keep the same values, but improve the structure.",
+        )
+        exercise2 = self.prompt_card(
+            "2",
+            "Rewrite the same measurements using one variable called temperatures, then read the second value.",
+            width=13.2,
+            body_size=25,
+        )
+        exercise2.move_to(UP * 1.80)
+        answer2 = self.colab_cell([
+            "temperatures = [22.1, 22.8, 23.0, 22.6]",
+            "temperatures[1]",
+        ], cell_id="7", title="BETTER STRUCTURE", width=8.1, line_size=24, min_height=2.35)
+        output2 = self.colab_output(["22.8"], width=2.9)
+        strip = self.array_boxes("temperatures", TEMPERATURES, show_indexes=True, highlight_index=1)
+        right = VGroup(strip, output2).arrange(DOWN, buff=0.34)
+        body2 = self.split_layout(answer2, right, center_y=-0.72)
+        self.assert_content_safe(VGroup(exercise2, body2.group), "workshop 2")
+        self.play(FadeIn(exercise2), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+        self.type_colab_cell(answer2, line_time=0.90, between=0.30, zoom_width=9.0)
+        self.wait(PAUSE_EXPLAIN)
+        self.build_array_visual(strip, show_indexes=True)
+        self.play(Indicate(strip[2][1], scale_factor=1.16), run_time=RUN_NORMAL)
+        self.run_pulse(answer2)
+        self.reveal_colab_output(output2, pause=PAUSE_READ)
+        self.wait(PAUSE_WORK)
+        self.clear_stage()
+
+    def summary(self) -> None:
+        self.set_header(
+            7,
+            "FINAL TAKEAWAY",
+            "Use a single variable for a single value. Use an array/list when the data are multiple, related, and ordered.",
+        )
+
+        route = self.process_map(
+            [
+                ("1", "VARIABLE → ONE VALUE"),
+                ("2", "ARRAY / LIST → MANY RELATED VALUES"),
+                ("3", "INDEX → READ A POSITION"),
+            ],
+            card_width=4.35,
+            card_height=1.18,
+            columns=3,
+        )
+        route.move_to(UP * 0.75)
+
+        final_cell = self.colab_cell([
+            "data = [value0, value1, value2, ...]",
+            "data[0]   # first value",
+            "data[1]   # second value",
+        ], cell_id="8", title="PATTERN TO TAKE INTO COLAB", width=8.9, line_size=25, min_height=2.75)
+        final_cell.move_to(DOWN * 1.05)
+
+        slogan = self.formula_panel(
+            r"\text{Better data work begins with better data structure}",
+            width=9.5,
+            height=1.05,
+            font_size=36,
+        )
+        slogan.move_to(DOWN * 3.45)
+
+        self.assert_content_safe(VGroup(route, final_cell, slogan), "summary")
+        self.play(LaggedStart(*[FadeIn(card) for card in route], lag_ratio=0.14), run_time=RUN_SLOW * 1.8)
+        self.wait(PAUSE_WORK)
+        self.type_colab_cell(final_cell, line_time=0.92, between=0.30, zoom_width=10.0)
+        self.wait(PAUSE_EXPLAIN)
+        self.play(FadeIn(slogan), run_time=RUN_NORMAL)
+        self.wait(PAUSE_FINAL)
+        self.standard_closing(
+            "An array/list is useful because it keeps related data together, ordered, and easier to use."
+        )
+
+
+# Preview gate:
+# manim -pql stat11_arrays_colab_revised.py Stat11ArraysColabMotivationV3 --format=mp4 --disable_caching
+# Final gate:
