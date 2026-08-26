@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light">
+  <title>Statistics 11 · Python Progress Master</title>
+  <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
+  <link rel="stylesheet" href="styles.css?v=20260826-master-v20">
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="config.js?v=20260826-master-v20"></script>
+  <script defer src="app.js?v=20260826-master-v20"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="mark">IJR</span><span><small>Instituto Jorge Robledo · Statistics 11</small><strong>Python Progress Master</strong></span></div>
+      <div><a class="button button-light" href="../">Student Hub</a></div>
+    </header>
+
+    <section id="loginPanel" class="login-card">
+      <p class="eyebrow">SECURE TEACHER ACCESS</p>
+      <h1>Student progress without a master PIN.</h1>
+      <p class="lead">The master page uses a Supabase teacher account plus multi-factor authentication. Student registrations, team progress and historical Class 01 evidence are not loaded until the teacher session reaches AAL2.</p>
+      <form id="emailLoginForm" class="auth-grid">
+        <label>Teacher email
+          <input id="teacherEmail" type="email" autocomplete="email" required placeholder="teacher@example.com">
+        </label>
+        <button id="sendLoginButton" type="submit">Send secure sign-in email</button>
+      </form>
+      <div class="auth-grid" aria-label="Optional email OTP verification">
+        <label>If the email contains a 6-digit code
+          <input id="emailOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="One-time email code">
+        </label>
+        <button id="verifyEmailOtpButton" class="button-light" type="button">Verify email code</button>
+      </div>
+      <p id="loginStatus" class="status" role="status" aria-live="polite"></p>
+      <div class="security-note"><strong>Security model</strong><br>Authorized teacher identity → secure email sign-in → authenticator-app MFA → AAL2-only gateway → read-only progress dashboard. The teacher allowlist and authorization rules are stored server-side, not in this page.</div>
+    </section>
+
+    <section id="mfaPanel" class="mfa-card hidden">
+      <p class="eyebrow">SECOND FACTOR REQUIRED</p>
+      <div class="mfa-layout">
+        <div>
+          <h2 id="mfaTitle">Secure the teacher account.</h2>
+          <p id="mfaCopy" class="lead">Use an authenticator app to complete teacher MFA.</p>
+          <div id="mfaQrWrap" class="qr-wrap hidden"><img id="mfaQr" alt="Authenticator setup QR code"><div id="mfaSecret" class="secret"></div></div>
+        </div>
+        <div class="mfa-code">
+          <label>Authenticator code<input id="mfaCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="6-digit code"></label>
+          <button id="verifyMfaButton" type="button">Verify MFA and open dashboard</button>
+          <p id="mfaStatus" class="status" role="status" aria-live="polite"></p>
+          <button id="mfaLogoutButton" type="button" class="quiet">Cancel / Sign out</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="dashboardPanel" class="hidden">
+      <div class="dashboard-head">
+        <div><p class="eyebrow">TEACHER · AAL2 VERIFIED</p><h1>Progress by student.</h1><p class="muted">Current Python Hub progress + verified historical Variable Types evidence from Class 01.</p></div>
+        <div class="filters">
+          <button class="filter-button active" data-group="" type="button">All</button>
+          <button class="filter-button" data-group="11A" type="button">11A</button>
+          <button class="filter-button" data-group="11B" type="button">11B</button>
+          <button class="filter-button" data-group="11C" type="button">11C</button>
+          <input id="searchInput" type="search" placeholder="Search student">
+          <button id="refreshButton" class="quiet" type="button">Refresh</button>
+          <button id="logoutButton" class="quiet" type="button">Sign out</button>
+        </div>
+      </div>
+      <p id="dashboardStatus" class="status" role="status" aria-live="polite"></p>
+      <section id="metrics" class="metrics" aria-label="Progress summary"></section>
+
+      <section class="section">
+        <div class="section-head"><div><h2>Roster progress</h2><p>One row per active roster student. Historical Variable Types evidence is shown separately from current Hub mastery.</p></div><span id="studentCount" class="muted"></span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Student</th><th>Legacy Variable Types</th><th>Hub registration</th><th>01 Operations</th><th>02 Types</th><th>03 Arrays</th><th>04 Logic</th><th>05 Conditions</th><th>06 Loops</th><th>07 Functions</th><th>08 Statistics</th><th>Last activity</th></tr></thead>
+            <tbody id="studentBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><div><h2>Current Hub registrations</h2><p>Individual and 2–3 student team registrations. Use recovery only when a student/team moves to a different device.</p></div><span id="registrationCount" class="muted"></span></div>
+        <div id="registrationList" class="registration-list"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><div><h2>Needs identity review</h2><p>Historical Class 01 records that completed the Variable Types checkpoints but were not safely matched to the official roster. They are intentionally not auto-credited.</p></div><span id="reviewCount" class="muted"></span></div>
+        <div id="identityReview" class="review-grid"></div>
+      </section>
+    </section>
+  </main>
+
+  <dialog id="recoveryDialog" class="dialog">
+    <div class="dialog-box">
+      <div class="dialog-head"><div><p class="eyebrow">ONE-TIME DEVICE RECOVERY</p><h2>Transfer this registration.</h2></div><button id="closeRecoveryDialog" class="quiet" type="button">Close</button></div>
+      <p id="recoveryIdentity" class="lead"></p>
+      <p>This token expires in 10 minutes, works once, and rotates the browser access token when redeemed. It is not a permanent student PIN.</p>
+      <code id="recoveryTokenValue" class="recovery-token"></code>
+      <span id="recoveryExpires" class="muted"></span>
+      <span id="recoveryLink" class="recovery-link"></span>
+      <div class="dialog-actions"><button id="copyRecoveryToken" type="button">Copy token</button><button id="copyRecoveryLink" class="button-light" type="button">Copy recovery link</button></div>
+      <p id="recoveryDialogStatus" class="status" role="status" aria-live="polite"></p>
+    </div>
+  </dialog>
+</body>
+</html>
