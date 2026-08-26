@@ -1,0 +1,7 @@
+/* V9 refinement after figure-by-figure pedagogical QA. */
+.v9-booknote{border-top:1px dashed var(--v9-line);padding:13px 22px;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;animation:v9-note-reveal 6s ease-in-out infinite}.v9-booknote small{font-size:.76rem;letter-spacing:.1em;color:var(--v9-muted);white-space:nowrap}.v9-booknote span{font-size:.88rem;line-height:1.45;color:#444}
+.v9-error-types>div,.v9-diagnose>div{animation-duration:8s}
+.v9-bridge>div small{font-size:.72rem;line-height:1.25;color:#666;max-width:105px}
+@keyframes v9-note-reveal{0%,44%{opacity:.2;transform:translateY(-3px)}55%,100%{opacity:1;transform:none}}
+@media(max-width:760px){.v9-booknote{grid-template-columns:1fr;gap:4px}}
+@media(prefers-reduced-motion:reduce){.v9-booknote{animation:none!important;opacity:1!important}}
