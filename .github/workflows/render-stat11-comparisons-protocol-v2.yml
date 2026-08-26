@@ -1,0 +1,133 @@
+name: Render Statistics 11 Comparisons Protocol V2 PQH
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'manim/stat11_comparisons_protocol_v2/**'
+      - '.github/workflows/render-stat11-comparisons-protocol-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render_protocol_v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      PROJECT_DIR: manim/stat11_comparisons_protocol_v2
+      IMAGE: manimcommunity/manim:v0.20.1
+      SCENE_FILE: src/stat11_comparisons_protocol_v2.py
+      SCENE_CLASS: Stat11ComparisonsProtocolV2
+      FINAL_NAME: Stat11_Comparisons_Protocol_V2_FINAL_PQH.mp4
+
+    steps:
+      - name: Checkout exact PR source
+        uses: actions/checkout@v4
+
+      - name: Reconstruct exact JP classroom style and validate source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT_DIR"
+          mkdir -p library delivery qa/audit_frames
+          cat ../stat11_arrays_motivation/fragments/style_* > library/jp_classroom_style.py
+          echo "5669230635d426fca04fab3ed63c7640adba5186de0f5f4b7e8d62a043777495  src/stat11_comparisons_protocol_v2.py" | sha256sum -c -
+          echo "3f3f06e94d5cad870ad335502cc1a93e56ce675abb1231ded5f9c71fd3e60e3d  library/jp_classroom_style.py" | sha256sum -c -
+          python -m py_compile src/stat11_comparisons_protocol_v2.py library/jp_classroom_style.py
+
+      - name: Pull pinned ManimCE 0.20.1 image
+        run: docker pull "$IMAGE"
+
+      - name: Protocol PQL visual smoke render
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$PROJECT_DIR/media_pql"
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -v "$PWD:/manim" \
+            -w "/manim/$PROJECT_DIR" \
+            "$IMAGE" \
+            bash -lc 'mkdir -p /tmp/manim-bin; printf "#!/bin/sh\nexit 0\n" > /tmp/manim-bin/xdg-open; chmod +x /tmp/manim-bin/xdg-open; export PATH="/tmp/manim-bin:$PATH"; python -m manim -pql "$SCENE_FILE" "$SCENE_CLASS" --format=mp4 --media_dir media_pql --disable_caching'
+          PREVIEW="$(find "$PROJECT_DIR/media_pql" -type f -name '*.mp4' ! -path '*/partial_movie_files/*' | head -n 1)"
+          test -n "$PREVIEW"
+          test -s "$PREVIEW"
+          echo "PQL_OK=$PREVIEW"
+
+      - name: Protocol PQH final render
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$PROJECT_DIR/media_final"
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -v "$PWD:/manim" \
+            -w "/manim/$PROJECT_DIR" \
+            "$IMAGE" \
+            bash -lc 'mkdir -p /tmp/manim-bin; printf "#!/bin/sh\nexit 0\n" > /tmp/manim-bin/xdg-open; chmod +x /tmp/manim-bin/xdg-open; export PATH="/tmp/manim-bin:$PATH"; python -m manim -pqh "$SCENE_FILE" "$SCENE_CLASS" --fps 30 --format=mp4 --media_dir media_final --disable_caching'
+          FINAL="$(find "$PROJECT_DIR/media_final" -type f -name '*.mp4' ! -path '*/partial_movie_files/*' | head -n 1)"
+          test -n "$FINAL"
+          test -s "$FINAL"
+          cp "$FINAL" "$PROJECT_DIR/delivery/$FINAL_NAME"
+
+      - name: Full technical QA and audit frames
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          V="$PROJECT_DIR/delivery/$FINAL_NAME"
+          ffprobe -v error \
+            -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt \
+            -show_entries format=duration,size \
+            -of default=nw=1 "$V" | tee "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^codec_name=h264$' "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^width=1920$' "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^height=1080$' "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^pix_fmt=yuv420p$' "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^r_frame_rate=30/1$' "$PROJECT_DIR/qa/ffprobe.txt"
+          ffmpeg -nostdin -v error -i "$V" -f null - 2> "$PROJECT_DIR/qa/decode_errors.log"
+          test ! -s "$PROJECT_DIR/qa/decode_errors.log"
+          sha256sum "$V" | tee "$PROJECT_DIR/qa/final_mp4.sha256"
+          ffmpeg -nostdin -v error -i "$V" -vf "fps=1/18,scale=960:-2" -frames:v 24 "$PROJECT_DIR/qa/audit_frames/frame_%02d.jpg"
+          test "$(find "$PROJECT_DIR/qa/audit_frames" -type f -name '*.jpg' | wc -l)" -ge 12
+
+      - name: Preserve exact source and render commands
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp "$PROJECT_DIR/src/stat11_comparisons_protocol_v2.py" "$PROJECT_DIR/delivery/stat11_comparisons_protocol_v2.py"
+          cat > "$PROJECT_DIR/delivery/README_RENDER.txt" <<'EOF'
+          ManimCE: 0.20.1
+          Preview: python -m manim -pql src/stat11_comparisons_protocol_v2.py Stat11ComparisonsProtocolV2
+          Final:   python -m manim -pqh src/stat11_comparisons_protocol_v2.py Stat11ComparisonsProtocolV2 --fps 30
+          Expected: 1920x1080, 30 fps, H.264, yuv420p
+          EOF
+
+      - name: Upload final MP4
+        uses: actions/upload-artifact@v4
+        with:
+          name: Stat11-Comparisons-Protocol-V2-FINAL-PQH
+          retention-days: 30
+          if-no-files-found: error
+          path: manim/stat11_comparisons_protocol_v2/delivery/Stat11_Comparisons_Protocol_V2_FINAL_PQH.mp4
+
+      - name: Upload exact source and QA package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Stat11-Comparisons-Protocol-V2-QA
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            manim/stat11_comparisons_protocol_v2/delivery/stat11_comparisons_protocol_v2.py
+            manim/stat11_comparisons_protocol_v2/delivery/README_RENDER.txt
+            manim/stat11_comparisons_protocol_v2/qa/ffprobe.txt
+            manim/stat11_comparisons_protocol_v2/qa/decode_errors.log
+            manim/stat11_comparisons_protocol_v2/qa/final_mp4.sha256
+            manim/stat11_comparisons_protocol_v2/qa/audit_frames/*.jpg
