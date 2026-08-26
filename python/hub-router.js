@@ -110,6 +110,30 @@
     }finally{$('registerButton').disabled=false;}
   }
 
+  async function recoverRegistration(tokenOverride=''){
+    const input=$('recoveryToken');
+    const button=$('recoverButton');
+    const status=$('recoveryStatus');
+    const token=String(tokenOverride || input?.value || '').trim().toUpperCase();
+    if(!token){ status.textContent='Enter the one-time recovery token issued by your teacher.'; status.className='inline-status error'; return false; }
+    button.disabled=true;
+    status.textContent='Recovering the registered progress…'; status.className='inline-status';
+    try{
+      const data=await rpc(config.rpc.recover,{p_recovery_token:token,p_session_id:crypto.randomUUID(),p_user_agent:navigator.userAgent});
+      rememberSession(data.registration_id,data.access_token,{mode:data.snapshot?.registration?.mode||'',groupCode:data.snapshot?.registration?.group_code||''});
+      state.registration={registrationId:data.registration_id,accessToken:data.access_token};
+      state.snapshot=data.snapshot;
+      if(input) input.value='';
+      history.replaceState(null,'',location.pathname+location.search);
+      showHub();
+      status.textContent='Registration recovered. This device will now resume it automatically.'; status.className='inline-status ok';
+      return true;
+    }catch(error){
+      status.textContent=error.message; status.className='inline-status error';
+      return false;
+    }finally{button.disabled=false;}
+  }
+
   async function resumeStored(){
     const saved=getStoredSession();
     if(!saved) return false;
@@ -167,6 +191,8 @@
     $('registrationMode').addEventListener('change',updateRegistrationFields);
     $('teamSize').addEventListener('change',updateRegistrationFields);
     $('registrationForm').addEventListener('submit',register);
+    $('recoverButton').addEventListener('click',()=>recoverRegistration());
+    $('recoveryToken').addEventListener('input',event=>{event.target.value=String(event.target.value||'').toUpperCase().replace(/[^A-F0-9]/g,'').slice(0,24);});
     $('changeRegistrationButton').addEventListener('click',()=>{
       clearActiveSession();
       showRegistration();
@@ -174,6 +200,17 @@
       $('registrationStatus').className='inline-status';
     });
     updateRegistrationFields();
+
+    const fragment=new URLSearchParams(location.hash.replace(/^#/,''));
+    const recoveryFromLink=fragment.get('recover');
+    if(recoveryFromLink){
+      showRegistration();
+      $('recoveryPanel').open=true;
+      $('recoveryToken').value=recoveryFromLink.toUpperCase();
+      await recoverRegistration(recoveryFromLink);
+      return;
+    }
+
     const resumed=await resumeStored();
     if(resumed) showHub(); else showRegistration();
   }
