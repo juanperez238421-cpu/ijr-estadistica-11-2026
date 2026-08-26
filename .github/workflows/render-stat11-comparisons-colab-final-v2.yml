@@ -3,7 +3,7 @@ name: Render Statistics 11 Comparisons Colab FINAL V2 PQH
 on:
   push:
     branches:
-      - manim/stat11-comparisons-colab-20260826
+      - manim/stat11-comparisons-colab-final-v2-20260826
     paths:
       - 'manim/stat11_comparisons_colab/**'
       - '.github/workflows/render-stat11-comparisons-colab-final-v2.yml'
