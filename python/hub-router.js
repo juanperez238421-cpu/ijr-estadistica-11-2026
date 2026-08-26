@@ -15,11 +15,21 @@
   const escapeHtml = value => String(value ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
   const state = {snapshot:null, registration:null};
 
-  function getStoredSession(){
-    try { return JSON.parse(localStorage.getItem(config.sessionStorageKey) || 'null'); } catch { return null; }
+  function readJson(key, fallback=null){
+    try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; } catch { return fallback; }
   }
-  function storeSession(registrationId, accessToken){ localStorage.setItem(config.sessionStorageKey, JSON.stringify({registrationId, accessToken})); }
-  function clearSession(){ localStorage.removeItem(config.sessionStorageKey); state.snapshot=null; state.registration=null; }
+  function writeJson(key,value){ try { localStorage.setItem(key,JSON.stringify(value)); } catch {} }
+  function getStoredSession(){ return readJson(config.sessionStorageKey,null); }
+  function getVault(){ return readJson(config.sessionVaultKey,{}) || {}; }
+  function fingerprint(group,emails){ return `${String(group||'').toUpperCase()}|${[...emails].map(v=>v.toLowerCase()).sort().join('|')}`; }
+  function rememberSession(registrationId,accessToken,meta={}){
+    const item={registrationId,accessToken,fingerprint:meta.fingerprint||'',groupCode:meta.groupCode||'',emails:meta.emails||[],mode:meta.mode||'',savedAt:new Date().toISOString()};
+    writeJson(config.sessionStorageKey,item);
+    if(item.fingerprint){ const vault=getVault(); vault[item.fingerprint]=item; writeJson(config.sessionVaultKey,vault); }
+  }
+  function clearActiveSession(){ localStorage.removeItem(config.sessionStorageKey); state.snapshot=null; state.registration=null; }
+  function forgetVaultItem(fp){ if(!fp)return; const vault=getVault(); delete vault[fp]; writeJson(config.sessionVaultKey,vault); }
+
   async function rpc(name,args){
     const {data,error} = await client.rpc(name,args);
     if(error) throw new Error(error.message || 'Backend request failed');
@@ -48,27 +58,53 @@
     return '';
   }
 
+  async function tryResume(saved){
+    if(!saved?.registrationId || !saved?.accessToken) return false;
+    try{
+      const data=await rpc(config.rpc.resume,{p_registration_id:saved.registrationId,p_access_token:saved.accessToken});
+      state.registration={registrationId:saved.registrationId,accessToken:saved.accessToken};
+      state.snapshot=data.snapshot;
+      writeJson(config.sessionStorageKey,saved);
+      return true;
+    }catch{
+      forgetVaultItem(saved.fingerprint);
+      if(getStoredSession()?.registrationId===saved.registrationId) localStorage.removeItem(config.sessionStorageKey);
+      return false;
+    }
+  }
+
   async function register(event){
     event.preventDefault();
     const status = $('registrationStatus');
     const emails = collectEmails();
     const emailError = validateEmails(emails);
     if(emailError){ status.textContent=emailError; status.className='inline-status error'; return; }
+    const mode=$('registrationMode').value;
+    const group=$('groupCode').value;
+    const fp=fingerprint(group,emails);
     $('registerButton').disabled=true;
-    status.textContent='Registering and loading progress…'; status.className='inline-status';
+    status.textContent='Checking saved progress…'; status.className='inline-status';
     try{
+      const known=getVault()[fp];
+      if(known && await tryResume(known)){
+        showHub();
+        status.textContent='Saved progress restored on this browser.'; status.className='inline-status ok';
+        return;
+      }
+
+      status.textContent='Creating registered learning path…';
       const data = await rpc(config.rpc.register, {
-        p_registration_mode:$('registrationMode').value,
-        p_group_code:$('groupCode').value,
+        p_registration_mode:mode,
+        p_group_code:group,
         p_student_emails:emails,
         p_session_id:crypto.randomUUID(),
         p_user_agent:navigator.userAgent
       });
-      storeSession(data.registration_id,data.access_token);
+      rememberSession(data.registration_id,data.access_token,{fingerprint:fp,groupCode:group,emails,mode});
       state.registration={registrationId:data.registration_id,accessToken:data.access_token};
       state.snapshot=data.snapshot;
       showHub();
-      status.textContent='Registration ready.'; status.className='inline-status ok';
+      status.textContent='Registration ready. Progress will save automatically.'; status.className='inline-status ok';
     }catch(error){
       status.textContent=error.message; status.className='inline-status error';
     }finally{$('registerButton').disabled=false;}
@@ -76,11 +112,8 @@
 
   async function resumeStored(){
     const saved=getStoredSession();
-    if(!saved?.registrationId || !saved?.accessToken) return false;
-    try{
-      const data=await rpc(config.rpc.resume,{p_registration_id:saved.registrationId,p_access_token:saved.accessToken});
-      state.registration=saved; state.snapshot=data.snapshot; return true;
-    }catch{ clearSession(); return false; }
+    if(!saved) return false;
+    return tryResume(saved);
   }
 
   function progressFor(slug){ return state.snapshot?.topics?.find(item=>item.slug===slug) || null; }
@@ -134,7 +167,12 @@
     $('registrationMode').addEventListener('change',updateRegistrationFields);
     $('teamSize').addEventListener('change',updateRegistrationFields);
     $('registrationForm').addEventListener('submit',register);
-    $('changeRegistrationButton').addEventListener('click',()=>{clearSession();showRegistration();});
+    $('changeRegistrationButton').addEventListener('click',()=>{
+      clearActiveSession();
+      showRegistration();
+      $('registrationStatus').textContent='Choose another individual or team. Registrations already used on this browser remain available and resume automatically.';
+      $('registrationStatus').className='inline-status';
+    });
     updateRegistrationFields();
     const resumed=await resumeStored();
     if(resumed) showHub(); else showRegistration();
