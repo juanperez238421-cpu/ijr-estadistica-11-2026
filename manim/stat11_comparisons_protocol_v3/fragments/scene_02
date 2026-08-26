@@ -1,0 +1,115 @@
+            stroke_width=1.6,
+            fill_color=VERY_LIGHT_GRAY,
+            fill_opacity=1.0,
+        )
+        badge_text = self.text(str(number), 22, BOLD).move_to(badge)
+        q = self.text(question, 26, BOLD)
+        expr = self.mono(expression, 27, MEDIUM)
+        text_group = VGroup(q, expr).arrange(DOWN, aligned_edge=LEFT, buff=0.12)
+        content = VGroup(VGroup(badge, badge_text), text_group).arrange(RIGHT, buff=0.28)
+        box = RoundedRectangle(
+            width=12.9,
+            height=1.62,
+            corner_radius=0.12,
+            stroke_color=LIGHT_GRAY,
+            stroke_width=1.5,
+            fill_color=WHITE_FILL,
+            fill_opacity=1.0,
+        )
+        self.fit(content, 12.25, 1.35)
+        content.move_to(box)
+        content.align_to(box, LEFT).shift(RIGHT * 0.34)
+        return VGroup(box, content)
+
+    # ------------------------------------------------------------------
+    # Lesson orchestration
+    # ------------------------------------------------------------------
+    def construct(self) -> None:
+        self.opening()
+        self.begin_with_data()
+        self.translate_question_to_code()
+        self.assignment_vs_comparison()
+        self.operator_family()
+        self.boolean_is_data()
+        self.compare_list_values()
+        self.guided_workshop()
+        self.summary()
+
+    # ------------------------------------------------------------------
+    # Scene 00 — opening
+    # ------------------------------------------------------------------
+    def opening(self) -> None:
+        self.standard_opening(
+            "STATISTICS 11 · PYTHON / COLAB",
+            "COMPARISON OPERATORS",
+            "Turn a data question into a Boolean answer",
+            "DATA → QUESTION → OPERATOR → RUN → INTERPRET",
+        )
+
+    # ------------------------------------------------------------------
+    # Scene 01 — data first
+    # ------------------------------------------------------------------
+    def begin_with_data(self) -> None:
+        self.set_header(
+            1,
+            "BEGIN WITH THE DATA",
+            "Read the values first. Then convert the statistical question into a precise comparison.",
+        )
+
+        cards = VGroup(
+            self.data_card("observed score", "4.2"),
+            self.data_card("pass mark", "3.0"),
+        ).arrange(DOWN, buff=0.42)
+
+        question = self.note_panel(
+            "DATA QUESTION",
+            [
+                "Did the observed score reach",
+                "or exceed the pass mark?",
+            ],
+            width=6.5,
+            title_size=27,
+            body_size=26,
+        )
+        relation = self.formula_panel(r"4.2\ge 3.0", width=6.5, height=1.22, font_size=46)
+        right = VGroup(question, relation).arrange(DOWN, buff=0.34)
+
+        layout = self.split_layout(cards, right, left_width=5.6, right_width=7.2, center_y=-0.55)
+        self.assert_content_safe(layout.group, "scene 01 split layout")
+
+        self.play(LaggedStart(*[FadeIn(card, shift=UP * 0.10) for card in cards], lag_ratio=0.25), run_time=RUN_SLOW)
+        self.wait(PAUSE_EXPLAIN)
+        self.play(FadeIn(question, shift=UP * 0.10), run_time=RUN_NORMAL)
+        self.wait(PAUSE_READ)
+        self.play(FadeIn(relation, shift=UP * 0.10), run_time=RUN_NORMAL)
+        self.wait(PAUSE_READ)
+
+        result = self.result_badge("True").next_to(relation, DOWN, buff=0.34)
+        self.play(Create(result[0]), Write(result[1]), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+        self.clear_stage()
+
+    # ------------------------------------------------------------------
+    # Scene 02 — human question -> Python code
+    # ------------------------------------------------------------------
+    def translate_question_to_code(self) -> None:
+        self.set_header(
+            2,
+            "TRANSLATE THE QUESTION INTO PYTHON",
+            "A Colab cell should show the same logic as the question: store the value, compare it, then read the output.",
+        )
+
+        cell = self.code_cell(["score = 4.2", "score >= 3.0"], width=9.9, line_size=30)
+        cell.move_to(LEFT * 2.45 + DOWN * 0.35)
+
+        route = self.process_map(
+            [
+                ("1", "STORE THE VALUE"),
+                ("2", "ASK THE QUESTION"),
+                ("3", "READ TRUE / FALSE"),
+            ],
+            card_width=4.1,
+            card_height=1.08,
+            columns=1,
+        )
+        route.move_to(RIGHT * 4.55 + DOWN * 0.35)
