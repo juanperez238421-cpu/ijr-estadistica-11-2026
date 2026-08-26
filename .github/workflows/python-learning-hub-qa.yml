@@ -1,12 +1,13 @@
 name: Python Learning Hub QA
 
-# V7: hub landing + dedicated theory and workshop pages for every topic.
+# V8: split theory/workshop architecture plus classroom-scale resilient visual figures.
 on:
   pull_request:
     paths:
       - 'python/**'
       - 'index.html'
       - 'qa/check_python_hub_split_pages.py'
+      - 'qa/check_python_hub_visual_v8.py'
       - 'supabase/migrations/*python_learning_hub*.sql'
       - '.github/workflows/python-learning-hub-qa.yml'
   push:
@@ -15,6 +16,7 @@ on:
       - 'python/**'
       - 'index.html'
       - 'qa/check_python_hub_split_pages.py'
+      - 'qa/check_python_hub_visual_v8.py'
       - 'supabase/migrations/*python_learning_hub*.sql'
       - '.github/workflows/python-learning-hub-qa.yml'
   workflow_dispatch:
@@ -35,8 +37,10 @@ jobs:
           node --check python/course-data-v4.js
           node --check python/hub-router.js
           node --check python/theory-page.js
+          node --check python/theory-visual-v8.js
           node --check python/workshop-page.js
-      - name: Split-page static course contract
+      - name: Static course contracts
         run: |
-          python -m py_compile qa/check_python_hub_split_pages.py
+          python -m py_compile qa/check_python_hub_split_pages.py qa/check_python_hub_visual_v8.py
           python qa/check_python_hub_split_pages.py
+          python qa/check_python_hub_visual_v8.py
