@@ -24,7 +24,7 @@
             height=1.05,
             font_size=36,
         )
-        takeaway.to_edge(DOWN, buff=0.38)
+        takeaway.move_to(DOWN * 3.45)
         group = VGroup(lead, cards, takeaway)
         self.assert_content_safe(group, "section 3 layout")
 
