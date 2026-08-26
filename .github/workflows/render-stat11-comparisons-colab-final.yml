@@ -33,7 +33,7 @@ jobs:
           mkdir -p library delivery qa/audit_frames
           cat ../stat11_arrays_motivation/fragments/style_* > library/jp_classroom_style.py
           echo "14e1c5386b4d949ad022b8db4faac39ce92eb87b2554b18e08cc2292abb360ab  src/stat11_comparisons_colab.py" | sha256sum -c -
-          echo "b0692acb3e6d112ccdb9efdf957dd5bdb8e0acb6c45f3a74885acfda0e30eb57  src/stat11_comparisons_colab_final.py" | sha256sum -c -
+          echo "4ee896ff419963578dde2fd44f0ed1834a7e57089b07146f0cf3b1dd9c2110c3  src/stat11_comparisons_colab_final.py" | sha256sum -c -
           echo "3f3f06e94d5cad870ad335502cc1a93e56ce675abb1231ded5f9c71fd3e60e3d  library/jp_classroom_style.py" | sha256sum -c -
           python -m py_compile src/stat11_comparisons_colab.py src/stat11_comparisons_colab_final.py library/jp_classroom_style.py
 
