@@ -60,7 +60,7 @@ class Stat11ComparisonsProtocolV3(JPMathClassroomScene):
     # Lesson-specific visual helpers
     # ------------------------------------------------------------------
     def mono(self, content: str, size: int = 28, weight=MEDIUM) -> Text:
-        return self.text(content, size, weight, font="DejaVu Sans Mono")
+        return self.text(content, size, weight, font="Noto Sans Mono")
 
     def data_card(self, label: str, value: str, *, width: float = 3.35) -> VGroup:
         label_mob = self.text(label, 22, BOLD)
