@@ -1,0 +1,2 @@
+Render trigger for the finalized Statistics 11 comparison-operators ManimCE class.
+PQL smoke -> PQH -> ffprobe/decode -> audit frames -> artifact.
