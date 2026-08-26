@@ -57,7 +57,7 @@ jobs:
             -v "$PWD:/manim" \
             -w "/manim/$PROJECT_DIR" \
             "$IMAGE" \
-            -ql src/stat11_arrays_motivation.py Stat11ArraysMotivation \
+            python -m manim -ql src/stat11_arrays_motivation.py Stat11ArraysMotivation \
             --format=mp4 --media_dir media_pql --disable_caching
           PREVIEW="$(find "$PROJECT_DIR/media_pql" -type f -name "$FINAL_NAME" | head -n 1)"
           test -n "$PREVIEW" -a -s "$PREVIEW"
@@ -74,7 +74,7 @@ jobs:
             -v "$PWD:/manim" \
             -w "/manim/$PROJECT_DIR" \
             "$IMAGE" \
-            -qh src/stat11_arrays_motivation.py Stat11ArraysMotivation \
+            python -m manim -qh src/stat11_arrays_motivation.py Stat11ArraysMotivation \
             --format=mp4 --media_dir media --disable_caching
           RAW="$(find "$PROJECT_DIR/media" -type f -name "$FINAL_NAME" | head -n 1)"
           test -n "$RAW" -a -s "$RAW"
