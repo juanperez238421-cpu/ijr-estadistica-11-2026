@@ -5,6 +5,7 @@ on:
     branches:
       - manim/stat11-arrays-motivation-20260826
     paths:
+      - 'manim/stat11_arrays_motivation/**'
       - '.github/workflows/debug-stat11-arrays-motivation.yml'
   workflow_dispatch:
 
