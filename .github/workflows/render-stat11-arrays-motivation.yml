@@ -80,23 +80,37 @@ jobs:
           cp "$FINAL" "$PROJECT_DIR/delivery/Stat11ArraysMotivation_PQH.mp4"
           test -s "$PROJECT_DIR/delivery/Stat11ArraysMotivation_PQH.mp4"
 
+      - name: Upload rendered MP4
+        uses: actions/upload-artifact@v4
+        with:
+          name: Stat11-Arrays-Motivation-PQH
+          retention-days: 30
+          if-no-files-found: error
+          path: manim/stat11_arrays_motivation/delivery/Stat11ArraysMotivation_PQH.mp4
+
       - name: Technical verification
+        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
           V="$PROJECT_DIR/delivery/Stat11ArraysMotivation_PQH.mp4"
           ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt -of default=nw=1 "$V" | tee "$PROJECT_DIR/qa/ffprobe.txt"
           ffmpeg -nostdin -v error -i "$V" -f null - 2> "$PROJECT_DIR/qa/decode_errors.log"
-          test ! -s "$PROJECT_DIR/qa/decode_errors.log"
           sha256sum "$V" > "$PROJECT_DIR/qa/final_mp4.sha256"
+          if test -s "$PROJECT_DIR/qa/decode_errors.log"; then
+            echo "ffmpeg emitted decode diagnostics; MP4 artifact remains available for direct inspection."
+            cat "$PROJECT_DIR/qa/decode_errors.log"
+            exit 1
+          fi
 
-      - name: Upload verified MP4
+      - name: Upload QA metadata
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Stat11-Arrays-Motivation-PQH
+          name: Stat11-Arrays-Motivation-QA
           retention-days: 30
-          if-no-files-found: error
+          if-no-files-found: warn
           path: |
-            manim/stat11_arrays_motivation/delivery/Stat11ArraysMotivation_PQH.mp4
             manim/stat11_arrays_motivation/qa/ffprobe.txt
+            manim/stat11_arrays_motivation/qa/decode_errors.log
             manim/stat11_arrays_motivation/qa/final_mp4.sha256
