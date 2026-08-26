@@ -1,0 +1,190 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Statistics 11 — Arrays motivation with Colab-style layout.
+
+Improved senior-QA version.
+Focus:
+1) activate prior knowledge about variables,
+2) create the need for storing many related values,
+3) define the array/list concept clearly,
+4) show advantages for data,
+5) keep a Colab-like coding layout.
+
+Target: ManimCE 0.20.1
+"""
+
+from __future__ import annotations
+
+from library.jp_classroom_style import *
+
+
+SCORES = [4.2, 3.8, 4.5, 3.2, 4.0]
+TEMPERATURES = [22.1, 22.8, 23.0, 22.6]
+HEIGHTS = [161, 168, 173, 159, 176, 170]
+
+
+class Stat11ArraysColabMotivationV2(JPMathClassroomScene):
+    """Refined classroom scene using a Colab-inspired visual language."""
+
+    def validate_lesson_data(self) -> None:
+        assert len(SCORES) == 5
+        assert SCORES[0] == 4.2
+        assert SCORES[2] == 4.5
+        assert len(TEMPERATURES) == 4
+        assert TEMPERATURES[1] == 22.8
+        assert len(HEIGHTS) == 6
+        assert HEIGHTS[1] == 168
+
+    # ------------------------------------------------------------------
+    # Visual helpers
+    # ------------------------------------------------------------------
+    def colab_cell(
+        self,
+        lines: list[str],
+        *,
+        cell_id: str = "1",
+        width: float = 7.6,
+        title: str | None = None,
+        line_size: int = 25,
+        min_height: float = 1.7,
+    ) -> VGroup:
+        """Colab-like code cell with left gutter and optional title."""
+        prompt_box = RoundedRectangle(
+            width=0.95,
+            height=0.62,
+            corner_radius=0.10,
+            stroke_color=BLACK_LINE,
+            stroke_width=1.4,
+            fill_color=VERY_LIGHT_GRAY,
+            fill_opacity=1.0,
+        )
+        prompt = self.text(f"In [{cell_id}]", 20, BOLD).move_to(prompt_box)
+        prompt_group = VGroup(prompt_box, prompt)
+
+        code_lines = VGroup(*[self.text(line, line_size, MEDIUM) for line in lines])
+        code_lines.arrange(DOWN, aligned_edge=LEFT, buff=0.14)
+
+        if title:
+            title_mob = self.text(title, 20, BOLD)
+            content = VGroup(title_mob, code_lines).arrange(DOWN, aligned_edge=LEFT, buff=0.18)
+        else:
+            content = code_lines
+
+        content_box = RoundedRectangle(
+            width=width,
+            height=max(min_height, content.height + 0.48),
+            corner_radius=0.10,
+            stroke_color=LIGHT_GRAY,
+            stroke_width=1.8,
+            fill_color=WHITE_FILL,
+            fill_opacity=1.0,
+        )
+        self.fit(content, width - 0.45, 4.65)
+        content.move_to(content_box).align_to(content_box, LEFT).shift(RIGHT * 0.24)
+
+        cell_body = VGroup(content_box, content)
+        row = VGroup(prompt_group, cell_body).arrange(RIGHT, buff=0.22, aligned_edge=UP)
+        return row
+
+    def colab_output(
+        self,
+        lines: list[str],
+        *,
+        width: float = 7.3,
+        line_size: int = 24,
+        tag: str = "Out"
+    ) -> VGroup:
+        tag_box = RoundedRectangle(
+            width=0.88,
+            height=0.56,
+            corner_radius=0.09,
+            stroke_color=BLACK_LINE,
+            stroke_width=1.3,
+            fill_color=PAPER_GRAY,
+            fill_opacity=1.0,
+        )
+        tag_text = self.text(tag, 19, BOLD).move_to(tag_box)
+        tag_group = VGroup(tag_box, tag_text)
+
+        output_lines = VGroup(*[self.text(line, line_size, MEDIUM) for line in lines])
+        output_lines.arrange(DOWN, aligned_edge=LEFT, buff=0.12)
+        output_box = RoundedRectangle(
+            width=width,
+            height=max(1.0, output_lines.height + 0.42),
+            corner_radius=0.10,
+            stroke_color=LIGHT_GRAY,
+            stroke_width=1.5,
+            fill_color=PAPER_GRAY,
+            fill_opacity=1.0,
+        )
+        self.fit(output_lines, width - 0.45, 3.1)
+        output_lines.move_to(output_box).align_to(output_box, LEFT).shift(RIGHT * 0.24)
+
+        output_body = VGroup(output_box, output_lines)
+        return VGroup(tag_group, output_body).arrange(RIGHT, buff=0.22, aligned_edge=UP)
+
+    def notebook_panel(self, title: str, subtitle: str, body: Mobject, *, width: float = 14.2) -> VGroup:
+        header = VGroup(
+            self.text(title, 25, BOLD),
+            self.text(subtitle, 18, MEDIUM),
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.10)
+
+        panel = RoundedRectangle(
+            width=width,
+            height=max(4.1, body.height + 1.35),
+            corner_radius=0.14,
+            stroke_color=BLACK_LINE,
+            stroke_width=1.8,
+            fill_color=WHITE_FILL,
+            fill_opacity=1.0,
+        )
+        divider = Line(LEFT * (width / 2 - 0.20), RIGHT * (width / 2 - 0.20), color=LIGHT_GRAY, stroke_width=1.6)
+        divider.next_to(header, DOWN, buff=0.20)
+        content = VGroup(header, divider, body).arrange(DOWN, aligned_edge=LEFT, buff=0.22)
+        self.fit(content, width - 0.55, 5.1)
+        content.move_to(panel).align_to(panel, UP).shift(DOWN * 0.18)
+        content.align_to(panel, LEFT).shift(RIGHT * 0.28)
+        group = VGroup(panel, content)
+        return group
+
+    def array_boxes(
+        self,
+        name: str,
+        values: list[float | int],
+        *,
+        show_indexes: bool = True,
+        highlight_index: int | None = None,
+        box_width: float = 1.10,
+        box_height: float = 0.84,
+    ) -> VGroup:
+        label = self.text(name, 28, BOLD)
+        boxes = VGroup()
+        values_group = VGroup()
+        indexes = VGroup()
+        for i, val in enumerate(values):
+            fill = VERY_LIGHT_GRAY if highlight_index == i else WHITE_FILL
+            box = RoundedRectangle(
+                width=box_width,
+                height=box_height,
+                corner_radius=0.08,
+                stroke_color=BLACK_LINE,
+                stroke_width=1.7,
+                fill_color=fill,
+                fill_opacity=1.0,
+            )
+            value_mob = self.text(str(val), 25, BOLD).move_to(box)
+            boxes.add(box)
+            values_group.add(value_mob)
+            if show_indexes:
+                idx = self.text(str(i), 18, BOLD)
+                idx.next_to(box, DOWN, buff=0.10)
+                indexes.add(idx)
+        boxes.arrange(RIGHT, buff=0.10)
+        for i, (box, value_mob) in enumerate(zip(boxes, values_group)):
+            value_mob.move_to(box)
+            if show_indexes:
+                indexes[i].next_to(box, DOWN, buff=0.10)
+        label.next_to(boxes, LEFT, buff=0.24)
+        arrow = Arrow(label.get_right(), boxes.get_left(), buff=0.08, stroke_width=2.0, color=BLACK_LINE)
+        group = VGroup(label, arrow, boxes, values_group)
+        if show_indexes:
