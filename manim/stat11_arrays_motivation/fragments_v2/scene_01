@@ -1,0 +1,190 @@
+            index_label = self.text("index", 17, MEDIUM)
+            index_label.next_to(indexes, LEFT, buff=0.16)
+            group.add(indexes, index_label)
+        return group
+
+    def advantage_cards(self) -> VGroup:
+        cards = self.process_map(
+            [
+                ("1", "ONE NAME FOR THE WHOLE DATASET"),
+                ("2", "VALUES STAY TOGETHER AND IN ORDER"),
+                ("3", "EASIER TO ACCESS: data[0], data[1], ..."),
+                ("4", "BETTER FOR REAL DATA COLLECTION"),
+            ],
+            card_width=6.2,
+            card_height=1.10,
+            columns=2,
+        )
+        return cards
+
+    # ------------------------------------------------------------------
+    # Scene flow
+    # ------------------------------------------------------------------
+    def construct(self) -> None:
+        self.opening()
+        self.prior_knowledge()
+        self.need_for_structure()
+        self.define_array_concept()
+        self.advantages_for_data()
+        self.colab_examples()
+        self.mini_workshop()
+        self.summary()
+
+    def opening(self) -> None:
+        self.standard_opening(
+            "STATISTICS 11 · PYTHON / COLAB",
+            "ARRAYS / LISTS AS DATA STRUCTURE",
+            "From one variable to one organized dataset",
+            "Same class format · stronger concept · clearer Colab layout",
+        )
+
+    def prior_knowledge(self) -> None:
+        self.set_header(
+            1,
+            "START WITH WHAT STUDENTS ALREADY KNOW",
+            "A variable stores one value. That is correct and useful when the task contains only one datum.",
+        )
+
+        cell = self.colab_cell([
+            "score = 4.2",
+            "print(score)",
+        ], cell_id="1", title="SINGLE VALUE")
+        out = self.colab_output(["4.2"], width=3.6)
+        notebook_body = VGroup(cell, out).arrange(DOWN, aligned_edge=LEFT, buff=0.22)
+        notebook = self.notebook_panel(
+            "Colab notebook",
+            "One variable name for one value",
+            notebook_body,
+            width=10.2,
+        )
+        notebook.move_to(LEFT * 2.25 + DOWN * 0.55)
+
+        idea = self.note_panel(
+            "IDEA",
+            [
+                "score is the variable name.",
+                "4.2 is the stored value.",
+                "This is perfect for one value.",
+            ],
+            width=4.9,
+            title_size=24,
+            body_size=22,
+        )
+        idea.move_to(RIGHT * 4.0 + DOWN * 0.15)
+        all_mobs = VGroup(notebook, idea)
+        self.assert_content_safe(all_mobs, "prior knowledge")
+
+        self.play(FadeIn(notebook), run_time=RUN_NORMAL)
+        self.wait(PAUSE_READ)
+        self.play(FadeIn(idea), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+        self.clear_stage()
+
+    def need_for_structure(self) -> None:
+        self.set_header(
+            2,
+            "NOW THE PROBLEM CHANGES",
+            "Statistics rarely works with one value only. Usually we collect a set of related values.",
+        )
+
+        prompt = self.prompt_card(
+            "A",
+            "Store the scores of five students using only what you know now.",
+            width=13.1,
+            body_size=27,
+        )
+        prompt.move_to(UP * 1.80)
+
+        cell = self.colab_cell([
+            "score_1 = 4.2",
+            "score_2 = 3.8",
+            "score_3 = 4.5",
+            "score_4 = 3.2",
+            "score_5 = 4.0",
+        ], cell_id="2", title="CORRECT, BUT HARD TO SCALE", width=7.0, line_size=24, min_height=3.25)
+        strip = self.array_boxes("same dataset", SCORES, show_indexes=False)
+        reflection = self.note_panel(
+            "WHAT FEELS WRONG?",
+            [
+                "The values are related,",
+                "but the code separates them.",
+                "Five values need five names.",
+            ],
+            width=5.6,
+            title_size=23,
+            body_size=22,
+        )
+        right = VGroup(strip, reflection).arrange(DOWN, buff=0.42)
+        body = self.split_layout(cell, right, center_y=-0.95)
+        self.assert_content_safe(VGroup(prompt, body.group), "need for structure")
+
+        self.play(FadeIn(prompt), run_time=RUN_NORMAL)
+        self.wait(PAUSE_READ)
+        self.play(FadeIn(cell), run_time=RUN_NORMAL)
+        self.wait(PAUSE_EXPLAIN)
+        self.play(FadeIn(strip), run_time=RUN_NORMAL)
+        self.wait(PAUSE_READ)
+        self.play(FadeIn(reflection), run_time=RUN_NORMAL)
+        self.wait(PAUSE_WORK)
+        self.clear_stage()
+
+        self.set_header(
+            2,
+            "THE REAL ISSUE IS ORGANIZATION",
+            "Separate variables are possible, but they do not describe the dataset in a natural way.",
+        )
+        cards = self.process_map(
+            [
+                ("1", "30 students → 30 variable names"),
+                ("2", "The code grows too much"),
+                ("3", "It becomes harder to read"),
+                ("4", "The data no longer looks grouped"),
+            ],
+            card_width=5.8,
+            card_height=1.10,
+            columns=2,
+        )
+        cards.move_to(DOWN * 0.1)
+        sentence = self.formula_panel(
+            r"\text{We need one structure for many related values}",
+            width=9.0,
+            height=1.05,
+            font_size=36,
+        )
+        sentence.move_to(DOWN * 3.32)
+        self.assert_content_safe(VGroup(cards, sentence), "organization issue")
+
+        self.play(LaggedStart(*[FadeIn(card) for card in cards], lag_ratio=0.12), run_time=RUN_SLOW * 1.7)
+        self.wait(PAUSE_WORK)
+        self.play(FadeIn(sentence), run_time=RUN_NORMAL)
+        self.wait(PAUSE_SUMMARY)
+        self.clear_stage()
+
+    def define_array_concept(self) -> None:
+        self.set_header(
+            3,
+            "ARRAY CONCEPT FOR THIS CLASS",
+            "In our Colab workshop, we will use a Python list as the basic array idea: one variable can store many ordered values.",
+        )
+
+        old_cell = self.colab_cell([
+            "score_1 = 4.2",
+            "score_2 = 3.8",
+            "score_3 = 4.5",
+            "score_4 = 3.2",
+            "score_5 = 4.0",
+        ], cell_id="3", title="BEFORE", width=6.4, line_size=22, min_height=3.2)
+
+        new_cell = self.colab_cell([
+            "scores = [4.2, 3.8, 4.5, 3.2, 4.0]",
+        ], cell_id="3", title="AFTER", width=6.7, line_size=24, min_height=1.95)
+
+        definition = self.note_panel(
+            "DEFINITION",
+            [
+                "An array/list is one variable",
+                "that stores multiple values",
+                "in a specific order.",
+            ],
+            width=5.2,
+            title_size=24,
