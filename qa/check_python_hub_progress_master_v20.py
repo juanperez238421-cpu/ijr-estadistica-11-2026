@@ -10,6 +10,7 @@ master_css = (root / 'python' / 'master' / 'styles.css').read_text(encoding='utf
 gateway = (root / 'supabase' / 'functions' / 'teacher-auth-gateway' / 'index.ts').read_text(encoding='utf-8')
 migration = (root / 'supabase' / 'migrations' / '20260826134800_python_hub_master_mfa_and_pinless_v20.sql').read_text(encoding='utf-8')
 recovery = (root / 'supabase' / 'migrations' / '20260826134900_python_hub_one_time_recovery_v20.sql').read_text(encoding='utf-8')
+disable_pin = (root / 'supabase' / 'migrations' / '20260826141000_python_hub_disable_legacy_progress_pin_v20.sql').read_text(encoding='utf-8')
 
 # Active student flow: no reusable progress PIN/code UI.
 assert 'id="progressCode"' not in index
@@ -25,6 +26,9 @@ assert 'p_progress_code' not in router
 assert 'getVault()' in router and 'fingerprint(group,emails)' in router
 assert 'recoverRegistration' in router
 assert "fragment.get('recover')" in router
+assert 'python_hub_register_v2' in disable_pin
+assert 'revoke all on function' in disable_pin.lower()
+assert 'from public, anon, authenticated' in disable_pin.lower()
 
 # Team progress must remain one exact registration for 1 / 2 / 3 students.
 for marker in ['Individual · 1 student', 'Team · 2–3 students', 'Students at this computer', 'every student in that team']:
@@ -78,4 +82,4 @@ assert '@media(max-width:760px)' in master_css
 assert '@media(prefers-reduced-motion:reduce)' in master_css
 
 print('PYTHON HUB PROGRESS MASTER V20 QA PASS')
-print('pinless_registration=PASS team_progress=PASS one_time_recovery=PASS teacher_auth=EMAIL+MFA_AAL2 master=8_TOPICS legacy_types=SEPARATE identity_review=PASS')
+print('pinless_registration=PASS legacy_pin_rpc=REVOKED team_progress=PASS one_time_recovery=PASS teacher_auth=EMAIL+MFA_AAL2 master=8_TOPICS legacy_types=SEPARATE identity_review=PASS')
