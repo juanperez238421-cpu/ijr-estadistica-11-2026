@@ -1,5 +1,6 @@
 name: Python Learning Hub QA
 
+# Topic 01 V5: full static contract includes blank-cell workshop and theory enrichment.
 on:
   pull_request:
     paths:
