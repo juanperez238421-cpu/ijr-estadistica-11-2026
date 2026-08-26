@@ -22,8 +22,6 @@ jobs:
     timeout-minutes: 90
     env:
       PROJECT_DIR: manim/stat11_arrays_motivation
-      SCENE_FILE: src/stat11_arrays_motivation.py
-      SCENE_CLASS: Stat11ArraysMotivation
       IMAGE: manimcommunity/manim:v0.20.1
       FINAL_NAME: Stat11ArraysMotivation.mp4
 
@@ -46,12 +44,9 @@ jobs:
           python workflow/validate_scene.py src/stat11_arrays_motivation.py
 
       - name: Pull pinned ManimCE image
-        shell: bash
-        run: |
-          set -euo pipefail
-          docker pull "$IMAGE"
+        run: docker pull "$IMAGE"
 
-      - name: PQL validation render
+      - name: Low-quality validation render
         shell: bash
         run: |
           set -euo pipefail
@@ -61,14 +56,14 @@ jobs:
             -e HOME=/tmp/manim-home \
             -v "$PWD:/manim" \
             -w "/manim/$PROJECT_DIR" \
-            --entrypoint bash \
             "$IMAGE" \
-            -lc 'mkdir -p /tmp/preview-bin; printf "#!/bin/sh\nexit 0\n" > /tmp/preview-bin/xdg-open; chmod +x /tmp/preview-bin/xdg-open; export PATH="/tmp/preview-bin:$PATH"; manim -pql src/stat11_arrays_motivation.py Stat11ArraysMotivation --format=mp4 --media_dir media_pql --disable_caching'
+            -ql src/stat11_arrays_motivation.py Stat11ArraysMotivation \
+            --format=mp4 --media_dir media_pql --disable_caching
           PREVIEW="$(find "$PROJECT_DIR/media_pql" -type f -name "$FINAL_NAME" | head -n 1)"
           test -n "$PREVIEW" -a -s "$PREVIEW"
           ffprobe -v error -show_entries stream=width,height,r_frame_rate -of default=nw=1 "$PREVIEW"
 
-      - name: PQH final render
+      - name: High-quality final render
         shell: bash
         run: |
           set -euo pipefail
@@ -78,9 +73,9 @@ jobs:
             -e HOME=/tmp/manim-home \
             -v "$PWD:/manim" \
             -w "/manim/$PROJECT_DIR" \
-            --entrypoint bash \
             "$IMAGE" \
-            -lc 'mkdir -p /tmp/preview-bin; printf "#!/bin/sh\nexit 0\n" > /tmp/preview-bin/xdg-open; chmod +x /tmp/preview-bin/xdg-open; export PATH="/tmp/preview-bin:$PATH"; manim -pqh src/stat11_arrays_motivation.py Stat11ArraysMotivation --format=mp4 --media_dir media --disable_caching'
+            -qh src/stat11_arrays_motivation.py Stat11ArraysMotivation \
+            --format=mp4 --media_dir media --disable_caching
           RAW="$(find "$PROJECT_DIR/media" -type f -name "$FINAL_NAME" | head -n 1)"
           test -n "$RAW" -a -s "$RAW"
           echo "RAW=$RAW" >> "$GITHUB_ENV"
@@ -131,7 +126,7 @@ jobs:
       - name: Upload verified MP4 artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Stat11-AIT-Arrays-Motivation-PQH
+          name: Stat11-Arrays-Motivation-PQH
           retention-days: 30
           if-no-files-found: error
           path: |
