@@ -183,8 +183,10 @@
     header.insertAdjacentHTML('afterend', theoryMarkup());
     const title = $('.lesson-title', mount);
     const lead = $('.lesson-lead', mount);
-    if (title) title.textContent = 'Python, Colab interface and general operations';
-    if (lead) lead.textContent = 'Before calculating, understand the tool: Python is the language, Colab is the notebook interface, and a code cell describes a repeatable process rather than only displaying a final number.';
+    const newTitle = 'Python, Colab interface and general operations';
+    const newLead = 'Before calculating, understand the tool: Python is the language, Colab is the notebook interface, and a code cell describes a repeatable process rather than only displaying a final number.';
+    if (title && title.textContent !== newTitle) title.textContent = newTitle;
+    if (lead && lead.textContent !== newLead) lead.textContent = newLead;
   }
 
   function enforceBlankWorkshop() {
@@ -198,8 +200,8 @@
 
     const title = $('#stageMount .stage-instructions h4');
     const prompt = $('#stageMount .stage-instructions p');
-    if (title) title.textContent = STAGES[stage].title;
-    if (prompt) prompt.textContent = STAGES[stage].prompt;
+    if (title && title.textContent !== STAGES[stage].title) title.textContent = STAGES[stage].title;
+    if (prompt && prompt.textContent !== STAGES[stage].prompt) prompt.textContent = STAGES[stage].prompt;
 
     if (stage <= 4) {
       const editor = $('#codeEditor');
@@ -213,7 +215,7 @@
         editor.addEventListener('input', () => writeDraft(stage, editor.value));
 
         const toolbarTitle = $('#stageMount .editor-toolbar strong');
-        if (toolbarTitle) toolbarTitle.textContent = 'Student Python cell · starts blank';
+        if (toolbarTitle && toolbarTitle.textContent !== 'Student Python cell · starts blank') toolbarTitle.textContent = 'Student Python cell · starts blank';
         editor.insertAdjacentHTML('beforebegin', '<div class="op-blank-note"><strong>Blank-cell challenge</strong><span>No solution or starter code is provided. Build the instructions yourself from the theory above.</span></div>');
 
         const reset = $('#resetCode');
@@ -237,7 +239,15 @@
     enforceBlankWorkshop();
   }
 
-  const observer = new MutationObserver(() => requestAnimationFrame(enhance));
+  let scheduled = false;
+  const observer = new MutationObserver(() => {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      enhance();
+    });
+  });
   observer.observe(document.documentElement, { childList: true, subtree: true });
   document.addEventListener('DOMContentLoaded', enhance);
   window.addEventListener('popstate', enhance);
