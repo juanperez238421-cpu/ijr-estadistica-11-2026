@@ -38,7 +38,7 @@
             title_size=25,
             body_size=23,
         )
-        note.move_to(DOWN * 3.05)
+        note.move_to(DOWN * 2.70)
         self.assert_content_safe(VGroup(cards, note), "advantages")
 
         self.play(LaggedStart(*[FadeIn(card, shift=UP * 0.08) for card in cards], lag_ratio=0.13), run_time=RUN_SLOW * 1.7)
