@@ -2,7 +2,7 @@ name: Render Statistics 11 Comparisons Protocol V2 After Hub QA
 
 on:
   workflow_run:
-    workflows: ["Deploy Statistics 11 Assessment"]
+    workflows: ["Deploy Statistics 11 Assessment", "pages build and deployment"]
     types: [completed]
   issue_comment:
     types: [created]
