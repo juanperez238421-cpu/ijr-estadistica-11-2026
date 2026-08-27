@@ -10,7 +10,7 @@
       login:'teacher_code_login',
       logout:'teacher_code_logout',
       dashboard:'python_hub_teacher_master_code_v1',
-      issueRecovery:'python_hub_teacher_issue_recovery_code_v1'
+      stageMatrix:'python_hub_teacher_stage_matrix_v1'
     })
   });
 })();
