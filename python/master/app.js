@@ -8,7 +8,7 @@
   const topicOrder=['operations','types','arrays','logic','conditions','loops','functions','statistics'];
   const state={snapshot:null,group:'',search:'',mfaFactorId:'',mfaChallengeId:'',loading:false,timer:null,recovery:null};
 
-  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmtTime=v=>{if(!v)return'—';try{return new Date(v).toLocaleString('en-CO',{dateStyle:'short',timeStyle:'short'})}catch{return'—'}};
   const setStatus=(id,text,kind='')=>{const el=$(id);if(!el)return;el.textContent=text||'';el.className=`status ${kind}`.trim();};
   const topicOf=(student,slug)=>Array.isArray(student?.hub?.topics)?student.hub.topics.find(t=>t.slug===slug):null;
