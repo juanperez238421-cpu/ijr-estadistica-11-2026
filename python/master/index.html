@@ -8,12 +8,12 @@
   <meta name="color-scheme" content="light">
   <title>Statistics 11 · Python Teacher Master</title>
   <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20260826-master-v25">
+  <link rel="stylesheet" href="styles.css?v=20260827-master-v26">
   <link rel="stylesheet" href="topic-review.css?v=20260826-master-v25">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="../course-data-v4.js?v=20260826-master-v25"></script>
-  <script defer src="config.js?v=20260826-master-v25"></script>
-  <script defer src="app.js?v=20260826-master-v25"></script>
+  <script defer src="config.js?v=20260827-master-v26"></script>
+  <script defer src="app.js?v=20260827-master-v26"></script>
   <script defer src="topic-review.js?v=20260826-master-v25"></script>
 </head>
 <body>
@@ -26,7 +26,7 @@
     <section id="loginPanel" class="login-card">
       <p class="eyebrow">TEACHER CODE ACCESS</p>
       <h1>Open the teacher dashboard.</h1>
-      <p class="lead">Enter the same private master code used by the Statistics teacher console. The code is checked on the server; it is not stored in this public GitHub page. A successful login creates a temporary teacher session for this browser tab.</p>
+      <p class="lead">Enter the private teacher master code. The code is checked on the server and is not stored in this public GitHub page. A successful login creates a temporary teacher session for this browser tab.</p>
       <form id="teacherCodeForm" class="auth-grid">
         <label>Master code
           <input id="teacherCode" type="password" autocomplete="current-password" spellcheck="false" required placeholder="Enter teacher master code">
@@ -34,22 +34,22 @@
         <button id="loginButton" type="submit">Open Teacher Master</button>
       </form>
       <p id="loginStatus" class="status" role="status" aria-live="polite"></p>
-      <div class="security-note"><strong>Security model</strong><br>Master code → server-side SHA-256 comparison → rate-limited temporary teacher token → read-only Python progress dashboard. No QR, authenticator app, email OTP, Supabase Auth session, service-role key or plaintext master code is shipped in GitHub Pages.</div>
+      <div class="security-note"><strong>Security model</strong><br>Master code → server-side SHA-256 comparison → rate-limited temporary teacher token → read-only progress and stage-audit dashboard. Student identities are verified independently through their institutional @ijr.edu.co account.</div>
     </section>
 
     <section id="dashboardPanel" class="hidden">
       <div class="dashboard-head">
         <div>
           <p class="eyebrow">TEACHER · CODE SESSION VERIFIED</p>
-          <h1>Progress and curriculum review.</h1>
-          <p class="muted">Operations, Variable Types and Arrays are available immediately after registration. Logic unlocks after Arrays is complete, and the remaining topics continue sequentially. Verified Class 01 Types evidence is credited automatically only when roster identity is certain.</p>
+          <h1>Individual progress and stage audit.</h1>
+          <p class="muted">Operations, Variable Types and Arrays stay open from the start. A ✓ on a workshop stage means that stage was actually validated by the server. Historical Class 01 credit is shown separately and never creates false stage validations.</p>
         </div>
         <div class="filters">
           <button class="filter-button active" data-group="" type="button">All</button>
           <button class="filter-button" data-group="11A" type="button">11A</button>
           <button class="filter-button" data-group="11B" type="button">11B</button>
           <button class="filter-button" data-group="11C" type="button">11C</button>
-          <input id="searchInput" type="search" placeholder="Search student">
+          <input id="searchInput" type="search" placeholder="Search student or @ijr email">
           <button id="refreshButton" class="quiet" type="button">Refresh</button>
           <button id="logoutButton" class="quiet" type="button">Sign out</button>
         </div>
@@ -70,38 +70,25 @@
       </section>
 
       <section class="section">
-        <div class="section-head"><div><h2>Roster progress</h2><p>Verified legacy Types credit and current Python Hub mastery, one row per active roster student.</p></div><span id="studentCount" class="muted"></span></div>
+        <div class="section-head"><div><h2>Roster progress · audited by workshop stage</h2><p>Each topic shows current workshop validations stage by stage. Green ✓ = server validated. Open ○ = not validated in the current workshop. Prior Class 01 credit is labeled separately.</p></div><span id="studentCount" class="muted"></span></div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Student</th><th>Legacy Variable Types</th><th>Hub registration</th><th>01 Operations</th><th>02 Types</th><th>03 Arrays</th><th>04 Logic</th><th>05 Conditions</th><th>06 Loops</th><th>07 Functions</th><th>08 Statistics</th><th>Last activity</th></tr></thead>
+            <thead><tr><th>Student</th><th>Legacy Variable Types</th><th>Verified account</th><th>01 Operations</th><th>02 Types</th><th>03 Arrays</th><th>04 Logic</th><th>05 Conditions</th><th>06 Loops</th><th>07 Functions</th><th>08 Statistics</th><th>Last activity</th></tr></thead>
             <tbody id="studentBody"></tbody>
           </table>
         </div>
       </section>
 
       <section class="section">
-        <div class="section-head"><div><h2>Current Hub registrations</h2><p>Supabase is the authoritative runtime store. Issue recovery only when a registered student/team changes device.</p></div><span id="registrationCount" class="muted"></span></div>
+        <div class="section-head"><div><h2>Registration audit history</h2><p>Current individual registrations and older Hub registrations remain visible for traceability. New student access is through a verified @ijr.edu.co account; no permanent student PIN or recovery code is required.</p></div><span id="registrationCount" class="muted"></span></div>
         <div id="registrationList" class="registration-list"></div>
       </section>
 
       <section class="section">
-        <div class="section-head"><div><h2>Needs identity review</h2><p>Class 01 records with 3/3 Variable Types evidence that could not be safely tied to the official roster. These records are intentionally not auto-credited.</p></div><span id="reviewCount" class="muted"></span></div>
+        <div class="section-head"><div><h2>Needs identity review</h2><p>Verified institutional accounts or historical Class 01 records that cannot yet be tied with certainty to the official roster remain separate instead of being silently assigned.</p></div><span id="reviewCount" class="muted"></span></div>
         <div id="identityReview" class="review-grid"></div>
       </section>
     </section>
   </main>
-
-  <dialog id="recoveryDialog" class="dialog">
-    <div class="dialog-box">
-      <div class="dialog-head"><div><p class="eyebrow">ONE-TIME DEVICE RECOVERY</p><h2>Transfer this registration.</h2></div><button id="closeRecoveryDialog" class="quiet" type="button">Close</button></div>
-      <p id="recoveryIdentity" class="lead"></p>
-      <p>This token expires in 10 minutes, works once, and rotates the browser access token when redeemed.</p>
-      <code id="recoveryTokenValue" class="recovery-token"></code>
-      <span id="recoveryExpires" class="muted"></span>
-      <span id="recoveryLink" class="recovery-link"></span>
-      <div class="dialog-actions"><button id="copyRecoveryToken" type="button">Copy token</button><button id="copyRecoveryLink" class="button-light" type="button">Copy recovery link</button></div>
-      <p id="recoveryDialogStatus" class="status" role="status" aria-live="polite"></p>
-    </div>
-  </dialog>
 </body>
 </html>
