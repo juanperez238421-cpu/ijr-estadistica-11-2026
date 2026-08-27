@@ -8,13 +8,14 @@
   <meta name="color-scheme" content="light">
   <title>Statistics 11 · Python Teacher Master</title>
   <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20260826-master-v21">
-  <link rel="stylesheet" href="topic-review.css?v=20260826-master-v21">
+  <link rel="stylesheet" href="styles.css?v=20260826-master-v22">
+  <link rel="stylesheet" href="topic-review.css?v=20260826-master-v22">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="../course-data-v4.js?v=20260826-master-v21"></script>
-  <script defer src="config.js?v=20260826-master-v21"></script>
-  <script defer src="app.js?v=20260826-master-v21"></script>
-  <script defer src="topic-review.js?v=20260826-master-v21"></script>
+  <script defer src="../course-data-v4.js?v=20260826-master-v22"></script>
+  <script defer src="config.js?v=20260826-master-v22"></script>
+  <script defer src="master-code-login.js?v=20260826-master-v22"></script>
+  <script defer src="app.js?v=20260826-master-v22"></script>
+  <script defer src="topic-review.js?v=20260826-master-v22"></script>
 </head>
 <body>
   <main class="shell">
@@ -25,22 +26,36 @@
 
     <section id="loginPanel" class="login-card">
       <p class="eyebrow">SECURE TEACHER ACCESS</p>
-      <h1>Student progress without a master PIN.</h1>
-      <p class="lead">The master page uses a Supabase teacher account plus multi-factor authentication. Student registrations, team progress and historical Class 01 evidence are not loaded until the teacher session reaches AAL2.</p>
-      <form id="emailLoginForm" class="auth-grid">
-        <label>Teacher email
-          <input id="teacherEmail" type="email" autocomplete="email" required placeholder="teacher@example.com">
+      <h1>Teacher Master access.</h1>
+      <p class="lead">Enter the private master code. The code is verified only on the Supabase server and is never stored in this public page. A valid code starts a teacher session, but student data remains locked until authenticator-app MFA reaches AAL2.</p>
+
+      <form id="masterCodeForm" class="auth-grid">
+        <label>Private master code
+          <input id="masterCode" type="password" autocomplete="current-password" autocapitalize="characters" spellcheck="false" required placeholder="Enter master code">
         </label>
-        <button id="sendLoginButton" type="submit">Send secure sign-in email</button>
+        <button id="masterCodeButton" type="submit">Continue securely</button>
       </form>
-      <div class="auth-grid" aria-label="Optional email OTP verification">
-        <label>If the email contains a 6-digit code
-          <input id="emailOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="One-time email code">
-        </label>
-        <button id="verifyEmailOtpButton" class="button-light" type="button">Verify email code</button>
-      </div>
-      <p id="loginStatus" class="status" role="status" aria-live="polite"></p>
-      <div class="security-note"><strong>Security model</strong><br>Authorized teacher identity → secure email sign-in → authenticator-app MFA → AAL2-only gateway → read-only progress dashboard. The teacher allowlist and authorization rules are stored server-side, not in this page.</div>
+      <p id="masterCodeStatus" class="status" role="status" aria-live="polite"></p>
+
+      <details class="security-note">
+        <summary><strong>Email sign-in fallback</strong></summary>
+        <p>Use this only if you prefer the Supabase email sign-in flow.</p>
+        <form id="emailLoginForm" class="auth-grid">
+          <label>Teacher email
+            <input id="teacherEmail" type="email" autocomplete="email" required placeholder="teacher@example.com">
+          </label>
+          <button id="sendLoginButton" type="submit">Send secure sign-in email</button>
+        </form>
+        <div class="auth-grid" aria-label="Optional email OTP verification">
+          <label>If the email contains a 6-digit code
+            <input id="emailOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="One-time email code">
+          </label>
+          <button id="verifyEmailOtpButton" class="button-light" type="button">Verify email code</button>
+        </div>
+        <p id="loginStatus" class="status" role="status" aria-live="polite"></p>
+      </details>
+
+      <div class="security-note"><strong>Security model</strong><br>Server-verified master code → one-time Supabase teacher sign-in → authenticator-app MFA → AAL2-only gateway → teacher dashboard. The master code hash, teacher authorization and rate-limit state are server-side and are not shipped in GitHub Pages.</div>
     </section>
 
     <section id="mfaPanel" class="mfa-card hidden">
