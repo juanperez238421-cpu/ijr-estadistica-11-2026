@@ -68,12 +68,13 @@ for (const ex of arrays.exercises) {
 }
 
 const guidance = read('python/workshop-guidance-v28.js');
+const guidanceLower = guidance.toLowerCase();
 for (let i=1;i<=12;i++) {
   const key = `arr-${String(i).padStart(2,'0')}`;
   if (!guidance.includes(`'${key}'`)) throw new Error(`V28 guidance missing explicit steps for ${key}.`);
 }
-for (const phrase of ['Do not type the expected result as a literal shortcut','A direct final-answer print is not a valid solution','No starter solution is provided']) {
-  if (!guidance.includes(phrase)) throw new Error(`V28 guidance missing authorship safeguard: ${phrase}`);
+for (const phrase of ['do not type the expected result as a literal shortcut','a direct final-answer print is not a valid solution','no starter solution is provided']) {
+  if (!guidanceLower.includes(phrase)) throw new Error(`V28 guidance missing authorship safeguard: ${phrase}`);
 }
 
 const workshopHtml = read('python/workshop.html');
