@@ -6,7 +6,7 @@
   const $=id=>document.getElementById(id);
   const sb=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:cfg.authStorageKey}});
   const topicOrder=['operations','types','arrays','logic','conditions','loops','functions','statistics'];
-  const state={snapshot:null,group:'',search:'',mfaFactorId:'',mfaChallengeId:'',loading:false,timer:null,recovery:null};
+  const state={snapshot:null,group:'',search:'',mfaFactorId:'',mfaChallengeId:'',mfaSetupActive:false,loading:false,timer:null,recovery:null};
 
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmtTime=v=>{if(!v)return'—';try{return new Date(v).toLocaleString('en-CO',{dateStyle:'short',timeStyle:'short'})}catch{return'—'}};
@@ -65,12 +65,26 @@
     const candidates=factorCandidates(factors);
     const verified=candidates.find(f=>f.status==='verified');
     if(verified){
+      state.mfaSetupActive=false;
       state.mfaFactorId=verified.id;
       $('mfaTitle').textContent='Verify your teacher authenticator.';
       $('mfaCopy').textContent='Enter the current 6-digit code from the authenticator app registered to this teacher account.';
       $('mfaQrWrap').classList.add('hidden');
       setStatus('mfaStatus','Verified authenticator found. Enter the current code.');
       return;
+    }
+
+    if(state.mfaSetupActive&&state.mfaFactorId){
+      const currentPending=candidates.find(f=>f.id===state.mfaFactorId&&f.status!=='verified');
+      if(currentPending){
+        $('mfaTitle').textContent='Set up teacher MFA.';
+        $('mfaCopy').textContent='Keep this QR open while you add it to your authenticator app. This enrollment stays stable until you verify it or sign out.';
+        $('mfaQrWrap').classList.remove('hidden');
+        setStatus('mfaStatus','QR is active. Scan it once, then enter the current 6-digit code from your authenticator app.','ok');
+        return;
+      }
+      state.mfaSetupActive=false;
+      state.mfaFactorId='';
     }
 
     const incomplete=candidates.filter(f=>f.status!=='verified');
@@ -81,12 +95,13 @@
 
     const {data:enroll,error:enrollError}=await sb.auth.mfa.enroll({factorType:'totp'});if(enrollError)throw enrollError;
     state.mfaFactorId=enroll.id;
+    state.mfaSetupActive=true;
     $('mfaTitle').textContent='Set up teacher MFA.';
-    $('mfaCopy').textContent='Scan this QR code once with an authenticator app, then enter the generated 6-digit code. This second factor is required before any student data can load.';
+    $('mfaCopy').textContent='Scan this QR once with an authenticator app. Keep this page open: the QR will remain valid while you finish setup.';
     $('mfaQr').src=enroll.totp.qr_code;
     $('mfaSecret').textContent=enroll.totp.secret||'';
     $('mfaQrWrap').classList.remove('hidden');
-    setStatus('mfaStatus',incomplete.length?'Previous incomplete MFA setup was reset. Scan this new QR and verify the first code.':'QR generated. Scan it and verify the first authenticator code.','ok');
+    setStatus('mfaStatus',incomplete.length?'Previous incomplete MFA setup was reset. This new QR will stay active while you complete verification.':'QR generated. It will stay active while you complete verification.','ok');
   }
 
   async function verifyMfa(){
@@ -97,7 +112,7 @@
       const {data:challenge,error:challengeError}=await sb.auth.mfa.challenge({factorId:state.mfaFactorId});if(challengeError)throw challengeError;
       state.mfaChallengeId=challenge.id;
       const {error:verifyError}=await sb.auth.mfa.verify({factorId:state.mfaFactorId,challengeId:state.mfaChallengeId,code});if(verifyError)throw verifyError;
-      $('mfaCode').value='';state.mfaChallengeId='';setStatus('mfaStatus','MFA verified. Opening secure progress dashboard…','ok');
+      $('mfaCode').value='';state.mfaChallengeId='';state.mfaSetupActive=false;setStatus('mfaStatus','MFA verified. Opening secure progress dashboard…','ok');
       await openDashboard();
     }catch(error){setStatus('mfaStatus',error.message,'error');}
     finally{$('verifyMfaButton').disabled=false;}
@@ -202,7 +217,7 @@
     try{await navigator.clipboard.writeText(text);setStatus('recoveryDialogStatus',statusMessage,'ok');}catch{setStatus('recoveryDialogStatus','Clipboard access failed. Select and copy the value manually.','error');}
   }
 
-  async function signOut(){clearTimeout(state.timer);state.snapshot=null;state.mfaFactorId='';state.mfaChallengeId='';await sb.auth.signOut();showOnly('loginPanel');setStatus('loginStatus','Signed out.');}
+  async function signOut(){clearTimeout(state.timer);state.snapshot=null;state.mfaFactorId='';state.mfaChallengeId='';state.mfaSetupActive=false;await sb.auth.signOut();showOnly('loginPanel');setStatus('loginStatus','Signed out.');}
 
   async function routeAuthenticated(){
     try{
@@ -225,7 +240,7 @@
     $('copyRecoveryToken').addEventListener('click',()=>copyText(state.recovery?.recovery_token||'','One-time recovery token copied.'));
     $('copyRecoveryLink').addEventListener('click',()=>copyText($('recoveryLink').textContent||'','One-time recovery link copied.'));
     document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('dashboardPanel').classList.contains('hidden'))loadDashboard();});
-    sb.auth.onAuthStateChange((event,session)=>{if((event==='SIGNED_IN'||event==='TOKEN_REFRESHED')&&session)setTimeout(routeAuthenticated,0);});
+    sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_IN'&&session)setTimeout(routeAuthenticated,0);});
   }
 
   async function init(){bind();await routeAuthenticated();}
