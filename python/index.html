@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="light">
-  <meta name="description" content="Statistics 11 Python Learning Hub with registered individual/team progress and immediate access to Operations, Variable Types and Arrays.">
+  <meta name="description" content="Statistics 11 Python Learning Hub with registered individual/team progress, stable student user IDs, audited individual progress and immediate access to Operations, Variable Types and Arrays.">
   <title>Statistics 11 · Python Learning Hub</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
@@ -12,11 +12,13 @@
   <link rel="stylesheet" href="gated.css?v=20260826-hub-v3">
   <link rel="stylesheet" href="split-layout.css?v=20260826-split-v7a">
   <link rel="stylesheet" href="classroom-visual-v8.css?v=20260826-v8">
+  <link rel="stylesheet" href="student-progress-v29.css?v=20260827-progress-v29">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="config-v2.js?v=20260826-progress-v21"></script>
   <script defer src="course-data-v4.js?v=20260826-split-v7a"></script>
   <script defer src="workshop-catalog-v27.js?v=20260827-catalog-v27"></script>
   <script defer src="hub-router.js?v=20260826-progress-v21"></script>
+  <script defer src="student-progress-v29.js?v=20260827-progress-v29"></script>
 </head>
 <body>
   <header class="topbar">
@@ -74,11 +76,11 @@
         <div class="sequence-rule" aria-label="Progress saving model">
           <strong>Automatic server saving</strong>
           <span>Progress is attached to the exact group + institutional-email registration and saves after every correctly validated stage.</span>
-          <small>This browser remembers registrations used here and resumes them automatically. A verified Class 01 Variable Types completion is credited only when the student can be matched with certainty to the official roster.</small>
+          <small>After entering the Hub, every registered student receives a visible stable User ID and an individual progress record. Team validations are credited to every registered member of that team.</small>
         </div>
 
         <div class="registration-actions">
-          <div><strong>Individual or classroom team</strong><span>If 2–3 students work together, register every student in that team before starting. A shared legacy credit is applied only when every member of the team has verified evidence.</span></div>
+          <div><strong>Individual or classroom team</strong><span>If 2–3 students work together, register every student in that team before starting. Each student will see an individual User ID and personal progress, while the current team also keeps its shared Registration ID.</span></div>
           <button id="registerButton" class="button button-dark" type="submit">Enter learning path</button>
         </div>
         <p id="registrationStatus" class="inline-status" role="status" aria-live="polite"></p>
@@ -105,10 +107,12 @@
         <h1>Study the idea. Then solve the workshop.</h1>
         <p id="identitySummary">Registered learning path</p>
         <p>Every subject is separated into <strong>Theory</strong> and <strong>Workshop</strong>. Every workshop contains <strong>12 required problems</strong>, and coding problems begin from a blank cell so the student writes the Python solution. The first three topics—Operations, Variable Types and Arrays—are available immediately after registration.</p>
-        <div class="sequence-rule"><strong>Automatic saving</strong><span>Your validated workshop progress is saved to this individual/team registration.</span><small>Use <strong>Switch registration</strong> when another student or team uses this computer. On a new device, ask the teacher for a one-time recovery token.</small></div>
+        <div class="sequence-rule"><strong>Automatic saving</strong><span>Your validated workshop progress is saved to this individual/team registration.</span><small>Your personal record below follows your stable User ID across registrations. Use <strong>Switch registration</strong> when another student or team uses this computer.</small></div>
       </div>
-      <div class="global-progress-card"><span>Overall workshop progress</span><strong id="globalPercent">0%</strong><div class="progress-track"><span id="globalProgressBar"></span></div><small id="globalProgressCopy">0 workshop stages correct</small></div>
+      <div class="global-progress-card"><span>Current registration progress</span><strong id="globalPercent">0%</strong><div class="progress-track"><span id="globalProgressBar"></span></div><small id="globalProgressCopy">0 workshop stages correct</small></div>
     </section>
+
+    <section id="identityProgressPanel" class="student-identity-progress" aria-live="polite"></section>
 
     <section class="topic-grid-heading"><p class="eyebrow">LEARN BY SUBJECT</p><h2>One topic · two dedicated pages</h2><p>You can begin with <strong>Operations</strong>, <strong>Variable Types</strong> or <strong>Arrays</strong>. Each workshop has 12 problems. Logic and the later topics continue as the sequential progression.</p></section>
     <section id="topicGrid" class="hub-topic-grid" aria-live="polite"></section>
