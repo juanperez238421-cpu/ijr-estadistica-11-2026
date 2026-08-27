@@ -8,14 +8,13 @@
   <meta name="color-scheme" content="light">
   <title>Statistics 11 · Python Teacher Master</title>
   <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20260826-master-v24">
-  <link rel="stylesheet" href="topic-review.css?v=20260826-master-v24">
+  <link rel="stylesheet" href="styles.css?v=20260826-master-v25">
+  <link rel="stylesheet" href="topic-review.css?v=20260826-master-v25">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="../course-data-v4.js?v=20260826-master-v24"></script>
-  <script defer src="config.js?v=20260826-master-v24"></script>
-  <script defer src="master-code-login.js?v=20260826-master-v24"></script>
-  <script defer src="app.js?v=20260826-master-v24"></script>
-  <script defer src="topic-review.js?v=20260826-master-v24"></script>
+  <script defer src="../course-data-v4.js?v=20260826-master-v25"></script>
+  <script defer src="config.js?v=20260826-master-v25"></script>
+  <script defer src="app.js?v=20260826-master-v25"></script>
+  <script defer src="topic-review.js?v=20260826-master-v25"></script>
 </head>
 <body>
   <main class="shell">
@@ -25,59 +24,26 @@
     </header>
 
     <section id="loginPanel" class="login-card">
-      <p class="eyebrow">SECURE TEACHER ACCESS</p>
-      <h1>Teacher Master access.</h1>
-      <p class="lead">Enter the private master code. The code is verified only on the Supabase server and is never stored in this public page. A valid code starts a teacher session, but student data remains locked until authenticator-app MFA reaches AAL2.</p>
-
-      <form id="masterCodeForm" class="auth-grid">
-        <label>Private master code
-          <input id="masterCode" type="password" autocomplete="current-password" autocapitalize="characters" spellcheck="false" required placeholder="Enter master code">
+      <p class="eyebrow">TEACHER CODE ACCESS</p>
+      <h1>Open the teacher dashboard.</h1>
+      <p class="lead">Enter the same private master code used by the Statistics teacher console. The code is checked on the server; it is not stored in this public GitHub page. A successful login creates a temporary teacher session for this browser tab.</p>
+      <form id="teacherCodeForm" class="auth-grid">
+        <label>Master code
+          <input id="teacherCode" type="password" autocomplete="current-password" spellcheck="false" required placeholder="Enter teacher master code">
         </label>
-        <button id="masterCodeButton" type="submit">Continue securely</button>
+        <button id="loginButton" type="submit">Open Teacher Master</button>
       </form>
-      <p id="masterCodeStatus" class="status" role="status" aria-live="polite"></p>
-
-      <details class="security-note">
-        <summary><strong>Email sign-in fallback</strong></summary>
-        <p>Use this only if you prefer the Supabase email sign-in flow.</p>
-        <form id="emailLoginForm" class="auth-grid">
-          <label>Teacher email
-            <input id="teacherEmail" type="email" autocomplete="email" required placeholder="teacher@example.com">
-          </label>
-          <button id="sendLoginButton" type="submit">Send secure sign-in email</button>
-        </form>
-        <div class="auth-grid" aria-label="Optional email OTP verification">
-          <label>If the email contains a 6-digit code
-            <input id="emailOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="One-time email code">
-          </label>
-          <button id="verifyEmailOtpButton" class="button-light" type="button">Verify email code</button>
-        </div>
-        <p id="loginStatus" class="status" role="status" aria-live="polite"></p>
-      </details>
-
-      <div class="security-note"><strong>Security model</strong><br>Server-verified master code → one-time Supabase teacher sign-in → authenticator-app MFA → AAL2-only gateway → teacher dashboard. The master code hash, teacher authorization and rate-limit state are server-side and are not shipped in GitHub Pages.</div>
-    </section>
-
-    <section id="mfaPanel" class="mfa-card hidden">
-      <p class="eyebrow">SECOND FACTOR REQUIRED</p>
-      <div class="mfa-layout">
-        <div>
-          <h2 id="mfaTitle">Secure the teacher account.</h2>
-          <p id="mfaCopy" class="lead">Use an authenticator app to complete teacher MFA.</p>
-          <div id="mfaQrWrap" class="qr-wrap hidden"><img id="mfaQr" alt="Authenticator setup QR code"><div id="mfaSecret" class="secret"></div></div>
-        </div>
-        <div class="mfa-code">
-          <label>Authenticator code<input id="mfaCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="6-digit code"></label>
-          <button id="verifyMfaButton" type="button">Verify MFA and open dashboard</button>
-          <p id="mfaStatus" class="status" role="status" aria-live="polite"></p>
-          <button id="mfaLogoutButton" type="button" class="quiet">Cancel / Sign out</button>
-        </div>
-      </div>
+      <p id="loginStatus" class="status" role="status" aria-live="polite"></p>
+      <div class="security-note"><strong>Security model</strong><br>Master code → server-side SHA-256 comparison → rate-limited temporary teacher token → read-only Python progress dashboard. No QR, authenticator app, email OTP, Supabase Auth session, service-role key or plaintext master code is shipped in GitHub Pages.</div>
     </section>
 
     <section id="dashboardPanel" class="hidden">
       <div class="dashboard-head">
-        <div><p class="eyebrow">TEACHER · AAL2 VERIFIED</p><h1>Progress and curriculum review.</h1><p class="muted">Review every Python topic from the canonical course source, then inspect current Hub progress and verified historical Variable Types evidence.</p></div>
+        <div>
+          <p class="eyebrow">TEACHER · CODE SESSION VERIFIED</p>
+          <h1>Progress and curriculum review.</h1>
+          <p class="muted">Operations is now optional for progression. Variable Types is available immediately; Arrays unlocks after Variable Types. Verified Class 01 Types evidence is credited automatically only when roster identity is certain.</p>
+        </div>
         <div class="filters">
           <button class="filter-button active" data-group="" type="button">All</button>
           <button class="filter-button" data-group="11A" type="button">11A</button>
@@ -92,12 +58,7 @@
       <section id="metrics" class="metrics" aria-label="Progress summary"></section>
 
       <section class="section" id="curriculumReviewSection">
-        <div class="section-head">
-          <div>
-            <h2>Curriculum &amp; Workshop Review</h2>
-            <p>Teacher-only overview of every topic. Expand a topic to inspect its definition, goals, theory map and all workshop stages without creating a student registration.</p>
-          </div>
-        </div>
+        <div class="section-head"><div><h2>Curriculum &amp; Workshop Review</h2><p>Expand any topic to inspect definitions, goals, theory and workshop stages from the same canonical source used by students.</p></div></div>
         <div class="topic-review-toolbar">
           <input id="topicReviewSearch" type="search" placeholder="Search topic, goal or keyword" aria-label="Search curriculum topics">
           <button id="expandAllTopics" class="quiet" type="button">Expand all</button>
@@ -109,7 +70,7 @@
       </section>
 
       <section class="section">
-        <div class="section-head"><div><h2>Roster progress</h2><p>One row per active roster student. Historical Variable Types evidence is shown separately from current Hub mastery.</p></div><span id="studentCount" class="muted"></span></div>
+        <div class="section-head"><div><h2>Roster progress</h2><p>Verified legacy Types credit and current Python Hub mastery, one row per active roster student.</p></div><span id="studentCount" class="muted"></span></div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Student</th><th>Legacy Variable Types</th><th>Hub registration</th><th>01 Operations</th><th>02 Types</th><th>03 Arrays</th><th>04 Logic</th><th>05 Conditions</th><th>06 Loops</th><th>07 Functions</th><th>08 Statistics</th><th>Last activity</th></tr></thead>
@@ -119,12 +80,12 @@
       </section>
 
       <section class="section">
-        <div class="section-head"><div><h2>Current Hub registrations</h2><p>Individual and 2–3 student team registrations. Use recovery only when a student/team moves to a different device.</p></div><span id="registrationCount" class="muted"></span></div>
+        <div class="section-head"><div><h2>Current Hub registrations</h2><p>Supabase is the authoritative runtime store. Issue recovery only when a registered student/team changes device.</p></div><span id="registrationCount" class="muted"></span></div>
         <div id="registrationList" class="registration-list"></div>
       </section>
 
       <section class="section">
-        <div class="section-head"><div><h2>Needs identity review</h2><p>Historical Class 01 records that completed the Variable Types checkpoints but were not safely matched to the official roster. They are intentionally not auto-credited.</p></div><span id="reviewCount" class="muted"></span></div>
+        <div class="section-head"><div><h2>Needs identity review</h2><p>Class 01 records with 3/3 Variable Types evidence that could not be safely tied to the official roster. These records are intentionally not auto-credited.</p></div><span id="reviewCount" class="muted"></span></div>
         <div id="identityReview" class="review-grid"></div>
       </section>
     </section>
@@ -134,7 +95,7 @@
     <div class="dialog-box">
       <div class="dialog-head"><div><p class="eyebrow">ONE-TIME DEVICE RECOVERY</p><h2>Transfer this registration.</h2></div><button id="closeRecoveryDialog" class="quiet" type="button">Close</button></div>
       <p id="recoveryIdentity" class="lead"></p>
-      <p>This token expires in 10 minutes, works once, and rotates the browser access token when redeemed. It is not a permanent student PIN.</p>
+      <p>This token expires in 10 minutes, works once, and rotates the browser access token when redeemed.</p>
       <code id="recoveryTokenValue" class="recovery-token"></code>
       <span id="recoveryExpires" class="muted"></span>
       <span id="recoveryLink" class="recovery-link"></span>

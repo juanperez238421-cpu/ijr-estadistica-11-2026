@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="light">
-  <meta name="description" content="Statistics 11 Python Learning Hub with separate theory and workshop pages, registered individual/team progress and prerequisite gating.">
+  <meta name="description" content="Statistics 11 Python Learning Hub with registered individual/team progress, optional Operations practice and a Variable Types entry point.">
   <title>Statistics 11 · Python Learning Hub</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
@@ -13,9 +13,9 @@
   <link rel="stylesheet" href="split-layout.css?v=20260826-split-v7a">
   <link rel="stylesheet" href="classroom-visual-v8.css?v=20260826-v8">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="config-v2.js?v=20260826-progress-v20"></script>
+  <script defer src="config-v2.js?v=20260826-progress-v21"></script>
   <script defer src="course-data-v4.js?v=20260826-split-v7a"></script>
-  <script defer src="hub-router.js?v=20260826-progress-v20"></script>
+  <script defer src="hub-router.js?v=20260826-progress-v21"></script>
 </head>
 <body>
   <header class="topbar">
@@ -34,12 +34,12 @@
     <div class="registration-card">
       <p class="eyebrow">REGISTERED LEARNING PATH · RUTA CON PROGRESO</p>
       <h1>Register once. Keep learning.</h1>
-      <p class="registration-lead">Choose an individual registration or the exact team working at this computer. Correct workshop stages are saved to that registered student or team and the next topic unlocks only when the previous workshop is complete.</p>
+      <p class="registration-lead">Choose an individual registration or the exact team working at this computer. Validated workshop progress is saved to that student/team in Supabase. <strong>Variable Types is available immediately</strong>; Operations is optional foundation practice and does not block progression.</p>
 
-      <div class="sequence-rule" aria-label="Course prerequisite rule">
-        <strong>Prerequisite rule</strong>
-        <span>01 Operations → 02 Variable Types → 03 Arrays → 04 Logic → 05 Conditions → 06 Loops → 07 Functions → 08 Statistics</span>
-        <small>Theory and workshop access follow the same prerequisite path.</small>
+      <div class="sequence-rule" aria-label="Course progression rule">
+        <strong>Progression rule</strong>
+        <span>01 Operations <em>(optional)</em> · 02 Variable Types → 03 Arrays → 04 Logic → 05 Conditions → 06 Loops → 07 Functions → 08 Statistics</span>
+        <small>You may start with Variable Types. From Arrays onward, each required topic unlocks after the previous required workshop is complete.</small>
       </div>
 
       <form id="registrationForm" class="hub-registration-form">
@@ -71,13 +71,13 @@
         </fieldset>
 
         <div class="sequence-rule" aria-label="Progress saving model">
-          <strong>No progress PIN</strong>
-          <span>Progress is attached to the exact group + institutional-email registration and saves after each validated stage.</span>
-          <small>This browser remembers registrations used here and resumes them automatically. If you need to continue on a different device, ask the teacher to recover the registration from the secure teacher master page.</small>
+          <strong>Automatic server saving</strong>
+          <span>Progress is attached to the exact group + institutional-email registration and saves after every correctly validated stage.</span>
+          <small>This browser remembers registrations used here and resumes them automatically. A verified Class 01 Variable Types completion is credited only when the student can be matched with certainty to the official roster.</small>
         </div>
 
         <div class="registration-actions">
-          <div><strong>Individual or classroom team</strong><span>If 2–3 students work together, register every student in that team before starting. One validated stage is then recorded for the complete registered team.</span></div>
+          <div><strong>Individual or classroom team</strong><span>If 2–3 students work together, register every student in that team before starting. A shared legacy credit is applied only when every member of the team has verified evidence.</span></div>
           <button id="registerButton" class="button button-dark" type="submit">Enter learning path</button>
         </div>
         <p id="registrationStatus" class="inline-status" role="status" aria-live="polite"></p>
@@ -85,7 +85,7 @@
 
       <details class="sequence-rule" id="recoveryPanel">
         <summary><strong>Using a different device?</strong> Teacher-assisted recovery</summary>
-        <span>Ask the teacher to open the secure master page and issue a one-time recovery token for your exact registration. It expires after 10 minutes and can be used only once.</span>
+        <span>Ask the teacher to open the Teacher Master and issue a one-time recovery token for your exact registration. It expires after 10 minutes and can be used only once.</span>
         <div class="registration-actions">
           <label style="flex:1">One-time recovery token
             <input id="recoveryToken" type="text" autocomplete="off" inputmode="text" maxlength="24" placeholder="Paste the teacher-issued token">
@@ -103,13 +103,13 @@
         <p class="eyebrow">PYTHON · STATISTICS 11</p>
         <h1>Study the idea. Then solve the workshop.</h1>
         <p id="identitySummary">Registered learning path</p>
-        <p>Every subject is separated into two focused pages: <strong>Theory</strong> contains explanations, official resources and animated diagrams; <strong>Workshop</strong> contains the complete practice layout, execution and validation.</p>
-        <div class="sequence-rule"><strong>Automatic saving</strong><span>Your validated workshop progress is saved to this individual/team registration.</span><small>No persistent progress code is required. Use <strong>Switch registration</strong> when another student or team uses this computer.</small></div>
+        <p>Every subject is separated into <strong>Theory</strong> and <strong>Workshop</strong>. Operations is optional review; Variable Types is the starting point for the required sequence.</p>
+        <div class="sequence-rule"><strong>Automatic saving</strong><span>Your validated workshop progress is saved to this individual/team registration.</span><small>Use <strong>Switch registration</strong> when another student or team uses this computer. On a new device, ask the teacher for a one-time recovery token.</small></div>
       </div>
       <div class="global-progress-card"><span>Overall workshop progress</span><strong id="globalPercent">0%</strong><div class="progress-track"><span id="globalProgressBar"></span></div><small id="globalProgressCopy">0 workshop stages correct</small></div>
     </section>
 
-    <section class="topic-grid-heading"><p class="eyebrow">LEARN BY SUBJECT</p><h2>One topic · two dedicated pages</h2><p>Theory does not change your mastery percentage. Correct workshop stages do.</p></section>
+    <section class="topic-grid-heading"><p class="eyebrow">LEARN BY SUBJECT</p><h2>One topic · two dedicated pages</h2><p>Start with <strong>Variable Types</strong> if you are continuing the current course sequence. Operations remains available as optional foundation practice.</p></section>
     <section id="topicGrid" class="hub-topic-grid" aria-live="polite"></section>
 
     <footer class="footer"><span>Instituto Jorge Robledo · Statistics / Programming 11° · 2026-2</span><a href="../">Course home</a></footer>
