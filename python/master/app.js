@@ -12,6 +12,8 @@
   const fmtTime=v=>{if(!v)return'—';try{return new Date(v).toLocaleString('es-CO',{dateStyle:'short',timeStyle:'short'})}catch{return'—'}};
   const setStatus=(id,text,kind='')=>{const el=$(id);if(!el)return;el.textContent=text||'';el.className=`status ${kind}`.trim();};
   const topicOf=(student,slug)=>Array.isArray(student?.hub?.topics)?student.hub.topics.find(t=>t.slug===slug):null;
+  const creditOf=(student,slug)=>Array.isArray(student?.topic_credits)?student.topic_credits.find(c=>c.topic_slug===slug):null;
+  const displayRegistrationId=id=>id?`REG-${String(id).replace(/-/g,'').slice(0,8).toUpperCase()}`:'—';
 
   async function rpc(name,args={}){const {data,error}=await sb.rpc(name,args);if(error)throw new Error(error.message||'Backend request failed');return data;}
   function showOnly(panel){['loginPanel','dashboardPanel'].forEach(id=>$(id).classList.toggle('hidden',id!==panel));}
@@ -36,7 +38,10 @@
 
   function filteredStudents(){
     const q=state.search.toLowerCase();
-    return (state.snapshot?.students||[]).filter(s=>(!state.group||s.group_code===state.group)&&(!q||String(s.display_name||'').toLowerCase().includes(q)||String(s.hub?.institutional_email||'').toLowerCase().includes(q)));
+    return (state.snapshot?.students||[]).filter(s=>{
+      const registrationText=(s.registrations||[]).map(r=>`${r.institutional_email||''} ${r.registration_id||''}`).join(' ').toLowerCase();
+      return (!state.group||s.group_code===state.group)&&(!q||String(s.display_name||'').toLowerCase().includes(q)||String(s.hub?.institutional_email||'').toLowerCase().includes(q)||registrationText.includes(q));
+    });
   }
   function filteredRegistrations(){
     const q=state.search.toLowerCase();
@@ -46,28 +51,45 @@
     if(legacy?.status==='completed')return `<span class="status-pill ok">✓ Types credited</span><span class="student-sub">Verified Class 01 · ${esc(fmtTime(legacy.last_activity_at))}</span>`;
     return '<span class="status-pill none">No verified legacy credit</span>';
   }
+  function registrationHistory(student){
+    const regs=Array.isArray(student.registrations)?student.registrations:[];
+    if(!regs.length)return '<span class="student-sub">Registration history: none</span>';
+    return `<span class="student-sub"><strong>Registration history (${regs.length})</strong></span>${regs.map(r=>`<span class="student-sub">${esc(displayRegistrationId(r.registration_id))} · ${r.registration_mode==='team'?`Team (${Number(r.team_size||0)})`:'Individual'} · ${esc(fmtTime(r.created_at))}</span>`).join('')}`;
+  }
+  function policyBadge(student){
+    const p=student.registration_policy;
+    if(!p?.force_individual)return'';
+    return `<span class="status-pill ok">${p.advanced?'ADVANCED · ':''}INDIVIDUAL ONLY</span><span class="student-sub">${esc(p.note||'This student cannot join team registrations.')}</span>`;
+  }
   function hubIdentity(student){
-    if(!student.hub)return '<span class="status-pill none">Not registered in Hub</span>';
-    const team=student.hub.registration_mode==='team';
-    return `<strong>${team?'Team':'Individual'}</strong>${team?`<span class="team-chip">TEAM · ${Number(student.hub.team_size||0)}</span>`:''}<span class="student-sub">${esc(student.hub.institutional_email||'')}</span>`;
+    const current=student.hub
+      ?(()=>{const team=student.hub.registration_mode==='team';return `<strong>${team?'Team':'Individual'}</strong>${team?`<span class="team-chip">TEAM · ${Number(student.hub.team_size||0)}</span>`:''}<span class="student-sub">${esc(student.hub.institutional_email||'')}</span><span class="student-sub">${esc(displayRegistrationId(student.hub.registration_id))}</span>`;})()
+      :'<span class="status-pill none">Not currently registered in Hub</span>';
+    return `${policyBadge(student)}${current}${registrationHistory(student)}`;
   }
   function topicCell(student,slug){
     const p=topicOf(student,slug);
+    const credit=creditOf(student,slug);
+    if(!p&&credit){
+      return `<td class="topic-cell"><strong>✓ Credited</strong><span class="student-sub">Historical/teacher verified</span><span class="student-sub">${esc(fmtTime(credit.completed_at))}</span></td>`;
+    }
     if(!p)return '<td class="topic-cell"><span class="muted">—</span></td>';
-    const done=p.status==='completed',credited=p.completion_source==='legacy_credit';
-    return `<td class="topic-cell"><strong>${done?'✓ ':''}${Number(p.percent||0)}%</strong><span class="student-sub">${credited?'Class 01 credit':`${Number(p.correct_count||0)}/${Number(p.total_count||0)}`}</span><span class="mini-track"><i style="width:${Math.max(0,Math.min(100,Number(p.percent||0)))}%"></i></span></td>`;
+    const done=p.status==='completed',credited=p.completion_source==='legacy_credit'||Boolean(credit);
+    return `<td class="topic-cell"><strong>${done?'✓ ':''}${Number(p.percent||0)}%</strong><span class="student-sub">${credited?'Topic credit (not fake stage validation)':`${Number(p.correct_count||0)}/${Number(p.total_count||0)}`}</span><span class="mini-track"><i style="width:${Math.max(0,Math.min(100,Number(p.percent||0)))}%"></i></span></td>`;
   }
 
   function renderMetrics(students,registrations){
     const legacyDone=students.filter(s=>s.legacy_types?.status==='completed').length;
     const hubRegistered=students.filter(s=>s.hub).length;
-    const hubTypesDone=students.filter(s=>topicOf(s,'types')?.status==='completed').length;
+    const hubTypesDone=students.filter(s=>topicOf(s,'types')?.status==='completed'||creditOf(s,'types')).length;
+    const individualOnly=students.filter(s=>s.registration_policy?.force_individual).length;
     $('metrics').innerHTML=[
       ['Roster students',students.length],
       ['Verified Types credits',legacyDone],
       ['Hub registered students',hubRegistered],
-      ['Hub Types complete',hubTypesDone],
-      ['Hub registrations',registrations.length]
+      ['Hub Types complete/credited',hubTypesDone],
+      ['Hub registrations',registrations.length],
+      ['Individual-only students',individualOnly]
     ].map(([label,value])=>`<div class="metric"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`).join('');
   }
   function renderStudents(students){
@@ -82,7 +104,7 @@
     $('registrationList').innerHTML=registrations.map(r=>{
       const members=(r.members||[]).map(m=>m.display_name||m.email).filter(Boolean);
       const topics=(r.topics||[]).map(t=>`<span>${String(t.sequence).padStart(2,'0')} ${Number(t.percent||0)}%${t.completion_source==='legacy_credit'?' · credit':''}</span>`).join('');
-      return `<article class="registration-card"><h3>${esc(r.group_code)} · ${r.mode==='team'?`Team (${Number(r.team_size||0)})`:'Individual'}</h3><p>${members.map(esc).join('<br>')}</p><div class="topic-chips">${topics}</div><p class="muted">Updated ${esc(fmtTime(r.last_activity_at))}</p><button type="button" class="recovery-button" data-recover-registration="${esc(r.id)}">Issue 10-minute recovery</button></article>`;
+      return `<article class="registration-card"><h3>${esc(r.group_code)} · ${r.mode==='team'?`Team (${Number(r.team_size||0)})`:'Individual'}</h3><p><strong>${esc(displayRegistrationId(r.id))}</strong><br>${members.map(esc).join('<br>')}</p><div class="topic-chips">${topics}</div><p class="muted">Updated ${esc(fmtTime(r.last_activity_at))}</p><button type="button" class="recovery-button" data-recover-registration="${esc(r.id)}">Issue 10-minute recovery</button></article>`;
     }).join('')||'<p class="muted">No Hub registrations match this filter.</p>';
     document.querySelectorAll('[data-recover-registration]').forEach(button=>button.addEventListener('click',()=>issueRecovery(button.dataset.recoverRegistration,button)));
   }
@@ -96,7 +118,7 @@
     if(!state.snapshot)return;
     const students=filteredStudents(),registrations=filteredRegistrations();
     renderMetrics(students,registrations);renderStudents(students);renderRegistrations(registrations);renderIdentityReview();
-    setStatus('dashboardStatus',`Code-session verified · snapshot ${fmtTime(state.snapshot.generated_at)} · ${Number(state.snapshot.legacy_credit_count||0)} verified legacy Types credits`,'ok');
+    setStatus('dashboardStatus',`Code-session verified · snapshot ${fmtTime(state.snapshot.generated_at)} · individual registration history visible per roster student`,'ok');
   }
 
   function schedule(){clearTimeout(state.timer);if(state.token&&!$('dashboardPanel').classList.contains('hidden'))state.timer=setTimeout(()=>{if(!document.hidden)loadDashboard();else schedule();},cfg.refreshMs);}
