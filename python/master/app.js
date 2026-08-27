@@ -62,14 +62,21 @@
     if(aal?.currentLevel==='aal2'){await openDashboard();return;}
 
     const {data:factors,error:factorsError}=await sb.auth.mfa.listFactors();if(factorsError)throw factorsError;
-    const verified=factorCandidates(factors).find(f=>f.status==='verified')||factorCandidates(factors)[0];
+    const candidates=factorCandidates(factors);
+    const verified=candidates.find(f=>f.status==='verified');
     if(verified){
       state.mfaFactorId=verified.id;
       $('mfaTitle').textContent='Verify your teacher authenticator.';
       $('mfaCopy').textContent='Enter the current 6-digit code from the authenticator app registered to this teacher account.';
       $('mfaQrWrap').classList.add('hidden');
-      setStatus('mfaStatus','Authenticator factor found. Enter the current code.');
+      setStatus('mfaStatus','Verified authenticator found. Enter the current code.');
       return;
+    }
+
+    const incomplete=candidates.filter(f=>f.status!=='verified');
+    for(const factor of incomplete){
+      const {error:unenrollError}=await sb.auth.mfa.unenroll({factorId:factor.id});
+      if(unenrollError)throw unenrollError;
     }
 
     const {data:enroll,error:enrollError}=await sb.auth.mfa.enroll({factorType:'totp'});if(enrollError)throw enrollError;
@@ -79,7 +86,7 @@
     $('mfaQr').src=enroll.totp.qr_code;
     $('mfaSecret').textContent=enroll.totp.secret||'';
     $('mfaQrWrap').classList.remove('hidden');
-    setStatus('mfaStatus','QR generated. Scan it and verify the first authenticator code.','ok');
+    setStatus('mfaStatus',incomplete.length?'Previous incomplete MFA setup was reset. Scan this new QR and verify the first code.':'QR generated. Scan it and verify the first authenticator code.','ok');
   }
 
   async function verifyMfa(){
