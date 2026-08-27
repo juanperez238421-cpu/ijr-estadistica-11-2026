@@ -1,6 +1,6 @@
 name: Python Learning Hub QA
 
-# V30: all-topic live theory + proven workshop runtime + 12 problems per workshop + student-authored code + stable user IDs + audited individual progress + special individual-only policy.
+# V31: all-topic live theory + proven workshop runtime + 12 problems per workshop + student-authored code + stable user IDs + audited individual progress + special individual-only policy + authoritative 2026-08-27 roster.
 on:
   pull_request:
     paths:
@@ -21,6 +21,7 @@ on:
       - 'qa/check_workshop_functional_v28.cjs'
       - 'qa/check_student_identity_progress_v29.cjs'
       - 'qa/check_advanced_individual_policy_v30.cjs'
+      - 'qa/check_roster_sync_v31.cjs'
       - 'qa/workshop_colab_smoke_v11.cjs'
       - 'actividad-colab-01/app.js'
       - 'supabase/migrations/*python_learning_hub*.sql'
@@ -47,6 +48,7 @@ on:
       - 'qa/check_workshop_functional_v28.cjs'
       - 'qa/check_student_identity_progress_v29.cjs'
       - 'qa/check_advanced_individual_policy_v30.cjs'
+      - 'qa/check_roster_sync_v31.cjs'
       - 'qa/workshop_colab_smoke_v11.cjs'
       - 'actividad-colab-01/app.js'
       - 'supabase/migrations/*python_learning_hub*.sql'
@@ -90,6 +92,7 @@ jobs:
           node --check qa/check_workshop_functional_v28.cjs
           node --check qa/check_student_identity_progress_v29.cjs
           node --check qa/check_advanced_individual_policy_v30.cjs
+          node --check qa/check_roster_sync_v31.cjs
           node --check qa/workshop_colab_smoke_v11.cjs
       - name: Static course contracts
         run: |
@@ -109,6 +112,7 @@ jobs:
           node qa/check_workshop_functional_v28.cjs
           node qa/check_student_identity_progress_v29.cjs
           node qa/check_advanced_individual_policy_v30.cjs
+          node qa/check_roster_sync_v31.cjs
       - name: Verify production Pyodide asset
         run: curl --fail --silent --show-error --location --head https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js >/dev/null
       - name: Real proven Pyodide workshop smoke
