@@ -40,7 +40,7 @@ for (const slug of expectedSlugs) {
   for (const ex of topic.exercises) {
     if (ex.mode === 'code') {
       if (String(ex.code || '') !== '') throw new Error(`${ex.key} exposes starter code.`);
-      if (!/blank cell/i.test(String(ex.prompt || ''))) throw new Error(`${ex.key} does not explicitly tell the student to start from a blank cell.`);
+      if (!/blank (?:python )?cell/i.test(String(ex.prompt || ''))) throw new Error(`${ex.key} does not explicitly tell the student to start from a blank cell.`);
     }
   }
 }
