@@ -6,17 +6,20 @@
   <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
   <meta name="referrer" content="no-referrer">
   <meta name="color-scheme" content="light">
-  <title>Statistics 11 · Python Progress Master</title>
+  <title>Statistics 11 · Python Teacher Master</title>
   <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20260826-master-v20">
+  <link rel="stylesheet" href="styles.css?v=20260826-master-v21">
+  <link rel="stylesheet" href="topic-review.css?v=20260826-master-v21">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="config.js?v=20260826-master-v20"></script>
-  <script defer src="app.js?v=20260826-master-v20"></script>
+  <script defer src="../course-data-v4.js?v=20260826-master-v21"></script>
+  <script defer src="config.js?v=20260826-master-v21"></script>
+  <script defer src="app.js?v=20260826-master-v21"></script>
+  <script defer src="topic-review.js?v=20260826-master-v21"></script>
 </head>
 <body>
   <main class="shell">
     <header class="topbar">
-      <div class="brand"><span class="mark">IJR</span><span><small>Instituto Jorge Robledo · Statistics 11</small><strong>Python Progress Master</strong></span></div>
+      <div class="brand"><span class="mark">IJR</span><span><small>Instituto Jorge Robledo · Statistics 11</small><strong>Python Teacher Master</strong></span></div>
       <div><a class="button button-light" href="../">Student Hub</a></div>
     </header>
 
@@ -59,7 +62,7 @@
 
     <section id="dashboardPanel" class="hidden">
       <div class="dashboard-head">
-        <div><p class="eyebrow">TEACHER · AAL2 VERIFIED</p><h1>Progress by student.</h1><p class="muted">Current Python Hub progress + verified historical Variable Types evidence from Class 01.</p></div>
+        <div><p class="eyebrow">TEACHER · AAL2 VERIFIED</p><h1>Progress and curriculum review.</h1><p class="muted">Review every Python topic from the canonical course source, then inspect current Hub progress and verified historical Variable Types evidence.</p></div>
         <div class="filters">
           <button class="filter-button active" data-group="" type="button">All</button>
           <button class="filter-button" data-group="11A" type="button">11A</button>
@@ -72,6 +75,23 @@
       </div>
       <p id="dashboardStatus" class="status" role="status" aria-live="polite"></p>
       <section id="metrics" class="metrics" aria-label="Progress summary"></section>
+
+      <section class="section" id="curriculumReviewSection">
+        <div class="section-head">
+          <div>
+            <h2>Curriculum &amp; Workshop Review</h2>
+            <p>Teacher-only overview of every topic. Expand a topic to inspect its definition, goals, theory map and all workshop stages without creating a student registration.</p>
+          </div>
+        </div>
+        <div class="topic-review-toolbar">
+          <input id="topicReviewSearch" type="search" placeholder="Search topic, goal or keyword" aria-label="Search curriculum topics">
+          <button id="expandAllTopics" class="quiet" type="button">Expand all</button>
+          <button id="collapseAllTopics" class="quiet" type="button">Collapse all</button>
+        </div>
+        <p id="topicReviewStatus" class="status" role="status" aria-live="polite"></p>
+        <div id="topicReviewSummary" class="topic-review-summary" aria-label="Curriculum summary"></div>
+        <div id="topicReviewList" class="topic-review-list"></div>
+      </section>
 
       <section class="section">
         <div class="section-head"><div><h2>Roster progress</h2><p>One row per active roster student. Historical Variable Types evidence is shown separately from current Hub mastery.</p></div><span id="studentCount" class="muted"></span></div>
