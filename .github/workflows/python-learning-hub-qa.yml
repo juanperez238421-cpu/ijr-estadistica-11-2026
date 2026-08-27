@@ -1,6 +1,6 @@
 name: Python Learning Hub QA
 
-# V27: all-topic live theory + proven workshop runtime + 12 problems per workshop + blank student-authored coding cells.
+# V28: all-topic live theory + proven workshop runtime + 12 problems per workshop + blank student-authored code + server authorship contract.
 on:
   pull_request:
     paths:
@@ -18,6 +18,7 @@ on:
       - 'qa/check_all_topics_live_theory_v19.py'
       - 'qa/check_python_hub_progress_master_v20.py'
       - 'qa/check_workshop_catalog_v27.cjs'
+      - 'qa/check_workshop_functional_v28.cjs'
       - 'qa/workshop_colab_smoke_v11.cjs'
       - 'actividad-colab-01/app.js'
       - 'supabase/migrations/*python_learning_hub*.sql'
@@ -41,6 +42,7 @@ on:
       - 'qa/check_all_topics_live_theory_v19.py'
       - 'qa/check_python_hub_progress_master_v20.py'
       - 'qa/check_workshop_catalog_v27.cjs'
+      - 'qa/check_workshop_functional_v28.cjs'
       - 'qa/workshop_colab_smoke_v11.cjs'
       - 'actividad-colab-01/app.js'
       - 'supabase/migrations/*python_learning_hub*.sql'
@@ -64,6 +66,7 @@ jobs:
           node --check python/config-v2.js
           node --check python/course-data-v4.js
           node --check python/workshop-catalog-v27.js
+          node --check python/workshop-array-prompts-v28.js
           node --check python/hub-router.js
           node --check python/theory-page.js
           node --check python/theory-visual-v8.js
@@ -75,9 +78,11 @@ jobs:
           node --check python/workshop-guidance-v13.js
           node --check python/workshop-guidance-v14.js
           node --check python/workshop-layout-v15.js
+          node --check python/workshop-guidance-v28.js
           node --check python/master/config.js
           node --check python/master/app.js
           node --check qa/check_workshop_catalog_v27.cjs
+          node --check qa/check_workshop_functional_v28.cjs
           node --check qa/workshop_colab_smoke_v11.cjs
       - name: Static course contracts
         run: |
@@ -94,6 +99,7 @@ jobs:
           python qa/check_all_topics_live_theory_v19.py
           python qa/check_python_hub_progress_master_v20.py
           node qa/check_workshop_catalog_v27.cjs
+          node qa/check_workshop_functional_v28.cjs
       - name: Verify production Pyodide asset
         run: curl --fail --silent --show-error --location --head https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js >/dev/null
       - name: Real proven Pyodide workshop smoke
