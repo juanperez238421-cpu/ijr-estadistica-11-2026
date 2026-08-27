@@ -5,6 +5,7 @@
     supabaseUrl,
     supabasePublishableKey:'sb_publishable_rmVOQ3Orx49KpW_4uMqYew_c2HpcA87',
     gatewayUrl:`${supabaseUrl}/functions/v1/teacher-auth-gateway`,
+    masterCodeUrl:`${supabaseUrl}/functions/v1/teacher-master-code`,
     hubUrl:'https://juanperez238421-cpu.github.io/ijr-estadistica-11-2026/python/',
     authStorageKey:'ijr-stat11-python-master-auth-v20',
     refreshMs:20000
