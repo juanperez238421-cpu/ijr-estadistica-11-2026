@@ -8,12 +8,12 @@ const params=new URLSearchParams(location.search);
 const slug=params.get('topic')||'object-model';
 let topic=(data?.topics||[]).find(x=>x.slug===slug)||data.topics[0];
 let attempt=null;
-// Stage 01 objective practice persists the `uml_mastery` field through the v4 evidence payload.
+// Stage 01 V5 combines conceptual classification, a live UML draft and visual diagram-reading evidence.
 
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 const briefs={
-  1:['Choose a concept from school, a store, science, a game, banking, music or your own domain. First classify UML elements, then construct a three-compartment class diagram, and only then translate the model into code with two concrete objects.','Select one conceptual case and distinguish the class, attributes, methods, object instance and items that do not belong. Then define one clear responsibility sentence for your own class.','Build the smallest implementation that matches your UML class name, attributes and methods. Do not add members that are absent from the model without updating the diagram.','Create two objects from the same class with different state. Show that both follow one class model while remaining distinct instances.','Change one attribute or method requirement and update both the live UML draft and the code so they remain synchronized.'],
+  1:['Choose a concept from school, a store, science, a game, banking, music or your own domain. First read several visual UML figures, classify UML elements, construct a three-compartment class diagram, and only then translate the model into code with two concrete objects.','Select one conceptual case and distinguish the class, attributes, methods, object instance and items that do not belong. Then read the visual class figure and define one clear responsibility sentence for your own class.','Build the smallest implementation that matches your UML class name, attributes and methods. Do not add members that are absent from the model without updating the diagram.','Create two objects from the same class with different state. Show that both follow one class model while remaining distinct instances.','Change one attribute or method requirement and update both the live UML draft and the code so they remain synchronized.'],
   2:['Model an object whose method changes its internal state in a controlled, observable way.','What should the object remember between method calls?','Implement one state-changing method.','Show state before and after the method call.','Add one business rule that constrains the state change.'],
   3:['Define a constructor that creates only coherent objects and makes required state explicit.','What data is mandatory at birth?','Implement initialization and one validation rule.','Create valid objects and attempt one invalid case.','Add a new required constructor parameter and update UML.'],
   4:['Protect internal state behind a deliberate public interface.','Which field should callers not change directly?','Implement controlled read/change behavior.','Test a valid and invalid update.','Strengthen one invariant without changing the public goal.'],
@@ -26,7 +26,7 @@ const briefs={
 };
 
 const defense={
-  1:['What is the difference between a class and an object? Give one example from your selected case.','What belongs in the middle compartment of a UML class box, and why are those items attributes instead of local variables?','What belongs in the bottom compartment, and how do you decide whether an action really belongs to this class?','Read this UML line aloud: − price : float. What does every part mean?','Read this UML line aloud: + applyDiscount(percent : float) : void. What are the visibility, method name, parameter and return type?','If the same UML model is implemented in Python, Java or JavaScript, what design decisions stay the same even when syntax changes?'],
+  1:['Point to the top, middle and bottom compartments of a UML class box. What does each compartment represent?','What is the difference between a class and an object? Give one example from your selected visual case.','What belongs in the middle compartment of a UML class box, and why are those items attributes instead of local variables?','What belongs in the bottom compartment, and how do you decide whether an action really belongs to this class?','Read this UML line aloud: − price : float. What does every part mean?','Read this UML line aloud: + applyDiscount(percent : float) : void. What are the visibility, method name, parameter and return type?','If the same UML model is implemented in Python, Java or JavaScript, what design decisions stay the same even when syntax changes?'],
   2:['Why is this value state instead of a local variable?','Why should this behavior belong to this class?','What state transition did your test prove?'],
   3:['Why does the object require these constructor values?','How do you prevent invalid initial state?','How is initialization represented in UML?'],
   4:['What invariant are you protecting?','Why is this member private/protected/public?','Could a caller bypass your rule?'],
@@ -71,7 +71,7 @@ function renderTopic(){
   $('umlAttrs').innerHTML=topic.uml.attrs.length?topic.uml.attrs.map(x=>`<div>${esc(x)}</div>`).join(''):'<div><em>No attributes required at this abstraction.</em></div>';
   $('umlOps').innerHTML=topic.uml.ops.map(x=>`<div>${esc(x)}</div>`).join('');
   const brief=briefs[topic.n];
-  $('taskTitle').textContent=topic.n===1?'Stage 01 · Understand UML, then construct the class':`Session ${String(topic.n).padStart(2,'0')} design challenge`;
+  $('taskTitle').textContent=topic.n===1?'Stage 01 · Read visual UML, then construct the class':`Session ${String(topic.n).padStart(2,'0')} design challenge`;
   $('taskBrief').textContent=brief[0];
   $('predictTask').textContent=brief[1];
   $('implementTask').textContent=brief[2];
@@ -93,23 +93,29 @@ function renderTopic(){
 async function saveEvidence(){
   const runtime=window.IJR_OOP_NOTEBOOK?.evidence?.()||{};
   const umlPractice=topic.n===1?(window.IJR_OOP_UML_STAGE1_PRACTICE?.evidence?.()||{}):{};
+  if(topic.n===1&&umlPractice.uml_visual_mastery!==true){
+    $('evModel').checked=false;
+    $('saveStatus').textContent='Complete the Visual Diagram Reading Sprint with 5/5 before recording Stage 01 V5 model evidence.';
+    document.getElementById('umlVisualChallengeV51')?.scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
   const evidence={
     model:$('evModel').checked,
     code:$('evCode').checked,
     test:$('evTest').checked,
     explain:$('evExplain').checked,
     notes:$('evidenceNotes').value.trim(),
-    pedagogy_version:'oop-uml-v4',
-    learning_focus:topic.n===1?'oop-foundations-plus-uml-anatomy':'oop-uml-common-core',
+    pedagogy_version:'oop-uml-v5',
+    learning_focus:topic.n===1?'oop-foundations-plus-visual-uml-atlas':'oop-uml-common-core',
     ...umlPractice,
     ...runtime
   };
   $('saveEvidence').disabled=true;
-  $('saveStatus').textContent='Validating and saving evidence…';
+  $('saveStatus').textContent='Validating visual UML, model, runtime and session evidence…';
   try{
     attempt=await store.recordSession(topic.sessionKey,evidence);
     hydrateEvidence();
-    $('saveStatus').textContent=attempt.backend==='supabase'?'Verified UML + session + runtime evidence saved to Supabase.':'Session evidence saved in local recovery mode.';
+    $('saveStatus').textContent=attempt.backend==='supabase'?'Verified visual UML + model + session + runtime evidence saved to Supabase.':'Session evidence saved in local recovery mode.';
   }catch(error){
     console.error(error);
     $('saveStatus').textContent=error.message||'Evidence could not be saved.';
@@ -126,7 +132,13 @@ document.addEventListener('ijr-oop-cell-run',event=>{
 });
 document.addEventListener('ijr-oop-uml-model-mastered',event=>{
   const detail=event.detail||{};
-  $('saveStatus').textContent=`UML model evidence verified: ${detail.score||0}/${detail.total||0} classification + completed class-diagram draft.`;
+  const visual=window.IJR_OOP_UML_STAGE1_PRACTICE?.evidence?.().uml_visual_mastery===true;
+  $('saveStatus').textContent=visual?`UML model verified: ${detail.score||0}/${detail.total||0} classification + complete class draft + visual reading mastery.`:`Conceptual UML + class draft verified (${detail.score||0}/${detail.total||0}). Finish the Visual Diagram Reading Sprint to complete Model evidence.`;
+});
+document.addEventListener('ijr-oop-uml-visual-mastered',event=>{
+  const detail=event.detail||{};
+  const base=window.IJR_OOP_UML_STAGE1_PRACTICE?.evidence?.()||{};
+  $('saveStatus').textContent=base.uml_mastery===true?`Visual UML reading verified ${detail.score||0}/${detail.total||0}. Stage 01 model gate is now complete.`:`Visual UML reading verified ${detail.score||0}/${detail.total||0}. Complete the conceptual identification lab and your own UML draft next.`;
 });
 document.addEventListener('ijr-oop-runtime-reset',()=>{
   $('saveStatus').textContent='Python runtime reset. Re-run implementation and test cells before recording new runtime evidence.';
