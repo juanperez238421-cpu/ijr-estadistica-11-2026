@@ -77,8 +77,8 @@ jobs:
           grep -q 'seminar_track_diagnostic_questions' "$f"
           grep -q 'seminar_track_diagnostic_attempts' "$f"
           grep -q 'enable row level security' "$f"
-          grep -q 'revoke all on public.seminar_track_diagnostic_attempts from anon, authenticated' "$f"
-          grep -q "security definer" "$f"
-          grep -q "set search_path = ''" "$f"
+          grep -Eq 'revoke all on public\.seminar_track_diagnostic_attempts from anon,[[:space:]]*authenticated' "$f"
+          grep -q 'security definer' "$f"
+          grep -Eq "set search_path[[:space:]]*=[[:space:]]*''" "$f"
           grep -q 'grant execute on function public.seminar_track_diagnostic_submit' "$f"
           test "$(grep -o "'2026-08-31-v1'" "$f" | wc -l)" -ge 75
