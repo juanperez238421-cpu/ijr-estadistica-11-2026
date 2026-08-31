@@ -13,3 +13,27 @@ window.IJR_OOP_UML_DATA=Object.freeze({
     {slug:'defense',sessionKey:'s10',n:10,title:'Architecture Defense',lead:'Explain and modify the design live instead of only presenting a finished artifact.',lab:'m15',uml:{name:'FinalProject',attrs:['- domainState: ...'],ops:['+ useCase(): ...']},concepts:['Architecture is a set of justified design decisions.','A diagram is useful only if it matches the running system.','Live modification demonstrates transferable understanding.'],mistakes:['Reading the diagram without explaining decisions.','Using patterns or inheritance because they look advanced.'],evidence:['Final synchronized class diagram','Live explanation of responsibilities','One small live change propagated to UML and code']}
   ]
 });
+
+(() => {
+  if(typeof document==='undefined'||typeof location==='undefined') return;
+  const path=location.pathname;
+  if(!/\/seminario-oop-uml\/(theory|workshop)\.html$/.test(path)) return;
+  const load=()=>{
+    if(!document.querySelector('link[data-uml-visual-v5]')){
+      const link=document.createElement('link');
+      link.rel='stylesheet';
+      link.href='stage1-uml-visuals-v5.css?v=20260831-v5';
+      link.dataset.umlVisualV5='true';
+      document.head.appendChild(link);
+    }
+    if(!document.querySelector('script[data-uml-visual-v5]')){
+      const script=document.createElement('script');
+      script.src='stage1-uml-visuals-v5.1.js?v=20260831-v51';
+      script.dataset.umlVisualV5='true';
+      script.async=false;
+      document.body.appendChild(script);
+    }
+  };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',load,{once:true});
+  else load();
+})();
