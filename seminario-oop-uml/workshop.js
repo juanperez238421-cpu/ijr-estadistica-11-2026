@@ -12,7 +12,7 @@ let attempt=null;
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 const briefs={
-  1:['Choose one concept from everyday life, school, a game, science, data or software. Turn that idea into the smallest possible class, create two concrete objects and explain how the same model could be written in another programming language.','Before coding, answer four questions: What is the concept/class? What data can differ/attribute? What can it do/method? What are two concrete examples/objects?','Create one very small class with one meaningful attribute, then create the first object. Add a simple method only after the class/object idea is clear.','Create a second object from the same class with a different value. Print both and identify what they share and what is different.','Add or change one simple method or attribute, then update your UML/class model so the idea and code still match.'],
+  1:['Choose a concept from school, a store, science, a game, banking, music or your own domain. First classify UML elements, then construct a three-compartment class diagram, and only then translate the model into code with two concrete objects.','Select one conceptual case and distinguish the class, attributes, methods, object instance and items that do not belong. Then define one clear responsibility sentence for your own class.','Build the smallest implementation that matches your UML class name, attributes and methods. Do not add members that are absent from the model without updating the diagram.','Create two objects from the same class with different state. Show that both follow one class model while remaining distinct instances.','Change one attribute or method requirement and update both the live UML draft and the code so they remain synchronized.'],
   2:['Model an object whose method changes its internal state in a controlled, observable way.','What should the object remember between method calls?','Implement one state-changing method.','Show state before and after the method call.','Add one business rule that constrains the state change.'],
   3:['Define a constructor that creates only coherent objects and makes required state explicit.','What data is mandatory at birth?','Implement initialization and one validation rule.','Create valid objects and attempt one invalid case.','Add a new required constructor parameter and update UML.'],
   4:['Protect internal state behind a deliberate public interface.','Which field should callers not change directly?','Implement controlled read/change behavior.','Test a valid and invalid update.','Strengthen one invariant without changing the public goal.'],
@@ -25,7 +25,7 @@ const briefs={
 };
 
 const defense={
-  1:['In one sentence, what is Object-Oriented Programming?','What is the class in your example, and what are the two objects?','Which part is an attribute and which part is a method?','If you rewrote the same model in Java, JavaScript or C#, what idea would stay the same even though the syntax changes?'],
+  1:['What is the difference between a class and an object? Give one example from your selected case.','What belongs in the middle compartment of a UML class box, and why are those items attributes instead of local variables?','What belongs in the bottom compartment, and how do you decide whether an action really belongs to this class?','Read this UML line aloud: − price : float. What does every part mean?','Read this UML line aloud: + applyDiscount(percent : float) : void. What are the visibility, method name, parameter and return type?','If the same UML model is implemented in Python, Java or JavaScript, what design decisions stay the same even when syntax changes?'],
   2:['Why is this value state instead of a local variable?','Why should this behavior belong to this class?','What state transition did your test prove?'],
   3:['Why does the object require these constructor values?','How do you prevent invalid initial state?','How is initialization represented in UML?'],
   4:['What invariant are you protecting?','Why is this member private/protected/public?','Could a caller bypass your rule?'],
@@ -50,6 +50,7 @@ function hydrateEvidence(){
   $('evTest').checked=evidence.test===true;
   $('evExplain').checked=evidence.explain===true;
   $('evidenceNotes').value=evidence.notes||'';
+  window.IJR_OOP_UML_STAGE1_PRACTICE?.hydrate(evidence);
   const done=record?.status==='completed';
   $('completionStamp').textContent=done?'Completed':'Not recorded';
   $('completionStamp').classList.toggle('done',done);
@@ -69,7 +70,7 @@ function renderTopic(){
   $('umlAttrs').innerHTML=topic.uml.attrs.length?topic.uml.attrs.map(x=>`<div>${esc(x)}</div>`).join(''):'<div><em>No attributes required at this abstraction.</em></div>';
   $('umlOps').innerHTML=topic.uml.ops.map(x=>`<div>${esc(x)}</div>`).join('');
   const brief=briefs[topic.n];
-  $('taskTitle').textContent=topic.n===1?'Stage 01 · From a concept to a class':`Session ${String(topic.n).padStart(2,'0')} design challenge`;
+  $('taskTitle').textContent=topic.n===1?'Stage 01 · Understand UML, then construct the class':`Session ${String(topic.n).padStart(2,'0')} design challenge`;
   $('taskBrief').textContent=brief[0];
   $('predictTask').textContent=brief[1];
   $('implementTask').textContent=brief[2];
@@ -83,20 +84,23 @@ function renderTopic(){
   $('theoryBottom').href=theory;
   $('sessionBadge').textContent=`${attempt.group} · ${attempt.label}`;
   $('sessionBadge').classList.remove('hidden');
+  window.IJR_OOP_UML_STAGE1_PRACTICE?.activate(topic.n===1);
   hydrateEvidence();
   window.IJR_OOP_NOTEBOOK?.mount({mode:'workshop',topicNumber:topic.n,lang});
 }
 
 async function saveEvidence(){
   const runtime=window.IJR_OOP_NOTEBOOK?.evidence?.()||{};
+  const umlPractice=topic.n===1?(window.IJR_OOP_UML_STAGE1_PRACTICE?.evidence?.()||{}):{};
   const evidence={
     model:$('evModel').checked,
     code:$('evCode').checked,
     test:$('evTest').checked,
     explain:$('evExplain').checked,
     notes:$('evidenceNotes').value.trim(),
-    pedagogy_version:'oop-uml-v3',
-    learning_focus:topic.n===1?'oop-foundations-language-agnostic':'oop-uml-common-core',
+    pedagogy_version:'oop-uml-v4',
+    learning_focus:topic.n===1?'oop-foundations-plus-uml-anatomy':'oop-uml-common-core',
+    ...umlPractice,
     ...runtime
   };
   $('saveEvidence').disabled=true;
@@ -104,7 +108,7 @@ async function saveEvidence(){
   try{
     attempt=await store.recordSession(topic.sessionKey,evidence);
     hydrateEvidence();
-    $('saveStatus').textContent=attempt.backend==='supabase'?'Verified session evidence + runtime snapshot saved to Supabase.':'Session evidence saved in local recovery mode.';
+    $('saveStatus').textContent=attempt.backend==='supabase'?'Verified UML + session + runtime evidence saved to Supabase.':'Session evidence saved in local recovery mode.';
   }catch(error){
     console.error(error);
     $('saveStatus').textContent=error.message||'Evidence could not be saved.';
@@ -118,6 +122,10 @@ document.addEventListener('ijr-oop-cell-run',event=>{
   if(event.detail?.ok!==true)return;
   if(event.detail.label==='implement'){$('evCode').checked=true;$('saveStatus').textContent='Implementation cell executed successfully. Code evidence marked.';}
   if(event.detail.label==='test'){$('evTest').checked=true;$('saveStatus').textContent='Test cell executed successfully. Test evidence marked.';}
+});
+document.addEventListener('ijr-oop-uml-model-mastered',event=>{
+  const detail=event.detail||{};
+  $('saveStatus').textContent=`UML model evidence verified: ${detail.score||0}/${detail.total||0} classification + completed class-diagram draft.`;
 });
 document.addEventListener('ijr-oop-runtime-reset',()=>{
   $('saveStatus').textContent='Python runtime reset. Re-run implementation and test cells before recording new runtime evidence.';
