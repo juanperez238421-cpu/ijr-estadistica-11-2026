@@ -1,0 +1,84 @@
+name: Seminar Specialized Learning Hubs QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "seminario-tracks/**"
+      - "supabase/migrations/*seminar_specialized_learning_hubs*"
+      - ".github/workflows/seminar-specialized-hubs-qa.yml"
+  pull_request:
+    paths:
+      - "seminario-tracks/**"
+      - "supabase/migrations/*seminar_specialized_learning_hubs*"
+      - ".github/workflows/seminar-specialized-hubs-qa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate five dedicated routes
+        run: |
+          set -euo pipefail
+          for route in web data-science cybersecurity 3d-programming robotics; do
+            test -s "seminario-tracks/$route/index.html"
+            grep -q "data-track=\"$route\"" "seminario-tracks/$route/index.html"
+          done
+          test -s seminario-tracks/index.html
+          test -s seminario-tracks/shared/styles.css
+          test -s seminario-tracks/shared/config.js
+          test -s seminario-tracks/shared/track-data.js
+          test -s seminario-tracks/shared/hub.js
+      - name: Validate JavaScript syntax
+        run: |
+          set -euo pipefail
+          node --check seminario-tracks/shared/config.js
+          node --check seminario-tracks/shared/track-data.js
+          node --check seminario-tracks/shared/hub.js
+      - name: Validate curriculum contract
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          require('./seminario-tracks/shared/track-data.js');
+          const tracks=globalThis.IJR_SPECIALIZED_TRACKS;
+          const slugs=['web','data-science','cybersecurity','3d-programming','robotics'];
+          if(!tracks||Object.keys(tracks).length!==5) throw new Error('Expected exactly five tracks');
+          for(const slug of slugs){
+            const t=tracks[slug];
+            if(!t||t.sprints.length!==8) throw new Error(`${slug}: expected eight sprints`);
+            if(t.diagnostic.totalQuestions!==15||t.diagnostic.scoredQuestions!==12||t.diagnostic.selfProfileQuestions!==3) throw new Error(`${slug}: diagnostic contract mismatch`);
+          }
+          NODE
+      - name: Validate diagnostic security contract
+        run: |
+          set -euo pipefail
+          js=seminario-tracks/shared/hub.js
+          grep -q 'seminar_track_diagnostic_get_questions' seminario-tracks/shared/config.js
+          grep -q 'seminar_track_diagnostic_submit' seminario-tracks/shared/config.js
+          grep -q 'p_answers' "$js"
+          grep -q 'autopercepción' "$js"
+          ! grep -q 'correct_option' "$js"
+          grep -q 'localStorage' "$js"
+          grep -q 'aria-live' "$js"
+          grep -q 'prefers-reduced-motion' seminario-tracks/shared/styles.css
+      - name: Validate Supabase migration contract
+        run: |
+          set -euo pipefail
+          f=$(ls supabase/migrations/*seminar_specialized_learning_hubs_diagnostic_v1.sql | head -1)
+          test -s "$f"
+          grep -q 'seminar_track_diagnostic_questions' "$f"
+          grep -q 'seminar_track_diagnostic_attempts' "$f"
+          grep -q 'enable row level security' "$f"
+          grep -q 'revoke all on public.seminar_track_diagnostic_attempts from anon, authenticated' "$f"
+          grep -q "security definer" "$f"
+          grep -q "set search_path = ''" "$f"
+          grep -q 'grant execute on function public.seminar_track_diagnostic_submit' "$f"
+          test "$(grep -o "'2026-08-31-v1'" "$f" | wc -l)" -ge 75
