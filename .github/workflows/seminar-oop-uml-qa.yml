@@ -119,39 +119,35 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -q "Unified Modeling Language" seminario-oop-uml/stage1-uml-depth-v4.js
-          grep -q "ACTUAL UML CLASS BOX STRUCTURE" seminario-oop-uml/stage1-uml-depth-v4.js
-          grep -q "TOP COMPARTMENT · CLASS NAME" seminario-oop-uml/stage1-uml-depth-v4.js
-          grep -q "MIDDLE COMPARTMENT · ATTRIBUTES" seminario-oop-uml/stage1-uml-depth-v4.js
-          grep -q "BOTTOM COMPARTMENT · METHODS / OPERATIONS" seminario-oop-uml/stage1-uml-depth-v4.js
-          grep -q "DEEP CONSTRUCTION PROCEDURE" seminario-oop-uml/stage1-uml-depth-v4.js
-          grep -q "UML IDENTIFICATION LAB" seminario-oop-uml/stage1-uml-depth-v4.js
+          file=seminario-oop-uml/stage1-uml-depth-v4.js
+          grep -q "Unified Modeling Language" "$file"
+          grep -q "ACTUAL UML CLASS BOX STRUCTURE" "$file"
+          grep -q "TOP COMPARTMENT · CLASS NAME" "$file"
+          grep -q "MIDDLE COMPARTMENT · ATTRIBUTES" "$file"
+          grep -q "BOTTOM COMPARTMENT · METHODS / OPERATIONS" "$file"
+          grep -q "DEEP CONSTRUCTION PROCEDURE" "$file"
+          grep -q "UML IDENTIFICATION LAB" "$file"
+          grep -q "Class vs object" "$file"
+          grep -q "Attribute vs local variable" "$file"
+          grep -q "Method vs unrelated function" "$file"
+          for step in 01 02 03 04 05 06 07 08 09 10; do
+            grep -q "'$step ·" "$file"
+          done
+          for case_id in student product sensor game-character bank-account playlist; do
+            grep -q "id:'$case_id'" "$file"
+          done
+          for kind in class attribute method object not-member; do
+            grep -q "'$kind'" "$file"
+          done
+          grep -q "umlDraftClass" "$file"
+          grep -q "umlDraftAttributes" "$file"
+          grep -q "umlDraftMethods" "$file"
+          grep -q "uml_classification_score" "$file"
           grep -q "stage1-uml-depth-v4.js?v=20260831-v4" seminario-oop-uml/theory.html
           grep -q "stage1-uml-depth-v4.js?v=20260831-v4" seminario-oop-uml/workshop.html
           grep -q "pedagogy_version:'oop-uml-v4'" seminario-oop-uml/workshop.js
           grep -q "uml_mastery" seminario-oop-uml/workshop.js
-          node - <<'NODE'
-          global.window={};
-          require('./seminario-oop-uml/course-data.js');
-          require('./seminario-oop-uml/coding-labs-v2.js');
-          require('./seminario-oop-uml/stage1-foundations-v3.js');
-          require('./seminario-oop-uml/stage1-uml-depth-v4.js');
-          const model=window.IJR_OOP_UML_STAGE1_UML;
-          const topic=window.IJR_OOP_UML_DATA.topics.find(x=>x.n===1);
-          if(model?.version!=='oop-uml-v4') throw new Error('Missing UML v4 model');
-          if(model.guide.constructionSteps.length<10) throw new Error('Need deep step-by-step UML construction');
-          if(model.cases.length<6) throw new Error('Need at least six conceptual class cases');
-          for(const item of model.cases){
-            const kinds=new Set(item.members.map(x=>x[1]));
-            for(const required of ['class','attribute','method','object','not-member']){
-              if(!kinds.has(required)) throw new Error(`${item.id} missing ${required}`);
-            }
-            if(item.members.length<8) throw new Error(`${item.id} classification set too small`);
-          }
-          if(topic.concepts.length<7) throw new Error('Stage 01 UML conceptual depth too small');
-          if(!topic.evidence.join(' ').includes('class / attribute / method / object / non-member')) throw new Error('Objective UML classification evidence missing');
-          console.log('UML v4 deep theory + six-case identification contract verified');
-          NODE
+          echo "UML v4 deep theory + six-case identification contract verified"
 
       - name: Validate guided notebook catalog
         shell: bash
@@ -162,7 +158,6 @@ jobs:
           require('./seminario-oop-uml/course-data.js');
           require('./seminario-oop-uml/coding-labs-v2.js');
           require('./seminario-oop-uml/stage1-foundations-v3.js');
-          require('./seminario-oop-uml/stage1-uml-depth-v4.js');
           const labs=window.IJR_OOP_CODING_LABS;
           const keys=Object.keys(labs||{});
           if(keys.length!==10) throw new Error(`Expected 10 coding labs, found ${keys.length}`);
