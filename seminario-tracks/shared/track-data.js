@@ -1,0 +1,47 @@
+globalThis.IJR_SPECIALIZED_TRACKS={
+  web:{slug:'web',title:'Web Development',project:'Web Management System',stack:['HTML','CSS','JavaScript','DOM','Fetch / localStorage'],diagnostic:{totalQuestions:15,scoredQuestions:12,selfProfileQuestions:3,domains:['foundations','applied_reasoning','workflow_tools'],version:'2026-08-31-v1'},sprints:[
+    {n:1,title:'Problem + MVP',goal:'Define user, problem, input/process/output and minimum useful feature.',deliverable:'README problem statement + backlog'},
+    {n:2,title:'Data model + UML V1',goal:'Model domain objects before interface logic.',deliverable:'UML V1 + object examples'},
+    {n:3,title:'Interface prototype',goal:'Build semantic HTML and responsive layout.',deliverable:'Navigable UI shell'},
+    {n:4,title:'OOP integration',goal:'Implement domain classes and connect them to DOM events.',deliverable:'Working class-based feature'},
+    {n:5,title:'Persistence + validation',goal:'Validate inputs and persist meaningful state.',deliverable:'localStorage/JSON flow + invalid case'},
+    {n:6,title:'Testing',goal:'Test valid, invalid and boundary scenarios.',deliverable:'Test checklist + fixes'},
+    {n:7,title:'Refactor + accessibility',goal:'Improve structure, naming, reuse and UI states.',deliverable:'Refactor commit + UML V2'},
+    {n:8,title:'Release + defense',goal:'Publish MVP and defend architecture live.',deliverable:'Release URL + final UML + defense'}]},
+  'data-science':{slug:'data-science',title:'Python & Data Science',project:'Data Analysis Studio',stack:['Python','CSV','Pandas','Matplotlib','descriptive statistics'],diagnostic:{totalQuestions:15,scoredQuestions:12,selfProfileQuestions:3,domains:['foundations','applied_reasoning','workflow_tools'],version:'2026-08-31-v1'},sprints:[
+    {n:1,title:'Question + dataset',goal:'Define one answerable question and obtain a suitable dataset.',deliverable:'Question + data dictionary'},
+    {n:2,title:'Pipeline + UML V1',goal:'Model Dataset, Cleaner, Analyzer and Report responsibilities.',deliverable:'UML V1 + pipeline sketch'},
+    {n:3,title:'Load + inspect',goal:'Read data, identify types, nulls and quality issues.',deliverable:'Reproducible notebook/script'},
+    {n:4,title:'OOP analysis layer',goal:'Move reusable analysis behavior into classes.',deliverable:'Dataset/Analyzer classes'},
+    {n:5,title:'Statistics + visualization',goal:'Calculate descriptive measures and create justified plots.',deliverable:'Evidence table + charts'},
+    {n:6,title:'Validation',goal:'Check assumptions, edge cases and reproducibility.',deliverable:'Validation cells/tests'},
+    {n:7,title:'Refactor + report',goal:'Separate data, analysis and presentation responsibilities.',deliverable:'UML V2 + concise findings'},
+    {n:8,title:'Release + defense',goal:'Present evidence-based conclusions and defend code architecture.',deliverable:'Final notebook/app + UML + defense'}]},
+  cybersecurity:{slug:'cybersecurity',title:'Defensive Cybersecurity',project:'Secure Application / Security Audit Simulator',stack:['Python/Web','input validation','authentication concepts','logging','threat modeling'],diagnostic:{totalQuestions:15,scoredQuestions:12,selfProfileQuestions:3,domains:['foundations','applied_reasoning','workflow_tools'],version:'2026-08-31-v1'},sprints:[
+    {n:1,title:'Asset + threat scope',goal:'Define what is protected and only defensive, authorized scenarios.',deliverable:'Asset list + threat model'},
+    {n:2,title:'Security objects + UML V1',goal:'Model User, Role, Session, Validator and AuditLog.',deliverable:'UML V1 + trust boundaries'},
+    {n:3,title:'Validation layer',goal:'Implement allow-list validation and safe error handling.',deliverable:'Valid/invalid input tests'},
+    {n:4,title:'OOP security services',goal:'Separate authentication/authorization simulation from UI.',deliverable:'Service classes + policy rules'},
+    {n:5,title:'Logging + least privilege',goal:'Record security-relevant events and enforce role boundaries.',deliverable:'Audit trail + access matrix'},
+    {n:6,title:'Defensive testing',goal:'Test expected misuse without attacking external systems.',deliverable:'Authorized test cases + fixes'},
+    {n:7,title:'Hardening + refactor',goal:'Reduce exposed state, duplicate checks and ambiguous privileges.',deliverable:'Hardening commit + UML V2'},
+    {n:8,title:'Security review + defense',goal:'Explain risks, mitigations and residual limitations.',deliverable:'Security report + final UML + defense'}]},
+  '3d-programming':{slug:'3d-programming',title:'3D Design + Programming',project:'Parametric 3D Generator',stack:['Python/Three.js/CAD scripting','coordinates','parametric geometry','transformations','assemblies'],diagnostic:{totalQuestions:15,scoredQuestions:12,selfProfileQuestions:3,domains:['foundations','applied_reasoning','workflow_tools'],version:'2026-08-31-v1'},sprints:[
+    {n:1,title:'Geometry requirement',goal:'Define dimensions, parameters and expected generated object.',deliverable:'Dimension sheet + MVP'},
+    {n:2,title:'Geometry objects + UML V1',goal:'Model Shape, Solid, Transform and Assembly.',deliverable:'UML V1 + coordinate convention'},
+    {n:3,title:'Primitive generator',goal:'Create parameter-driven base geometry.',deliverable:'First generated model'},
+    {n:4,title:'OOP transformations',goal:'Encapsulate translation, rotation, scale or extrusion behavior.',deliverable:'Reusable geometry classes'},
+    {n:5,title:'Composition',goal:'Build a larger object from reusable parts.',deliverable:'Assembly model + UML relation'},
+    {n:6,title:'Validation',goal:'Reject invalid dimensions and verify geometric constraints.',deliverable:'Boundary tests'},
+    {n:7,title:'Refactor + export',goal:'Improve reuse and create a consistent export/render flow.',deliverable:'UML V2 + exported artifact'},
+    {n:8,title:'Demo + defense',goal:'Change a parameter live and explain architecture.',deliverable:'Final model + UML + live modification'}]},
+  robotics:{slug:'robotics',title:'Robotics & Automation',project:'Automation System',stack:['Python/MicroPython/Arduino','sensors','actuators','state machines','control logic'],diagnostic:{totalQuestions:15,scoredQuestions:12,selfProfileQuestions:3,domains:['foundations','applied_reasoning','workflow_tools'],version:'2026-08-31-v1'},sprints:[
+    {n:1,title:'System requirement',goal:'Define sensor input, decision logic, actuator output and safety state.',deliverable:'I/O table + state sketch'},
+    {n:2,title:'Automation objects + UML V1',goal:'Model Sensor, Controller, Actuator and System.',deliverable:'UML V1 + state diagram'},
+    {n:3,title:'Simulation',goal:'Simulate sensor readings and deterministic outputs before hardware.',deliverable:'Runnable simulation'},
+    {n:4,title:'OOP control layer',goal:'Implement object responsibilities and controller behavior.',deliverable:'Class-based controller'},
+    {n:5,title:'State machine + fail-safe',goal:'Handle transitions, invalid readings and safe fallback.',deliverable:'State tests + fail-safe evidence'},
+    {n:6,title:'Integration testing',goal:'Test multiple input sequences and expected actuator responses.',deliverable:'Test matrix + fixes'},
+    {n:7,title:'Hardware/advanced simulation',goal:'Connect target hardware when available or strengthen simulation.',deliverable:'Integrated prototype + UML V2'},
+    {n:8,title:'Demo + defense',goal:'Run scenario live and defend object/state architecture.',deliverable:'Final prototype + UML + defense'}]}
+};

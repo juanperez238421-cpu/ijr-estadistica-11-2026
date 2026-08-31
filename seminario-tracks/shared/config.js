@@ -1,0 +1,12 @@
+globalThis.IJR_SPECIALIZED_HUB_CONFIG={
+  supabaseUrl:'https://rlfxnjbqxbozjdzkbwlz.supabase.co',
+  supabasePublishableKey:'sb_publishable_rmVOQ3Orx49KpW_4uMqYew_c2HpcA87',
+  bankVersion:'2026-08-31-v1',
+  localPrefix:'ijr-seminar-specialized-diagnostic-v1:',
+  rpc:{
+    questions:'seminar_track_diagnostic_get_questions',
+    start:'seminar_track_diagnostic_start',
+    snapshot:'seminar_track_diagnostic_snapshot',
+    submit:'seminar_track_diagnostic_submit'
+  }
+};
