@@ -36,7 +36,8 @@ jobs:
             seminario-oop-uml/config.js \
             seminario-oop-uml/course-data.js \
             seminario-oop-uml/store.js \
-            seminario-oop-uml/hub.js; do
+            seminario-oop-uml/hub.js \
+            seminario-oop-uml/workshop.js; do
             test -s "$f"
           done
 
@@ -48,17 +49,16 @@ jobs:
           node --check seminario-oop-uml/course-data.js
           node --check seminario-oop-uml/store.js
           node --check seminario-oop-uml/hub.js
+          node --check seminario-oop-uml/workshop.js
           python - <<'PY'
           import pathlib, re
-          for name, suffix in [('theory.html','.js'),('workshop.html','.mjs')]:
-              text=(pathlib.Path('seminario-oop-uml')/name).read_text(encoding='utf-8')
-              blocks=re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>',text,re.S|re.I)
-              if not blocks:
-                  raise SystemExit(f'No inline script found in {name}')
-              pathlib.Path('/tmp/'+name+suffix).write_text('\n'.join(blocks),encoding='utf-8')
+          text=pathlib.Path('seminario-oop-uml/theory.html').read_text(encoding='utf-8')
+          blocks=re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>',text,re.S|re.I)
+          if not blocks:
+              raise SystemExit('No inline theory script found')
+          pathlib.Path('/tmp/theory-inline.js').write_text('\n'.join(blocks),encoding='utf-8')
           PY
-          node --check /tmp/theory.html.js
-          node --check /tmp/workshop.html.mjs
+          node --check /tmp/theory-inline.js
 
       - name: Validate ten-session curriculum contract
         shell: bash
@@ -86,6 +86,7 @@ jobs:
           grep -q "seminar_oop_uml_snapshot" seminario-oop-uml/config.js
           grep -q "seminar_oop_uml_record_session" seminario-oop-uml/config.js
           grep -q "p_attempt_token" seminario-oop-uml/store.js
+          grep -q "recordSession" seminario-oop-uml/workshop.js
           ! grep -Rqi "service_role\|SUPABASE_SERVICE_ROLE\|secret_key" seminario-oop-uml
 
       - name: Validate pedagogy and route integration
