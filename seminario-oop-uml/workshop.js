@@ -84,22 +84,25 @@ function renderTopic(){
   $('sessionBadge').textContent=`${attempt.group} · ${attempt.label}`;
   $('sessionBadge').classList.remove('hidden');
   hydrateEvidence();
+  window.IJR_OOP_NOTEBOOK?.mount({mode:'workshop',topicNumber:topic.n,lang});
 }
 
 async function saveEvidence(){
+  const runtime=window.IJR_OOP_NOTEBOOK?.evidence?.()||{};
   const evidence={
     model:$('evModel').checked,
     code:$('evCode').checked,
     test:$('evTest').checked,
     explain:$('evExplain').checked,
-    notes:$('evidenceNotes').value.trim()
+    notes:$('evidenceNotes').value.trim(),
+    ...runtime
   };
   $('saveEvidence').disabled=true;
   $('saveStatus').textContent='Validating and saving evidence…';
   try{
     attempt=await store.recordSession(topic.sessionKey,evidence);
     hydrateEvidence();
-    $('saveStatus').textContent=attempt.backend==='supabase'?'Verified session evidence saved to Supabase.':'Session evidence saved in local recovery mode.';
+    $('saveStatus').textContent=attempt.backend==='supabase'?'Verified session evidence + runtime snapshot saved to Supabase.':'Session evidence saved in local recovery mode.';
   }catch(error){
     console.error(error);
     $('saveStatus').textContent=error.message||'Evidence could not be saved.';
@@ -107,6 +110,16 @@ async function saveEvidence(){
     $('saveEvidence').disabled=false;
   }
 }
+
+// Successful guided implementation/test cells can mark the corresponding evidence.
+document.addEventListener('ijr-oop-cell-run',event=>{
+  if(event.detail?.ok!==true)return;
+  if(event.detail.label==='implement'){$('evCode').checked=true;$('saveStatus').textContent='Implementation cell executed successfully. Code evidence marked.';}
+  if(event.detail.label==='test'){$('evTest').checked=true;$('saveStatus').textContent='Test cell executed successfully. Test evidence marked.';}
+});
+document.addEventListener('ijr-oop-runtime-reset',()=>{
+  $('saveStatus').textContent='Python runtime reset. Re-run implementation and test cells before recording new runtime evidence.';
+});
 
 $('saveEvidence').addEventListener('click',saveEvidence);
 store.restore().then(value=>{
