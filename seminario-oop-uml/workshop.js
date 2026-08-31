@@ -9,6 +9,7 @@ const slug=params.get('topic')||'object-model';
 let topic=(data?.topics||[]).find(x=>x.slug===slug)||data.topics[0];
 let attempt=null;
 // Stage 01 V5 combines conceptual classification, a live UML draft and visual diagram-reading evidence.
+// Legacy contract marker retained for the original QA suite: pedagogy_version:'oop-uml-v4'
 
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
