@@ -1,0 +1,99 @@
+name: Seminar OOP UML Visual V5 QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "seminario-oop-uml/**"
+      - "supabase/migrations/20260831170017_seminar_oop_uml_visual_stage1_v5.sql"
+      - ".github/workflows/seminar-oop-uml-visual-v5-qa.yml"
+  pull_request:
+    paths:
+      - "seminario-oop-uml/**"
+      - "supabase/migrations/20260831170017_seminar_oop_uml_visual_stage1_v5.sql"
+      - ".github/workflows/seminar-oop-uml-visual-v5-qa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate V5 visual assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s seminario-oop-uml/stage1-uml-visuals-v5.css
+          test -s seminario-oop-uml/stage1-uml-visuals-v5.1.js
+          grep -q "stage1-uml-visuals-v5.css" seminario-oop-uml/course-data.js
+          grep -q "stage1-uml-visuals-v5.1.js" seminario-oop-uml/course-data.js
+          grep -q "typeof document==='undefined'" seminario-oop-uml/course-data.js
+
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check seminario-oop-uml/course-data.js
+          node --check seminario-oop-uml/stage1-uml-visuals-v5.1.js
+          node --check seminario-oop-uml/workshop.js
+          node - <<'NODE'
+          global.window={};
+          require('./seminario-oop-uml/course-data.js');
+          if(!window.IJR_OOP_UML_DATA||window.IJR_OOP_UML_DATA.topics.length!==10) throw new Error('Course data failed outside browser runtime');
+          console.log('course-data browser guard verified');
+          NODE
+
+      - name: Validate visual UML atlas contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          file=seminario-oop-uml/stage1-uml-visuals-v5.1.js
+          grep -q "VISUAL UML ATLAS V5" "$file"
+          grep -q "Actual three-compartment UML class-box anatomy" "$file"
+          grep -q "8 VISUAL CLASS EXAMPLES" "$file"
+          grep -q "MULTI-CLASS DIAGRAM PREVIEW" "$file"
+          grep -q "COHESION · BAD VS BETTER" "$file"
+          grep -q "VISUAL DIAGRAM READING SPRINT" "$file"
+          for case_id in student bank-account sensor game-character playlist product vehicle thermostat; do
+            grep -q "id:'$case_id'" "$file"
+          done
+          grep -q "Association" "$file"
+          grep -q "Composition" "$file"
+          grep -q "Generalization" "$file"
+          grep -q "Dependency" "$file"
+          grep -q "uml_visual_mastery" "$file"
+          grep -q "uml_visual_examples_seen" "$file"
+
+      - name: Validate Stage 01 V5 evidence gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "pedagogy_version:'oop-uml-v5'" seminario-oop-uml/workshop.js
+          grep -q "Visual Diagram Reading Sprint with 5/5" seminario-oop-uml/workshop.js
+          grep -q "ijr-oop-uml-visual-mastered" seminario-oop-uml/workshop.js
+          migration=supabase/migrations/20260831170017_seminar_oop_uml_visual_stage1_v5.sql
+          grep -q "uml_visual_score" "$migration"
+          grep -q "uml_visual_total" "$migration"
+          grep -q "uml_visual_mastery" "$migration"
+          grep -q "uml_visual_examples_seen" "$migration"
+          grep -q "Visual Diagram Reading Sprint with a perfect score" "$migration"
+          grep -q "v_pedagogy_version = 'oop-uml-v5'" "$migration"
+          ! grep -Rqi "service_role\|SUPABASE_SERVICE_ROLE\|secret_key" seminario-oop-uml
+
+      - name: Validate visual responsive CSS
+        shell: bash
+        run: |
+          set -euo pipefail
+          css=seminario-oop-uml/stage1-uml-visuals-v5.css
+          grep -q "uml-v5-hero-grid" "$css"
+          grep -q "uml-v5-example-grid" "$css"
+          grep -q "uml-v5-challenge-grid" "$css"
+          grep -q "@media(max-width:860px)" "$css"
+          grep -q "prefers-reduced-motion" "$css"
