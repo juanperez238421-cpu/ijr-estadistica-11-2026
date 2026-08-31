@@ -139,7 +139,7 @@ let editRequiredScaffolds=0;
 // 4) Standalone OOP Colab shell.
 {
   const html=read('seminario-oop-colab-01/index.html');
-  for(const marker of ['pyodide/v0.27.7/full/pyodide.js','pythonCell','runCode','codeOutput']){
+  for(const marker of ['pyodide/v0.27.7/full/pyodide.js','codeEditor','runCodeButton','terminalOutput','terminalCommand']){
     assert(html.includes(marker),`Standalone OOP Colab missing ${marker}`);
   }
   if(/id="terminalCommand"[^>]*disabled/.test(html)){
