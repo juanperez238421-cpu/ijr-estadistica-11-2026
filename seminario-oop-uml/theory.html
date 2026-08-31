@@ -2,19 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light"><meta name="robots" content="noindex,nofollow">
-  <meta name="description" content="Seminar 11 OOP and UML theory with beginner mental models, language-agnostic object modeling, deep UML class-diagram construction, guided executable Python cells and a live browser terminal.">
+  <meta name="description" content="Seminar 11 OOP and UML theory with visual class-diagram anatomy, beginner mental models, language-agnostic object modeling, guided Python and Java bridges, and an executable browser notebook.">
   <title>Seminar 11 · OOP + UML Theory</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="styles.css?v=20260831-v2">
   <link rel="stylesheet" href="coding-runtime-v2.css?v=20260831-v2">
+  <link rel="stylesheet" href="stage1-uml-visuals-v5.css?v=20260831-v5" data-uml-visual-v5>
+  <link rel="stylesheet" href="theory-v6.css?v=20260831-v6">
   <script defer src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
   <script defer src="course-data.js?v=20260831-v1"></script>
   <script defer src="coding-labs-v2.js?v=20260831-v2"></script>
   <script defer src="stage1-foundations-v3.js?v=20260831-v3"></script>
   <script defer src="stage1-uml-depth-v4.js?v=20260831-v4"></script>
+  <script defer src="stage1-uml-visuals-v5.1.js?v=20260831-v51" data-uml-visual-v5></script>
   <script defer src="coding-runtime-v2.js?v=20260831-v2"></script>
+  <script defer src="theory-v6.js?v=20260831-v6"></script>
 </head>
-<body>
+<body class="theory-page">
 <header class="topbar">
   <a class="brand" href="./"><span class="brand-mark">IJR</span><span><small>Seminar 11 · Common Core</small><strong>OOP + UML Theory</strong></span></a>
   <div class="top-actions"><a class="button button-light" href="./">Learning Hub</a><a id="workshopTop" class="button button-dark" href="workshop.html">Open Workshop</a></div>
@@ -26,6 +30,7 @@
     <h1 id="title">Loading…</h1>
     <p id="lead"></p>
   </section>
+  <nav id="theorySectionNav" class="theory-section-nav" aria-label="Theory sections"></nav>
 
   <section id="foundationPanel" class="panel hidden" style="margin-top:28px">
     <p class="eyebrow">STAGE 01 · BEFORE SYNTAX</p>
