@@ -123,7 +123,10 @@
 
     const links = qa('a', nav);
     const byId = new Map(links.map(link => [link.getAttribute('href').slice(1), link]));
-    const setCurrent = id => links.forEach(link => link.toggleAttribute('aria-current', link === byId.get(id)));
+    const setCurrent = id => links.forEach(link => {
+      if (link === byId.get(id)) link.setAttribute('aria-current', 'location');
+      else link.removeAttribute('aria-current');
+    });
 
     if ('IntersectionObserver' in window) {
       const observer = new IntersectionObserver(entries => {
