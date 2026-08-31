@@ -12,7 +12,7 @@ let attempt=null;
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 const briefs={
-  1:['Create two objects from one class and prove that they share behavior while keeping independent state.','Which values distinguish one instance from another?','Instantiate at least two objects and call one behavior.','Change one object state and verify the other instance is unaffected.','Add one new attribute to the UML class and implementation.'],
+  1:['Choose one concept from everyday life, school, a game, science, data or software. Turn that idea into the smallest possible class, create two concrete objects and explain how the same model could be written in another programming language.','Before coding, answer four questions: What is the concept/class? What data can differ/attribute? What can it do/method? What are two concrete examples/objects?','Create one very small class with one meaningful attribute, then create the first object. Add a simple method only after the class/object idea is clear.','Create a second object from the same class with a different value. Print both and identify what they share and what is different.','Add or change one simple method or attribute, then update your UML/class model so the idea and code still match.'],
   2:['Model an object whose method changes its internal state in a controlled, observable way.','What should the object remember between method calls?','Implement one state-changing method.','Show state before and after the method call.','Add one business rule that constrains the state change.'],
   3:['Define a constructor that creates only coherent objects and makes required state explicit.','What data is mandatory at birth?','Implement initialization and one validation rule.','Create valid objects and attempt one invalid case.','Add a new required constructor parameter and update UML.'],
   4:['Protect internal state behind a deliberate public interface.','Which field should callers not change directly?','Implement controlled read/change behavior.','Test a valid and invalid update.','Strengthen one invariant without changing the public goal.'],
@@ -25,7 +25,7 @@ const briefs={
 };
 
 const defense={
-  1:['What is the difference between this class and these objects?','Which state belongs to each instance?','Where is the class responsibility visible in UML and code?'],
+  1:['In one sentence, what is Object-Oriented Programming?','What is the class in your example, and what are the two objects?','Which part is an attribute and which part is a method?','If you rewrote the same model in Java, JavaScript or C#, what idea would stay the same even though the syntax changes?'],
   2:['Why is this value state instead of a local variable?','Why should this behavior belong to this class?','What state transition did your test prove?'],
   3:['Why does the object require these constructor values?','How do you prevent invalid initial state?','How is initialization represented in UML?'],
   4:['What invariant are you protecting?','Why is this member private/protected/public?','Could a caller bypass your rule?'],
@@ -69,7 +69,7 @@ function renderTopic(){
   $('umlAttrs').innerHTML=topic.uml.attrs.length?topic.uml.attrs.map(x=>`<div>${esc(x)}</div>`).join(''):'<div><em>No attributes required at this abstraction.</em></div>';
   $('umlOps').innerHTML=topic.uml.ops.map(x=>`<div>${esc(x)}</div>`).join('');
   const brief=briefs[topic.n];
-  $('taskTitle').textContent=`Session ${String(topic.n).padStart(2,'0')} design challenge`;
+  $('taskTitle').textContent=topic.n===1?'Stage 01 · From a concept to a class':`Session ${String(topic.n).padStart(2,'0')} design challenge`;
   $('taskBrief').textContent=brief[0];
   $('predictTask').textContent=brief[1];
   $('implementTask').textContent=brief[2];
@@ -95,6 +95,8 @@ async function saveEvidence(){
     test:$('evTest').checked,
     explain:$('evExplain').checked,
     notes:$('evidenceNotes').value.trim(),
+    pedagogy_version:'oop-uml-v3',
+    learning_focus:topic.n===1?'oop-foundations-language-agnostic':'oop-uml-common-core',
     ...runtime
   };
   $('saveEvidence').disabled=true;
