@@ -114,10 +114,10 @@ jobs:
           grep -q "setStdout" seminario-oop-uml/coding-runtime-v2.js
           grep -q "setStderr" seminario-oop-uml/coding-runtime-v2.js
           grep -q "oopTerminalInput" seminario-oop-uml/coding-runtime-v2.js
+          grep -q "code_snapshot" seminario-oop-uml/coding-runtime-v2.js
           grep -q "theoryCodingLab" seminario-oop-uml/theory.html
           grep -q "workshopCodingLab" seminario-oop-uml/workshop.html
           grep -q "ijr-oop-cell-run" seminario-oop-uml/workshop.js
-          grep -q "code_snapshot" seminario-oop-uml/workshop.js
 
       - name: Validate Supabase progress contract
         shell: bash
