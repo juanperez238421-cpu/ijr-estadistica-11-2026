@@ -1,0 +1,91 @@
+name: Seminar OOP UML Theory V6 QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "seminario-oop-uml/theory.html"
+      - "seminario-oop-uml/theory-v6.css"
+      - "seminario-oop-uml/theory-v6.js"
+      - ".github/workflows/seminar-oop-uml-theory-v6-qa.yml"
+  pull_request:
+    paths:
+      - "seminario-oop-uml/theory.html"
+      - "seminario-oop-uml/theory-v6.css"
+      - "seminario-oop-uml/theory-v6.js"
+      - ".github/workflows/seminar-oop-uml-theory-v6-qa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate V6 assets and direct visual loading
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s seminario-oop-uml/theory-v6.css
+          test -s seminario-oop-uml/theory-v6.js
+          grep -q 'class="theory-page"' seminario-oop-uml/theory.html
+          grep -q 'id="theorySectionNav"' seminario-oop-uml/theory.html
+          grep -q 'stage1-uml-visuals-v5.css' seminario-oop-uml/theory.html
+          grep -q 'stage1-uml-visuals-v5.1.js' seminario-oop-uml/theory.html
+          test "$(grep -o 'data-uml-visual-v5' seminario-oop-uml/theory.html | wc -l)" -ge 2
+          grep -q 'theory-v6.css' seminario-oop-uml/theory.html
+          grep -q 'theory-v6.js' seminario-oop-uml/theory.html
+
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check seminario-oop-uml/theory-v6.js
+          node --check seminario-oop-uml/stage1-uml-visuals-v5.1.js
+
+      - name: Validate navigation and hierarchy contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          js=seminario-oop-uml/theory-v6.js
+          grep -q 'theory-hero-side' "$js"
+          grep -q 'theory-language-switch' "$js"
+          grep -q 'theory-flow-strip' "$js"
+          grep -q 'theory-visuals' "$js"
+          grep -q 'theory-construction' "$js"
+          grep -q 'theory-code' "$js"
+          grep -q 'theory-lab' "$js"
+          grep -q 'theory-mastery' "$js"
+          grep -q 'IntersectionObserver' "$js"
+          grep -q 'aria-current' "$js"
+          grep -q 'foundation.after(visuals)' "$js"
+          grep -q 'visuals.after(quick)' "$js"
+
+      - name: Validate responsive visual QA contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          css=seminario-oop-uml/theory-v6.css
+          grep -q 'figure{margin:0}' "$css"
+          grep -q 'aspect-ratio:940/500' "$css"
+          grep -q 'min-height:0' "$css"
+          grep -q 'overflow-x:auto' "$css"
+          grep -q 'focus-visible' "$css"
+          grep -q 'scroll-margin-top' "$css"
+          grep -q '@media(max-width:720px)' "$css"
+          grep -q '@media(prefers-reduced-motion:reduce)' "$css"
+          grep -q '@media print' "$css"
+
+      - name: Validate loader compatibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'data-uml-visual-v5' seminario-oop-uml/theory.html
+          grep -q 'link\[data-uml-visual-v5\]' seminario-oop-uml/course-data.js
+          grep -q 'script\[data-uml-visual-v5\]' seminario-oop-uml/course-data.js
