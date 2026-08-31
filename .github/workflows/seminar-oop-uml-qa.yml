@@ -1,0 +1,103 @@
+name: Seminar OOP UML Hub QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "seminario-oop-uml/**"
+      - ".github/workflows/seminar-oop-uml-qa.yml"
+  pull_request:
+    paths:
+      - "seminario-oop-uml/**"
+      - ".github/workflows/seminar-oop-uml-qa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate required student routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in \
+            seminario-oop-uml/index.html \
+            seminario-oop-uml/theory.html \
+            seminario-oop-uml/workshop.html \
+            seminario-oop-uml/styles.css \
+            seminario-oop-uml/config.js \
+            seminario-oop-uml/course-data.js \
+            seminario-oop-uml/store.js \
+            seminario-oop-uml/hub.js \
+            seminario-oop-uml/workshop.js; do
+            test -s "$f"
+          done
+
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check seminario-oop-uml/config.js
+          node --check seminario-oop-uml/course-data.js
+          node --check seminario-oop-uml/store.js
+          node --check seminario-oop-uml/hub.js
+          node --check seminario-oop-uml/workshop.js
+          python - <<'PY'
+          import pathlib, re
+          text=pathlib.Path('seminario-oop-uml/theory.html').read_text(encoding='utf-8')
+          blocks=re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>',text,re.S|re.I)
+          if not blocks:
+              raise SystemExit('No inline theory script found')
+          pathlib.Path('/tmp/theory-inline.js').write_text('\n'.join(blocks),encoding='utf-8')
+          PY
+          node --check /tmp/theory-inline.js
+
+      - name: Validate ten-session curriculum contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(grep -o "sessionKey:'s[0-9][0-9]'" seminario-oop-uml/course-data.js | wc -l | tr -d ' ')" = "10"
+          for key in s01 s02 s03 s04 s05 s06 s07 s08 s09 s10; do
+            grep -q "sessionKey:'$key'" seminario-oop-uml/course-data.js
+          done
+          grep -q "Class · Object · Instance" seminario-oop-uml/course-data.js
+          grep -q "Encapsulation & Visibility" seminario-oop-uml/course-data.js
+          grep -q "Object Relationships" seminario-oop-uml/course-data.js
+          grep -q "Inheritance & Generalization" seminario-oop-uml/course-data.js
+          grep -q "Polymorphism & Abstraction" seminario-oop-uml/course-data.js
+          grep -q "UML Class Diagram Architecture" seminario-oop-uml/course-data.js
+          grep -q "Architecture Defense" seminario-oop-uml/course-data.js
+
+      - name: Validate Supabase progress contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "sb_publishable_" seminario-oop-uml/config.js
+          grep -q "seminar_course_start_team" seminario-oop-uml/config.js
+          grep -q "seminar_course_resume" seminario-oop-uml/config.js
+          grep -q "seminar_oop_uml_snapshot" seminario-oop-uml/config.js
+          grep -q "seminar_oop_uml_record_session" seminario-oop-uml/config.js
+          grep -q "p_attempt_token" seminario-oop-uml/store.js
+          grep -q "recordSession" seminario-oop-uml/workshop.js
+          ! grep -Rqi "service_role\|SUPABASE_SERVICE_ROLE\|secret_key" seminario-oop-uml
+
+      - name: Validate pedagogy and route integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "Model first. Code second." seminario-oop-uml/index.html
+          grep -q "Theory" seminario-oop-uml/index.html
+          grep -q "Workshop" seminario-oop-uml/index.html
+          grep -q "evModel" seminario-oop-uml/workshop.html
+          grep -q "evCode" seminario-oop-uml/workshop.html
+          grep -q "evTest" seminario-oop-uml/workshop.html
+          grep -q "evExplain" seminario-oop-uml/workshop.html
+          grep -q "seminario-oop-colab-01" seminario-oop-uml/workshop.html

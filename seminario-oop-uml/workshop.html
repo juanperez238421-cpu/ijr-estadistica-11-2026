@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light"><meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="Seminar 11 OOP and UML workshop with UML modeling, implementation, testing, modification and Supabase-backed evidence recording.">
+  <title>Seminar 11 · OOP + UML Workshop</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
+  <link rel="stylesheet" href="styles.css?v=20260831-v1">
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="config.js?v=20260831-v1"></script><script defer src="course-data.js?v=20260831-v1"></script>
+  <script type="module" src="workshop.js?v=20260831-v1"></script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="./"><span class="brand-mark">IJR</span><span><small>Seminar 11 · Common Core</small><strong>OOP + UML Workshop</strong></span></a>
+  <div class="top-actions"><span id="sessionBadge" class="session-badge hidden"></span><a id="theoryTop" class="button button-light" href="theory.html">Review Theory</a><a class="button button-dark" href="../seminario-oop-colab-01/">Python OOP Lab</a></div>
+</header>
+
+<section id="accessPanel" class="access-note hidden">
+  <p class="eyebrow">REGISTRATION REQUIRED</p><h1>Open the Learning Hub first.</h1>
+  <p>This workshop records OOP + UML evidence against an active Seminar classroom registration. Return to the hub, register the student/team, then open this workshop again.</p>
+  <a class="button button-dark" href="./">Open OOP + UML Hub</a>
+</section>
+
+<main id="workshopPanel" class="page-shell hidden">
+  <div class="crumbs"><a href="./">OOP + UML Hub</a><span>→</span><span id="crumbTopic">Workshop</span></div>
+  <section class="page-hero"><p class="eyebrow" id="sessionLabel">COMMON CORE · WORKSHOP</p><h1 id="title">Loading…</h1><p id="lead"></p><div id="completionHeader" class="status-banner">Session evidence not recorded yet.</div></section>
+
+  <section class="panel" style="margin-top:28px">
+    <p class="eyebrow">ENGINEERING WORKFLOW</p><h2>Do not jump directly to code.</h2>
+    <div class="workshop-steps">
+      <div class="workshop-step"><span>STEP 01</span><strong>Predict</strong><p id="predictTask">Identify the objects and responsibilities before implementation.</p></div>
+      <div class="workshop-step"><span>STEP 02</span><strong>Model</strong><p>Draw or update the UML class view. Include only state, behavior and relationships you can justify.</p></div>
+      <div class="workshop-step"><span>STEP 03</span><strong>Implement</strong><p id="implementTask">Translate the design into the selected language without copying a finished solution.</p></div>
+      <div class="workshop-step"><span>STEP 04</span><strong>Test</strong><p id="testTask">Create a concrete scenario and verify observable behavior.</p></div>
+      <div class="workshop-step"><span>STEP 05</span><strong>Modify</strong><p id="modifyTask">Change one requirement and propagate it through UML and code.</p></div>
+      <div class="workshop-step"><span>STEP 06</span><strong>Explain</strong><p>Defend the responsibility of each class and show where the same decision exists in UML and code.</p></div>
+    </div>
+  </section>
+
+  <section class="content-grid">
+    <article class="panel">
+      <p class="eyebrow">TASK BRIEF</p><h2 id="taskTitle">Build the model</h2><p id="taskBrief"></p>
+      <div class="qa-grid" id="taskCriteria"></div>
+      <div class="callout"><strong>Technical library reference:</strong> <span id="labReference">m08</span>. The 16-module Seminar route remains the deeper implementation library; this workshop focuses on synchronization between OOP reasoning and UML.</div>
+      <a class="link-card" href="../seminario-oop-colab-01/" style="margin-top:14px"><strong>Python OOP Colab Lab 01</strong><small>Supplementary executable browser lab for classes, objects, state and methods.</small></a>
+    </article>
+    <aside class="panel soft">
+      <p class="eyebrow">UML TARGET</p>
+      <div class="uml-card"><div id="umlName" class="uml-title">Class</div><div id="umlAttrs" class="uml-section"></div><div id="umlOps" class="uml-section"></div></div>
+      <p class="callout">This is a reference model, not an answer to copy. Your diagram may differ if the responsibilities and relationships remain coherent and match your implementation.</p>
+    </aside>
+  </section>
+
+  <section class="content-grid">
+    <article class="panel">
+      <p class="eyebrow">EVIDENCE WORKSPACE</p><h2>Record what you actually completed.</h2>
+      <div class="evidence-workspace">
+        <div class="evidence-checks">
+          <label><input id="evModel" type="checkbox"><span><strong>Model</strong><br>My UML diagram represents the current classes/state/behavior.</span></label>
+          <label><input id="evCode" type="checkbox"><span><strong>Code</strong><br>I implemented the design myself in the selected language.</span></label>
+          <label><input id="evTest" type="checkbox"><span><strong>Test</strong><br>I executed a concrete scenario and checked its behavior.</span></label>
+          <label><input id="evExplain" type="checkbox"><span><strong>Explain</strong><br>I can defend why the design is structured this way.</span></label>
+        </div>
+        <label><strong>Design notes · optional</strong><textarea id="evidenceNotes" class="evidence-notes" maxlength="2000" placeholder="Example: I changed the relationship from inheritance to composition because…"></textarea></label>
+        <div class="save-strip"><p><span id="completionStamp" class="completion-stamp">Not recorded</span><br><small id="saveStatus">All four evidence checks are required by the server.</small></p><button id="saveEvidence" class="button button-dark" type="button">Record session evidence</button></div>
+      </div>
+    </article>
+    <aside class="panel">
+      <p class="eyebrow">LIVE DEFENSE QUESTIONS</p><h2>Be ready to answer</h2><ol id="defenseQuestions" class="evidence-list"></ol>
+      <div class="callout"><strong>Mastery rule:</strong> execution is necessary but not sufficient. The student must connect object responsibility, UML notation and executable behavior.</div>
+    </aside>
+  </section>
+
+  <section class="panel" style="margin-top:28px"><p class="eyebrow">SESSION EXIT</p><h2>Before returning to the Hub</h2><ul id="evidenceList" class="evidence-list"></ul><div class="page-actions"><a class="button button-light" href="./">Back to Hub</a><a id="theoryBottom" class="button button-light" href="theory.html">Review Theory</a><a class="button button-dark" href="../seminario-oop-colab-01/">Open Python OOP Lab</a></div></section>
+</main>
+</body></html>
