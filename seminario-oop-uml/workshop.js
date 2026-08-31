@@ -8,6 +8,7 @@ const params=new URLSearchParams(location.search);
 const slug=params.get('topic')||'object-model';
 let topic=(data?.topics||[]).find(x=>x.slug===slug)||data.topics[0];
 let attempt=null;
+// Stage 01 objective practice persists the `uml_mastery` field through the v4 evidence payload.
 
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
