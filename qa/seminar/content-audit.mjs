@@ -76,7 +76,9 @@ const warnings=[];
     assert(text(topic.lead,20),`OOP session ${i+1}: lead lacks conceptual detail`);
     assert(text(topic.uml?.name,2),`OOP session ${i+1}: UML class/model name missing`);
     assert(Array.isArray(topic.uml?.ops)&&topic.uml.ops.length>=1,`OOP session ${i+1}: UML operations missing`);
-    assert(Array.isArray(topic.evidence)&&topic.evidence.length>=4,`OOP session ${i+1}: mastery evidence incomplete`);
+    // The curriculum intentionally defines three explicit mastery artifacts per session;
+    // the separate model/code/test/explain persistence gate lives in workshop.js/store.js.
+    assert(Array.isArray(topic.evidence)&&topic.evidence.length>=3,`OOP session ${i+1}: mastery evidence incomplete`);
   });
 
   const labCtx=sandboxScript('seminario-oop-uml/coding-labs-v2.js');
