@@ -165,8 +165,8 @@ async function standaloneColabShellSmoke(browser){
   const page=await browser.newPage({viewport:{width:1280,height:900}});
   const check=monitor(page,'Standalone OOP Colab');
   await page.goto(absolute('seminario-oop-colab-01/'),{waitUntil:'domcontentloaded'});
-  await page.waitForSelector('#pythonCell');
-  for(const selector of ['#pythonCell','#runCode','#codeOutput','#terminalCommand']){
+  await page.waitForSelector('#codeEditor');
+  for(const selector of ['#codeEditor','#runCodeButton','#terminalOutput','#terminalCommand']){
     assert(await page.locator(selector).count()===1,`Standalone OOP Colab missing ${selector}`);
   }
   assert(await page.locator('#terminalCommand').isDisabled(),'Standalone OOP Colab console contract changed: QA expected output-only command line');
