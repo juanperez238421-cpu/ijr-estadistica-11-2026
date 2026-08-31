@@ -106,9 +106,9 @@ let editRequiredScaffolds=0;
       if(compiled.status===0){
         compilableCells++;
       }else{
-        // A student-edit scaffold may deliberately contain an ellipsis placeholder that
-        // must be replaced before Run. Any other syntax failure is a genuine QA failure.
-        const explicitEditPlaceholder=/TODO/.test(cell.code)&&/\.\.\./.test(cell.code);
+        // Workshop scaffolds may deliberately contain an ellipsis placeholder that
+        // students must replace before Run. Theory cells are never allowed this exception.
+        const explicitEditPlaceholder=lab.workshop.includes(cell)&&/\.\.\./.test(cell.code);
         assert(explicitEditPlaceholder,`Session ${n} / ${cell.id}: unexpected Python syntax error\n${compiled.stderr||compiled.stdout}`);
         editRequiredScaffolds++;
       }
