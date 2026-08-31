@@ -2,10 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light"><meta name="robots" content="noindex,nofollow">
-  <meta name="description" content="Seminar 11 OOP and UML theory: mental models, class diagrams, implementation bridge, design failures and mastery evidence.">
+  <meta name="description" content="Seminar 11 OOP and UML theory with mental models, UML, guided executable Python cells and a live browser terminal.">
   <title>Seminar 11 · OOP + UML Theory</title>
-  <link rel="stylesheet" href="styles.css?v=20260831-v1">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="styles.css?v=20260831-v2">
+  <link rel="stylesheet" href="coding-runtime-v2.css?v=20260831-v2">
+  <script defer src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
   <script defer src="course-data.js?v=20260831-v1"></script>
+  <script defer src="coding-labs-v2.js?v=20260831-v2"></script>
+  <script defer src="coding-runtime-v2.js?v=20260831-v2"></script>
 </head>
 <body>
 <header class="topbar">
@@ -51,6 +56,12 @@
     </aside>
   </section>
 
+  <section class="panel notebook-panel">
+    <div id="theoryCodingLab">
+      <p class="eyebrow">LIVE COLAB-STYLE NOTEBOOK</p><h2>Loading guided Python cells…</h2>
+    </div>
+  </section>
+
   <section class="content-grid">
     <article class="panel">
       <p class="eyebrow">UML REASONING</p><h2 id="umlReasoningTitle">How to decide</h2>
@@ -58,7 +69,7 @@
     </article>
     <aside class="panel soft">
       <p class="eyebrow">LANGUAGE TRANSFER</p><h2>Python and Java express the same design differently.</h2>
-      <p>Python is concise and dynamic; Java makes types, visibility and contracts more explicit. The <strong>object model</strong> should remain recognizable in both.</p>
+      <p>Python is concise and dynamic; Java makes types, visibility and contracts more explicit. The <strong>object model</strong> should remain recognizable in both. The embedded executable notebook uses Python/Pyodide so every student can run code directly in the browser.</p>
       <div class="qa-grid"><article><strong>Python</strong><p><code>self</code>, constructor <code>__init__</code>, convention-based privacy, duck typing.</p></article><article><strong>Java</strong><p><code>this</code>, typed fields, explicit visibility, interfaces and declared return types.</p></article></div>
     </aside>
   </section>
@@ -86,6 +97,7 @@ window.addEventListener('DOMContentLoaded',()=>{
  $('umlReasoning').innerHTML=(reasoning[topic.n]||[]).map(([a,b])=>`<article><strong>${esc(a)}</strong><p>${esc(b)}</p></article>`).join('');
  $('codeHeading').textContent=`From UML to ${lang==='python'?'Python':'Java'}`;$('codeExample').textContent=(lang==='python'?py:java)[topic.n];$('codeNote').textContent='Compare the class box with the source: identify where each attribute/field and operation/method appears. The notation differs by language; the responsibility should not.';
  const q=`workshop.html?topic=${encodeURIComponent(topic.slug)}&lang=${lang}`;$('workshopTop').href=q;$('workshopBottom').href=q;
+ window.IJR_OOP_NOTEBOOK?.mount({mode:'theory',topicNumber:topic.n,lang});
 });
 </script>
 </body></html>

@@ -2,13 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light"><meta name="robots" content="noindex,nofollow">
-  <meta name="description" content="Seminar 11 OOP and UML workshop with UML modeling, implementation, testing, modification and Supabase-backed evidence recording.">
+  <meta name="description" content="Seminar 11 OOP and UML workshop with guided Colab-style Python cells, functional terminal, UML modeling and Supabase-backed evidence recording.">
   <title>Seminar 11 · OOP + UML Workshop</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20260831-v1">
+  <link rel="stylesheet" href="styles.css?v=20260831-v2"><link rel="stylesheet" href="coding-runtime-v2.css?v=20260831-v2">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
   <script defer src="config.js?v=20260831-v1"></script><script defer src="course-data.js?v=20260831-v1"></script>
-  <script type="module" src="workshop.js?v=20260831-v1"></script>
+  <script defer src="coding-labs-v2.js?v=20260831-v2"></script><script defer src="coding-runtime-v2.js?v=20260831-v2"></script>
+  <script type="module" src="workshop.js?v=20260831-v2"></script>
 </head>
 <body>
 <header class="topbar">
@@ -52,18 +54,24 @@
     </aside>
   </section>
 
+  <section class="panel notebook-panel">
+    <div id="workshopCodingLab">
+      <p class="eyebrow">LIVE COLAB-STYLE WORKSPACE</p><h2>Loading guided Python cells…</h2>
+    </div>
+  </section>
+
   <section class="content-grid">
     <article class="panel">
       <p class="eyebrow">EVIDENCE WORKSPACE</p><h2>Record what you actually completed.</h2>
       <div class="evidence-workspace">
         <div class="evidence-checks">
           <label><input id="evModel" type="checkbox"><span><strong>Model</strong><br>My UML diagram represents the current classes/state/behavior.</span></label>
-          <label><input id="evCode" type="checkbox"><span><strong>Code</strong><br>I implemented the design myself in the selected language.</span></label>
-          <label><input id="evTest" type="checkbox"><span><strong>Test</strong><br>I executed a concrete scenario and checked its behavior.</span></label>
+          <label><input id="evCode" type="checkbox"><span><strong>Code</strong><br>I implemented the design myself. A successful implementation-cell run can mark this automatically.</span></label>
+          <label><input id="evTest" type="checkbox"><span><strong>Test</strong><br>I executed a concrete scenario. A successful test-cell run can mark this automatically.</span></label>
           <label><input id="evExplain" type="checkbox"><span><strong>Explain</strong><br>I can defend why the design is structured this way.</span></label>
         </div>
         <label><strong>Design notes · optional</strong><textarea id="evidenceNotes" class="evidence-notes" maxlength="2000" placeholder="Example: I changed the relationship from inheritance to composition because…"></textarea></label>
-        <div class="save-strip"><p><span id="completionStamp" class="completion-stamp">Not recorded</span><br><small id="saveStatus">All four evidence checks are required by the server.</small></p><button id="saveEvidence" class="button button-dark" type="button">Record session evidence</button></div>
+        <div class="save-strip"><p><span id="completionStamp" class="completion-stamp">Not recorded</span><br><small id="saveStatus">All four evidence checks are required by the server. Runtime evidence is attached when available.</small></p><button id="saveEvidence" class="button button-dark" type="button">Record session evidence</button></div>
       </div>
     </article>
     <aside class="panel">

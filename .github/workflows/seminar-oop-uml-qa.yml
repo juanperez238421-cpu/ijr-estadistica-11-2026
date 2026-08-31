@@ -5,10 +5,12 @@ on:
     branches: [main]
     paths:
       - "seminario-oop-uml/**"
+      - "supabase/migrations/20260831150803_seminar_oop_uml_runtime_evidence_v2.sql"
       - ".github/workflows/seminar-oop-uml-qa.yml"
   pull_request:
     paths:
       - "seminario-oop-uml/**"
+      - "supabase/migrations/20260831150803_seminar_oop_uml_runtime_evidence_v2.sql"
       - ".github/workflows/seminar-oop-uml-qa.yml"
   workflow_dispatch:
 
@@ -33,6 +35,9 @@ jobs:
             seminario-oop-uml/theory.html \
             seminario-oop-uml/workshop.html \
             seminario-oop-uml/styles.css \
+            seminario-oop-uml/coding-runtime-v2.css \
+            seminario-oop-uml/coding-labs-v2.js \
+            seminario-oop-uml/coding-runtime-v2.js \
             seminario-oop-uml/config.js \
             seminario-oop-uml/course-data.js \
             seminario-oop-uml/store.js \
@@ -50,6 +55,8 @@ jobs:
           node --check seminario-oop-uml/store.js
           node --check seminario-oop-uml/hub.js
           node --check seminario-oop-uml/workshop.js
+          node --check seminario-oop-uml/coding-labs-v2.js
+          node --check seminario-oop-uml/coding-runtime-v2.js
           python - <<'PY'
           import pathlib, re
           text=pathlib.Path('seminario-oop-uml/theory.html').read_text(encoding='utf-8')
@@ -76,6 +83,42 @@ jobs:
           grep -q "UML Class Diagram Architecture" seminario-oop-uml/course-data.js
           grep -q "Architecture Defense" seminario-oop-uml/course-data.js
 
+      - name: Validate guided notebook catalog
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          global.window={};
+          require('./seminario-oop-uml/coding-labs-v2.js');
+          const labs=window.IJR_OOP_CODING_LABS;
+          const keys=Object.keys(labs||{});
+          if(keys.length!==10) throw new Error(`Expected 10 coding labs, found ${keys.length}`);
+          for(let n=1;n<=10;n++){
+            if(!labs[n]) throw new Error(`Missing coding lab ${n}`);
+            if(labs[n].theory.length!==2) throw new Error(`Theory ${n} must have 2 guided cells`);
+            if(labs[n].workshop.length!==3) throw new Error(`Workshop ${n} must have 3 guided cells`);
+            for(const item of [...labs[n].theory,...labs[n].workshop]){
+              if(!item.id||!item.title||!item.purpose||!Array.isArray(item.steps)||item.steps.length<3) throw new Error(`Incomplete cell in session ${n}`);
+            }
+          }
+          console.log('10 sessions · 20 theory cells · 30 workshop cells');
+          NODE
+
+      - name: Validate executable runtime contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "pyodide/v0.27.7/full/pyodide.js" seminario-oop-uml/theory.html
+          grep -q "pyodide/v0.27.7/full/pyodide.js" seminario-oop-uml/workshop.html
+          grep -q "runPythonAsync" seminario-oop-uml/coding-runtime-v2.js
+          grep -q "setStdout" seminario-oop-uml/coding-runtime-v2.js
+          grep -q "setStderr" seminario-oop-uml/coding-runtime-v2.js
+          grep -q "oopTerminalInput" seminario-oop-uml/coding-runtime-v2.js
+          grep -q "code_snapshot" seminario-oop-uml/coding-runtime-v2.js
+          grep -q "theoryCodingLab" seminario-oop-uml/theory.html
+          grep -q "workshopCodingLab" seminario-oop-uml/workshop.html
+          grep -q "ijr-oop-cell-run" seminario-oop-uml/workshop.js
+
       - name: Validate Supabase progress contract
         shell: bash
         run: |
@@ -87,6 +130,8 @@ jobs:
           grep -q "seminar_oop_uml_record_session" seminario-oop-uml/config.js
           grep -q "p_attempt_token" seminario-oop-uml/store.js
           grep -q "recordSession" seminario-oop-uml/workshop.js
+          grep -q "code_snapshot" supabase/migrations/20260831150803_seminar_oop_uml_runtime_evidence_v2.sql
+          grep -q "successful_run_count" supabase/migrations/20260831150803_seminar_oop_uml_runtime_evidence_v2.sql
           ! grep -Rqi "service_role\|SUPABASE_SERVICE_ROLE\|secret_key" seminario-oop-uml
 
       - name: Validate pedagogy and route integration
