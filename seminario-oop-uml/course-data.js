@@ -15,6 +15,7 @@ window.IJR_OOP_UML_DATA=Object.freeze({
 });
 
 (() => {
+  if(typeof document==='undefined'||typeof location==='undefined') return;
   const path=location.pathname;
   if(!/\/seminario-oop-uml\/(theory|workshop)\.html$/.test(path)) return;
   const load=()=>{
