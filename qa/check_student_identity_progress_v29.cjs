@@ -10,16 +10,17 @@ const html=read('python/index.html');
 const js=read('python/student-progress-v29.js');
 const css=read('python/student-progress-v29.css');
 const migration=read('supabase/migrations/20260827160452_python_hub_student_identity_progress_v29.sql');
+const authMigration=read('supabase/migrations/20260902101500_python_hub_student_password_auth_v31.sql');
 
 for(const token of [
   'student-progress-v29.css',
   'student-progress-v29.js',
   'id="identityProgressPanel"',
-  'Current registration progress',
+  'Current student progress',
   'stable User ID',
-  'individual progress'
+  'verified individual student account'
 ]){
-  if(!html.includes(token)) throw new Error(`Student page missing V29 UI contract: ${token}`);
+  if(!html.includes(token)) throw new Error(`Student page missing identity/progress UI contract: ${token}`);
 }
 
 for(const token of [
@@ -63,9 +64,18 @@ for(const token of [
   if(!migration.includes(token)) throw new Error(`V29 migration missing secure individual-progress contract: ${token}`);
 }
 
+// V31 authenticated accounts must populate the same stable identity foreign key.
+for(const token of [
+  'python_hub_ensure_student_identity_v29',
+  'student_identity_id',
+  'excluded.student_identity_id'
+]){
+  if(!authMigration.includes(token)) throw new Error(`V31 authenticated account flow does not preserve V29 identity progress: ${token}`);
+}
+
 if(/service[_-]?role/i.test(js+html)) throw new Error('Student frontend must not contain a service-role credential/reference.');
 if(!migration.includes('revoke all on function private.python_hub_member_progress_v29(uuid) from public,anon,authenticated')) throw new Error('Private progress helper must not be executable by browser roles.');
 if(!migration.includes("split_part(institutional_email,'@',2)='ijr.edu.co'")) throw new Error('Student identity table must enforce the institutional email domain.');
 
-console.log('PYTHON HUB STUDENT IDENTITY PROGRESS V29 QA PASS');
-console.log('registration_id=VISIBLE stable_user_id=PASS individual_progress=AGGREGATED team_members=INDIVIDUAL historical_credit=SEPARATE rls=PASS private_helpers=LOCKED');
+console.log('PYTHON HUB STUDENT IDENTITY PROGRESS V31 QA PASS');
+console.log('registration_id=VISIBLE stable_user_id=PASS authenticated_identity_link=PASS individual_progress=AGGREGATED historical_credit=SEPARATE rls=PASS private_helpers=LOCKED');
