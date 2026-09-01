@@ -9,26 +9,58 @@
   }
 
   const client = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
   });
+
   const $ = id => document.getElementById(id);
   const escapeHtml = value => String(value ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
-  const state = {snapshot:null, registration:null};
+  const state = {
+    snapshot:null,
+    registration:null,
+    authSession:null,
+    passwordMode:'signup',
+    pendingIdentity:null
+  };
 
   function readJson(key, fallback=null){
     try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; } catch { return fallback; }
   }
   function writeJson(key,value){ try { localStorage.setItem(key,JSON.stringify(value)); } catch {} }
+  function removeKey(key){ try { localStorage.removeItem(key); } catch {} }
   function getStoredSession(){ return readJson(config.sessionStorageKey,null); }
-  function getVault(){ return readJson(config.sessionVaultKey,{}) || {}; }
-  function fingerprint(group,emails){ return `${String(group||'').toUpperCase()}|${[...emails].map(v=>v.toLowerCase()).sort().join('|')}`; }
+  function getPendingIdentity(){ return readJson(config.pendingAuthStorageKey,null); }
+
   function rememberSession(registrationId,accessToken,meta={}){
-    const item={registrationId,accessToken,fingerprint:meta.fingerprint||'',groupCode:meta.groupCode||'',emails:meta.emails||[],mode:meta.mode||'',savedAt:new Date().toISOString()};
+    const item={
+      registrationId,
+      accessToken,
+      fingerprint:'',
+      groupCode:meta.groupCode||'',
+      emails:meta.email?[meta.email]:[],
+      mode:'individual',
+      authProtected:true,
+      savedAt:new Date().toISOString()
+    };
     writeJson(config.sessionStorageKey,item);
-    if(item.fingerprint){ const vault=getVault(); vault[item.fingerprint]=item; writeJson(config.sessionVaultKey,vault); }
+    state.registration={registrationId,accessToken};
   }
-  function clearActiveSession(){ localStorage.removeItem(config.sessionStorageKey); state.snapshot=null; state.registration=null; }
-  function forgetVaultItem(fp){ if(!fp)return; const vault=getVault(); delete vault[fp]; writeJson(config.sessionVaultKey,vault); }
+
+  function clearHubSession(){
+    removeKey(config.sessionStorageKey);
+    removeKey(config.sessionVaultKey);
+    state.snapshot=null;
+    state.registration=null;
+  }
+
+  function savePendingIdentity(identity){
+    state.pendingIdentity=identity;
+    writeJson(config.pendingAuthStorageKey,identity);
+  }
+
+  function clearPendingIdentity(){
+    state.pendingIdentity=null;
+    removeKey(config.pendingAuthStorageKey);
+  }
 
   async function rpc(name,args){
     const {data,error} = await client.rpc(name,args);
@@ -36,117 +68,106 @@
     return data;
   }
 
-  function updateRegistrationFields(){
-    const team = $('registrationMode').value === 'team';
-    $('teamSizeWrap').classList.toggle('hidden', !team);
-    const size = team ? Number($('teamSize').value) : 1;
-    $('member2Wrap').classList.toggle('hidden', size < 2);
-    $('member3Wrap').classList.toggle('hidden', size < 3);
-    $('memberEmail2').required = size >= 2;
-    $('memberEmail3').required = size >= 3;
+  function normalizeEmail(value){ return String(value||'').trim().toLowerCase(); }
+  function validInstitutionalEmail(email){
+    if(!email || email.split('@').length!==2) return false;
+    const [local,domain]=email.split('@');
+    return Boolean(local) && domain===config.institutionalEmailDomain;
   }
-  function collectEmails(){
-    const team = $('registrationMode').value === 'team';
-    const size = team ? Number($('teamSize').value) : 1;
-    return Array.from({length:size},(_,i)=>$(`memberEmail${i+1}`).value.trim().toLowerCase());
-  }
-  function validateEmails(emails){
-    if(new Set(emails).size !== emails.length) return 'Do not repeat the same institutional email.';
-    for(const email of emails){
-      if(!email.endsWith(`@${config.institutionalEmailDomain}`) || email.split('@').length !== 2) return `Use institutional emails ending in @${config.institutionalEmailDomain}.`;
-    }
+
+  function validatePassword(password,confirmation,needsConfirmation){
+    if(password.length<8) return 'Use at least 8 characters.';
+    if(!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) return 'Use at least one letter and one number.';
+    if(needsConfirmation && password!==confirmation) return 'The two passwords do not match. Type the same password in both fields.';
     return '';
   }
 
-  async function tryResume(saved){
-    if(!saved?.registrationId || !saved?.accessToken) return false;
-    try{
-      const data=await rpc(config.rpc.resume,{p_registration_id:saved.registrationId,p_access_token:saved.accessToken});
-      state.registration={registrationId:saved.registrationId,accessToken:saved.accessToken};
-      state.snapshot=data.snapshot;
-      writeJson(config.sessionStorageKey,saved);
-      return true;
-    }catch{
-      forgetVaultItem(saved.fingerprint);
-      if(getStoredSession()?.registrationId===saved.registrationId) localStorage.removeItem(config.sessionStorageKey);
-      return false;
-    }
+  function currentIdentity(){
+    const group=String($('groupCode')?.value||state.pendingIdentity?.groupCode||'').toUpperCase();
+    const email=normalizeEmail($('studentEmail')?.value||state.pendingIdentity?.email||state.authSession?.user?.email||'');
+    return {groupCode:group,email};
   }
 
-  async function register(event){
-    event.preventDefault();
-    const status = $('registrationStatus');
-    const emails = collectEmails();
-    const emailError = validateEmails(emails);
-    if(emailError){ status.textContent=emailError; status.className='inline-status error'; return; }
-    const mode=$('registrationMode').value;
-    const group=$('groupCode').value;
-    const fp=fingerprint(group,emails);
-    $('registerButton').disabled=true;
-    status.textContent='Checking saved progress…'; status.className='inline-status';
-    try{
-      const known=getVault()[fp];
-      if(known && await tryResume(known)){
-        showHub();
-        status.textContent='Saved progress restored on this browser.'; status.className='inline-status ok';
-        return;
-      }
-
-      status.textContent='Creating registered learning path…';
-      const data = await rpc(config.rpc.register, {
-        p_registration_mode:mode,
-        p_group_code:group,
-        p_student_emails:emails,
-        p_session_id:crypto.randomUUID(),
-        p_user_agent:navigator.userAgent
-      });
-      rememberSession(data.registration_id,data.access_token,{fingerprint:fp,groupCode:group,emails,mode});
-      state.registration={registrationId:data.registration_id,accessToken:data.access_token};
-      state.snapshot=data.snapshot;
-      showHub();
-      status.textContent='Registration ready. Progress will save automatically.'; status.className='inline-status ok';
-    }catch(error){
-      status.textContent=error.message; status.className='inline-status error';
-    }finally{$('registerButton').disabled=false;}
-  }
-
-  async function recoverRegistration(tokenOverride=''){
-    const input=$('recoveryToken');
-    const button=$('recoverButton');
-    const status=$('recoveryStatus');
-    const token=String(tokenOverride || input?.value || '').trim().toUpperCase();
-    if(!token){ status.textContent='Enter the one-time recovery token issued by your teacher.'; status.className='inline-status error'; return false; }
-    button.disabled=true;
-    status.textContent='Recovering the registered progress…'; status.className='inline-status';
-    try{
-      const data=await rpc(config.rpc.recover,{p_recovery_token:token,p_session_id:crypto.randomUUID(),p_user_agent:navigator.userAgent});
-      rememberSession(data.registration_id,data.access_token,{mode:data.snapshot?.registration?.mode||'',groupCode:data.snapshot?.registration?.group_code||''});
-      state.registration={registrationId:data.registration_id,accessToken:data.access_token};
-      state.snapshot=data.snapshot;
-      if(input) input.value='';
-      history.replaceState(null,'',location.pathname+location.search);
-      showHub();
-      status.textContent='Registration recovered. This device will now resume it automatically.'; status.className='inline-status ok';
-      return true;
-    }catch(error){
-      status.textContent=error.message; status.className='inline-status error';
-      return false;
-    }finally{button.disabled=false;}
-  }
-
-  async function resumeStored(){
-    const saved=getStoredSession();
-    if(!saved) return false;
-    return tryResume(saved);
-  }
-
-  function progressFor(slug){ return state.snapshot?.topics?.find(item=>item.slug===slug) || null; }
   function showRegistration(){
     $('registrationPanel').classList.remove('hidden');
     $('hubPanel').classList.add('hidden');
     $('changeRegistrationButton').classList.add('hidden');
     $('sessionBadge').classList.add('hidden');
   }
+
+  function showIdentityStep({preserve=true}={}){
+    showRegistration();
+    $('identityStepForm').classList.remove('hidden');
+    $('passwordStepForm').classList.add('hidden');
+    $('confirmationPanel').classList.add('hidden');
+    if(!preserve){
+      $('groupCode').value='';
+      $('studentEmail').value='';
+      $('identityStatus').textContent='';
+    }
+    const pending=getPendingIdentity();
+    if(pending){
+      if(pending.groupCode && !$('groupCode').value) $('groupCode').value=pending.groupCode;
+      if(pending.email && !$('studentEmail').value) $('studentEmail').value=pending.email;
+    }
+    if(state.authSession?.user?.email){
+      $('studentEmail').value=normalizeEmail(state.authSession.user.email);
+      $('studentEmail').readOnly=true;
+      $('identityStatus').textContent='Institutional account is already authenticated. Confirm your group to continue.';
+      $('identityStatus').className='inline-status ok';
+      $('continueIdentityButton').textContent='Continue to Learning Hub';
+    }else{
+      $('studentEmail').readOnly=false;
+      $('continueIdentityButton').textContent='Continue to password';
+    }
+  }
+
+  function setPasswordMode(mode){
+    state.passwordMode=mode==='signin'?'signin':'signup';
+    const signup=state.passwordMode==='signup';
+    $('confirmPasswordWrap').classList.toggle('hidden',!signup);
+    $('studentPasswordConfirm').required=signup;
+    $('studentPassword').autocomplete=signup?'new-password':'current-password';
+    $('studentPasswordConfirm').autocomplete='new-password';
+    $('passwordModeTitle').textContent=signup?'First access · Create your password':'Returning student · Enter your password';
+    $('passwordModeCopy').textContent=signup
+      ?'Create a private password and enter it twice. After email verification, this password will protect your individual learning progress.'
+      :'Enter the password you created for this institutional account.';
+    $('passwordActionTitle').textContent=signup?'Step 2 of 2 · Confirm your password':'Step 2 of 2 · Sign in';
+    $('passwordActionCopy').textContent=signup
+      ?'Both password fields must match exactly before the account can be created.'
+      :'Your institutional email and password must match the verified student account.';
+    $('passwordSubmitButton').textContent=signup?'Create account':'Sign in';
+    $('passwordToggleLabel').textContent=signup?'Already created your password?':'First time on this Hub?';
+    $('passwordToggleCopy').textContent=signup
+      ?'Switch to sign-in mode. Returning students enter the password only once.'
+      :'Switch to first-access mode to create and confirm a new password.';
+    $('passwordModeToggle').textContent=signup?'I already have a password':'Create my password';
+    $('studentPassword').value='';
+    $('studentPasswordConfirm').value='';
+    $('passwordStatus').textContent='';
+    $('passwordStatus').className='inline-status';
+  }
+
+  function showPasswordStep(identity,mode='signup'){
+    savePendingIdentity(identity);
+    showRegistration();
+    $('identityStepForm').classList.add('hidden');
+    $('passwordStepForm').classList.remove('hidden');
+    $('confirmationPanel').classList.add('hidden');
+    $('selectedIdentity').textContent=`${identity.groupCode} · ${identity.email}`;
+    setPasswordMode(mode);
+    setTimeout(()=>$('studentPassword').focus(),0);
+  }
+
+  function showConfirmation(email){
+    showRegistration();
+    $('identityStepForm').classList.add('hidden');
+    $('passwordStepForm').classList.add('hidden');
+    $('confirmationPanel').classList.remove('hidden');
+    $('confirmationEmail').textContent=`A confirmation message was sent to ${email}.`;
+  }
+
   function showHub(){
     $('registrationPanel').classList.add('hidden');
     $('hubPanel').classList.remove('hidden');
@@ -155,10 +176,148 @@
     renderHub();
   }
 
+  async function openStudentAccount(identity){
+    const status=$('passwordStatus') || $('identityStatus');
+    if(status){ status.textContent='Loading your verified learning progress…'; status.className='inline-status'; }
+    const data=await rpc(config.rpc.studentAccount,{
+      p_group_code:identity.groupCode,
+      p_session_id:crypto.randomUUID(),
+      p_user_agent:navigator.userAgent
+    });
+    rememberSession(data.registration_id,data.access_token,{groupCode:identity.groupCode,email:identity.email});
+    state.snapshot=data.snapshot;
+    clearPendingIdentity();
+    showHub();
+  }
+
+  async function handleIdentityStep(event){
+    event.preventDefault();
+    const status=$('identityStatus');
+    const identity=currentIdentity();
+    if(!['11A','11B','11C'].includes(identity.groupCode)){
+      status.textContent='Select your group: 11A, 11B or 11C.';
+      status.className='inline-status error';
+      return;
+    }
+    if(!validInstitutionalEmail(identity.email)){
+      status.textContent=`Use your institutional email ending in @${config.institutionalEmailDomain}.`;
+      status.className='inline-status error';
+      return;
+    }
+
+    savePendingIdentity(identity);
+    status.textContent='Checking institutional account…';
+    status.className='inline-status';
+    $('continueIdentityButton').disabled=true;
+    try{
+      const {data:{session}}=await client.auth.getSession();
+      state.authSession=session||null;
+      if(session?.user?.email){
+        const authenticatedEmail=normalizeEmail(session.user.email);
+        if(authenticatedEmail!==identity.email){
+          await client.auth.signOut();
+          state.authSession=null;
+          clearHubSession();
+          status.textContent='A different student account was active on this device. It was signed out; continue with the selected email.';
+          status.className='inline-status';
+          showPasswordStep(identity,'signin');
+          return;
+        }
+        await openStudentAccount(identity);
+        return;
+      }
+      showPasswordStep(identity,'signup');
+    }catch(error){
+      status.textContent=error.message;
+      status.className='inline-status error';
+    }finally{
+      $('continueIdentityButton').disabled=false;
+    }
+  }
+
+  async function handlePasswordStep(event){
+    event.preventDefault();
+    const status=$('passwordStatus');
+    const identity=state.pendingIdentity||getPendingIdentity();
+    if(!identity || !validInstitutionalEmail(identity.email) || !['11A','11B','11C'].includes(identity.groupCode)){
+      status.textContent='Return to Step 1 and enter your institutional email and group again.';
+      status.className='inline-status error';
+      return;
+    }
+
+    const password=$('studentPassword').value;
+    const confirmation=$('studentPasswordConfirm').value;
+    const needsConfirmation=state.passwordMode==='signup';
+    const passwordError=validatePassword(password,confirmation,needsConfirmation);
+    if(passwordError){
+      status.textContent=passwordError;
+      status.className='inline-status error';
+      return;
+    }
+
+    $('passwordSubmitButton').disabled=true;
+    $('passwordModeToggle').disabled=true;
+    status.textContent=needsConfirmation?'Creating secure student account…':'Signing in securely…';
+    status.className='inline-status';
+
+    try{
+      if(needsConfirmation){
+        const redirectTo=`${location.origin}${location.pathname}`;
+        const {data,error}=await client.auth.signUp({
+          email:identity.email,
+          password,
+          options:{
+            emailRedirectTo:redirectTo,
+            data:{course:'statistics-11-python-hub'}
+          }
+        });
+        if(error) throw error;
+        state.authSession=data.session||null;
+        $('studentPassword').value='';
+        $('studentPasswordConfirm').value='';
+
+        if(data.session){
+          await openStudentAccount(identity);
+          return;
+        }
+
+        status.textContent='Account created. Confirm the institutional email before entering the Hub.';
+        status.className='inline-status ok';
+        showConfirmation(identity.email);
+        return;
+      }
+
+      const {data,error}=await client.auth.signInWithPassword({email:identity.email,password});
+      if(error) throw error;
+      state.authSession=data.session||null;
+      $('studentPassword').value='';
+      await openStudentAccount(identity);
+    }catch(error){
+      const message=String(error?.message||'Sign-in failed.');
+      const normalized=message.toLowerCase();
+      if(normalized.includes('invalid login credentials')){
+        status.textContent='Email or password is incorrect. If this is your first access, choose “Create my password”.';
+      }else if(normalized.includes('email not confirmed')){
+        status.textContent='Confirm your institutional email from the message in your inbox, then sign in again.';
+      }else if(normalized.includes('user already registered')){
+        status.textContent='This institutional email already has an account. Choose “I already have a password”.';
+      }else{
+        status.textContent=message;
+      }
+      status.className='inline-status error';
+    }finally{
+      $('passwordSubmitButton').disabled=false;
+      $('passwordModeToggle').disabled=false;
+    }
+  }
+
+  function progressFor(slug){ return state.snapshot?.topics?.find(item=>item.slug===slug) || null; }
+
   function renderHub(){
     const snapshot=state.snapshot;
+    if(!snapshot?.registration) return;
     const reg=snapshot.registration;
-    $('sessionBadge').textContent=`${reg.group_code} · ${reg.mode === 'team' ? 'Team' : 'Individual'} · ${snapshot.completed_topics}/${snapshot.total_topics}`;
+    $('sessionBadge').textContent=`${reg.group_code} · Verified student · ${snapshot.completed_topics}/${snapshot.total_topics}`;
     $('identitySummary').textContent=`${reg.group_code} · ${reg.display_label}`;
     const totalStages=(snapshot.topics || []).reduce((sum,item)=>sum+Number(item.total_count||0),0);
     const correctStages=(snapshot.topics || []).reduce((sum,item)=>sum+Number(item.correct_count||0),0);
@@ -187,32 +346,74 @@
     }).join('');
   }
 
-  async function init(){
-    $('registrationMode').addEventListener('change',updateRegistrationFields);
-    $('teamSize').addEventListener('change',updateRegistrationFields);
-    $('registrationForm').addEventListener('submit',register);
-    $('recoverButton').addEventListener('click',()=>recoverRegistration());
-    $('recoveryToken').addEventListener('input',event=>{event.target.value=String(event.target.value||'').toUpperCase().replace(/[^A-F0-9]/g,'').slice(0,24);});
-    $('changeRegistrationButton').addEventListener('click',()=>{
-      clearActiveSession();
-      showRegistration();
-      $('registrationStatus').textContent='Choose another individual or team. Registrations already used on this browser remain available and resume automatically.';
-      $('registrationStatus').className='inline-status';
-    });
-    updateRegistrationFields();
+  async function signOutAndSwitch(){
+    $('changeRegistrationButton').disabled=true;
+    try{ await client.auth.signOut(); }catch{}
+    state.authSession=null;
+    clearHubSession();
+    clearPendingIdentity();
+    $('studentEmail').readOnly=false;
+    showIdentityStep({preserve:false});
+    $('identityStatus').textContent='Previous student signed out. Enter the next student’s institutional account.';
+    $('identityStatus').className='inline-status ok';
+    $('changeRegistrationButton').disabled=false;
+  }
 
-    const fragment=new URLSearchParams(location.hash.replace(/^#/,''));
-    const recoveryFromLink=fragment.get('recover');
-    if(recoveryFromLink){
-      showRegistration();
-      $('recoveryPanel').open=true;
-      $('recoveryToken').value=recoveryFromLink.toUpperCase();
-      await recoverRegistration(recoveryFromLink);
+  async function init(){
+    $('identityStepForm').addEventListener('submit',handleIdentityStep);
+    $('passwordStepForm').addEventListener('submit',handlePasswordStep);
+    $('backToIdentityButton').addEventListener('click',()=>showIdentityStep({preserve:true}));
+    $('passwordModeToggle').addEventListener('click',()=>setPasswordMode(state.passwordMode==='signup'?'signin':'signup'));
+    $('confirmationReturnButton').addEventListener('click',()=>{
+      const identity=getPendingIdentity();
+      if(identity) showPasswordStep(identity,'signin');
+      else showIdentityStep({preserve:false});
+    });
+    $('changeRegistrationButton').addEventListener('click',signOutAndSwitch);
+
+    state.pendingIdentity=getPendingIdentity();
+
+    try{
+      const {data:{session}}=await client.auth.getSession();
+      state.authSession=session||null;
+    }catch{
+      state.authSession=null;
+    }
+
+    if(state.authSession?.user?.email){
+      const email=normalizeEmail(state.authSession.user.email);
+      const pending=getPendingIdentity();
+      const stored=getStoredSession();
+      const groupCode=String(pending?.groupCode||stored?.groupCode||'').toUpperCase();
+      if(groupCode && ['11A','11B','11C'].includes(groupCode)){
+        const identity={groupCode,email};
+        savePendingIdentity(identity);
+        showRegistration();
+        try{
+          await openStudentAccount(identity);
+          return;
+        }catch(error){
+          showIdentityStep({preserve:true});
+          $('groupCode').value=groupCode;
+          $('studentEmail').value=email;
+          $('identityStatus').textContent=error.message;
+          $('identityStatus').className='inline-status error';
+          return;
+        }
+      }
+
+      showIdentityStep({preserve:true});
+      $('studentEmail').value=email;
+      $('studentEmail').readOnly=true;
+      $('identityStatus').textContent='Institutional account verified. Select your group to load your progress.';
+      $('identityStatus').className='inline-status ok';
       return;
     }
 
-    const resumed=await resumeStored();
-    if(resumed) showHub(); else showRegistration();
+    // Deliberately do not resume a legacy email-only Hub token here. The student
+    // must authenticate with the institutional email + password gate first.
+    clearHubSession();
+    showIdentityStep({preserve:true});
   }
 
   document.addEventListener('DOMContentLoaded',init);
