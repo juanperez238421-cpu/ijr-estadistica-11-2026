@@ -1,0 +1,92 @@
+name: Publish Statistics 11 Comparisons Boolean Logic V3 release
+
+on:
+  push:
+    branches:
+      - manim/stat11-comparisons-logic-protocol-v3-20260903
+    paths:
+      - .github/workflows/publish-stat11-comparisons-booleanlogic-v3-release.yml
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish_release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VIDEO_NAME: Statistics11_Comparisons_BooleanLogic_V3_SENIOR_FINAL_pqh.mp4
+      ARTIFACT_ID: "9910261948"
+      SOURCE_RUN_ID: "33798056270"
+      RELEASE_TAG: stat11-comparisons-booleanlogic-v3-senior-final
+    steps:
+      - name: Checkout publication commit
+        uses: actions/checkout@v4
+
+      - name: Download exact verified GitHub Actions artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          gh api \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" \
+            > /tmp/stat11_render.zip
+          unzip -q /tmp/stat11_render.zip -d dist
+          test -s "dist/${VIDEO_NAME}"
+          echo "Downloaded $(stat -c%s "dist/${VIDEO_NAME}") bytes"
+
+      - name: Verify MP4 before publishing
+        run: |
+          set -euo pipefail
+          ffprobe -v error \
+            -select_streams v:0 \
+            -show_entries stream=codec_name,width,height,r_frame_rate \
+            -show_entries format=duration,size \
+            -of default=noprint_wrappers=1 \
+            "dist/${VIDEO_NAME}" | tee dist/FFPROBE_RELEASE.txt
+          ffmpeg -v error -i "dist/${VIDEO_NAME}" -f null -
+          sha256sum "dist/${VIDEO_NAME}" | tee dist/SHA256SUMS.txt
+
+      - name: Create or refresh stable GitHub Release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          RELEASE_NOTES=$(cat <<EOF
+          Senior delivery publication for Statistics 11 · Python / Google Colab · Comparisons and Boolean Logic V3.
+
+          Source render workflow run: ${SOURCE_RUN_ID}
+          Source artifact ID: ${ARTIFACT_ID}
+          Publication commit: ${GITHUB_SHA}
+
+          The MP4 is revalidated with ffprobe, full ffmpeg decode, and SHA-256 immediately before upload.
+          EOF
+          )
+
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            gh release upload "${RELEASE_TAG}" \
+              "dist/${VIDEO_NAME}" \
+              "dist/SHA256SUMS.txt" \
+              "dist/FFPROBE_RELEASE.txt" \
+              --clobber
+            gh release edit "${RELEASE_TAG}" \
+              --title "Statistics 11 · Comparisons & Boolean Logic V3 · SENIOR FINAL PQH" \
+              --notes "${RELEASE_NOTES}"
+          else
+            gh release create "${RELEASE_TAG}" \
+              "dist/${VIDEO_NAME}" \
+              "dist/SHA256SUMS.txt" \
+              "dist/FFPROBE_RELEASE.txt" \
+              --target "${GITHUB_SHA}" \
+              --title "Statistics 11 · Comparisons & Boolean Logic V3 · SENIOR FINAL PQH" \
+              --notes "${RELEASE_NOTES}"
+          fi
+
+      - name: Print stable direct-download URL
+        run: |
+          echo "https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/${VIDEO_NAME}"
