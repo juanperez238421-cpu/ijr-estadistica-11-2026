@@ -1,0 +1,231 @@
+name: Render Statistics 11 Comparisons Boolean Logic V3 SENIOR FINAL PQH
+
+on:
+  push:
+    branches:
+      - manim/stat11-comparisons-logic-protocol-v3-20260903
+    paths:
+      - 'manim/stat11_comparisons_logic_protocol_v3/**'
+      - 'manim/stat11_arrays_motivation/fragments/style_*'
+      - '.github/workflows/render-stat11-comparisons-logic-protocol-v3.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stat11-comparisons-logic-v3-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      PROJECT_DIR: manim/stat11_comparisons_logic_protocol_v3
+      IMAGE: manimcommunity/manim:v0.20.1
+      SCENE_FILE: src/stat11_comparisons_logic_protocol_v3.py
+      SCENE_CLASS: Stat11ComparisonsLogicProtocolV3
+      FINAL_NAME: Statistics11_Comparisons_BooleanLogic_V3_SENIOR_FINAL_pqh.mp4
+      PACKAGE_NAME: Statistics11_Comparisons_BooleanLogic_V3_SENIOR_PQH_PACKAGE
+
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+
+      - name: Reconstruct JP classroom style and run static QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT_DIR"
+          mkdir -p library delivery qa/audit_frames
+          cat ../stat11_arrays_motivation/fragments/style_* > library/jp_classroom_style.py
+          python -m py_compile "$SCENE_FILE" library/jp_classroom_style.py
+          python - <<'PY'
+          from pathlib import Path
+          src = Path('src/stat11_comparisons_logic_protocol_v3.py').read_text(encoding='utf-8')
+          required = [
+              'class Stat11ComparisonsLogicProtocolV3(JPMathClassroomScene)',
+              'SCORES = [4.2, 2.8, 3.0, 4.5, 3.7]',
+              'PASS_MARK = 3.0',
+              'MAX_SCORE = 5.0',
+              'def assignment_vs_equality',
+              'def comparison_operators',
+              'def boolean_values',
+              'def and_operator',
+              'def or_operator',
+              'def not_operator',
+              'def final_challenge',
+              'def bridge_next_lesson',
+              'assert_content_safe',
+              'set_header',
+              'standard_closing',
+          ]
+          missing = [item for item in required if item not in src]
+          if missing:
+              raise SystemExit(f'Missing required lesson elements: {missing}')
+          forbidden = ['pandas', 'while ', 'def mean(', 'elif ', 'else:', '/Users/', 'C:\\Users\\']
+          bad = [item for item in forbidden if item in src]
+          if bad:
+              raise SystemExit(f'Forbidden lesson content/path detected: {bad}')
+          if src.count('self.set_header(') < 20:
+              raise SystemExit('Expected persistent numbered header architecture for 20 lesson sections.')
+          print('STATIC_PEDAGOGICAL_QA=PASS')
+          PY
+          sha256sum "$SCENE_FILE" > qa/source.sha256
+          sha256sum library/jp_classroom_style.py > qa/style.sha256
+
+      - name: Pull pinned ManimCE 0.20.1
+        run: docker pull "$IMAGE"
+
+      - name: PQL smoke render with compressed timing
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$PROJECT_DIR/media_pql"
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -e LESSON_TIME_SCALE=0.08 \
+            -v "$PWD:/manim" \
+            -w "/manim/$PROJECT_DIR" \
+            --entrypoint bash \
+            "$IMAGE" \
+            -c '
+              set -euo pipefail
+              mkdir -p /tmp/colab-bin
+              printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/colab-bin/xdg-open
+              chmod +x /tmp/colab-bin/xdg-open
+              export PATH="/tmp/colab-bin:$PATH"
+              manim -pql "$SCENE_FILE" "$SCENE_CLASS" --format=mp4 --media_dir media_pql --disable_caching
+            '
+          PREVIEW="$(find "$PROJECT_DIR/media_pql" -type f -name '*.mp4' ! -path '*/partial_movie_files/*' | head -n 1)"
+          test -n "$PREVIEW"
+          test -s "$PREVIEW"
+          echo "PQL_OK=$PREVIEW" | tee "$PROJECT_DIR/qa/pql_result.txt"
+
+      - name: PQH final render full classroom pacing
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$PROJECT_DIR/media_pqh"
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -e LESSON_TIME_SCALE=1.0 \
+            -v "$PWD:/manim" \
+            -w "/manim/$PROJECT_DIR" \
+            --entrypoint bash \
+            "$IMAGE" \
+            -c '
+              set -euo pipefail
+              mkdir -p /tmp/colab-bin
+              printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/colab-bin/xdg-open
+              chmod +x /tmp/colab-bin/xdg-open
+              export PATH="/tmp/colab-bin:$PATH"
+              manim -pqh "$SCENE_FILE" "$SCENE_CLASS" --format=mp4 --media_dir media_pqh --disable_caching
+            '
+          FINAL="$(find "$PROJECT_DIR/media_pqh" -type f -name '*.mp4' ! -path '*/partial_movie_files/*' | head -n 1)"
+          test -n "$FINAL"
+          test -s "$FINAL"
+          cp "$FINAL" "$PROJECT_DIR/delivery/$FINAL_NAME"
+          test -s "$PROJECT_DIR/delivery/$FINAL_NAME"
+
+      - name: Technical QA, full decode and dense frame audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg zip
+          V="$PROJECT_DIR/delivery/$FINAL_NAME"
+          ffprobe -v error \
+            -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt \
+            -show_entries format=duration,size \
+            -of default=nw=1 "$V" | tee "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^codec_name=h264$' "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^width=1920$' "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^height=1080$' "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^r_frame_rate=30/1$' "$PROJECT_DIR/qa/ffprobe.txt"
+          ffmpeg -nostdin -v error -i "$V" -f null - 2> "$PROJECT_DIR/qa/decode_errors.log"
+          test ! -s "$PROJECT_DIR/qa/decode_errors.log"
+          sha256sum "$V" | tee "$PROJECT_DIR/qa/final_mp4.sha256"
+          DURATION="$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$V")"
+          python - "$DURATION" > "$PROJECT_DIR/qa/frame_times.txt" <<'PY'
+          import sys
+          duration = float(sys.argv[1])
+          n = 30
+          for i in range(n):
+              print(f"{duration * (i + 0.5) / n:.3f}")
+          PY
+          i=1
+          while read -r t; do
+            ffmpeg -nostdin -v error -ss "$t" -i "$V" -frames:v 1 -vf scale=960:-2 "$PROJECT_DIR/qa/audit_frames/frame_$(printf '%02d' "$i").jpg"
+            i=$((i+1))
+          done < "$PROJECT_DIR/qa/frame_times.txt"
+          FRAME_COUNT="$(find "$PROJECT_DIR/qa/audit_frames" -type f -name '*.jpg' | wc -l)"
+          test "$FRAME_COUNT" -eq 30
+          {
+            echo "AUDIT_FRAME_COUNT=$FRAME_COUNT"
+            echo "OPENING_CHECK=REQUIRED"
+            echo "HEADERS_AND_SAFE_AREA_CHECK=REQUIRED"
+            echo "COLAB_CELL_CHECK=REQUIRED"
+            echo "BOOLEAN_LOGIC_CHECK=REQUIRED"
+            echo "FINAL_BRIDGE_CHECK=REQUIRED"
+          } | tee "$PROJECT_DIR/qa/audit_summary.txt"
+
+      - name: Build canonical delivery package
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$PROJECT_DIR/delivery/$PACKAGE_NAME"
+          mkdir -p "$ROOT/src" "$ROOT/library" "$ROOT/render" "$ROOT/qa/audit_frames" "$ROOT/workflow"
+          cp "$PROJECT_DIR/$SCENE_FILE" "$ROOT/src/"
+          cp "$PROJECT_DIR/library/jp_classroom_style.py" "$ROOT/library/"
+          cp "$PROJECT_DIR/delivery/$FINAL_NAME" "$ROOT/render/"
+          cp "$PROJECT_DIR/qa/"*.txt "$ROOT/qa/" || true
+          cp "$PROJECT_DIR/qa/"*.sha256 "$ROOT/qa/" || true
+          cp "$PROJECT_DIR/qa/decode_errors.log" "$ROOT/qa/"
+          cp "$PROJECT_DIR/qa/audit_frames/"*.jpg "$ROOT/qa/audit_frames/"
+          cp ".github/workflows/render-stat11-comparisons-logic-protocol-v3.yml" "$ROOT/workflow/"
+          if [ -f "$PROJECT_DIR/qa/SENIOR_QA_REVIEW.md" ]; then cp "$PROJECT_DIR/qa/SENIOR_QA_REVIEW.md" "$ROOT/qa/"; fi
+          if [ -f "$PROJECT_DIR/storyboard/STORYBOARD.md" ]; then mkdir -p "$ROOT/storyboard"; cp "$PROJECT_DIR/storyboard/STORYBOARD.md" "$ROOT/storyboard/"; fi
+          cat > "$ROOT/README.md" <<EOF
+          # Statistics 11 — Comparisons and Boolean Logic V3 SENIOR
+
+          - Scene: Stat11ComparisonsLogicProtocolV3
+          - ManimCE: 0.20.1
+          - Final render: render/$FINAL_NAME
+          - Resolution: 1920x1080
+          - FPS: 30
+          - Style: JP Classroom monochrome white-background system
+          - Gates: syntax/static QA → PQL smoke → PQH → ffprobe → full decode → 30-frame audit
+          EOF
+          cd "$PROJECT_DIR/delivery"
+          zip -qr "$PACKAGE_NAME.zip" "$PACKAGE_NAME"
+          unzip -t "$PACKAGE_NAME.zip" > package_zip_test.txt
+
+      - name: Upload final downloadable PQH MP4
+        uses: actions/upload-artifact@v4
+        with:
+          name: Statistics11-Comparisons-BooleanLogic-V3-SENIOR-FINAL-PQH
+          retention-days: 30
+          if-no-files-found: error
+          path: manim/stat11_comparisons_logic_protocol_v3/delivery/Statistics11_Comparisons_BooleanLogic_V3_SENIOR_FINAL_pqh.mp4
+
+      - name: Upload full source-render-QA package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Statistics11-Comparisons-BooleanLogic-V3-SENIOR-PACKAGE
+          retention-days: 30
+          if-no-files-found: error
+          path: manim/stat11_comparisons_logic_protocol_v3/delivery/Statistics11_Comparisons_BooleanLogic_V3_SENIOR_PQH_PACKAGE.zip
+
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Statistics11-Comparisons-BooleanLogic-V3-SENIOR-QA
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            manim/stat11_comparisons_logic_protocol_v3/qa/**
