@@ -15,7 +15,7 @@ permissions:
 jobs:
   publish_release:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     env:
       VIDEO_NAME: Statistics11_Comparisons_BooleanLogic_V3_SENIOR_FINAL_pqh.mp4
       ARTIFACT_ID: "9910261948"
@@ -39,6 +39,14 @@ jobs:
           unzip -q /tmp/stat11_render.zip -d dist
           test -s "dist/${VIDEO_NAME}"
           echo "Downloaded $(stat -c%s "dist/${VIDEO_NAME}") bytes"
+
+      - name: Install FFmpeg validation tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update -y
+          sudo apt-get install -y ffmpeg
+          ffprobe -version | head -n 1
+          ffmpeg -version | head -n 1
 
       - name: Verify MP4 before publishing
         run: |
