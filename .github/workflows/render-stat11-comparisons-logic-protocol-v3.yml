@@ -64,12 +64,14 @@ jobs:
           missing = [item for item in required if item not in src]
           if missing:
               raise SystemExit(f'Missing required lesson elements: {missing}')
-          forbidden = ['pandas', 'while ', 'def mean(', 'elif ', 'else:', '/Users/', 'C:\\Users\\']
+          forbidden = ['pandas', 'while ', 'def mean(', '/Users/', 'C:\\Users\\']
           bad = [item for item in forbidden if item in src]
           if bad:
               raise SystemExit(f'Forbidden lesson content/path detected: {bad}')
           if src.count('self.set_header(') < 20:
               raise SystemExit('Expected persistent numbered header architecture for 20 lesson sections.')
+          if src.count('if condition:') != 1:
+              raise SystemExit('The only student-facing if preview must be the single final bridge frame.')
           print('STATIC_PEDAGOGICAL_QA=PASS')
           PY
           sha256sum "$SCENE_FILE" > qa/source.sha256
@@ -87,6 +89,8 @@ jobs:
             --user "$(id -u):$(id -g)" \
             -e HOME=/tmp/manim-home \
             -e LESSON_TIME_SCALE=0.08 \
+            -e SCENE_FILE="$SCENE_FILE" \
+            -e SCENE_CLASS="$SCENE_CLASS" \
             -v "$PWD:/manim" \
             -w "/manim/$PROJECT_DIR" \
             --entrypoint bash \
@@ -113,6 +117,8 @@ jobs:
             --user "$(id -u):$(id -g)" \
             -e HOME=/tmp/manim-home \
             -e LESSON_TIME_SCALE=1.0 \
+            -e SCENE_FILE="$SCENE_FILE" \
+            -e SCENE_CLASS="$SCENE_CLASS" \
             -v "$PWD:/manim" \
             -w "/manim/$PROJECT_DIR" \
             --entrypoint bash \
