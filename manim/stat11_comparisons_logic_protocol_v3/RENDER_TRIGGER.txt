@@ -2,3 +2,4 @@ Statistics 11 Comparisons + Boolean Logic V3 SENIOR
 Render requested: 2026-09-03
 Scene: Stat11ComparisonsLogicProtocolV3
 Protocol: syntax/static QA -> PQL smoke -> PQH -> ffprobe/decode -> 30-frame audit -> artifact
+Retry after workflow gate fix: 1
