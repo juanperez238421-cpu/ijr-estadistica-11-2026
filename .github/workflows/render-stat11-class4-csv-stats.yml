@@ -1,0 +1,163 @@
+name: Render Statistics 11 Class 4 CSV Stats PQH
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stat11-class4-csv-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      PROJECT_DIR: manim/stat11_class4_csv_stats
+      IMAGE: manimcommunity/manim:v0.20.1
+      SCENE_FILE: src/stat11_class4_csv_stats.py
+      SCENE_CLASS: Stat11Class4CSVStats
+      FINAL_NAME: Stat11_Class4_From_CSV_to_Statistical_Information_SENIOR_FINAL_PQH.mp4
+
+    steps:
+      - name: Checkout exact source branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          fetch-depth: 0
+
+      - name: Reconstruct JP classroom style and validate source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT_DIR"
+          mkdir -p library delivery qa/audit_frames
+          cat ../stat11_arrays_motivation/fragments/style_* > library/jp_classroom_style.py
+          echo "3f3f06e94d5cad870ad335502cc1a93e56ce675abb1231ded5f9c71fd3e60e3d  library/jp_classroom_style.py" | sha256sum -c -
+          python -m py_compile "$SCENE_FILE"
+          python - <<'PY'
+          import csv, statistics
+          from pathlib import Path
+          p = Path('assets/estudiantes.csv')
+          rows = list(csv.DictReader(p.open(encoding='utf-8')))
+          grades = [float(r['grade']) for r in rows]
+          assert len(rows) == 10
+          assert abs(statistics.mean(grades) - 3.55) < 1e-12
+          assert abs(statistics.median(grades) - 3.8) < 1e-12
+          assert statistics.multimode(grades) == [3.8]
+          approved = [x for x in grades if x >= 3.0]
+          assert len(approved) == 8
+          assert abs(statistics.mean(approved) - 3.85) < 1e-12
+          PY
+          sha256sum "$SCENE_FILE" assets/estudiantes.csv | tee qa/source.sha256
+          grep -q 'class Stat11Class4CSVStats' "$SCENE_FILE"
+          grep -q 'pd.read_csv' "$SCENE_FILE"
+          grep -q '\.mean()' "$SCENE_FILE"
+          grep -q '\.median()' "$SCENE_FILE"
+          grep -q '\.mode()' "$SCENE_FILE"
+          grep -q 'df\[df\["grade"\] >= 3.0\]' "$SCENE_FILE"
+
+      - name: Pull pinned ManimCE 0.20.1 image
+        run: docker pull "$IMAGE"
+
+      - name: PQL smoke render
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$PROJECT_DIR/media_pql"
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -v "$PWD:/manim" \
+            -w "/manim/$PROJECT_DIR" \
+            "$IMAGE" \
+            python -m manim -ql "$SCENE_FILE" "$SCENE_CLASS" \
+              --format=mp4 --media_dir media_pql --disable_caching
+          PREVIEW="$(find "$PROJECT_DIR/media_pql" -type f -name '*.mp4' ! -path '*/partial_movie_files/*' | head -n 1)"
+          test -n "$PREVIEW" && test -s "$PREVIEW"
+
+      - name: PQH final render
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$PROJECT_DIR/media_final"
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -v "$PWD:/manim" \
+            -w "/manim/$PROJECT_DIR" \
+            "$IMAGE" \
+            python -m manim -qh "$SCENE_FILE" "$SCENE_CLASS" \
+              --fps 30 --format=mp4 --media_dir media_final --disable_caching
+          FINAL="$(find "$PROJECT_DIR/media_final" -type f -name '*.mp4' ! -path '*/partial_movie_files/*' | head -n 1)"
+          test -n "$FINAL" && test -s "$FINAL"
+          cp "$FINAL" "$PROJECT_DIR/delivery/$FINAL_NAME"
+          cp "$PROJECT_DIR/src/stat11_class4_csv_stats.py" "$PROJECT_DIR/delivery/stat11_class4_csv_stats.py"
+          cp "$PROJECT_DIR/assets/estudiantes.csv" "$PROJECT_DIR/delivery/estudiantes.csv"
+
+      - name: Technical and dense visual QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          V="$PROJECT_DIR/delivery/$FINAL_NAME"
+          ffprobe -v error \
+            -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt \
+            -show_entries format=duration,size \
+            -of default=nw=1 "$V" | tee "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^codec_name=h264$' "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^width=1920$' "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^height=1080$' "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^pix_fmt=yuv420p$' "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^r_frame_rate=30/1$' "$PROJECT_DIR/qa/ffprobe.txt"
+          ffmpeg -nostdin -v error -i "$V" -f null - 2> "$PROJECT_DIR/qa/decode_errors.log"
+          test ! -s "$PROJECT_DIR/qa/decode_errors.log"
+          sha256sum "$V" | tee "$PROJECT_DIR/qa/final_mp4.sha256"
+          ffmpeg -nostdin -v error -i "$V" \
+            -vf "fps=1/10,scale=960:-2" \
+            -frames:v 48 "$PROJECT_DIR/qa/audit_frames/frame_%02d.jpg"
+          test "$(find "$PROJECT_DIR/qa/audit_frames" -type f -name '*.jpg' | wc -l)" -ge 18
+          ffmpeg -nostdin -v error -i "$V" \
+            -vf "fps=1/12,scale=384:-2,tile=5x6:padding=4:margin=4" \
+            -frames:v 1 "$PROJECT_DIR/qa/contact_sheet.jpg"
+          test -s "$PROJECT_DIR/qa/contact_sheet.jpg"
+
+      - name: Publish rendered MP4 directly to source branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$PROJECT_DIR/delivery/$FINAL_NAME" \
+                  "$PROJECT_DIR/delivery/stat11_class4_csv_stats.py" \
+                  "$PROJECT_DIR/delivery/estudiantes.csv" \
+                  "$PROJECT_DIR/qa/ffprobe.txt" \
+                  "$PROJECT_DIR/qa/final_mp4.sha256" \
+                  "$PROJECT_DIR/qa/contact_sheet.jpg"
+          git commit -m "Add rendered Statistics 11 Class 4 PQH video [skip ci]" || true
+          TARGET_BRANCH="${{ github.event.pull_request.head.ref }}"
+          if [ -z "$TARGET_BRANCH" ]; then TARGET_BRANCH="$GITHUB_REF_NAME"; fi
+          git push origin "HEAD:$TARGET_BRANCH"
+
+      - name: Upload short-lived QA package
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: Stat11-Class4-CSV-Stats-QA
+          retention-days: 1
+          if-no-files-found: warn
+          path: |
+            manim/stat11_class4_csv_stats/delivery/Stat11_Class4_From_CSV_to_Statistical_Information_SENIOR_FINAL_PQH.mp4
+            manim/stat11_class4_csv_stats/delivery/stat11_class4_csv_stats.py
+            manim/stat11_class4_csv_stats/delivery/estudiantes.csv
+            manim/stat11_class4_csv_stats/qa/source.sha256
+            manim/stat11_class4_csv_stats/qa/ffprobe.txt
+            manim/stat11_class4_csv_stats/qa/decode_errors.log
+            manim/stat11_class4_csv_stats/qa/final_mp4.sha256
+            manim/stat11_class4_csv_stats/qa/contact_sheet.jpg
+            manim/stat11_class4_csv_stats/qa/audit_frames/*.jpg
