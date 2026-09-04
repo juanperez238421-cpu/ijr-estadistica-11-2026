@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+import numpy as np
 
 HERE = Path(__file__).resolve()
 V5_SRC = HERE.parents[2] / "stat11_comparisons_v5" / "src"
@@ -21,7 +22,6 @@ from stat11_comparisons_v5 import Stat11ComparisonsV5, COLAB_NOTEBOOK_TITLE
 from library.jp_classroom_style import *
 
 
-# Stable Google/Colab UI colors used only where interface fidelity benefits the lesson.
 COLAB_ORANGE = "#E8710A"
 COLAB_YELLOW = "#F9AB00"
 GOOGLE_GRAY_50 = "#F8F9FA"
@@ -35,31 +35,19 @@ class Stat11ComparisonsV6(Stat11ComparisonsV5):
     """V6: V5 curriculum fidelity plus a much more realistic Colab UI."""
 
     def validate_lesson_data(self) -> None:
-        # Keep every executable-sequence assertion from V5.
         super().validate_lesson_data()
-
-        # UI-specific sanity checks: the run glyph is deliberately constructed as
-        # a centered polygon, never with Manim's generic Triangle primitive.
         pts = [(-0.045, -0.070), (-0.045, 0.070), (0.082, 0.0)]
         assert len(pts) == 3
         assert pts[2][0] > pts[0][0]
 
-    # ------------------------------------------------------------------
-    # Colab interface primitives
-    # ------------------------------------------------------------------
     def colab_logo(self) -> VGroup:
         """Small projector-safe approximation of the Colab logo mark."""
         c = Text("C", font="Noto Sans", font_size=25, weight=BOLD, color=COLAB_ORANGE)
         o = Text("O", font="Noto Sans", font_size=25, weight=BOLD, color=COLAB_YELLOW)
-        logo = VGroup(c, o).arrange(RIGHT, buff=-0.06)
-        return logo
+        return VGroup(c, o).arrange(RIGHT, buff=-0.06)
 
     def _play_triangle(self, center=ORIGIN) -> Polygon:
-        """Right-pointing play glyph explicitly centered inside its circle.
-
-        V5 used Manim's generic Triangle, whose geometric center/bounding-box
-        behavior produced the visibly detached icon reported in the rendered MP4.
-        """
+        """Right-pointing play glyph explicitly centered inside its circle."""
         tri = Polygon(
             LEFT*0.045 + DOWN*0.070,
             LEFT*0.045 + UP*0.070,
@@ -85,7 +73,6 @@ class Stat11ComparisonsV6(Stat11ComparisonsV5):
     def cell(self, lines, width=11.4, height=None, size=34, execution="[ ]") -> VGroup:
         """Modern Colab-like selected code cell with a real gutter hierarchy.
 
-        Structure is intentionally compatible with the previous scene API:
         cell[0] = frame/chrome, cell[1] = run/count/status controls,
         cell[2] = code lines.
         """
@@ -102,8 +89,6 @@ class Stat11ComparisonsV6(Stat11ComparisonsV5):
             fill_color=GOOGLE_GRAY_50,
             fill_opacity=1,
         )
-
-        # Colab selection cue: thin blue rail, not the heavy black V5 edge.
         selection = Line(
             box.get_corner(UL) + DOWN*0.07,
             box.get_corner(DL) + UP*0.07,
@@ -111,7 +96,6 @@ class Stat11ComparisonsV6(Stat11ComparisonsV5):
             stroke_width=2.5,
         )
 
-        # Place code first so the play button can align with the first code row.
         self.fit(code, width - 1.55, h - 0.34)
         code.move_to(box).align_to(box, LEFT).shift(RIGHT*1.28)
         first_y = code[0].get_center()[1]
@@ -143,11 +127,7 @@ class Stat11ComparisonsV6(Stat11ComparisonsV5):
         return VGroup(frame, controls, code)
 
     def play_cell(self, cell: VGroup, run_no: int, line_time=0.95) -> None:
-        """Animate a Colab cell as write -> run -> completion status.
-
-        The execution counter is separate from the play button, and the play glyph
-        briefly becomes a stop square while the cell is 'running'.
-        """
+        """Animate Colab write -> run -> completion status."""
         frame, controls, code = cell
         run, count, status = controls
 
@@ -174,13 +154,7 @@ class Stat11ComparisonsV6(Stat11ComparisonsV5):
         self.wait(PAUSE_SHORT)
 
     def colab_bar(self, notebook_title=COLAB_NOTEBOOK_TITLE, width=13.25) -> VGroup:
-        """Current-style Colab notebook chrome without the artificial V5 card.
-
-        Stable controls are represented: notebook title, menus, Commands,
-        + Code, + Text, Run all, resource status, and Share. The UI is drawn as
-        stacked application rows separated by subtle rules rather than a large
-        rounded classroom panel.
-        """
+        """Current-style Colab chrome without the artificial V5 rounded card."""
         spacer = Rectangle(width=width, height=1.08, stroke_opacity=0, fill_opacity=0)
 
         logo = self.colab_logo()
@@ -224,7 +198,8 @@ class Stat11ComparisonsV6(Stat11ComparisonsV5):
             stroke_width=1.0,
         ).move_to(spacer.get_center() + UP*0.02)
         bottom_rule = Line(
-            spacer.get_left(), spacer.get_right(),
+            spacer.get_left(),
+            spacer.get_right(),
             stroke_color=GOOGLE_GRAY_200,
             stroke_width=1.2,
         ).move_to(spacer.get_bottom() + UP*0.02)
@@ -242,9 +217,6 @@ class Stat11ComparisonsV6(Stat11ComparisonsV5):
         texts.move_to(spacer).align_to(spacer, LEFT).shift(RIGHT*1.22)
         return VGroup(spacer, texts)
 
-    # ------------------------------------------------------------------
-    # Scene-level refinement: keep V5 pedagogy; state why the cell controls matter.
-    # ------------------------------------------------------------------
     def colab_cycle(self) -> None:
         self.set_header(
             2,
