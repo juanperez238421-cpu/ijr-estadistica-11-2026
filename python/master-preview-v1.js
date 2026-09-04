@@ -127,16 +127,26 @@
     observer.observe(document.body,{childList:true,subtree:true});
   }
 
+  function previewUrl(page,slug){
+    return `${page}.html?topic=${encodeURIComponent(slug)}&masterPreview=1`;
+  }
+
   function installBanner(){
     if(bannerInstalled || !authorized || !document.body) return;
     bannerInstalled = true;
+    const topics = window.IJR_PYTHON_HUB_TOPICS || [];
+    const currentSlug = new URLSearchParams(location.search).get('topic') || topics[0]?.slug || 'operations';
+    const currentPage = /workshop\.html$/i.test(location.pathname) ? 'workshop' : 'theory';
     const strip = document.createElement('div');
     strip.id = 'ijrMasterPreviewStrip';
-    strip.innerHTML = '<div><strong>MASTER · REAL STUDENT VIEW</strong><span>Exact student page · all topics unlocked · validation is simulated · no student progress, grades, answers, or registrations are changed.</span></div><div class="ijr-preview-actions"><button id="ijrResetPreview" type="button">Reset preview progress</button><a href="../maestro/">Back to master</a></div>';
+    strip.innerHTML = `<div class="ijr-preview-copy"><strong>MASTER · REAL STUDENT VIEW</strong><span>Exact student page · all topics unlocked · validation is simulated · no student progress, grades, answers, or registrations are changed.</span></div><div class="ijr-preview-actions"><select id="ijrPreviewTopic" aria-label="Preview topic">${topics.map(topic=>`<option value="${topic.slug}" ${topic.slug===currentSlug?'selected':''}>${String(topic.sequence).padStart(2,'0')} · ${topic.nav||topic.title}</option>`).join('')}</select><a class="${currentPage==='theory'?'active':''}" href="${previewUrl('theory',currentSlug)}">Theory</a><a class="${currentPage==='workshop'?'active':''}" href="${previewUrl('workshop',currentSlug)}">Workshop</a><button id="ijrResetPreview" type="button">Reset preview</button><a href="../maestro/">Back to master</a></div>`;
     const style = document.createElement('style');
-    style.textContent = '#ijrMasterPreviewStrip{position:sticky;top:0;z-index:10000;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:9px 18px;background:#111827;color:#fff;border-bottom:1px solid #374151;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}#ijrMasterPreviewStrip>div:first-child{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}#ijrMasterPreviewStrip strong{font-size:.75rem;letter-spacing:.06em}#ijrMasterPreviewStrip span{font-size:.73rem;color:#d1d5db}.ijr-preview-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.ijr-preview-actions a,.ijr-preview-actions button{appearance:none;color:#fff;background:transparent;border:1px solid #4b5563;border-radius:7px;padding:5px 8px;text-decoration:none;font-size:.72rem;font-weight:750;white-space:nowrap;cursor:pointer}.ijr-preview-actions a:hover,.ijr-preview-actions button:hover{background:#1f2937}@media(max-width:760px){#ijrMasterPreviewStrip{align-items:flex-start;padding:8px 10px}#ijrMasterPreviewStrip span{display:none}.ijr-preview-actions button{display:none}}';
+    style.textContent = '#ijrMasterPreviewStrip{position:sticky;top:0;z-index:10000;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:9px 18px;background:#111827;color:#fff;border-bottom:1px solid #374151;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}.ijr-preview-copy{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}#ijrMasterPreviewStrip strong{font-size:.75rem;letter-spacing:.06em}#ijrMasterPreviewStrip span{font-size:.73rem;color:#d1d5db}.ijr-preview-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.ijr-preview-actions a,.ijr-preview-actions button,.ijr-preview-actions select{appearance:none;color:#fff;background:transparent;border:1px solid #4b5563;border-radius:7px;padding:5px 8px;text-decoration:none;font-size:.72rem;font-weight:750;white-space:nowrap;cursor:pointer}.ijr-preview-actions select{background:#111827;max-width:230px}.ijr-preview-actions option{background:#fff;color:#111827}.ijr-preview-actions a:hover,.ijr-preview-actions button:hover,.ijr-preview-actions a.active{background:#1f2937;border-color:#6b7280}@media(max-width:980px){#ijrMasterPreviewStrip{align-items:flex-start;padding:8px 10px}.ijr-preview-copy span{display:none}.ijr-preview-actions select{max-width:170px}}@media(max-width:680px){.ijr-preview-actions button{display:none}.ijr-preview-actions select{max-width:145px}}';
     document.head.appendChild(style);
     document.body.prepend(strip);
+    document.getElementById('ijrPreviewTopic')?.addEventListener('change',event=>{
+      location.href = previewUrl(currentPage,event.target.value);
+    });
     document.getElementById('ijrResetPreview')?.addEventListener('click',()=>{
       sessionStorage.removeItem(PREVIEW_PROGRESS_KEY);
       location.reload();
@@ -160,7 +170,7 @@
             markCompleted(String(rpcArgs.p_topic_slug||''),String(rpcArgs.p_item_key||''));
             return {data:{correct:true,preview:true,snapshot:buildSnapshot()},error:null};
           }
-          return target.rpc(name,rpcArgs);
+          return target.rpc.call(target,name,rpcArgs);
         };
       }
     });
