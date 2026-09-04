@@ -1,0 +1,129 @@
+name: Render Statistics 11 Comparisons V5 FINAL PQH
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'manim/stat11_comparisons_v5/**'
+      - 'manim/stat11_comparisons_v4/src/stat11_comparisons_v4.py'
+      - '.github/workflows/render-stat11-comparisons-v5-final.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stat11-comparisons-v5-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      PROJECT_DIR: manim/stat11_comparisons_v5
+      IMAGE: manimcommunity/manim:v0.20.1
+      SCENE_FILE: src/stat11_comparisons_v5.py
+      SCENE_CLASS: Stat11ComparisonsV5
+      FINAL_NAME: Stat11_Comparisons_V5_COLAB_SENIOR_FINAL_PQH.mp4
+
+    steps:
+      - name: Checkout exact PR source
+        uses: actions/checkout@v4
+
+      - name: Reconstruct JP classroom style and source QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT_DIR"
+          mkdir -p library delivery qa/audit_frames
+          cat ../stat11_arrays_motivation/fragments/style_* > library/jp_classroom_style.py
+          echo "3f3f06e94d5cad870ad335502cc1a93e56ce675abb1231ded5f9c71fd3e60e3d  library/jp_classroom_style.py" | sha256sum -c -
+          python -m py_compile src/stat11_comparisons_v5.py ../stat11_comparisons_v4/src/stat11_comparisons_v4.py library/jp_classroom_style.py
+          sha256sum src/stat11_comparisons_v5.py | tee qa/source.sha256
+          grep -Fq 'scores = [4.2, 2.8, 3.0, 4.5, 3.7]' src/stat11_comparisons_v5.py
+          grep -Fq 'colab_output(["True", "bool"]' src/stat11_comparisons_v5.py
+          grep -Fq 'greater than or equal to' src/stat11_comparisons_v5.py
+          grep -Fq 'less than or equal to' src/stat11_comparisons_v5.py
+
+      - name: Pull pinned ManimCE 0.20.1 image
+        run: docker pull "$IMAGE"
+
+      - name: PQL smoke render and runtime lesson validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$PROJECT_DIR/media_pql"
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -v "$PWD:/manim" \
+            -w "/manim/$PROJECT_DIR" \
+            "$IMAGE" \
+            python -m manim -ql "$SCENE_FILE" "$SCENE_CLASS" \
+              --format=mp4 --media_dir media_pql --disable_caching
+          PREVIEW="$(find "$PROJECT_DIR/media_pql" -type f -name '*.mp4' ! -path '*/partial_movie_files/*' | head -n 1)"
+          test -n "$PREVIEW" && test -s "$PREVIEW"
+
+      - name: PQH final render
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$PROJECT_DIR/media_final"
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -v "$PWD:/manim" \
+            -w "/manim/$PROJECT_DIR" \
+            "$IMAGE" \
+            python -m manim -qh "$SCENE_FILE" "$SCENE_CLASS" \
+              --fps 30 --format=mp4 --media_dir media_final --disable_caching
+          FINAL="$(find "$PROJECT_DIR/media_final" -type f -name '*.mp4' ! -path '*/partial_movie_files/*' | head -n 1)"
+          test -n "$FINAL" && test -s "$FINAL"
+          cp "$FINAL" "$PROJECT_DIR/delivery/$FINAL_NAME"
+          cp "$PROJECT_DIR/src/stat11_comparisons_v5.py" "$PROJECT_DIR/delivery/stat11_comparisons_v5.py"
+
+      - name: Technical and dense visual QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          V="$PROJECT_DIR/delivery/$FINAL_NAME"
+          ffprobe -v error \
+            -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt \
+            -show_entries format=duration,size \
+            -of default=nw=1 "$V" | tee "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^codec_name=h264$' "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^width=1920$' "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^height=1080$' "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^pix_fmt=yuv420p$' "$PROJECT_DIR/qa/ffprobe.txt"
+          grep -q '^r_frame_rate=30/1$' "$PROJECT_DIR/qa/ffprobe.txt"
+          ffmpeg -nostdin -v error -i "$V" -f null - 2> "$PROJECT_DIR/qa/decode_errors.log"
+          test ! -s "$PROJECT_DIR/qa/decode_errors.log"
+          sha256sum "$V" | tee "$PROJECT_DIR/qa/final_mp4.sha256"
+          ffmpeg -nostdin -v error -i "$V" -vf "fps=1/10,scale=960:-2" -frames:v 36 "$PROJECT_DIR/qa/audit_frames/frame_%02d.jpg"
+          test "$(find "$PROJECT_DIR/qa/audit_frames" -type f -name '*.jpg' | wc -l)" -ge 20
+
+      - name: Upload final V5 MP4
+        uses: actions/upload-artifact@v4
+        with:
+          name: Stat11-Comparisons-V5-COLAB-SENIOR-FINAL-PQH
+          retention-days: 30
+          if-no-files-found: error
+          path: manim/stat11_comparisons_v5/delivery/Stat11_Comparisons_V5_COLAB_SENIOR_FINAL_PQH.mp4
+
+      - name: Upload V5 source and QA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Stat11-Comparisons-V5-COLAB-QA
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            manim/stat11_comparisons_v5/delivery/stat11_comparisons_v5.py
+            manim/stat11_comparisons_v5/qa/source.sha256
+            manim/stat11_comparisons_v5/qa/ffprobe.txt
+            manim/stat11_comparisons_v5/qa/decode_errors.log
+            manim/stat11_comparisons_v5/qa/final_mp4.sha256
+            manim/stat11_comparisons_v5/qa/audit_frames/*.jpg
