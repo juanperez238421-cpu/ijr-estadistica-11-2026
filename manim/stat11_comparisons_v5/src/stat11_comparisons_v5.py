@@ -223,7 +223,7 @@ class Stat11ComparisonsV5(Stat11ComparisonsV4):
             6, "A COMPARISON PRODUCES BOOLEAN DATA",
             "Each print() call appears on its own Colab output line. Python calls True / False values bool.",
         )
-        bar = self.colab_bar().move_to(UP*1.47)
+        bar = self.colab_bar().move_to(UP*1.55)
         self.assert_content_safe(bar, "boolean colab toolbar")
         self.play(FadeIn(bar), run_time=RUN_NORMAL)
 
@@ -234,17 +234,17 @@ class Stat11ComparisonsV5(Stat11ComparisonsV4):
                 "print(passed)",
                 "print(type(passed).__name__)",
             ],
-            11.7, 2.62, 28,
-        ).move_to(DOWN*0.18)
+            11.7, 2.46, 27,
+        ).move_to(DOWN*0.34)
         self.assert_content_safe(c, "boolean cell")
         self.play_cell(c, 2, 0.78)
 
-        out = self.colab_output(["True", "bool"], 10.9, 29).move_to(DOWN*2.02)
+        out = self.colab_output(["True", "bool"], 10.9, 29).move_to(DOWN*1.92)
         self.assert_content_safe(out, "boolean multiline output")
         self.play(FadeIn(out, shift=UP*0.06), run_time=RUN_NORMAL)
         self.wait(PAUSE_READ)
 
-        note = self.interpretation("The comparison result can be stored and reused as data.", 7.4).move_to(DOWN*3.05)
+        note = self.interpretation("The comparison result can be stored and reused as data.", 7.4).move_to(DOWN*2.98)
         self.assert_content_safe(note, "boolean interpretation")
         self.play(FadeIn(note[0]), Write(note[1][0]), run_time=RUN_NORMAL)
         self.play(LaggedStart(*[Write(x) for x in note[1][1]], lag_ratio=0.18), run_time=RUN_NORMAL)
@@ -256,7 +256,7 @@ class Stat11ComparisonsV5(Stat11ComparisonsV4):
             7, "DEFINE THE LIST BEFORE YOU COMPARE",
             "Notebook state matters: run the cell that creates scores before using scores[index].",
         )
-        bar = self.colab_bar().move_to(UP*1.47)
+        bar = self.colab_bar().move_to(UP*1.55)
         self.assert_content_safe(bar, "list colab toolbar")
         self.play(FadeIn(bar), run_time=RUN_NORMAL)
 
@@ -267,8 +267,8 @@ class Stat11ComparisonsV5(Stat11ComparisonsV4):
         self.assert_content_safe(setup, "scores setup cell")
         self.play_cell(setup, 3, 0.95)
 
-        self.play(FadeOut(setup), run_time=RUN_QUICK)
-        strip = self.score_strip().move_to(UP*0.30)
+        self.play(FadeOut(setup), FadeOut(bar), run_time=RUN_QUICK)
+        strip = self.score_strip().move_to(UP*0.95)
         self.assert_content_safe(strip, "score strip")
         self.play(Write(strip[0]), run_time=RUN_NORMAL)
         self.play(LaggedStart(*[FadeIn(x, shift=UP*0.08) for x in strip[1]], lag_ratio=0.12), run_time=RUN_SLOW)
@@ -279,15 +279,15 @@ class Stat11ComparisonsV5(Stat11ComparisonsV4):
         self.play(Create(h3), Create(h1), run_time=RUN_NORMAL)
         self.wait(PAUSE_READ)
 
-        compare = self.cell(["scores[3] > scores[1]"], 10.5, 1.45, 34).move_to(DOWN*1.22)
+        compare = self.cell(["scores[3] > scores[1]"], 10.5, 1.45, 34).move_to(DOWN*0.70)
         self.assert_content_safe(compare, "indexed comparison cell")
         self.play_cell(compare, 4, 1.05)
 
-        out = self.colab_output(["True"], 9.7, 30).move_to(DOWN*2.22)
+        out = self.colab_output(["True"], 9.7, 30).move_to(DOWN*1.76)
         self.play(FadeIn(out, shift=UP*0.06), run_time=RUN_NORMAL)
         note = self.interpretation(
             "Index 3 is 4.5 and index 1 is 2.8, so 4.5 > 2.8.", 8.1
-        ).move_to(DOWN*3.10)
+        ).move_to(DOWN*2.82)
         self.assert_content_safe(note, "indexed comparison interpretation")
         self.play(FadeIn(note[0]), Write(note[1][0]), run_time=RUN_NORMAL)
         self.play(LaggedStart(*[Write(x) for x in note[1][1]], lag_ratio=0.16), run_time=RUN_NORMAL)
