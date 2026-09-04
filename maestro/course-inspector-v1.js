@@ -131,10 +131,9 @@
     return lines.join('\n').trim();
   }
 
-  async function copyWorkshop(slug, topics){
+  async function copyWorkshop(slug, topics, button){
     const topic = topics.find(item => item.slug === slug);
     if (!topic) return;
-    const button = document.querySelector(`[data-copy-workshop="${CSS.escape(slug)}"]`);
     try {
       await navigator.clipboard.writeText(workshopText(topic));
       if (button) {
@@ -198,10 +197,16 @@
     $('courseCollapseAll')?.addEventListener('click', () => {
       document.querySelectorAll('[data-course-topic]').forEach(details => { details.open = false; });
     });
-    $('coursePrint')?.addEventListener('click', () => window.print());
+    $('coursePrint')?.addEventListener('click', () => {
+      const details = [...document.querySelectorAll('[data-course-topic]:not(.course-filtered-out)')];
+      const previousState = details.map(item => item.open);
+      details.forEach(item => { item.open = true; });
+      window.print();
+      setTimeout(() => details.forEach((item, index) => { item.open = previousState[index]; }), 0);
+    });
     list.addEventListener('click', event => {
       const button = event.target.closest('[data-copy-workshop]');
-      if (button) copyWorkshop(button.dataset.copyWorkshop, topics);
+      if (button) copyWorkshop(button.dataset.copyWorkshop, topics, button);
     });
   }
 
