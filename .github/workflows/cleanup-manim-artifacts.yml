@@ -1,0 +1,67 @@
+name: Cleanup Statistics 11 ManimCE Artifacts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/cleanup-manim-artifacts.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '31 5 * * *'
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Delete only ManimCE/render artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="${GITHUB_REPOSITORY}"
+          tmp="$(mktemp)"
+
+          # Keep GitHub Pages deployment artifacts and non-Manim academic QA.
+          # Delete only disposable ManimCE/render outputs (MP4/PQH/comparison render packages and their render QA packages).
+          gh api --paginate "/repos/${repo}/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.name != "github-pages") | select((.name | ascii_downcase) | test("manim|pqh|stat11.*compar|comparisons.*(qa|render|final)|render.*stat11|video.*stat11")) | [.id,.name,.size_in_bytes] | @tsv' > "$tmp"
+
+          total="$(wc -l < "$tmp" | tr -d ' ')"
+          bytes="$(awk -F '\t' '{s+=$3} END {printf "%.0f", s+0}' "$tmp")"
+          echo "Targeted ManimCE artifacts: ${total}"
+          echo "Targeted bytes: ${bytes}"
+
+          if [ "$total" -gt 0 ]; then
+            export repo GH_TOKEN
+            cut -f1 "$tmp" | xargs -r -n1 -P12 bash -c '
+              id="$1"
+              gh api --method DELETE "/repos/${repo}/actions/artifacts/${id}" >/dev/null 2>&1 || true
+            ' _
+          fi
+
+          remaining="$(gh api --paginate "/repos/${repo}/actions/artifacts?per_page=100" --jq '.artifacts[] | select(.name != "github-pages") | select((.name | ascii_downcase) | test("manim|pqh|stat11.*compar|comparisons.*(qa|render|final)|render.*stat11|video.*stat11")) | .id' | wc -l | tr -d ' ')"
+          deleted=$(( total - remaining ))
+          {
+            echo "deleted_manim_artifacts=${deleted}"
+            echo "remaining_targeted_artifacts=${remaining}"
+            echo "targeted_bytes_before_cleanup=${bytes}"
+            echo "github-pages artifacts were explicitly preserved"
+            echo "source, protocols, HTML, Supabase, and course content were untouched"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Cleanup policy
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
+
+          ## Safe Statistics 11 storage policy
+          - Preserve `github-pages` deployment artifacts.
+          - Preserve repository source and ManimCE protocols.
+          - Remove only disposable ManimCE/render/PQH artifacts and their render-QA packages.
+          - The cleanup runs daily to prevent video artifacts from accumulating again.
+          EOF
