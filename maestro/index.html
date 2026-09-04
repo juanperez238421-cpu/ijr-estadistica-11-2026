@@ -5,23 +5,32 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <meta name="color-scheme" content="light">
-  <title>Statistics 11 · Live panel</title>
+  <title>Statistics 11 · Master panel</title>
   <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
   <link rel="stylesheet" href="styles.css?v=20260825-master-code-v11">
   <link rel="stylesheet" href="master-v10.css?v=20260825-master-code-v11">
+  <link rel="stylesheet" href="course-inspector-v1.css?v=20260904-course-inspector-v1">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="../python/course-data-v4.js?v=20260826-split-v7a"></script>
+  <script defer src="../python/workshop-catalog-v27.js?v=20260827-catalog-v27"></script>
+  <script defer src="../python/data-analyst-extension-v30.js?v=20260901-data-analyst-v30"></script>
   <script defer src="config.js?v=20260825-master-code-v11"></script>
   <script defer src="app.js?v=20260825-master-code-v11"></script>
+  <script defer src="course-inspector-v1.js?v=20260904-course-inspector-v1"></script>
 </head>
 <body>
   <main class="shell">
     <header class="header">
       <div>
         <div class="eyebrow">Instituto Jorge Robledo · Statistics 11</div>
-        <h1>Colab Class 01 · Live</h1>
-        <p>Progress, answers, projected grades and registration controls.</p>
+        <h1>Master panel</h1>
+        <p>Live progress, registrations, projected grades, and full course theory/workshop inspection.</p>
       </div>
-      <a class="link-button" href="../">Course</a>
+      <div class="master-header-actions">
+        <a class="link-button" href="../">Course</a>
+        <a class="link-button" href="../python/">Python Hub</a>
+        <a class="link-button primary" href="#courseInspector">Course inspector</a>
+      </div>
     </header>
 
     <section id="loginPanel" class="login-card">
@@ -80,6 +89,33 @@
       </section>
 
       <p class="footnote">Each row is one registration/session. Use <strong>Inspect</strong> for full stage history, <strong>Edit</strong> to correct group or institutional emails, and <strong>Delete</strong> only for invalid/test registrations.</p>
+
+      <section id="courseInspector" class="course-inspector" aria-labelledby="courseInspectorTitle">
+        <div class="course-inspector-head">
+          <div>
+            <span class="eyebrow">MASTER · READ-ONLY COURSE CONTENT</span>
+            <h2 id="courseInspectorTitle">Full course theory &amp; workshop inspector</h2>
+            <p>Inspect the exact content currently loaded by the Statistics 11 Python Learning Hub: every topic, theory definition, learning goal, section, syntax reference, visual note, resource, workshop instruction, and workshop problem. This view does not alter student progress.</p>
+          </div>
+        </div>
+
+        <div id="courseInspectorSummary" class="course-inspector-summary" aria-label="Course content summary"></div>
+
+        <div class="course-inspector-controls">
+          <input id="courseSearch" type="search" placeholder="Search topic, theory, syntax, problem, or keyword" aria-label="Search complete course content">
+          <select id="courseMode" aria-label="Course content type">
+            <option value="all">Theory + workshop</option>
+            <option value="theory">Theory only</option>
+            <option value="workshop">Workshop only</option>
+          </select>
+          <button id="courseExpandAll" type="button" class="quiet">Expand all</button>
+          <button id="courseCollapseAll" type="button" class="quiet">Collapse all</button>
+          <button id="coursePrint" type="button" class="quiet">Print / PDF</button>
+          <span id="courseFilterStatus" class="muted" aria-live="polite"></span>
+        </div>
+
+        <div id="courseInspectorList" class="course-inspector-list" aria-live="polite"></div>
+      </section>
     </section>
   </main>
 
