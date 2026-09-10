@@ -26,8 +26,10 @@
   <script defer src="workshop-array-prompts-v28.js?v=20260827-array-v28"></script>
   <script defer src="curriculum-data-first-v32.js?v=20260904-data-first-v32"></script>
   <script defer src="master-context-v34.js?v=20260910-master-context-v35"></script>
-  <script defer src="workshop-bootstrap-v33.js?v=20260910-startup-v37"></script>
-  <script defer src="workshop-page.js?v=20260910-arrays-recovery-v37"></script>
+  <script defer src="student-supabase-transport-v39.js?v=20260910-v39"></script>
+  <script defer src="workshop-bootstrap-v33.js?v=20260910-startup-v39"></script>
+  <script defer src="student-supabase-bridge-v39.js?v=20260910-v39"></script>
+  <script defer src="workshop-page.js?v=20260910-arrays-recovery-v39"></script>
   <script defer src="workshop-blank-cell-v27.js?v=20260827-blank-v27"></script>
   <script defer src="workshop-terminal-v12.js?v=20260826-terminal-v12"></script>
   <script defer src="workshop-guidance-v13.js?v=20260826-guidance-v13"></script>
@@ -45,6 +47,7 @@
     <div class="top-actions">
       <span id="sessionBadge" class="session-badge">Loading progress…</span>
       <a id="theoryTopLink" class="button button-light" href="theory.html">Theory</a>
+      <a class="button button-light" href="sandbox.html" target="_blank" rel="noopener">Python Sandbox ↗</a>
       <a class="button button-dark" href="./">All topics</a>
     </div>
   </header>
@@ -78,7 +81,7 @@
         const badge = document.getElementById('sessionBadge');
         if (badge) badge.textContent = 'Connection issue';
         access.classList.remove('hidden');
-        access.innerHTML = '<p class="eyebrow">WORKSHOP STARTUP RECOVERY</p><h1>The workshop did not finish starting.</h1><p>The page shell loaded, but a required local script or the progress request did not complete. Your saved progress was not changed.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px"><button class="button button-dark" type="button" onclick="location.reload()">Retry workshop</button><a class="button button-light" href="./">Return to Learning Hub</a></div><small style="display:block;margin-top:14px">Recovery watchdog · ' + Math.round((Date.now()-started)/1000) + ' s</small>';
+        access.innerHTML = '<p class="eyebrow">WORKSHOP STARTUP RECOVERY</p><h1>The workshop did not finish starting.</h1><p>The page shell loaded, but progress could not be recovered in time. The V39 transport is bounded, so the page will not remain on a blank loading shell indefinitely. Your saved progress was not changed.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px"><button class="button button-dark" type="button" onclick="location.reload()">Retry workshop</button><a class="button button-light" href="./">Return to Learning Hub</a><a class="button button-light" href="sandbox.html" target="_blank" rel="noopener">Open Python Sandbox ↗</a></div><small style="display:block;margin-top:14px">Recovery watchdog · ' + Math.round((Date.now()-started)/1000) + ' s</small>';
       }, 8000);
     })();
   </script>
