@@ -8,6 +8,7 @@ const SESSION_KEY = 'ijr-stat11-python-hub-active-session-v20';
 const QA_GROUP = '11A';
 const QA_REGISTRATION = '00000000-0000-4000-8000-000000000038';
 const QA_ACCESS_TOKEN = 'browser-e2e-v38-non-production-token';
+const GLOBAL_TIMEOUT_MS = 60000;
 
 function arraysSnapshot() {
   const items = Array.from({ length: 12 }, (_, index) => ({
@@ -105,9 +106,9 @@ async function visibleOutcome(page, appId, pageErrors) {
   }
 }
 
-(async () => {
+async function run() {
   const server = spawn('python3', ['-m', 'http.server', '4173', '--bind', '127.0.0.1', '--directory', ROOT], {
-    stdio: ['ignore', 'pipe', 'pipe']
+    stdio: 'ignore'
   });
 
   let browser;
@@ -145,6 +146,11 @@ async function visibleOutcome(page, appId, pageErrors) {
       });
     });
 
+    // The workshop currently starts its Pyodide download after rendering. This
+    // browser smoke verifies startup/render/navigation only; the established
+    // Python Learning Hub QA job tests the real Pyodide runtime separately.
+    await context.route('**/pyodide/v0.27.7/**', route => route.abort('blockedbyclient'));
+
     const page = await context.newPage();
     const pageErrors = [];
     page.on('pageerror', error => pageErrors.push(`pageerror: ${error.message}`));
@@ -155,7 +161,7 @@ async function visibleOutcome(page, appId, pageErrors) {
       }
     });
 
-    await page.goto(`${ORIGIN}/python/workshop.html?topic=arrays`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.goto(`${ORIGIN}/python/workshop.html?topic=arrays`, { waitUntil: 'domcontentloaded', timeout: 20000 });
     await visibleOutcome(page, 'workshopApp', pageErrors);
 
     const transport = await page.evaluate(() => window.IJR_STUDENT_TRANSPORT_V38 || null);
@@ -175,7 +181,7 @@ async function visibleOutcome(page, appId, pageErrors) {
     if (!(await page.locator('#runCode').isVisible())) throw new Error('Arrays Run control is not visible.');
     if (!(await page.locator('#validateCode').isVisible())) throw new Error('Arrays Validate control is not visible.');
 
-    await page.goto(`${ORIGIN}/python/theory.html?topic=arrays`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.goto(`${ORIGIN}/python/theory.html?topic=arrays`, { waitUntil: 'domcontentloaded', timeout: 20000 });
     await visibleOutcome(page, 'theoryApp', pageErrors);
     const theoryTitle = (await page.locator('#theoryHero h1').innerText()).trim();
     if (!/Arrays and Python lists/i.test(theoryTitle)) throw new Error(`Wrong theory title: ${theoryTitle}`);
@@ -190,12 +196,24 @@ async function visibleOutcome(page, appId, pageErrors) {
 
     console.log('STUDENT ARRAYS BROWSER E2E V38 PASS');
     console.log(`transport=${transport.mode} resume_requests=${resumeRequests} publishable_headers=${resumeApiKeyHeaders} workshop=visible stages=${stageCount} controls=visible theory=visible figures=${figureCount}`);
-    console.log('Progress RPC response is deterministic/mocked in-browser. Production Supabase account/topic/grant checks are verified separately; Pyodide execution remains covered by Python Learning Hub QA.');
+    console.log('Progress RPC response is deterministic/mocked in-browser. Production Supabase account/topic/grant checks are verified separately; real Pyodide execution is covered by Python Learning Hub QA.');
   } finally {
     if (browser) await browser.close().catch(() => {});
-    server.kill('SIGTERM');
+    if (!server.killed) server.kill('SIGKILL');
   }
-})().catch(error => {
+}
+
+const timer = setTimeout(() => {
+  console.error(`Global E2E timeout after ${GLOBAL_TIMEOUT_MS} ms.`);
+  process.exit(1);
+}, GLOBAL_TIMEOUT_MS);
+
+timer.unref();
+run().then(() => {
+  clearTimeout(timer);
+  process.exit(0);
+}).catch(error => {
+  clearTimeout(timer);
   console.error(error.stack || error);
   process.exit(1);
 });
