@@ -5,16 +5,19 @@ html = (root / 'python' / 'workshop.html').read_text(encoding='utf-8')
 js = (root / 'python' / 'workshop-guidance-v13.js').read_text(encoding='utf-8')
 css = (root / 'python' / 'workshop-guidance-v13.css').read_text(encoding='utf-8')
 terminal_css = (root / 'python' / 'workshop-terminal-v12.css').read_text(encoding='utf-8')
+bootstrap = (root / 'python' / 'workshop-bootstrap-v33.js').read_text(encoding='utf-8')
 
 required_html = [
     'workshop-terminal-v12.css',
     'workshop-guidance-v13.css',
     'workshop-terminal-v12.js',
     'workshop-guidance-v13.js',
-    'pyodide/v0.27.7/full/pyodide.js',
+    'workshop-bootstrap-v33.js',
 ]
 for marker in required_html:
     assert marker in html, f'missing workshop asset: {marker}'
+assert "script.src = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js';" in bootstrap, 'lazy Pyodide V33 loader missing'
+assert 'pyodide/v0.27.7/full/pyodide.js' not in html, 'Pyodide must not block initial workshop HTML boot'
 assert html.index('workshop-terminal-v12.js') < html.index('workshop-guidance-v13.js'), 'guidance must load after terminal enhancer'
 
 for slug in ['operations', 'types', 'arrays', 'logic', 'conditions', 'loops', 'functions', 'statistics']:
@@ -56,4 +59,4 @@ for marker in [
 for marker in ['#202124', '#e8eaed']:
     assert marker in terminal_css, f'proven black terminal palette changed: {marker}'
 
-print('Workshop guidance V13 QA passed: explicit lateral step-by-step panel, all topics, Topic 01 deep guidance, responsive layout, black terminal preserved.')
+print('Workshop guidance V13/V33 QA passed: explicit lateral step-by-step panel, all topics, Topic 01 deep guidance, lazy runtime boot, responsive layout, black terminal preserved.')
