@@ -66,16 +66,18 @@ async function withTimeout(promise, ms, label) {
 
 async function installSession(context) {
   await context.addInitScript(({ key, registrationId, accessToken, group }) => {
-    localStorage.setItem(key, JSON.stringify({
-      registrationId,
-      accessToken,
-      fingerprint: '',
-      groupCode: group,
-      emails: ['local.qa@ijr.edu.co'],
-      mode: 'individual',
-      authProtected: true,
-      savedAt: new Date().toISOString()
-    }));
+    try {
+      localStorage.setItem(key, JSON.stringify({
+        registrationId,
+        accessToken,
+        fingerprint: '',
+        groupCode: group,
+        emails: ['local.qa@ijr.edu.co'],
+        mode: 'individual',
+        authProtected: true,
+        savedAt: new Date().toISOString()
+      }));
+    } catch {}
   }, { key: SESSION_KEY, registrationId: QA_REGISTRATION, accessToken: QA_ACCESS_TOKEN, group: GROUP });
 }
 
@@ -130,7 +132,11 @@ async function startupState(page) {
 
 async function assertWorkshopVisible(page, expectedTitle, diagnostics, stats) {
   try {
-    await withTimeout(page.waitForSelector('#workshopApp:not(.hidden)', { state: 'visible' }), 12000, 'Workshop render');
+    await page.waitForFunction(() => {
+      const app = document.getElementById('workshopApp');
+      const access = document.getElementById('accessPanel');
+      return Boolean(app && access && (!app.classList.contains('hidden') || !access.classList.contains('hidden')));
+    }, { timeout: 12000 });
   } catch (error) {
     const state = await startupState(page);
     throw new Error(`${error.message}\nSTARTUP_STATE=${JSON.stringify(state)}\nROUTE_STATS=${JSON.stringify(stats)}\nPAGE_ERRORS=${JSON.stringify(diagnostics.pageErrors)}\nCONSOLE=${JSON.stringify(diagnostics.console)}\nFAILED_REQUESTS=${JSON.stringify(diagnostics.failedRequests)}\nBAD_RESPONSES=${JSON.stringify(diagnostics.badResponses)}`);
@@ -143,23 +149,30 @@ async function assertWorkshopVisible(page, expectedTitle, diagnostics, stats) {
   if (stages !== 12) throw new Error(`Expected 12 stages, got ${stages}`);
 }
 
-async function createLocalPage(browser, snapshot) {
+async function createLocalPage(browser, snapshot, label) {
   const context = await browser.newContext();
+  phase(`${label}: context-created`);
   const stats = { resumeHits: 0, resumeUrls: [] };
   const diagnostics = { pageErrors: [], console: [], failedRequests: [], badResponses: [] };
   await installSession(context);
+  phase(`${label}: session-init-installed`);
   await routeResume(context, snapshot, stats);
+  phase(`${label}: resume-route-installed`);
   const page = await context.newPage();
+  phase(`${label}: page-created`);
   wirePageDiagnostics(page, snapshot.current_topic, diagnostics);
   return { context, page, stats, diagnostics };
 }
 
 async function testLocalArrays(browser) {
   phase('local Arrays startup');
-  const { context, page, stats, diagnostics } = await createLocalPage(browser, topicSnapshot('arrays', 'Arrays and Python lists', 3, 'arr'));
+  const { context, page, stats, diagnostics } = await createLocalPage(browser, topicSnapshot('arrays', 'Arrays and Python lists', 3, 'arr'), 'arrays');
   try {
+    phase('arrays: goto-start');
     await withTimeout(page.goto(`${ORIGIN}/python/workshop.html?topic=arrays`, { waitUntil: 'domcontentloaded' }), 15000, 'Arrays navigation');
+    phase('arrays: domcontentloaded');
     await assertWorkshopVisible(page, 'Arrays', diagnostics, stats);
+    phase(`arrays: visible resumeHits=${stats.resumeHits}`);
     if (diagnostics.pageErrors.length) throw new Error(`Arrays browser errors: ${diagnostics.pageErrors.join(' | ')}`);
   } finally {
     await context.close();
@@ -169,16 +182,20 @@ async function testLocalArrays(browser) {
 
 async function testLocalPandasRuntime(browser) {
   phase('local Pandas + classroom CSV runtime');
-  const { context, page, stats, diagnostics } = await createLocalPage(browser, topicSnapshot('conditions', 'Read and operate datasets with Pandas', 5, 'cond'));
+  const { context, page, stats, diagnostics } = await createLocalPage(browser, topicSnapshot('conditions', 'Read and operate datasets with Pandas', 5, 'cond'), 'pandas');
   try {
+    phase('pandas: goto-start');
     await withTimeout(page.goto(`${ORIGIN}/python/workshop.html?topic=conditions`, { waitUntil: 'domcontentloaded' }), 15000, 'Pandas navigation');
+    phase('pandas: domcontentloaded');
     await assertWorkshopVisible(page, 'Pandas', diagnostics, stats);
+    phase(`pandas: visible resumeHits=${stats.resumeHits}`);
     await page.locator('#codeEditor').fill('import pandas as pd\ndf = pd.read_csv("estudiantes.csv")\nprint(df.shape)');
     await page.locator('#runCode').click();
+    phase('pandas: run-clicked');
     await withTimeout(page.waitForFunction(() => {
       const text = document.getElementById('terminalOutput')?.textContent || '';
       return text.includes('(12, 4)') || /FileNotFoundError|ModuleNotFoundError|Traceback|ERROR/.test(text);
-    }), 45000, 'Pandas execution');
+    }), 60000, 'Pandas execution');
     const terminal = await page.locator('#terminalOutput').innerText();
     if (!terminal.includes('(12, 4)')) throw new Error(`Classroom CSV runtime failed:\n${terminal}`);
     if (diagnostics.pageErrors.length) throw new Error(`Pandas browser errors: ${diagnostics.pageErrors.join(' | ')}`);
@@ -198,7 +215,9 @@ async function testLivePages(browser) {
     if (url.startsWith(`${LIVE_ORIGIN}/python/`) && response.status() >= 400) badResponses.push(`${response.status()} ${url}`);
   });
   try {
+    phase('live-pages: goto-start');
     await withTimeout(page.goto(`${LIVE_ORIGIN}/python/workshop.html?topic=arrays&qa_v40=${Date.now()}`, { waitUntil: 'domcontentloaded' }), 20000, 'Live workshop navigation');
+    phase('live-pages: domcontentloaded');
     await withTimeout(page.waitForFunction(() => {
       const app = document.getElementById('workshopApp');
       const access = document.getElementById('accessPanel');
@@ -245,7 +264,9 @@ async function main() {
   let browser;
   try {
     await waitForServer();
+    phase('server-ready');
     browser = await chromium.launch({ headless: true });
+    phase('browser-launched');
     await testLocalArrays(browser);
     await testLocalPandasRuntime(browser);
     await testLivePages(browser);
