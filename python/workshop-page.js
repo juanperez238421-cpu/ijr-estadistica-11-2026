@@ -35,6 +35,7 @@
   };
 
   const draftKey = `ijr-python-hub-workshop-drafts-v11:${topic.slug}`;
+  const startup = { running:false };
 
   function getSession(){ try{return JSON.parse(localStorage.getItem(config.sessionStorageKey)||'null');}catch{return null;} }
   function readDrafts(){ try{return JSON.parse(sessionStorage.getItem(draftKey)||'{}');}catch{return {};} }
@@ -45,26 +46,43 @@
   function resetRunState(){ state.lastOutput=''; state.lastCode=''; state.lastRunKey=null; state.lastRunOk=false; }
   function lastScalar(output){ const values=String(output||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean); return values.length?values[values.length-1]:''; }
 
+  function hubReturnUrl(){
+    const target=`workshop.html?topic=${encodeURIComponent(topic.slug)}`;
+    return `./?returnTo=${encodeURIComponent(target)}`;
+  }
+
+  function showStartupPanel(title,message,{retry=false}={}){
+    $('workshopApp').classList.add('hidden');
+    $('accessPanel').classList.remove('hidden');
+    $('accessPanel').innerHTML=`<p class="eyebrow">WORKSHOP STARTUP</p><h1>${escapeHtml(title)}</h1><p>${escapeHtml(message)}</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">${retry?'<button id="retryWorkshopBoot" class="button button-dark" type="button">Retry workshop</button>':''}<a class="button ${retry?'button-light':'button-dark'}" href="${hubReturnUrl()}">${retry?'Reconnect in Learning Hub':'Open Learning Hub'}</a></div>`;
+    if(retry) $('retryWorkshopBoot')?.addEventListener('click',boot);
+  }
+
   async function resume(){
     const saved=getSession();
-    if(!saved?.registrationId || !saved?.accessToken) return false;
+    if(!saved?.registrationId || !saved?.accessToken) return {ok:false,reason:'missing-session'};
     try{
       const data=await rpc(config.rpc.resume,{p_registration_id:saved.registrationId,p_access_token:saved.accessToken});
+      if(!data?.snapshot?.registration || !Array.isArray(data.snapshot.topics)){
+        throw new Error('The progress service returned an incomplete workshop snapshot.');
+      }
       state.registration=saved;
       state.snapshot=data.snapshot;
       const p=topicProgress();
-      if(!p || p.status==='locked') return false;
+      if(!p) throw new Error(`The progress snapshot does not include the ${topic.slug} workshop.`);
+      if(p.status==='locked') return {ok:false,reason:'locked'};
       const first=topic.exercises.findIndex(ex=>!serverItem(ex.key)?.correct);
       state.stageIndex=first>=0?first:0;
-      return true;
-    }catch{
-      return false;
+      return {ok:true};
+    }catch(error){
+      return {ok:false,reason:'backend',message:String(error?.message||'The workshop progress request failed.')};
     }
   }
 
   function render(){
     const p=topicProgress();
     if(!p || p.status==='locked') return renderLocked();
+    $('accessPanel').classList.add('hidden');
     const reg=state.snapshot.registration;
     const theoryUrl=`theory.html?topic=${encodeURIComponent(topic.slug)}`;
     $('theoryTopLink').href=theoryUrl;
@@ -91,6 +109,7 @@
   }
 
   function renderLocked(){
+    $('workshopApp').classList.add('hidden');
     $('accessPanel').classList.remove('hidden');
     $('accessPanel').innerHTML='<p class="eyebrow">TOPIC LOCKED</p><h1>This workshop is not released yet.</h1><p>Complete the previous workshop first. The prerequisite rule is enforced by the course backend.</p><a class="button button-dark" href="./">Return to Learning Hub</a>';
   }
@@ -314,7 +333,6 @@
       await validate(ex,state.lastOutput,editor.value);
     });
 
-    ensureRuntime().catch(()=>{});
   }
 
   function bindChoice(ex){
@@ -352,13 +370,33 @@
     panel.innerHTML=`<div><p class="eyebrow">TOPIC COMPLETE</p><h2>${escapeHtml(topic.title)} mastered.</h2><p>All required workshop stages are correct. ${nextTopic?`${escapeHtml(nextTopic.title)} is now unlocked.`:'You completed the complete Python foundations path.'}</p></div><div class="completion-actions"><a class="button button-light" href="theory.html?topic=${encodeURIComponent(topic.slug)}">Review theory</a>${nextTopic?`<a class="button button-dark" href="theory.html?topic=${encodeURIComponent(nextTopic.slug)}">Open next theory</a>`:'<a class="button button-dark" href="./">Return to hub</a>'}</div>`;
   }
 
-  document.addEventListener('DOMContentLoaded',async()=>{
-    const ok=await resume();
-    if(!ok){
-      $('accessPanel').classList.remove('hidden');
-      $('accessPanel').innerHTML='<p class="eyebrow">ACCESS REQUIRED</p><h1>Open the Learning Hub first.</h1><p>You need an active registered learning path, and this topic must be unlocked.</p><a class="button button-dark" href="./">Open Learning Hub</a>';
-      return;
+  async function boot(){
+    if(startup.running) return;
+    startup.running=true;
+    $('sessionBadge').textContent='Loading workshop progress…';
+    showStartupPanel('Loading your workshop…','Checking your saved Statistics 11 progress. This does not change any answer or score.');
+    try{
+      const result=await resume();
+      if(result.ok){
+        render();
+        return;
+      }
+      if(result.reason==='locked'){
+        renderLocked();
+        return;
+      }
+      if(result.reason==='missing-session'){
+        $('sessionBadge').textContent='Learning Hub sign-in required';
+        showStartupPanel('Open the Learning Hub first.','Sign in with the institutional account, and the Hub will return you to this Arrays workshop automatically.');
+        return;
+      }
+      $('sessionBadge').textContent='Workshop connection issue';
+      showStartupPanel('The workshop could not load your progress.',result.message||'Check the connection and try again. Your saved progress was not changed.',{retry:true});
+    }finally{
+      startup.running=false;
     }
-    render();
-  });
+  }
+
+  window.IJR_WORKSHOP_RETRY_BOOT=boot;
+  document.addEventListener('DOMContentLoaded',boot);
 })();
