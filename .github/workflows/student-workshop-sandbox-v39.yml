@@ -1,11 +1,11 @@
-name: Student Workshop + Sandbox V39 QA
+name: Student Workshop Stable + Sandbox V41 QA
 
 on:
   pull_request:
     paths:
       - 'python/workshop.html'
-      - 'python/student-supabase-transport-v39.js'
-      - 'python/student-supabase-bridge-v39.js'
+      - 'python/workshop-bootstrap-v33.js'
+      - 'python/workshop-page.js'
       - 'python/sandbox.html'
       - 'python/sandbox-v39.js'
       - 'python/sandbox-v39.css'
@@ -16,8 +16,8 @@ on:
     branches: [main]
     paths:
       - 'python/workshop.html'
-      - 'python/student-supabase-transport-v39.js'
-      - 'python/student-supabase-bridge-v39.js'
+      - 'python/workshop-bootstrap-v33.js'
+      - 'python/workshop-page.js'
       - 'python/sandbox.html'
       - 'python/sandbox-v39.js'
       - 'python/sandbox-v39.css'
@@ -30,7 +30,7 @@ permissions:
   contents: read
 
 jobs:
-  v39-qa:
+  v41-qa:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -39,19 +39,17 @@ jobs:
 
       - name: JavaScript syntax
         run: |
-          node --check python/student-supabase-transport-v39.js
-          node --check python/student-supabase-bridge-v39.js
+          node --check python/workshop-bootstrap-v33.js
+          node --check python/workshop-page.js
           node --check python/sandbox-v39.js
           node --check qa/check_student_workshop_sandbox_v39.cjs
           node --check qa/sandbox_runtime_smoke_v39.cjs
 
-      - name: Source and wiring contracts
+      - name: Stable workshop and sandbox source contracts
         run: node qa/check_student_workshop_sandbox_v39.cjs
 
-      - name: Verify browser runtime and official Supabase ESM assets
-        run: |
-          curl --fail --silent --show-error --location --head https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js >/dev/null
-          curl --fail --silent --show-error --location --head https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm >/dev/null
+      - name: Verify production Pyodide asset
+        run: curl --fail --silent --show-error --location --head https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js >/dev/null
 
       - name: Real Python sandbox smoke — Pandas + CSV + Matplotlib
         run: |
