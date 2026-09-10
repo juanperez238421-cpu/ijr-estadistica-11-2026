@@ -11,11 +11,14 @@ checks = {
     'blocking Pyodide CDN removed from HTML': 'pyodide/v0.27.7/full/pyodide.js' not in html,
     'lazy Pyodide CDN retained in bootstrap': "script.src = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js';" in bootstrap,
     'obsolete runtime wrapper not loaded': 'workshop-runtime-v10.js' not in html,
-    'V39 cache-busted controller': 'workshop-page.js?v=20260910-arrays-recovery-v39' in html,
+    'V39 external transport removed from startup': 'student-supabase-transport-v39.js' not in html and 'student-supabase-bridge-v39.js' not in html,
+    'V41 cache-busted controller': 'workshop-page.js?v=20260910-workshop-v41' in html,
+    'V41 stable V33 bootstrap': 'workshop-bootstrap-v33.js?v=20260910-stable-v41' in html,
     'V11 Colab stylesheet': 'workshop-colab-v11.css?v=20260826-colab-v11' in html,
     'proven index constant': "const PYODIDE_INDEX = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';" in page,
     'proven direct loadPyodide path': 'window.loadPyodide({indexURL:PYODIDE_INDEX})' in page,
     'lazy loader proxy exposed': 'window.IJR_loadPyodide = resolvePyodideLoader' in bootstrap,
+    'bounded native Supabase RPC': "transport: 'native-fetch'" in bootstrap and 'AbortController' in bootstrap,
     'stdout capture': 'py.setStdout({batched:m=>stdout.push(m)})' in page,
     'stderr capture': 'py.setStderr({batched:m=>stderr.push(m)})' in page,
     'real async Python': 'await py.runPythonAsync(code)' in page,
@@ -33,5 +36,5 @@ checks = {
 
 failed = [name for name, ok in checks.items() if not ok]
 if failed:
-    raise SystemExit('Workshop Colab V11/V33 QA failed: ' + ', '.join(failed))
-print(f'Workshop Colab V11/V39 QA passed ({len(checks)}/{len(checks)} checks).')
+    raise SystemExit('Workshop Colab V11/V41 QA failed: ' + ', '.join(failed))
+print(f'Workshop Colab V11/V41 QA passed ({len(checks)}/{len(checks)} checks).')
