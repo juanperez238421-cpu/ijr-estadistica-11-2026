@@ -19,17 +19,16 @@
   <link rel="stylesheet" href="workshop-layout-v15.css?v=20260826-layout-v15">
   <link rel="stylesheet" href="workshop-guidance-v16.css?v=20260826-guidance-v16">
   <link rel="stylesheet" href="beginner-basics-v17.css?v=20260826-beginner-v17">
-  <script defer src="config-v2.js?v=20260826-hub-v3"></script>
+  <script defer src="config-v2.js?v=20260910-workshop-v41"></script>
   <script defer src="course-data-v4.js?v=20260826-split-v7"></script>
   <script defer src="workshop-catalog-v27.js?v=20260827-catalog-v27"></script>
   <script defer src="data-analyst-extension-v30.js?v=20260901-data-analyst-v30"></script>
   <script defer src="workshop-array-prompts-v28.js?v=20260827-array-v28"></script>
   <script defer src="curriculum-data-first-v32.js?v=20260904-data-first-v32"></script>
   <script defer src="master-context-v34.js?v=20260910-master-context-v35"></script>
-  <script defer src="student-supabase-transport-v39.js?v=20260910-v39"></script>
-  <script defer src="workshop-bootstrap-v33.js?v=20260910-startup-v39"></script>
-  <script defer src="student-supabase-bridge-v39.js?v=20260910-v39"></script>
-  <script defer src="workshop-page.js?v=20260910-arrays-recovery-v39"></script>
+  <script defer src="workshop-bootstrap-v33.js?v=20260910-stable-v41"></script>
+  <script defer src="workshop-runtime-v41.js?v=20260910-runtime-v41"></script>
+  <script defer src="workshop-page.js?v=20260910-workshop-v41"></script>
   <script defer src="workshop-blank-cell-v27.js?v=20260827-blank-v27"></script>
   <script defer src="workshop-terminal-v12.js?v=20260826-terminal-v12"></script>
   <script defer src="workshop-guidance-v13.js?v=20260826-guidance-v13"></script>
@@ -81,7 +80,7 @@
         const badge = document.getElementById('sessionBadge');
         if (badge) badge.textContent = 'Connection issue';
         access.classList.remove('hidden');
-        access.innerHTML = '<p class="eyebrow">WORKSHOP STARTUP RECOVERY</p><h1>The workshop did not finish starting.</h1><p>The page shell loaded, but progress could not be recovered in time. The V39 transport is bounded, so the page will not remain on a blank loading shell indefinitely. Your saved progress was not changed.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px"><button class="button button-dark" type="button" onclick="location.reload()">Retry workshop</button><a class="button button-light" href="./">Return to Learning Hub</a><a class="button button-light" href="sandbox.html" target="_blank" rel="noopener">Open Python Sandbox ↗</a></div><small style="display:block;margin-top:14px">Recovery watchdog · ' + Math.round((Date.now()-started)/1000) + ' s</small>';
+        access.innerHTML = '<p class="eyebrow">WORKSHOP STARTUP RECOVERY</p><h1>The workshop did not finish starting.</h1><p>The page shell loaded, but the saved progress request did not complete. Your answers and saved progress were not changed.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px"><button class="button button-dark" type="button" onclick="window.IJR_WORKSHOP_RETRY_BOOT ? window.IJR_WORKSHOP_RETRY_BOOT() : location.reload()">Retry workshop</button><a class="button button-light" href="./">Return to Learning Hub</a><a class="button button-light" href="sandbox.html" target="_blank" rel="noopener">Open Python Sandbox ↗</a></div><small style="display:block;margin-top:14px">Recovery watchdog · ' + Math.round((Date.now()-started)/1000) + ' s</small>';
       }, 8000);
     })();
   </script>
