@@ -79,8 +79,10 @@ async function installSession(context) {
   }, { key: SESSION_KEY, registrationId: QA_REGISTRATION, accessToken: QA_ACCESS_TOKEN, group: GROUP });
 }
 
-async function routeResume(context, snapshot) {
+async function routeResume(context, snapshot, stats) {
   await context.route('**/rest/v1/rpc/python_hub_resume_v1', async route => {
+    stats.resumeHits += 1;
+    stats.resumeUrls.push(route.request().url());
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -89,8 +91,50 @@ async function routeResume(context, snapshot) {
   });
 }
 
-async function assertWorkshopVisible(page, expectedTitle) {
-  await withTimeout(page.waitForSelector('#workshopApp:not(.hidden)', { state: 'visible' }), 12000, 'Workshop render');
+function wirePageDiagnostics(page, label, sink) {
+  page.on('pageerror', error => sink.pageErrors.push(error.message));
+  page.on('console', message => sink.console.push(`${message.type()}: ${message.text()}`));
+  page.on('requestfailed', request => sink.failedRequests.push(`${request.method()} ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`));
+  page.on('response', response => {
+    if (response.status() >= 400) sink.badResponses.push(`${response.status()} ${response.url()}`);
+  });
+  page.on('crash', () => sink.pageErrors.push(`${label}: page crashed`));
+}
+
+async function startupState(page) {
+  return page.evaluate(key => {
+    const app = document.getElementById('workshopApp');
+    const access = document.getElementById('accessPanel');
+    const badge = document.getElementById('sessionBadge');
+    const topicMap = window.IJR_PYTHON_HUB_TOPIC_MAP || {};
+    return {
+      readyState: document.readyState,
+      bodyText: (document.body?.innerText || '').slice(0, 1600),
+      appClass: app?.className || null,
+      accessClass: access?.className || null,
+      accessText: (access?.innerText || '').slice(0, 1200),
+      badge: badge?.textContent || null,
+      session: localStorage.getItem(key),
+      hasConfig: Boolean(window.IJR_PYTHON_HUB_CONFIG),
+      topicCount: Array.isArray(window.IJR_PYTHON_HUB_TOPICS) ? window.IJR_PYTHON_HUB_TOPICS.length : -1,
+      topicKeys: Object.keys(topicMap).slice(0, 30),
+      hasArrays: Boolean(topicMap.arrays),
+      hasConditions: Boolean(topicMap.conditions),
+      hasSupabase: Boolean(window.supabase?.createClient),
+      hasRetryBoot: typeof window.IJR_WORKSHOP_RETRY_BOOT === 'function',
+      reliability: window.IJR_WORKSHOP_RELIABILITY_V40 || null,
+      dataFirstPolicy: window.IJR_PYTHON_HUB_WORKSHOP_POLICY_V32 || null
+    };
+  }, SESSION_KEY);
+}
+
+async function assertWorkshopVisible(page, expectedTitle, diagnostics, stats) {
+  try {
+    await withTimeout(page.waitForSelector('#workshopApp:not(.hidden)', { state: 'visible' }), 12000, 'Workshop render');
+  } catch (error) {
+    const state = await startupState(page);
+    throw new Error(`${error.message}\nSTARTUP_STATE=${JSON.stringify(state)}\nROUTE_STATS=${JSON.stringify(stats)}\nPAGE_ERRORS=${JSON.stringify(diagnostics.pageErrors)}\nCONSOLE=${JSON.stringify(diagnostics.console)}\nFAILED_REQUESTS=${JSON.stringify(diagnostics.failedRequests)}\nBAD_RESPONSES=${JSON.stringify(diagnostics.badResponses)}`);
+  }
   const accessVisible = await page.locator('#accessPanel').isVisible();
   if (accessVisible) throw new Error(`Unexpected access/recovery panel: ${await page.locator('#accessPanel').innerText()}`);
   const title = (await page.locator('#workshopHero h1').innerText()).trim();
@@ -99,41 +143,48 @@ async function assertWorkshopVisible(page, expectedTitle) {
   if (stages !== 12) throw new Error(`Expected 12 stages, got ${stages}`);
 }
 
+async function createLocalPage(browser, snapshot) {
+  const context = await browser.newContext();
+  const stats = { resumeHits: 0, resumeUrls: [] };
+  const diagnostics = { pageErrors: [], console: [], failedRequests: [], badResponses: [] };
+  await installSession(context);
+  await routeResume(context, snapshot, stats);
+  const page = await context.newPage();
+  wirePageDiagnostics(page, snapshot.current_topic, diagnostics);
+  return { context, page, stats, diagnostics };
+}
+
 async function testLocalArrays(browser) {
   phase('local Arrays startup');
-  const context = await browser.newContext();
-  await installSession(context);
-  await routeResume(context, topicSnapshot('arrays', 'Arrays and Python lists', 3, 'arr'));
-  const page = await context.newPage();
-  const errors = [];
-  page.on('pageerror', error => errors.push(error.message));
-  await withTimeout(page.goto(`${ORIGIN}/python/workshop.html?topic=arrays`, { waitUntil: 'domcontentloaded' }), 15000, 'Arrays navigation');
-  await assertWorkshopVisible(page, 'Arrays');
-  if (errors.length) throw new Error(`Arrays browser errors: ${errors.join(' | ')}`);
-  await context.close();
+  const { context, page, stats, diagnostics } = await createLocalPage(browser, topicSnapshot('arrays', 'Arrays and Python lists', 3, 'arr'));
+  try {
+    await withTimeout(page.goto(`${ORIGIN}/python/workshop.html?topic=arrays`, { waitUntil: 'domcontentloaded' }), 15000, 'Arrays navigation');
+    await assertWorkshopVisible(page, 'Arrays', diagnostics, stats);
+    if (diagnostics.pageErrors.length) throw new Error(`Arrays browser errors: ${diagnostics.pageErrors.join(' | ')}`);
+  } finally {
+    await context.close();
+  }
   phase('local Arrays startup PASS');
 }
 
 async function testLocalPandasRuntime(browser) {
   phase('local Pandas + classroom CSV runtime');
-  const context = await browser.newContext();
-  await installSession(context);
-  await routeResume(context, topicSnapshot('conditions', 'Read and operate datasets with Pandas', 5, 'cond'));
-  const page = await context.newPage();
-  const errors = [];
-  page.on('pageerror', error => errors.push(error.message));
-  await withTimeout(page.goto(`${ORIGIN}/python/workshop.html?topic=conditions`, { waitUntil: 'domcontentloaded' }), 15000, 'Pandas navigation');
-  await assertWorkshopVisible(page, 'Pandas');
-  await page.locator('#codeEditor').fill('import pandas as pd\ndf = pd.read_csv("estudiantes.csv")\nprint(df.shape)');
-  await page.locator('#runCode').click();
-  await withTimeout(page.waitForFunction(() => {
-    const text = document.getElementById('terminalOutput')?.textContent || '';
-    return text.includes('(12, 4)') || /FileNotFoundError|ModuleNotFoundError|Traceback|ERROR/.test(text);
-  }), 45000, 'Pandas execution');
-  const terminal = await page.locator('#terminalOutput').innerText();
-  if (!terminal.includes('(12, 4)')) throw new Error(`Classroom CSV runtime failed:\n${terminal}`);
-  if (errors.length) throw new Error(`Pandas browser errors: ${errors.join(' | ')}`);
-  await context.close();
+  const { context, page, stats, diagnostics } = await createLocalPage(browser, topicSnapshot('conditions', 'Read and operate datasets with Pandas', 5, 'cond'));
+  try {
+    await withTimeout(page.goto(`${ORIGIN}/python/workshop.html?topic=conditions`, { waitUntil: 'domcontentloaded' }), 15000, 'Pandas navigation');
+    await assertWorkshopVisible(page, 'Pandas', diagnostics, stats);
+    await page.locator('#codeEditor').fill('import pandas as pd\ndf = pd.read_csv("estudiantes.csv")\nprint(df.shape)');
+    await page.locator('#runCode').click();
+    await withTimeout(page.waitForFunction(() => {
+      const text = document.getElementById('terminalOutput')?.textContent || '';
+      return text.includes('(12, 4)') || /FileNotFoundError|ModuleNotFoundError|Traceback|ERROR/.test(text);
+    }), 45000, 'Pandas execution');
+    const terminal = await page.locator('#terminalOutput').innerText();
+    if (!terminal.includes('(12, 4)')) throw new Error(`Classroom CSV runtime failed:\n${terminal}`);
+    if (diagnostics.pageErrors.length) throw new Error(`Pandas browser errors: ${diagnostics.pageErrors.join(' | ')}`);
+  } finally {
+    await context.close();
+  }
   phase('local Pandas + classroom CSV runtime PASS');
 }
 
@@ -146,16 +197,19 @@ async function testLivePages(browser) {
     const url = response.url();
     if (url.startsWith(`${LIVE_ORIGIN}/python/`) && response.status() >= 400) badResponses.push(`${response.status()} ${url}`);
   });
-  await withTimeout(page.goto(`${LIVE_ORIGIN}/python/workshop.html?topic=arrays&qa_v40=${Date.now()}`, { waitUntil: 'domcontentloaded' }), 20000, 'Live workshop navigation');
-  await withTimeout(page.waitForFunction(() => {
-    const app = document.getElementById('workshopApp');
-    const access = document.getElementById('accessPanel');
-    return Boolean(app && access && (!app.classList.contains('hidden') || !access.classList.contains('hidden')));
-  }), 12000, 'Live workshop startup outcome');
-  if (badResponses.length) throw new Error(`Live same-origin asset failures:\n${badResponses.join('\n')}`);
-  const html = await page.content();
-  if (!html.includes('Statistics 11 · Python Workshop')) throw new Error('Live Pages is not serving the workshop document.');
-  await context.close();
+  try {
+    await withTimeout(page.goto(`${LIVE_ORIGIN}/python/workshop.html?topic=arrays&qa_v40=${Date.now()}`, { waitUntil: 'domcontentloaded' }), 20000, 'Live workshop navigation');
+    await withTimeout(page.waitForFunction(() => {
+      const app = document.getElementById('workshopApp');
+      const access = document.getElementById('accessPanel');
+      return Boolean(app && access && (!app.classList.contains('hidden') || !access.classList.contains('hidden')));
+    }), 12000, 'Live workshop startup outcome');
+    if (badResponses.length) throw new Error(`Live same-origin asset failures:\n${badResponses.join('\n')}`);
+    const html = await page.content();
+    if (!html.includes('Statistics 11 · Python Workshop')) throw new Error('Live Pages is not serving the workshop document.');
+  } finally {
+    await context.close();
+  }
   phase('live GitHub Pages shell + assets PASS');
 }
 
