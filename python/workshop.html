@@ -6,6 +6,7 @@
   <meta name="color-scheme" content="light">
   <meta name="description" content="Statistics 11 Python workshop with 12 problems per topic, student-authored blank code cells, explicit task guidance without direct answers, a real Colab-style code cell, and a black executable Python terminal.">
   <title>Statistics 11 · Python Workshop</title>
+  <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="styles.css?v=20260826-hub-v1">
   <link rel="stylesheet" href="gated.css?v=20260826-hub-v3">
@@ -18,16 +19,14 @@
   <link rel="stylesheet" href="workshop-layout-v15.css?v=20260826-layout-v15">
   <link rel="stylesheet" href="workshop-guidance-v16.css?v=20260826-guidance-v16">
   <link rel="stylesheet" href="beginner-basics-v17.css?v=20260826-beginner-v17">
-  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
   <script defer src="config-v2.js?v=20260826-hub-v3"></script>
   <script defer src="course-data-v4.js?v=20260826-split-v7"></script>
   <script defer src="workshop-catalog-v27.js?v=20260827-catalog-v27"></script>
   <script defer src="data-analyst-extension-v30.js?v=20260901-data-analyst-v30"></script>
   <script defer src="workshop-array-prompts-v28.js?v=20260827-array-v28"></script>
   <script defer src="curriculum-data-first-v32.js?v=20260904-data-first-v32"></script>
-  <script defer src="master-preview-v3.js?v=20260910-master-preview-v3"></script>
-  <script defer src="workshop-page.js?v=20260826-colab-v11"></script>
+  <script defer src="workshop-bootstrap-v33.js?v=20260910-stable-v33"></script>
+  <script defer src="workshop-page.js?v=20260910-stable-v33"></script>
   <script defer src="workshop-blank-cell-v27.js?v=20260827-blank-v27"></script>
   <script defer src="workshop-terminal-v12.js?v=20260826-terminal-v12"></script>
   <script defer src="workshop-guidance-v13.js?v=20260826-guidance-v13"></script>
@@ -67,5 +66,20 @@
       <footer class="footer"><span>Instituto Jorge Robledo · Statistics / Programming 11° · 2026-2</span><a href="./">Python Hub</a></footer>
     </div>
   </main>
+
+  <script>
+    (() => {
+      const started = Date.now();
+      window.setTimeout(() => {
+        const app = document.getElementById('workshopApp');
+        const access = document.getElementById('accessPanel');
+        if (!app || !access || !app.classList.contains('hidden') || !access.classList.contains('hidden')) return;
+        const badge = document.getElementById('sessionBadge');
+        if (badge) badge.textContent = 'Connection issue';
+        access.classList.remove('hidden');
+        access.innerHTML = '<p class="eyebrow">WORKSHOP STARTUP RECOVERY</p><h1>The workshop did not finish starting.</h1><p>The page shell loaded, but a required local script or the progress request did not complete. Your saved progress was not changed.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px"><button class="button button-dark" type="button" onclick="location.reload()">Retry workshop</button><a class="button button-light" href="./">Return to Learning Hub</a></div><small style="display:block;margin-top:14px">Recovery watchdog · ' + Math.round((Date.now()-started)/1000) + ' s</small>';
+      }, 8000);
+    })();
+  </script>
 </body>
 </html>
