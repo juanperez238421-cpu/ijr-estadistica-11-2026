@@ -1,0 +1,59 @@
+name: Student Workshop + Sandbox V39 QA
+
+on:
+  pull_request:
+    paths:
+      - 'python/workshop.html'
+      - 'python/student-supabase-transport-v39.js'
+      - 'python/student-supabase-bridge-v39.js'
+      - 'python/sandbox.html'
+      - 'python/sandbox-v39.js'
+      - 'python/sandbox-v39.css'
+      - 'qa/check_student_workshop_sandbox_v39.cjs'
+      - 'qa/sandbox_runtime_smoke_v39.cjs'
+      - '.github/workflows/student-workshop-sandbox-v39.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'python/workshop.html'
+      - 'python/student-supabase-transport-v39.js'
+      - 'python/student-supabase-bridge-v39.js'
+      - 'python/sandbox.html'
+      - 'python/sandbox-v39.js'
+      - 'python/sandbox-v39.css'
+      - 'qa/check_student_workshop_sandbox_v39.cjs'
+      - 'qa/sandbox_runtime_smoke_v39.cjs'
+      - '.github/workflows/student-workshop-sandbox-v39.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  v39-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: JavaScript syntax
+        run: |
+          node --check python/student-supabase-transport-v39.js
+          node --check python/student-supabase-bridge-v39.js
+          node --check python/sandbox-v39.js
+          node --check qa/check_student_workshop_sandbox_v39.cjs
+          node --check qa/sandbox_runtime_smoke_v39.cjs
+
+      - name: Source and wiring contracts
+        run: node qa/check_student_workshop_sandbox_v39.cjs
+
+      - name: Verify browser runtime and official Supabase ESM assets
+        run: |
+          curl --fail --silent --show-error --location --head https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js >/dev/null
+          curl --fail --silent --show-error --location --head https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm >/dev/null
+
+      - name: Real Python sandbox smoke — Pandas + CSV + Matplotlib
+        run: |
+          npm install --no-save --no-package-lock pyodide@0.27.7
+          node qa/sandbox_runtime_smoke_v39.cjs
