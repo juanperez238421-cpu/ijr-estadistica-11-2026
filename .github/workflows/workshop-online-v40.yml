@@ -1,0 +1,38 @@
+name: Statistics 11 Workshop Online V40 QA
+
+on:
+  push:
+    branches:
+      - fix/stat11-workshop-online-v40-20260910
+    paths:
+      - 'python/**'
+      - 'qa/workshop_online_v40.cjs'
+      - '.github/workflows/workshop-online-v40.yml'
+  pull_request:
+    paths:
+      - 'python/**'
+      - 'qa/workshop_online_v40.cjs'
+      - '.github/workflows/workshop-online-v40.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  workshop-online-v40:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: JavaScript syntax
+        run: node --check qa/workshop_online_v40.cjs
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Real browser + live GitHub Pages + Supabase smoke
+        run: node qa/workshop_online_v40.cjs
