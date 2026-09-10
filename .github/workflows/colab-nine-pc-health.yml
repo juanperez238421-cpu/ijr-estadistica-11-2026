@@ -87,7 +87,7 @@ jobs:
         run: |
           set -euo pipefail
           curl --fail --silent --show-error --retry 2 --connect-timeout 6 --max-time 20 "$MASTER_URL" -o /tmp/master.html
-          grep -q "Colab Class 01 · Live" /tmp/master.html
+          grep -q "Statistics 11 · Master panel" /tmp/master.html
           grep -q "Registrations" /tmp/master.html
           grep -q "Actions" /tmp/master.html
           grep -q "registrationDialog" /tmp/master.html
