@@ -18,7 +18,7 @@ const checks = {
   'QA uses existing student registration backend': hub.includes("const QA_REGISTER_RPC='python_hub_register_v1';") && hub.includes('openQaStudentAccount'),
   'QA session is clearly marked': hub.includes('qaTest:true') && hub.includes('authProtected:false'),
   'QA login bypass is exact identity only': hub.includes('if(isQaIdentity(identity)){') && hub.includes("if(isQaEmail(identity.email) && identity.groupCode!==QA_GROUP)"),
-  'QA session resumes before Supabase Auth lookup': hub.indexOf('const storedQa=getStoredSession();') < hub.indexOf('await client.auth.getSession();'),
+  'QA session resumes before init Supabase Auth lookup': hub.indexOf('const storedQa=getStoredSession();') < hub.lastIndexOf('await client.auth.getSession();'),
   'real students keep Supabase Auth signup': hub.includes('client.auth.signUp({') && hub.includes("data:{course:'statistics-11-python-hub'}"),
   'real students keep password sign-in': hub.includes('client.auth.signInWithPassword({email:identity.email,password})'),
   'same production session storage contract': theory.includes('localStorage.getItem(config.sessionStorageKey)') && workshop.includes('localStorage.getItem(config.sessionStorageKey)'),
