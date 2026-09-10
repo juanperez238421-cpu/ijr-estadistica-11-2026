@@ -1,0 +1,44 @@
+name: Student Arrays E2E V38
+
+on:
+  pull_request:
+    paths:
+      - 'python/**'
+      - 'qa/check_student_workshop_transport_v38.cjs'
+      - 'qa/student_arrays_e2e_v38.cjs'
+      - '.github/workflows/student-arrays-e2e-v38.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'python/**'
+      - 'qa/check_student_workshop_transport_v38.cjs'
+      - 'qa/student_arrays_e2e_v38.cjs'
+      - '.github/workflows/student-arrays-e2e-v38.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  student-arrays-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: V38 JavaScript syntax and static contracts
+        run: |
+          node --check python/supabase-official-capture-v38.js
+          node --check python/supabase-student-restore-v38.js
+          node --check qa/check_student_workshop_transport_v38.cjs
+          node --check qa/student_arrays_e2e_v38.cjs
+          node qa/check_student_workshop_transport_v38.cjs
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Real student Arrays browser smoke
+        run: node qa/student_arrays_e2e_v38.cjs

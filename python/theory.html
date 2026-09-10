@@ -18,6 +18,8 @@
   <link rel="stylesheet" href="operations-visual-v9-refine.css?v=20260826-v9b">
   <link rel="stylesheet" href="theory-live-lab-v19.css?v=20260826-live-lab-v19">
   <link rel="stylesheet" href="arrays-theory-v34.css?v=20260910-arrays-v35">
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="supabase-official-capture-v38.js?v=20260910-student-v38"></script>
   <script defer src="config-v2.js?v=20260826-hub-v3"></script>
   <script defer src="course-data-v4.js?v=20260826-split-v7"></script>
   <script defer src="workshop-catalog-v27.js?v=20260827-catalog-v27"></script>
@@ -25,8 +27,9 @@
   <script defer src="curriculum-data-first-v32.js?v=20260904-data-first-v32"></script>
   <script defer src="master-context-v34.js?v=20260910-master-context-v35"></script>
   <script defer src="workshop-bootstrap-v33.js?v=20260910-stable-v35"></script>
+  <script defer src="supabase-student-restore-v38.js?v=20260910-student-v38"></script>
   <script defer src="arrays-theory-v34.js?v=20260910-arrays-v35"></script>
-  <script defer src="theory-page.js?v=20260910-master-access-v35"></script>
+  <script defer src="theory-page.js?v=20260910-student-v38"></script>
   <script defer src="theory-visual-v8.js?v=20260826-v8"></script>
   <script defer src="theory-visual-v9.js?v=20260826-v9"></script>
   <script defer src="theory-live-lab-v19.js?v=20260826-live-lab-v19"></script>
@@ -70,8 +73,10 @@
         if (!app || !access || !app.classList.contains('hidden') || !access.classList.contains('hidden')) return;
         const badge = document.getElementById('sessionBadge');
         if (badge) badge.textContent = 'Connection issue';
+        const transport = window.IJR_STUDENT_TRANSPORT_V38;
+        const transportNote = transport ? `${transport.mode}${transport.ready ? '' : ' · not ready'}` : 'transport not initialized';
         access.classList.remove('hidden');
-        access.innerHTML = '<p class="eyebrow">THEORY STARTUP RECOVERY</p><h1>The theory page did not finish starting.</h1><p>The page shell loaded, but progress or a local module did not complete. Your saved progress was not changed.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px"><button class="button button-dark" type="button" onclick="location.reload()">Retry theory</button><a class="button button-light" href="./">Return to Learning Hub</a></div>';
+        access.innerHTML = '<p class="eyebrow">THEORY STARTUP RECOVERY</p><h1>The theory page did not finish starting.</h1><p>The page shell loaded, but progress or a local module did not complete. Your saved progress was not changed.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px"><button class="button button-dark" type="button" onclick="location.reload()">Retry theory</button><a class="button button-light" href="./">Return to Learning Hub</a></div><small style="display:block;margin-top:14px">Recovery watchdog · ' + transportNote + '</small>';
       }, 8000);
     })();
   </script>
