@@ -1,4 +1,3 @@
-const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const { chromium } = require('playwright');
@@ -6,43 +5,43 @@ const { chromium } = require('playwright');
 const ROOT = path.resolve(__dirname, '..');
 const ORIGIN = 'http://127.0.0.1:4173';
 const SESSION_KEY = 'ijr-stat11-python-hub-active-session-v20';
-const QA_EMAIL = 'qa.workshop.e2e@ijr.edu.co';
 const QA_GROUP = '11A';
+const QA_REGISTRATION = '00000000-0000-4000-8000-000000000038';
+const QA_ACCESS_TOKEN = 'browser-e2e-v38-non-production-token';
 
-function readConfig() {
-  const source = fs.readFileSync(path.join(ROOT, 'python', 'config-v2.js'), 'utf8');
-  const url = source.match(/supabaseUrl:\s*'([^']+)'/)?.[1];
-  const key = source.match(/supabasePublishableKey:\s*'([^']+)'/)?.[1];
-  if (!url || !key) throw new Error('Could not read public Supabase configuration.');
-  return { url, key };
-}
-
-async function qaRegistration() {
-  const { url, key } = readConfig();
-  const response = await fetch(`${url}/rest/v1/rpc/python_hub_register_v1`, {
-    method: 'POST',
-    headers: {
-      apikey: key,
-      'Content-Type': 'application/json',
-      Accept: 'application/json'
+function arraysSnapshot() {
+  const items = Array.from({ length: 12 }, (_, index) => ({
+    key: `arr-${String(index + 1).padStart(2, '0')}`,
+    correct: false,
+    completed: false,
+    tries: 0
+  }));
+  return {
+    registration: {
+      id: QA_REGISTRATION,
+      display_id: 'REG-E2EV38',
+      mode: 'individual',
+      group_code: QA_GROUP,
+      team_size: 1,
+      display_label: 'Browser QA student',
+      status: 'active'
     },
-    body: JSON.stringify({
-      p_registration_mode: 'individual',
-      p_group_code: QA_GROUP,
-      p_student_emails: [QA_EMAIL],
-      p_session_id: crypto.randomUUID(),
-      p_user_agent: 'GitHub Actions · Student Arrays E2E V38'
-    })
-  });
-  const raw = await response.text();
-  if (!response.ok) throw new Error(`QA registration failed (${response.status}): ${raw}`);
-  const data = JSON.parse(raw);
-  if (!data.registration_id || !data.access_token) throw new Error('QA registration did not return a student learning session.');
-  const arrays = data.snapshot?.topics?.find(item => item.slug === 'arrays');
-  if (!arrays || arrays.status === 'locked' || arrays.total_count !== 12) {
-    throw new Error(`Arrays backend contract invalid: ${JSON.stringify(arrays)}`);
-  }
-  return data;
+    members: [],
+    topics: [{
+      slug: 'arrays',
+      sequence: 3,
+      title: 'Arrays and Python lists',
+      nav: 'Arrays / lists',
+      status: 'available',
+      correct_count: 0,
+      total_count: 12,
+      percent: 0,
+      items
+    }],
+    current_topic: 'arrays',
+    completed_topics: 0,
+    total_topics: 16
+  };
 }
 
 async function waitForServer() {
@@ -72,7 +71,6 @@ async function visibleOutcome(page, appId) {
 }
 
 (async () => {
-  const registration = await qaRegistration();
   const server = spawn('python3', ['-m', 'http.server', '4173', '--bind', '127.0.0.1', '--directory', ROOT], {
     stdio: ['ignore', 'pipe', 'pipe']
   });
@@ -87,15 +85,29 @@ async function visibleOutcome(page, appId) {
     }, {
       key: SESSION_KEY,
       session: {
-        registrationId: registration.registration_id,
-        accessToken: registration.access_token,
+        registrationId: QA_REGISTRATION,
+        accessToken: QA_ACCESS_TOKEN,
         fingerprint: '',
         groupCode: QA_GROUP,
-        emails: [QA_EMAIL],
+        emails: ['browser.qa@ijr.edu.co'],
         mode: 'individual',
         authProtected: true,
         savedAt: new Date().toISOString()
       }
+    });
+
+    let resumeRequests = 0;
+    let resumeApiKeyHeaders = 0;
+    const snapshot = arraysSnapshot();
+    await context.route('**/rest/v1/rpc/python_hub_resume_v1', async route => {
+      const request = route.request();
+      resumeRequests += 1;
+      if (request.headers().apikey?.startsWith('sb_publishable_')) resumeApiKeyHeaders += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ snapshot })
+      });
     });
 
     const page = await context.newPage();
@@ -134,10 +146,14 @@ async function visibleOutcome(page, appId) {
     const figureCount = await page.locator('.array-anatomy-v34, .array-index-v34, .array-append-v34, .array-summary-v34, .array-mean-v34, .array-dataset-v34').count();
     if (figureCount < 6) throw new Error(`Expected at least 6 Arrays visual figures, got ${figureCount}`);
 
+    if (resumeRequests < 2 || resumeApiKeyHeaders < 2) {
+      throw new Error(`Official SDK resume transport was not observed on both pages: requests=${resumeRequests}, apikey=${resumeApiKeyHeaders}`);
+    }
     if (pageErrors.length) throw new Error(`Browser console/page errors:\n${pageErrors.join('\n')}`);
 
-    console.log('STUDENT ARRAYS E2E V38 PASS');
-    console.log(`backend arrays=available/12 transport=${transport.mode} workshop=visible stages=${stageCount} pyodide=executed theory=visible figures>=6`);
+    console.log('STUDENT ARRAYS BROWSER E2E V38 PASS');
+    console.log(`transport=${transport.mode} resume_requests=${resumeRequests} publishable_headers=${resumeApiKeyHeaders} workshop=visible stages=${stageCount} pyodide=executed theory=visible figures=${figureCount}`);
+    console.log('NOTE: the progress RPC response is deterministic/mocked in-browser; production Supabase state is verified separately by backend QA.');
   } finally {
     if (browser) await browser.close().catch(() => {});
     server.kill('SIGTERM');
