@@ -1,0 +1,25 @@
+name: Statistics 11 Workshop Startup Diagnostic V40
+
+on:
+  push:
+    branches:
+      - fix/stat11-workshop-online-v40-20260910
+    paths:
+      - 'python/**'
+      - 'qa/workshop_startup_diag_v40.cjs'
+      - '.github/workflows/workshop-startup-diag-v40.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  startup-diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install lightweight Playwright API only
+        run: npm install --no-save --no-package-lock playwright-core@1.55.0
+      - name: Workshop startup diagnostic
+        run: node qa/workshop_startup_diag_v40.cjs
