@@ -5,13 +5,15 @@ html = (ROOT / 'python' / 'workshop.html').read_text(encoding='utf-8')
 css = (ROOT / 'python' / 'workshop-terminal-v12.css').read_text(encoding='utf-8')
 js = (ROOT / 'python' / 'workshop-terminal-v12.js').read_text(encoding='utf-8')
 page = (ROOT / 'python' / 'workshop-page.js').read_text(encoding='utf-8')
+bootstrap = (ROOT / 'python' / 'workshop-bootstrap-v33.js').read_text(encoding='utf-8')
 course = (ROOT / 'python' / 'course-data-v4.js').read_text(encoding='utf-8')
 proven = (ROOT / 'actividad-colab-01' / 'app.js').read_text(encoding='utf-8')
 
 checks = {
-    'terminal css loaded last': 'workshop-terminal-v12.css?v=20260826-terminal-v12' in html,
+    'terminal css loaded': 'workshop-terminal-v12.css?v=20260826-terminal-v12' in html,
     'terminal js loaded after workshop controller': html.index('workshop-page.js') < html.index('workshop-terminal-v12.js'),
-    'direct Pyodide asset retained': 'pyodide/v0.27.7/full/pyodide.js' in html,
+    'blocking Pyodide removed from HTML': 'pyodide/v0.27.7/full/pyodide.js' not in html,
+    'lazy Pyodide asset retained': "script.src = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js';" in bootstrap,
     'proven dark palette': '#202124' in css and '#e8eaed' in css and '#303134' in css,
     'large terminal output': 'min-height:220px' in css and '1.08rem' in css,
     'executable prompt': '>>>' in js and 'terminal-form-v12' in js,
@@ -31,6 +33,6 @@ checks = {
 
 failed = [name for name, ok in checks.items() if not ok]
 if failed:
-    raise SystemExit('Workshop terminal V12 QA failed: ' + ', '.join(failed))
+    raise SystemExit('Workshop terminal V12/V33 QA failed: ' + ', '.join(failed))
 
-print(f'Workshop terminal V12 QA passed ({len(checks)}/{len(checks)} checks).')
+print(f'Workshop terminal V12/V33 QA passed ({len(checks)}/{len(checks)} checks).')
