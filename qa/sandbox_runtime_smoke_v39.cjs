@@ -8,6 +8,8 @@ const { loadPyodide } = require('pyodide');
 
   const source = `
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 df = pd.read_csv('/home/pyodide/uploads/sample.csv')
@@ -30,7 +32,7 @@ plt.savefig('/home/pyodide/uploads/smoke.png', dpi=80)
   const stat = py.FS.stat('/home/pyodide/uploads/smoke.png');
   assert(stat.size > 500, 'Matplotlib must create a non-empty PNG figure.');
 
-  console.log(`V39 real runtime smoke passed: Python + Pandas CSV mean=2.0 + Matplotlib PNG ${stat.size} bytes.`);
+  console.log(`V39 real runtime smoke passed: Python + Pandas CSV mean=2.0 + Matplotlib Agg PNG ${stat.size} bytes.`);
 })().catch(error => {
   console.error(error);
   process.exit(1);
