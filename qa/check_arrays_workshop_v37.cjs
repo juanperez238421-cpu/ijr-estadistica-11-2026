@@ -76,8 +76,10 @@ async function masterPreviewSnapshot(topics, config) {
   must(arrays.exercises.every((item, index) => item.key === `arr-${String(index + 1).padStart(2, '0')}`), 'Arrays keys remain ordered arr-01 through arr-12');
   must(arrays.exercises.every(item => item.mode === 'code' && item.code === ''), 'every Arrays code cell starts blank');
   must(arrays.exercises.every(item => /Start from a blank Python cell\./.test(item.prompt)), 'every Arrays stage has explicit student-authored guidance');
-  must(html.indexOf('workshop-bootstrap-v33.js') < html.indexOf('workshop-page.js'), 'stable transport loads before the workshop controller');
-  must(html.includes('workshop-page.js?v=20260910-arrays-recovery-v37'), 'V37 cache key is active');
+  must(html.indexOf('student-supabase-transport-v39.js') < html.indexOf('workshop-bootstrap-v33.js'), 'V39 official transport is prepared before the workshop bootstrap');
+  must(html.indexOf('workshop-bootstrap-v33.js') < html.indexOf('student-supabase-bridge-v39.js'), 'V39 bridge installs after the master-safe bootstrap');
+  must(html.indexOf('student-supabase-bridge-v39.js') < html.indexOf('workshop-page.js'), 'V39 student bridge is active before the workshop controller');
+  must(html.includes('workshop-page.js?v=20260910-arrays-recovery-v39'), 'V39 cache key is active');
   must(page.includes('IJR_WORKSHOP_RETRY_BOOT') && page.includes("reason:'backend'"), 'startup failure exposes a retry path instead of a false access error');
   must(page.includes('returnTo=${encodeURIComponent(target)}') && hub.includes('requestedReturnTo.match'), 'student sign-in returns to the requested Arrays workshop');
   must(!page.includes('ensureRuntime().catch'), 'Pyodide stays lazy until the student presses Run');
@@ -94,8 +96,8 @@ async function masterPreviewSnapshot(topics, config) {
   must(arraysProgress?.status === 'available', 'master preview marks Arrays available without waiting on a remote snapshot');
   must(arraysProgress?.items?.length === 12, 'master preview and Arrays UI agree on all 12 stages');
 
-  console.log('Arrays Workshop V37 QA PASS (frontend data, boot, recovery, lazy runtime and master snapshot).');
+  console.log('Arrays Workshop V39 QA PASS (frontend data, official-first boot, recovery, lazy runtime and master snapshot).');
 })().catch(error => {
-  console.error(`Arrays Workshop V37 QA FAIL: ${error.message}`);
+  console.error(`Arrays Workshop V39 QA FAIL: ${error.message}`);
   process.exit(1);
 });
