@@ -55,18 +55,53 @@ async function waitForServer() {
   throw new Error('Local static server did not start.');
 }
 
-async function visibleOutcome(page, appId) {
-  await page.waitForFunction(({ appId }) => {
-    const app = document.getElementById(appId);
-    const access = document.getElementById('accessPanel');
-    return Boolean(app && access && (!app.classList.contains('hidden') || !access.classList.contains('hidden')));
-  }, { appId }, { timeout: 20000 });
+async function startupState(page, appId, pageErrors) {
+  let state = null;
+  try {
+    state = await page.evaluate(({ appId, sessionKey }) => {
+      const app = document.getElementById(appId);
+      const access = document.getElementById('accessPanel');
+      return {
+        href: location.href,
+        readyState: document.readyState,
+        appExists: Boolean(app),
+        appClass: app?.className || null,
+        accessExists: Boolean(access),
+        accessClass: access?.className || null,
+        accessText: access?.innerText?.slice(0, 800) || '',
+        badge: document.getElementById('sessionBadge')?.textContent || '',
+        bodyText: document.body?.innerText?.slice(0, 1200) || '',
+        storedSession: localStorage.getItem(sessionKey),
+        supabaseCapture: window.IJR_SUPABASE_CAPTURE_V38 || null,
+        studentTransport: window.IJR_STUDENT_TRANSPORT_V38 || null,
+        bootstrap: window.IJR_WORKSHOP_BOOTSTRAP_V33 || null,
+        masterContext: window.IJR_MASTER_CONTEXT_V34 || null,
+        hasSupabase: Boolean(window.supabase),
+        scriptSources: Array.from(document.scripts).map(s => s.src || '[inline]').slice(0, 40)
+      };
+    }, { appId, sessionKey: SESSION_KEY });
+  } catch (error) {
+    state = { evaluationError: error.message };
+  }
+  return { state, pageErrors: [...pageErrors] };
+}
+
+async function visibleOutcome(page, appId, pageErrors) {
+  try {
+    await page.waitForFunction(({ appId }) => {
+      const app = document.getElementById(appId);
+      const access = document.getElementById('accessPanel');
+      return Boolean(app && access && (!app.classList.contains('hidden') || !access.classList.contains('hidden')));
+    }, { appId }, { timeout: 15000 });
+  } catch (error) {
+    const diagnostics = await startupState(page, appId, pageErrors);
+    throw new Error(`${appId} startup timeout. ${error.message}\nDIAGNOSTICS=${JSON.stringify(diagnostics, null, 2)}`);
+  }
 
   const accessVisible = await page.locator('#accessPanel').evaluate(el => !el.classList.contains('hidden'));
   if (accessVisible) {
-    const message = await page.locator('#accessPanel').innerText();
-    const diag = await page.evaluate(() => window.IJR_STUDENT_TRANSPORT_V38 || null);
-    throw new Error(`Access/recovery panel appeared instead of ${appId}: ${message}\ntransport=${JSON.stringify(diag)}`);
+    const diagnostics = await startupState(page, appId, pageErrors);
+    throw new Error(`Access/recovery panel appeared instead of ${appId}.\nDIAGNOSTICS=${JSON.stringify(diagnostics, null, 2)}`);
   }
 }
 
@@ -81,7 +116,7 @@ async function visibleOutcome(page, appId) {
     browser = await chromium.launch({ headless: true });
     const context = await browser.newContext();
     await context.addInitScript(({ key, session }) => {
-      localStorage.setItem(key, JSON.stringify(session));
+      try { localStorage.setItem(key, JSON.stringify(session)); } catch {}
     }, {
       key: SESSION_KEY,
       session: {
@@ -116,9 +151,10 @@ async function visibleOutcome(page, appId) {
     page.on('console', msg => {
       if (msg.type() === 'error') pageErrors.push(`console: ${msg.text()}`);
     });
+    page.on('requestfailed', request => pageErrors.push(`requestfailed: ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`));
 
     await page.goto(`${ORIGIN}/python/workshop.html?topic=arrays`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await visibleOutcome(page, 'workshopApp');
+    await visibleOutcome(page, 'workshopApp', pageErrors);
 
     const transport = await page.evaluate(() => window.IJR_STUDENT_TRANSPORT_V38 || null);
     if (!transport?.ready || transport.mode !== 'official-supabase-js') {
@@ -139,7 +175,7 @@ async function visibleOutcome(page, appId) {
     await page.waitForFunction(() => /(^|\n)8(\n|$)/.test(document.getElementById('terminalOutput')?.textContent || ''), null, { timeout: 45000 });
 
     await page.goto(`${ORIGIN}/python/theory.html?topic=arrays`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await visibleOutcome(page, 'theoryApp');
+    await visibleOutcome(page, 'theoryApp', pageErrors);
     const theoryTitle = (await page.locator('#theoryHero h1').innerText()).trim();
     if (!/Arrays and Python lists/i.test(theoryTitle)) throw new Error(`Wrong theory title: ${theoryTitle}`);
 
