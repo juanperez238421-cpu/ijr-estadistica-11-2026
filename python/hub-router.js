@@ -21,6 +21,7 @@
     passwordMode:'signup',
     pendingIdentity:null
   };
+  const requestedReturnTo=new URLSearchParams(location.search).get('returnTo')||'';
 
   function readJson(key, fallback=null){
     try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; } catch { return fallback; }
@@ -174,6 +175,13 @@
     $('changeRegistrationButton').classList.remove('hidden');
     $('sessionBadge').classList.remove('hidden');
     renderHub();
+    const match=requestedReturnTo.match(/^workshop\.html\?topic=([a-z0-9-]+)$/);
+    if(match){
+      const progress=progressFor(match[1]);
+      if(progress && progress.status!=='locked'){
+        setTimeout(()=>location.replace(requestedReturnTo),0);
+      }
+    }
   }
 
   async function openStudentAccount(identity){

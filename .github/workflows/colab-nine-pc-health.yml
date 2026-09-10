@@ -47,7 +47,7 @@ jobs:
           grep -q "No loops, functions, conditions or Pandas" actividad-colab-01/index.html
           grep -q "variantBankSize: 36" actividad-colab-01/config.js
           grep -q "student_learning_activity_start_team_email_v11" actividad-colab-01/config.js
-          grep -q "Colab Class 01 · Live" maestro/index.html
+          grep -q "Statistics 11 · Master panel" maestro/index.html
           grep -q "Delete registration" maestro/index.html
           grep -q "teacher_learning_activity_detail_v11" maestro/config.js
           grep -q "teacher_learning_activity_dashboard_v11" maestro/config.js

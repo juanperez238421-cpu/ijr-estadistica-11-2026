@@ -1,10 +1,10 @@
-name: QA Student V36
+name: Real Student Auth V37
 
 on:
   pull_request:
     paths:
       - 'python/index.html'
-      - 'python/hub-router-v36.js'
+      - 'python/hub-router.js'
       - 'python/theory-page.js'
       - 'python/workshop-page.js'
       - 'python/config-v2.js'
@@ -14,7 +14,7 @@ on:
     branches: [main]
     paths:
       - 'python/index.html'
-      - 'python/hub-router-v36.js'
+      - 'python/hub-router.js'
       - 'qa/check_qa_student_v36.cjs'
       - '.github/workflows/qa-student-v36.yml'
   workflow_dispatch:
@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v4
       - name: JavaScript syntax
         run: |
-          node --check python/hub-router-v36.js
+          node --check python/hub-router.js
           node --check qa/check_qa_student_v36.cjs
       - name: Student login contract
         run: node qa/check_qa_student_v36.cjs
