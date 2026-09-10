@@ -11,6 +11,7 @@ data = (HUB / 'course-data-v4.js').read_text(encoding='utf-8')
 hub_js = (HUB / 'hub-router.js').read_text(encoding='utf-8')
 theory_js = (HUB / 'theory-page.js').read_text(encoding='utf-8')
 workshop_js = (HUB / 'workshop-page.js').read_text(encoding='utf-8')
+workshop_bootstrap = (HUB / 'workshop-bootstrap-v33.js').read_text(encoding='utf-8')
 css = (HUB / 'split-layout.css').read_text(encoding='utf-8')
 
 
@@ -23,7 +24,10 @@ def require(ok, message):
 for required in ('course-data-v4.js', 'hub-router.js', 'split-layout.css'):
     require(required in index, f'hub missing {required}')
 require('theory-page.js' in theory and 'course-data-v4.js' in theory, 'dedicated theory page missing')
-require('workshop-page.js' in workshop and 'pyodide/v0.27.7' in workshop, 'dedicated workshop page missing')
+require('workshop-page.js' in workshop and 'workshop-bootstrap-v33.js' in workshop, 'dedicated workshop page missing')
+# V33+ lazy-loads Pyodide only when Run is pressed, so the runtime URL belongs
+# to the bootstrap/workshop runtime code rather than to a blocking HTML script.
+require('pyodide/v0.27.7' in workshop_bootstrap or 'pyodide/v0.27.7' in workshop_js, 'Pyodide 0.27.7 runtime contract missing')
 require('Theory' in hub_js and 'Workshop' in hub_js, 'hub cards must expose Theory and Workshop actions')
 require('theory.html?topic=' in hub_js and 'workshop.html?topic=' in hub_js, 'topic routes missing')
 
@@ -84,5 +88,5 @@ for animation in ('split-scan','split-pulse','split-grow','split-output','split-
 # No answer keys embedded in new client data.
 require('expected_text' not in data and 'expected:' not in data, 'client must not contain answer keys')
 
-print('PYTHON HUB SPLIT V7 QA PASS')
-print('topics=8 split_pages=PASS topic01_diagrams>=8 later_diagrams>=3 operations_stages=10 blank_cells=PASS official_resources=PASS progress=PASS animations=PASS')
+print('PYTHON HUB SPLIT V33 QA PASS')
+print('topics=8 split_pages=PASS lazy_pyodide=PASS topic01_diagrams>=8 later_diagrams>=3 operations_stages=10 blank_cells=PASS official_resources=PASS progress=PASS animations=PASS')

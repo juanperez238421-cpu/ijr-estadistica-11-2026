@@ -1,6 +1,6 @@
 name: Python Learning Hub QA
 
-# V31: all-topic live theory + proven workshop runtime + 12 problems per workshop + student-authored code + stable user IDs + audited individual progress + special individual-only policy + authoritative 2026-08-27 roster.
+# V35: all-topic live theory + proven workshop runtime + 12 problems per workshop + student-authored code + stable user IDs + audited individual progress + master-preview continuity + Arrays visual QA.
 on:
   pull_request:
     paths:
@@ -22,6 +22,7 @@ on:
       - 'qa/check_student_identity_progress_v29.cjs'
       - 'qa/check_advanced_individual_policy_v30.cjs'
       - 'qa/check_roster_sync_v31.cjs'
+      - 'qa/check_master_arrays_v35.cjs'
       - 'qa/workshop_colab_smoke_v11.cjs'
       - 'actividad-colab-01/app.js'
       - 'supabase/migrations/*python_learning_hub*.sql'
@@ -49,6 +50,7 @@ on:
       - 'qa/check_student_identity_progress_v29.cjs'
       - 'qa/check_advanced_individual_policy_v30.cjs'
       - 'qa/check_roster_sync_v31.cjs'
+      - 'qa/check_master_arrays_v35.cjs'
       - 'qa/workshop_colab_smoke_v11.cjs'
       - 'actividad-colab-01/app.js'
       - 'supabase/migrations/*python_learning_hub*.sql'
@@ -75,10 +77,13 @@ jobs:
           node --check python/workshop-array-prompts-v28.js
           node --check python/hub-router.js
           node --check python/student-progress-v29.js
+          node --check python/master-context-v34.js
           node --check python/theory-page.js
+          node --check python/arrays-theory-v34.js
           node --check python/theory-visual-v8.js
           node --check python/theory-visual-v9.js
           node --check python/theory-live-lab-v19.js
+          node --check python/workshop-bootstrap-v33.js
           node --check python/workshop-page.js
           node --check python/workshop-blank-cell-v27.js
           node --check python/workshop-terminal-v12.js
@@ -86,13 +91,16 @@ jobs:
           node --check python/workshop-guidance-v14.js
           node --check python/workshop-layout-v15.js
           node --check python/workshop-guidance-v28.js
+          node --check python/master/session-bridge-v35.js
           node --check python/master/config.js
           node --check python/master/app.js
+          node --check python/master/topic-review.js
           node --check qa/check_workshop_catalog_v27.cjs
           node --check qa/check_workshop_functional_v28.cjs
           node --check qa/check_student_identity_progress_v29.cjs
           node --check qa/check_advanced_individual_policy_v30.cjs
           node --check qa/check_roster_sync_v31.cjs
+          node --check qa/check_master_arrays_v35.cjs
           node --check qa/workshop_colab_smoke_v11.cjs
       - name: Static course contracts
         run: |
@@ -113,6 +121,7 @@ jobs:
           node qa/check_student_identity_progress_v29.cjs
           node qa/check_advanced_individual_policy_v30.cjs
           node qa/check_roster_sync_v31.cjs
+          node qa/check_master_arrays_v35.cjs
       - name: Verify production Pyodide asset
         run: curl --fail --silent --show-error --location --head https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js >/dev/null
       - name: Real proven Pyodide workshop smoke

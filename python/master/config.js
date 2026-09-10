@@ -4,7 +4,11 @@
     supabaseUrl:'https://rlfxnjbqxbozjdzkbwlz.supabase.co',
     supabasePublishableKey:'sb_publishable_rmVOQ3Orx49KpW_4uMqYew_c2HpcA87',
     hubUrl:'https://juanperez238421-cpu.github.io/ijr-estadistica-11-2026/python/',
-    teacherSessionKey:'ijr-stat11-python-master-code-session-v1',
+    // Canonical key shared by the teacher dashboard, the full student-view
+    // master preview, theory pages and workshop pages.
+    teacherSessionKey:'ijr-stat11-master-teacher-session-v1',
+    // Kept for one release only so an already-open V34 dashboard can migrate.
+    legacyTeacherSessionKey:'ijr-stat11-python-master-code-session-v1',
     refreshMs:20000,
     rpc:Object.freeze({
       login:'teacher_code_login',

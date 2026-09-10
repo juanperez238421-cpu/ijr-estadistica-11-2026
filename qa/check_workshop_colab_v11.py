@@ -3,16 +3,19 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 html = (ROOT / 'python' / 'workshop.html').read_text(encoding='utf-8')
 page = (ROOT / 'python' / 'workshop-page.js').read_text(encoding='utf-8')
+bootstrap = (ROOT / 'python' / 'workshop-bootstrap-v33.js').read_text(encoding='utf-8')
 golden = (ROOT / 'actividad-colab-01' / 'app.js').read_text(encoding='utf-8')
 css = (ROOT / 'python' / 'workshop-colab-v11.css').read_text(encoding='utf-8')
 
 checks = {
-    'direct Pyodide CDN retained': 'pyodide/v0.27.7/full/pyodide.js' in html,
+    'blocking Pyodide CDN removed from HTML': 'pyodide/v0.27.7/full/pyodide.js' not in html,
+    'lazy Pyodide CDN retained in bootstrap': "script.src = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js';" in bootstrap,
     'obsolete runtime wrapper not loaded': 'workshop-runtime-v10.js' not in html,
-    'V11 cache-busted controller': 'workshop-page.js?v=20260826-colab-v11' in html,
+    'V35 cache-busted controller': 'workshop-page.js?v=20260910-master-access-v35' in html,
     'V11 Colab stylesheet': 'workshop-colab-v11.css?v=20260826-colab-v11' in html,
     'proven index constant': "const PYODIDE_INDEX = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';" in page,
     'proven direct loadPyodide path': 'window.loadPyodide({indexURL:PYODIDE_INDEX})' in page,
+    'lazy loader proxy exposed': 'window.IJR_loadPyodide = resolvePyodideLoader' in bootstrap,
     'stdout capture': 'py.setStdout({batched:m=>stdout.push(m)})' in page,
     'stderr capture': 'py.setStderr({batched:m=>stderr.push(m)})' in page,
     'real async Python': 'await py.runPythonAsync(code)' in page,
@@ -30,5 +33,5 @@ checks = {
 
 failed = [name for name, ok in checks.items() if not ok]
 if failed:
-    raise SystemExit('Workshop Colab V11 QA failed: ' + ', '.join(failed))
-print(f'Workshop Colab V11 QA passed ({len(checks)}/{len(checks)} checks).')
+    raise SystemExit('Workshop Colab V11/V33 QA failed: ' + ', '.join(failed))
+print(f'Workshop Colab V11/V33 QA passed ({len(checks)}/{len(checks)} checks).')
