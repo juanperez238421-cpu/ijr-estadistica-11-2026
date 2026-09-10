@@ -5,6 +5,7 @@ root = Path(__file__).resolve().parents[1]
 js = (root / 'python' / 'theory-live-lab-v19.js').read_text(encoding='utf-8')
 css = (root / 'python' / 'theory-live-lab-v19.css').read_text(encoding='utf-8')
 html = (root / 'python' / 'theory.html').read_text(encoding='utf-8')
+bootstrap = (root / 'python' / 'workshop-bootstrap-v33.js').read_text(encoding='utf-8')
 
 TOPICS = ['operations', 'types', 'arrays', 'logic', 'conditions', 'loops', 'functions', 'statistics']
 for topic in TOPICS:
@@ -37,7 +38,9 @@ assert 'python_hub_workshop_keys' not in js
 
 assert 'theory-live-lab-v19.css' in html
 assert 'theory-live-lab-v19.js' in html
-assert 'pyodide/v0.27.7/full/pyodide.js' in html
+assert 'workshop-bootstrap-v33.js' in html
+assert 'pyodide/v0.27.7/full/pyodide.js' not in html, 'Theory HTML should not block on Pyodide at startup'
+assert "script.src = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js';" in bootstrap, 'Lazy Pyodide loader required for theory live cells'
 assert 'beginner-interface-v18.js' not in html, 'Old Topic-01-only theory interface must not remain loaded'
 assert 'beginner-basics-v17.js' not in html, 'Old Topic-01-only theory block must not remain loaded'
 
@@ -49,7 +52,6 @@ for marker in [
     assert marker in css, f'Missing V19 visual/responsive marker: {marker}'
 
 # Ensure each topic has a meaningful number of live demonstrations.
-blocks = re.split(r'\n    (?=[a-z]+: \{)', js)
 counts = {}
 for topic in TOPICS:
     start = js.find(f'    {topic}: {{')
@@ -61,5 +63,5 @@ for topic in TOPICS:
     counts[topic] = chunk.count("{key:")
     assert counts[topic] >= 5, f'{topic} needs at least 5 live demonstrations, found {counts[topic]}'
 
-print('ALL TOPICS LIVE THEORY V19 QA PASS')
-print('topics=8 editable_cells=PASS pyodide=PASS black_output=PASS responsive=PASS counts=' + str(counts))
+print('ALL TOPICS LIVE THEORY V19/V33 QA PASS')
+print('topics=8 editable_cells=PASS lazy_pyodide=PASS black_output=PASS responsive=PASS counts=' + str(counts))
