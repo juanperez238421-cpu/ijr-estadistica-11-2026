@@ -66,5 +66,20 @@
       <footer class="footer"><span>Instituto Jorge Robledo · Statistics / Programming 11° · 2026-2</span><a href="./">Python Hub</a></footer>
     </div>
   </main>
+
+  <script>
+    (() => {
+      const started = Date.now();
+      window.setTimeout(() => {
+        const app = document.getElementById('workshopApp');
+        const access = document.getElementById('accessPanel');
+        if (!app || !access || !app.classList.contains('hidden') || !access.classList.contains('hidden')) return;
+        const badge = document.getElementById('sessionBadge');
+        if (badge) badge.textContent = 'Connection issue';
+        access.classList.remove('hidden');
+        access.innerHTML = '<p class="eyebrow">WORKSHOP STARTUP RECOVERY</p><h1>The workshop did not finish starting.</h1><p>The page shell loaded, but a required local script or the progress request did not complete. Your saved progress was not changed.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px"><button class="button button-dark" type="button" onclick="location.reload()">Retry workshop</button><a class="button button-light" href="./">Return to Learning Hub</a></div><small style="display:block;margin-top:14px">Recovery watchdog · ' + Math.round((Date.now()-started)/1000) + ' s</small>';
+      }, 8000);
+    })();
+  </script>
 </body>
 </html>
