@@ -28,13 +28,18 @@
       </article>`;
   }
 
+  function previewHref(page, slug) {
+    return `../${page}.html?topic=${encodeURIComponent(slug || '')}&masterPreview=1`;
+  }
+
   function topicMarkup(topic) {
     const goals = Array.isArray(topic.goals) ? topic.goals : [];
     const sections = Array.isArray(topic.sections) ? topic.sections : [];
     const syntax = Array.isArray(topic.syntax) ? topic.syntax : [];
     const exercises = Array.isArray(topic.exercises) ? topic.exercises : [];
     const diagrams = Array.isArray(topic.diagrams) ? topic.diagrams : [];
-    const slug = encodeURIComponent(topic.slug || '');
+    const theoryHref = previewHref('theory', topic.slug);
+    const workshopHref = previewHref('workshop', topic.slug);
 
     return `
       <article class="topic-review-card" data-topic-slug="${esc(topic.slug || '')}">
@@ -46,8 +51,8 @@
             <p>${esc(topic.lead || '')}</p>
           </div>
           <div class="topic-review-actions">
-            <a class="button button-light" href="../theory.html?topic=${slug}" target="_blank" rel="noopener">Open theory</a>
-            <a class="button" href="../workshop.html?topic=${slug}" target="_blank" rel="noopener">Open workshop</a>
+            <a class="button button-light" href="${theoryHref}">Open theory</a>
+            <a class="button" href="${workshopHref}">Open workshop</a>
           </div>
         </div>
 
@@ -57,6 +62,7 @@
           <span>${diagrams.length} diagrams</span>
           <span>${syntax.length} syntax items</span>
           <span>${exercises.length} workshop stages</span>
+          <span>Teacher preview · same tab</span>
         </div>
 
         <details class="topic-review-details">
@@ -145,7 +151,7 @@
 
     const status = $('topicReviewStatus');
     if (status) {
-      status.textContent = 'Synchronized with python/course-data-v4.js — the same topic source used by the student hub.';
+      status.textContent = 'Synchronized with python/course-data-v4.js. Theory and Workshop open in the same tab with verified master-preview context preserved.';
       status.className = 'status ok';
     }
   }
