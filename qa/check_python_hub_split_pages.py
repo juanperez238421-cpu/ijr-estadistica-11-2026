@@ -8,7 +8,8 @@ index = (HUB / 'index.html').read_text(encoding='utf-8')
 theory = (HUB / 'theory.html').read_text(encoding='utf-8')
 workshop = (HUB / 'workshop.html').read_text(encoding='utf-8')
 data = (HUB / 'course-data-v4.js').read_text(encoding='utf-8')
-hub_js = (HUB / 'hub-router.js').read_text(encoding='utf-8')
+hub_router_name = 'hub-router-v36.js' if 'hub-router-v36.js' in index else 'hub-router.js'
+hub_js = (HUB / hub_router_name).read_text(encoding='utf-8')
 theory_js = (HUB / 'theory-page.js').read_text(encoding='utf-8')
 workshop_js = (HUB / 'workshop-page.js').read_text(encoding='utf-8')
 workshop_bootstrap = (HUB / 'workshop-bootstrap-v33.js').read_text(encoding='utf-8')
@@ -21,7 +22,7 @@ def require(ok, message):
 
 
 # Two-page architecture.
-for required in ('course-data-v4.js', 'hub-router.js', 'split-layout.css'):
+for required in ('course-data-v4.js', hub_router_name, 'split-layout.css'):
     require(required in index, f'hub missing {required}')
 require('theory-page.js' in theory and 'course-data-v4.js' in theory, 'dedicated theory page missing')
 require('workshop-page.js' in workshop and 'workshop-bootstrap-v33.js' in workshop, 'dedicated workshop page missing')
@@ -88,5 +89,5 @@ for animation in ('split-scan','split-pulse','split-grow','split-output','split-
 # No answer keys embedded in new client data.
 require('expected_text' not in data and 'expected:' not in data, 'client must not contain answer keys')
 
-print('PYTHON HUB SPLIT V33 QA PASS')
-print('topics=8 split_pages=PASS lazy_pyodide=PASS topic01_diagrams>=8 later_diagrams>=3 operations_stages=10 blank_cells=PASS official_resources=PASS progress=PASS animations=PASS')
+print('PYTHON HUB SPLIT V36 QA PASS')
+print(f'router={hub_router_name} topics=8 split_pages=PASS lazy_pyodide=PASS topic01_diagrams>=8 later_diagrams>=3 operations_stages=10 blank_cells=PASS official_resources=PASS progress=PASS animations=PASS')
