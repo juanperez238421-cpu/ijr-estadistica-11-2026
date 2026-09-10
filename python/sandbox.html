@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Statistics 11 browser Python sandbox with a Colab-style notebook interface, real Pyodide execution, CSV upload, Pandas and Matplotlib support.">
+  <title>Statistics 11 · Python Sandbox</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="sandbox-v39.css?v=20260910-v39">
+  <script defer src="sandbox-v39.js?v=20260910-v39"></script>
+</head>
+<body>
+  <header class="sandbox-topbar">
+    <a class="sandbox-brand" href="./" aria-label="Back to Python Learning Hub">
+      <span class="brand-mark">IJR</span>
+      <span><small>Instituto Jorge Robledo · Statistics 11</small><strong>Python Sandbox</strong></span>
+    </a>
+    <div class="sandbox-top-actions">
+      <span id="runtimeBadge" class="runtime-badge" data-state="idle">Python runtime · idle</span>
+      <a class="button secondary" href="./">Learning Hub</a>
+      <a class="button secondary" href="https://colab.research.google.com/" target="_blank" rel="noopener noreferrer">Open Google Colab ↗</a>
+    </div>
+  </header>
+
+  <main class="sandbox-shell">
+    <section class="sandbox-notebook" aria-label="Python notebook sandbox">
+      <div class="notebook-titlebar">
+        <div>
+          <p class="eyebrow">STUDENT PYTHON LAB · REAL BROWSER RUNTIME</p>
+          <h1>Colab-style Python Sandbox</h1>
+          <p>Write Python, run real code in your browser, inspect output, upload CSV files, and experiment without changing workshop grades or progress.</p>
+        </div>
+        <div class="notebook-status-card">
+          <span>Runtime</span>
+          <strong>Python 3 · Pyodide 0.27.7</strong>
+          <small>Runs locally inside this browser tab. First execution downloads the Python runtime.</small>
+        </div>
+      </div>
+
+      <div class="notebook-toolbar" role="toolbar" aria-label="Notebook controls">
+        <button id="runAllButton" class="button primary" type="button">▶ Run all</button>
+        <button id="addCellButton" class="button secondary" type="button">＋ Code</button>
+        <button id="clearOutputsButton" class="button secondary" type="button">Clear outputs</button>
+        <button id="resetNotebookButton" class="button danger" type="button">Reset notebook</button>
+        <span class="toolbar-hint">Ctrl/⌘ + Enter runs the active cell</span>
+      </div>
+
+      <section id="runtimeNotice" class="runtime-notice" aria-live="polite">
+        <strong>Ready.</strong>
+        <span>Run a cell when you want to start Python. Your code is autosaved only in this browser.</span>
+      </section>
+
+      <section id="cellList" class="cell-list" aria-live="polite"></section>
+    </section>
+
+    <aside class="sandbox-sidebar" aria-label="Sandbox tools">
+      <section class="side-card">
+        <p class="eyebrow">FILES</p>
+        <h2>Upload data</h2>
+        <p>Upload a CSV or text file. It will be copied into the temporary Python filesystem for this tab.</p>
+        <label class="file-button" for="fileInput">Choose CSV / TXT</label>
+        <input id="fileInput" type="file" accept=".csv,.txt,text/csv,text/plain" multiple>
+        <div id="fileList" class="file-list"><span>No files uploaded yet.</span></div>
+      </section>
+
+      <section class="side-card">
+        <p class="eyebrow">SUPPORTED WORKFLOW</p>
+        <h2>Use real Python</h2>
+        <ul>
+          <li>Python variables, lists, conditionals and functions</li>
+          <li>NumPy and Pandas when imported</li>
+          <li>CSV reading from uploaded files</li>
+          <li>Matplotlib figures rendered below the code cell</li>
+          <li>Printed output and Python exceptions</li>
+        </ul>
+      </section>
+
+      <section class="side-card compact">
+        <p class="eyebrow">IMPORTANT</p>
+        <p>This sandbox is for exploration. It does <strong>not</strong> submit workshop answers, mark problems correct, or modify your saved course progress.</p>
+      </section>
+    </aside>
+  </main>
+
+  <template id="codeCellTemplate">
+    <article class="code-cell">
+      <div class="cell-gutter">
+        <button class="cell-run" type="button" title="Run cell" aria-label="Run this code cell">▶</button>
+        <span class="cell-count">[ ]</span>
+      </div>
+      <div class="cell-body">
+        <div class="cell-head">
+          <span>Python</span>
+          <div>
+            <button class="cell-action move-up" type="button" title="Move up">↑</button>
+            <button class="cell-action move-down" type="button" title="Move down">↓</button>
+            <button class="cell-action delete-cell" type="button" title="Delete cell">Delete</button>
+          </div>
+        </div>
+        <textarea class="code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Python code"></textarea>
+        <div class="cell-output hidden" aria-live="polite"></div>
+      </div>
+    </article>
+  </template>
+
+  <footer class="sandbox-footer">
+    <span>Instituto Jorge Robledo · Statistics / Programming 11° · 2026-2</span>
+    <span>Python execution: Pyodide in the browser</span>
+  </footer>
+</body>
+</html>
