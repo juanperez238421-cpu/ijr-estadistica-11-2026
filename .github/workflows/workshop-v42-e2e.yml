@@ -3,25 +3,39 @@ name: Statistics 11 Guided Colab Workshop V42 E2E
 on:
   pull_request:
     paths:
+      - 'python/workshop.html'
       - 'python/workshop-v42.html'
       - 'python/workshop-v42.css'
       - 'python/workshop-v42.js'
+      - 'python/workshop-guidance-v43.css'
+      - 'python/workshop-guidance-v43.js'
+      - 'python/workshop-progression-guard-v44.css'
+      - 'python/workshop-progression-guard-v44.js'
       - 'python/config-v2.js'
       - 'python/course-data-v4.js'
       - 'python/workshop-catalog-v27.js'
       - 'python/data-analyst-extension-v30.js'
       - 'python/curriculum-data-first-v32.js'
       - 'qa/check_workshop_v42_contract.cjs'
+      - 'qa/check_workshop_progression_guard_v44.cjs'
       - 'qa/workshop_v42_e2e.cjs'
+      - 'qa/workshop_progression_guard_v44_e2e.cjs'
       - '.github/workflows/workshop-v42-e2e.yml'
   push:
     branches: [main]
     paths:
+      - 'python/workshop.html'
       - 'python/workshop-v42.html'
       - 'python/workshop-v42.css'
       - 'python/workshop-v42.js'
+      - 'python/workshop-guidance-v43.css'
+      - 'python/workshop-guidance-v43.js'
+      - 'python/workshop-progression-guard-v44.css'
+      - 'python/workshop-progression-guard-v44.js'
       - 'qa/check_workshop_v42_contract.cjs'
+      - 'qa/check_workshop_progression_guard_v44.cjs'
       - 'qa/workshop_v42_e2e.cjs'
+      - 'qa/workshop_progression_guard_v44_e2e.cjs'
       - '.github/workflows/workshop-v42-e2e.yml'
   workflow_dispatch:
 
@@ -36,12 +50,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: JavaScript syntax and V42 static contracts
+      - name: JavaScript syntax and workshop static contracts
         run: |
           node --check python/workshop-v42.js
+          node --check python/workshop-guidance-v43.js
+          node --check python/workshop-progression-guard-v44.js
           node --check qa/check_workshop_v42_contract.cjs
+          node --check qa/check_workshop_progression_guard_v44.cjs
           node --check qa/workshop_v42_e2e.cjs
+          node --check qa/workshop_progression_guard_v44_e2e.cjs
           node qa/check_workshop_v42_contract.cjs
+          node qa/check_workshop_progression_guard_v44.cjs
 
       - name: Install deterministic browser runtime
         run: |
@@ -49,4 +68,6 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Full point-to-point Chromium smoke
-        run: node qa/workshop_v42_e2e.cjs
+        run: |
+          node qa/workshop_v42_e2e.cjs
+          node qa/workshop_progression_guard_v44_e2e.cjs
