@@ -146,6 +146,9 @@
   .v45-preview-heading span{display:block;margin-top:3px}
   .v45-mean-block{grid-template-columns:1fr}
   .v45-mean-chips{justify-content:flex-start}
+  .code-cell-shell{grid-template-columns:42px minmax(0,1fr);width:100%}
+  .code-cell-shell .cell-main{min-width:0;width:100%}
+  .code-cell-shell .code-editor{min-width:0;width:100%}
 }
 @media(prefers-reduced-motion:reduce){
   .v45-inspector-placeholder.loading .v45-inspector-icon{animation:none}
