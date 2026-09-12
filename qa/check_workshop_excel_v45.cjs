@@ -26,12 +26,12 @@ for (const token of [
   'pandas',
   'openpyxl',
   'Visual inspect',
-  'score',
-  '>= 90'
+  'score'
 ]) {
   requireContract(js.includes(token), `V45 Excel contract missing: ${token}`);
 }
 
+requireContract(js.includes('at least 90') && js.includes('&gt;= 90'), 'Stage 4 threshold guidance is missing or inconsistent.');
 requireContract(js.includes("CLASS_FILE = 'stat11_stage4_students.xlsx'"), 'Canonical graded workbook filename missing.');
 requireContract(js.includes("accept=\".xlsx"), 'Real browser Excel file input missing.');
 requireContract(js.includes("dataTransfer?.files?.[0]"), 'Drag/drop Excel upload path missing.');
