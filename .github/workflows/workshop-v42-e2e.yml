@@ -1,4 +1,4 @@
-name: Statistics 11 Guided Colab Workshop V42 E2E
+name: Statistics 11 Guided Colab Workshop V45 E2E
 
 on:
   pull_request:
@@ -11,6 +11,9 @@ on:
       - 'python/workshop-guidance-v43.js'
       - 'python/workshop-progression-guard-v44.css'
       - 'python/workshop-progression-guard-v44.js'
+      - 'python/workshop-excel-stage-v45.css'
+      - 'python/workshop-excel-stage-v45.js'
+      - 'python/data/stat11_stage4_students.xlsx'
       - 'python/config-v2.js'
       - 'python/course-data-v4.js'
       - 'python/workshop-catalog-v27.js'
@@ -18,8 +21,10 @@ on:
       - 'python/curriculum-data-first-v32.js'
       - 'qa/check_workshop_v42_contract.cjs'
       - 'qa/check_workshop_progression_guard_v44.cjs'
+      - 'qa/check_workshop_excel_v45.cjs'
       - 'qa/workshop_v42_e2e.cjs'
       - 'qa/workshop_progression_guard_v44_e2e.cjs'
+      - 'qa/workshop_excel_stage_v45_e2e.cjs'
       - '.github/workflows/workshop-v42-e2e.yml'
   push:
     branches: [main]
@@ -32,10 +37,15 @@ on:
       - 'python/workshop-guidance-v43.js'
       - 'python/workshop-progression-guard-v44.css'
       - 'python/workshop-progression-guard-v44.js'
+      - 'python/workshop-excel-stage-v45.css'
+      - 'python/workshop-excel-stage-v45.js'
+      - 'python/data/stat11_stage4_students.xlsx'
       - 'qa/check_workshop_v42_contract.cjs'
       - 'qa/check_workshop_progression_guard_v44.cjs'
+      - 'qa/check_workshop_excel_v45.cjs'
       - 'qa/workshop_v42_e2e.cjs'
       - 'qa/workshop_progression_guard_v44_e2e.cjs'
+      - 'qa/workshop_excel_stage_v45_e2e.cjs'
       - '.github/workflows/workshop-v42-e2e.yml'
   workflow_dispatch:
 
@@ -45,7 +55,7 @@ permissions:
 jobs:
   guided-colab-e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 18
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -55,12 +65,16 @@ jobs:
           node --check python/workshop-v42.js
           node --check python/workshop-guidance-v43.js
           node --check python/workshop-progression-guard-v44.js
+          node --check python/workshop-excel-stage-v45.js
           node --check qa/check_workshop_v42_contract.cjs
           node --check qa/check_workshop_progression_guard_v44.cjs
+          node --check qa/check_workshop_excel_v45.cjs
           node --check qa/workshop_v42_e2e.cjs
           node --check qa/workshop_progression_guard_v44_e2e.cjs
+          node --check qa/workshop_excel_stage_v45_e2e.cjs
           node qa/check_workshop_v42_contract.cjs
           node qa/check_workshop_progression_guard_v44.cjs
+          node qa/check_workshop_excel_v45.cjs
 
       - name: Install deterministic browser runtime
         run: |
@@ -71,3 +85,13 @@ jobs:
         run: |
           node qa/workshop_v42_e2e.cjs
           node qa/workshop_progression_guard_v44_e2e.cjs
+          node qa/workshop_excel_stage_v45_e2e.cjs
+
+      - name: Upload V45 visual QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: workshop-v45-visual-qa
+          path: qa-artifacts/workshop-v45-*.png
+          if-no-files-found: ignore
+          retention-days: 14
