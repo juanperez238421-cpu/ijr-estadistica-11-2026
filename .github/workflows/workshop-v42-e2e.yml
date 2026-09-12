@@ -13,6 +13,7 @@ on:
       - 'python/workshop-progression-guard-v44.js'
       - 'python/workshop-excel-stage-v45.css'
       - 'python/workshop-excel-stage-v45.js'
+      - 'python/workshop-excel-stage-v45-post.js'
       - 'python/data/stat11_stage4_students.xlsx'
       - 'python/config-v2.js'
       - 'python/course-data-v4.js'
@@ -39,6 +40,7 @@ on:
       - 'python/workshop-progression-guard-v44.js'
       - 'python/workshop-excel-stage-v45.css'
       - 'python/workshop-excel-stage-v45.js'
+      - 'python/workshop-excel-stage-v45-post.js'
       - 'python/data/stat11_stage4_students.xlsx'
       - 'qa/check_workshop_v42_contract.cjs'
       - 'qa/check_workshop_progression_guard_v44.cjs'
@@ -66,6 +68,7 @@ jobs:
           node --check python/workshop-guidance-v43.js
           node --check python/workshop-progression-guard-v44.js
           node --check python/workshop-excel-stage-v45.js
+          node --check python/workshop-excel-stage-v45-post.js
           node --check qa/check_workshop_v42_contract.cjs
           node --check qa/check_workshop_progression_guard_v44.cjs
           node --check qa/check_workshop_excel_v45.cjs
