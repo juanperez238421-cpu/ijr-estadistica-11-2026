@@ -4,84 +4,131 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="light">
-  <meta name="description" content="Statistics 11 Python workshop with 12 problems per topic, student-authored blank code cells, explicit task guidance without direct answers, a real Colab-style code cell, and a black executable Python terminal.">
-  <title>Statistics 11 · Python Workshop</title>
+  <meta name="description" content="Statistics 11 guided Python workshop with a functional Colab-style notebook, real browser Python execution, guided problem solving and Supabase-backed validation.">
+  <title>Statistics 11 · Guided Colab Workshop V42</title>
   <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20260826-hub-v1">
-  <link rel="stylesheet" href="gated.css?v=20260826-hub-v3">
-  <link rel="stylesheet" href="split-layout.css?v=20260826-split-v7">
-  <link rel="stylesheet" href="classroom-visual-v8.css?v=20260826-v8">
-  <link rel="stylesheet" href="workshop-colab-v11.css?v=20260826-colab-v11">
-  <link rel="stylesheet" href="workshop-terminal-v12.css?v=20260826-terminal-v12">
-  <link rel="stylesheet" href="workshop-guidance-v13.css?v=20260826-guidance-v13">
-  <link rel="stylesheet" href="workshop-guidance-v14.css?v=20260826-guidance-v14">
-  <link rel="stylesheet" href="workshop-layout-v15.css?v=20260826-layout-v15">
-  <link rel="stylesheet" href="workshop-guidance-v16.css?v=20260826-guidance-v16">
-  <link rel="stylesheet" href="beginner-basics-v17.css?v=20260826-beginner-v17">
-  <script defer src="config-v2.js?v=20260910-workshop-v41"></script>
-  <script defer src="course-data-v4.js?v=20260826-split-v7"></script>
-  <script defer src="workshop-catalog-v27.js?v=20260827-catalog-v27"></script>
-  <script defer src="data-analyst-extension-v30.js?v=20260901-data-analyst-v30"></script>
-  <script defer src="workshop-array-prompts-v28.js?v=20260827-array-v28"></script>
-  <script defer src="curriculum-data-first-v32.js?v=20260904-data-first-v32"></script>
-  <script defer src="master-context-v34.js?v=20260910-master-context-v35"></script>
-  <script defer src="workshop-bootstrap-v33.js?v=20260910-stable-v41"></script>
-  <script defer src="workshop-page.js?v=20260910-workshop-v41"></script>
-  <script defer src="workshop-blank-cell-v27.js?v=20260827-blank-v27"></script>
-  <script defer src="workshop-terminal-v12.js?v=20260826-terminal-v12"></script>
-  <script defer src="workshop-guidance-v13.js?v=20260826-guidance-v13"></script>
-  <script defer src="workshop-guidance-v14.js?v=20260826-guidance-v14"></script>
-  <script defer src="workshop-layout-v15.js?v=20260826-layout-v15"></script>
-  <script defer src="workshop-guidance-v28.js?v=20260827-guidance-v28"></script>
-  <script defer src="beginner-basics-v17.js?v=20260826-beginner-v17"></script>
+  <link rel="stylesheet" href="workshop-v42.css?v=20260911-v42">
+  <script defer src="config-v2.js?v=20260911-v42"></script>
+  <script defer src="course-data-v4.js?v=20260911-v42"></script>
+  <script defer src="workshop-catalog-v27.js?v=20260911-v42"></script>
+  <script defer src="data-analyst-extension-v30.js?v=20260911-v42"></script>
+  <script defer src="workshop-array-prompts-v28.js?v=20260911-v42"></script>
+  <script defer src="curriculum-data-first-v32.js?v=20260911-v42"></script>
+  <script defer src="workshop-v42.js?v=20260911-v42"></script>
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="./" aria-label="Back to Python Learning Hub">
-      <span class="brand-mark">IJR</span>
-      <span><small>Instituto Jorge Robledo · Statistics 11</small><strong>Python Learning Hub</strong></span>
-    </a>
-    <div class="top-actions">
-      <span id="sessionBadge" class="session-badge">Loading progress…</span>
-      <a id="theoryTopLink" class="button button-light" href="theory.html">Theory</a>
-      <a class="button button-light" href="sandbox.html" target="_blank" rel="noopener">Python Sandbox ↗</a>
-      <a class="button button-dark" href="./">All topics</a>
-    </div>
-  </header>
+  <div class="colab-app-shell">
+    <header class="notebook-titlebar">
+      <a class="ijr-brand" href="./" aria-label="Back to Statistics 11 Python Learning Hub">
+        <span class="ijr-mark">IJR</span>
+        <span class="brand-copy"><small>Statistics 11 · Python</small><strong>Guided Workshop</strong></span>
+      </a>
+      <div class="notebook-file" aria-label="Notebook file">
+        <span class="notebook-icon" aria-hidden="true">▣</span>
+        <div>
+          <strong id="notebookTitle">Statistics_11_Workshop.ipynb</strong>
+          <small id="notebookSubtitle">Guided notebook · V42</small>
+        </div>
+      </div>
+      <div class="titlebar-actions">
+        <span id="sessionBadge" class="session-badge">Checking progress…</span>
+        <a id="theoryLink" class="ghost-button" href="theory.html">Theory</a>
+        <a class="ghost-button" href="./">All topics</a>
+      </div>
+    </header>
 
-  <main class="split-main workshop-main">
-    <section id="accessPanel" class="split-access hidden"></section>
-    <div id="workshopApp" class="hidden">
-      <nav class="split-breadcrumb" aria-label="Breadcrumb"><a href="./">Python Hub</a><span>→</span><a id="theoryCrumb" href="theory.html">Theory</a><span>→</span><span id="crumbTopic">Workshop</span></nav>
-      <section id="workshopHero" class="workshop-hero"></section>
-      <section class="workshop-layout-full">
-        <nav class="workshop-stage-nav workshop-stage-rail" aria-label="Workshop stages">
-          <div class="workshop-stage-nav-head"><p class="eyebrow">WORKSHOP STAGES</p><h2 id="stageNavTitle">Practice</h2><p id="stageNavProgress">0 / 0 correct</p></div>
-          <div id="stageButtons" class="stage-button-list"></div>
-        </nav>
-        <section class="workshop-workspace">
-          <div id="stageMount"></div>
-        </section>
+    <div class="colab-menubar" aria-label="Notebook toolbar">
+      <div class="menu-items" aria-hidden="true">
+        <span>File</span><span>Edit</span><span>View</span><span>Insert</span><span>Runtime</span><span>Tools</span><span>Help</span>
+      </div>
+      <div class="toolbar-actions">
+        <button id="addCodeButton" class="toolbar-button" type="button">+ Code</button>
+        <button id="addTextButton" class="toolbar-button" type="button">+ Text</button>
+        <button id="connectButton" class="runtime-button" type="button" aria-live="polite">
+          <span id="runtimeDot" class="runtime-dot"></span>
+          <span id="runtimeLabel">Connect</span>
+        </button>
+      </div>
+    </div>
+
+    <main class="workspace-shell">
+      <aside class="stage-sidebar" aria-label="Workshop stages">
+        <div class="sidebar-head">
+          <p class="eyebrow">WORKSHOP</p>
+          <h1 id="topicNavTitle">Loading…</h1>
+          <div class="mastery-row"><span>Mastery</span><strong id="masteryPercent">0%</strong></div>
+          <div class="mastery-track"><span id="masteryBar"></span></div>
+          <small id="masteryCount">0 / 0 validated</small>
+        </div>
+        <nav id="stageList" class="stage-list"></nav>
+      </aside>
+
+      <section class="notebook-scroll" aria-label="Guided notebook">
+        <div id="startupPanel" class="startup-panel hidden" role="status"></div>
+        <div id="workshopApp" class="hidden">
+          <section class="notebook-hero text-cell">
+            <div>
+              <p id="topicEyebrow" class="eyebrow">TOPIC</p>
+              <h2 id="topicTitle">Loading workshop…</h2>
+              <p id="topicIntro"></p>
+            </div>
+            <div class="hero-progress">
+              <span>Current stage</span>
+              <strong id="heroStage">01 / 12</strong>
+            </div>
+          </section>
+
+          <article id="problemCell" class="text-cell problem-cell" tabindex="-1">
+            <div class="cell-type-badge">Guided problem</div>
+            <div class="problem-grid">
+              <div>
+                <p id="problemKicker" class="eyebrow">STAGE 1</p>
+                <h2 id="problemTitle">Problem</h2>
+                <p id="problemPrompt" class="problem-prompt"></p>
+                <div id="problemStatus" class="problem-status"></div>
+              </div>
+              <aside id="guidePanel" class="guide-panel" tabindex="-1">
+                <div class="guide-head">
+                  <div><span class="guide-label">Guided reasoning</span><strong id="guideConcept">Plan before coding</strong></div>
+                  <button id="hintButton" class="hint-button" type="button">Show hint</button>
+                </div>
+                <ol id="guideSteps" class="guide-steps"></ol>
+                <div id="hintBox" class="hint-box hidden"></div>
+              </aside>
+            </div>
+          </article>
+
+          <article id="codeNotebookCell" class="code-cell-shell">
+            <div class="cell-gutter">
+              <button id="runButton" class="run-cell-button" type="button" aria-label="Run Python cell">▶</button>
+              <span id="executionCount" class="execution-count">[ ]</span>
+            </div>
+            <div class="cell-main">
+              <div class="cell-toolbar">
+                <div><strong>Python 3 code cell</strong><small id="cellModeLabel"> · write your solution</small></div>
+                <div class="cell-actions">
+                  <button id="resetButton" class="small-action" type="button">Reset</button>
+                  <button id="validateButton" class="validate-button" type="button" disabled>Validate</button>
+                </div>
+              </div>
+              <textarea id="codeEditor" class="code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Python code editor" placeholder="# Write your Python solution here"></textarea>
+              <div id="choiceEditor" class="choice-editor hidden"></div>
+              <section id="outputPanel" class="output-panel hidden" aria-live="polite">
+                <div class="output-head"><span>Output</span><button id="clearOutputButton" type="button">Clear</button></div>
+                <pre id="outputText"></pre>
+              </section>
+            </div>
+          </article>
+
+          <section class="notebook-footer-nav text-cell">
+            <button id="previousButton" class="nav-button" type="button">← Previous</button>
+            <span id="saveMessage">Run the cell, inspect the output, then validate.</span>
+            <button id="nextButton" class="nav-button" type="button">Next →</button>
+          </section>
+        </div>
       </section>
-      <section id="completionPanel" class="completion-panel hidden"></section>
-      <footer class="footer"><span>Instituto Jorge Robledo · Statistics / Programming 11° · 2026-2</span><a href="./">Python Hub</a></footer>
-    </div>
-  </main>
-
-  <script>
-    (() => {
-      const started = Date.now();
-      window.setTimeout(() => {
-        const app = document.getElementById('workshopApp');
-        const access = document.getElementById('accessPanel');
-        if (!app || !access || !app.classList.contains('hidden') || !access.classList.contains('hidden')) return;
-        const badge = document.getElementById('sessionBadge');
-        if (badge) badge.textContent = 'Connection issue';
-        access.classList.remove('hidden');
-        access.innerHTML = '<p class="eyebrow">WORKSHOP STARTUP RECOVERY</p><h1>The workshop did not finish starting.</h1><p>The page shell loaded, but the saved progress request did not complete. Your answers and saved progress were not changed.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px"><button class="button button-dark" type="button" onclick="window.IJR_WORKSHOP_RETRY_BOOT ? window.IJR_WORKSHOP_RETRY_BOOT() : location.reload()">Retry workshop</button><a class="button button-light" href="./">Return to Learning Hub</a><a class="button button-light" href="sandbox.html" target="_blank" rel="noopener">Open Python Sandbox ↗</a></div><small style="display:block;margin-top:14px">Recovery watchdog · ' + Math.round((Date.now()-started)/1000) + ' s</small>';
-      }, 8000);
-    })();
-  </script>
+    </main>
+  </div>
 </body>
 </html>
