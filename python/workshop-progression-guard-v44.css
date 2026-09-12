@@ -1,0 +1,20 @@
+/* V44 strict sequential progression: only server-validated stages unlock the next stage. */
+.stage-button.progression-locked,
+.nav-button.progression-locked{
+  opacity:.46;
+  cursor:not-allowed;
+  filter:grayscale(.2);
+}
+.stage-button.progression-locked:hover,
+.nav-button.progression-locked:hover{
+  background:inherit;
+}
+.stage-button.progression-locked .stage-number{
+  background:#f1f3f4;
+  color:#80868b;
+}
+.stage-button.progression-locked .stage-copy small::after{
+  content:' · locked';
+  font-weight:700;
+  color:#9aa0a6;
+}
