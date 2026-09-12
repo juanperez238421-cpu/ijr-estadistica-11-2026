@@ -10,8 +10,7 @@
 
   const QA_EMAIL = 'qa.student11@ijr.edu.co';
   const QA_GROUP = '11A';
-  const QA_PASSWORD_SHA256 = '192c0b6d86ac758a197ef18e0d530a429e2d5a0f093ac27fed88f918f36f401f';
-  const QA_REGISTER_RPC = 'python_hub_register_v1';
+  const QA_LOGIN_RPC = 'python_hub_qa_login_v1';
 
   const client = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, {
     auth: { persistSession:false, autoRefreshToken:false, detectSessionInUrl:false }
@@ -51,12 +50,6 @@
     return data;
   }
 
-  async function sha256Hex(value){
-    const bytes = new TextEncoder().encode(String(value || ''));
-    const digest = await crypto.subtle.digest('SHA-256', bytes);
-    return Array.from(new Uint8Array(digest)).map(byte=>byte.toString(16).padStart(2,'0')).join('');
-  }
-
   function progressFor(slug){
     return snapshot?.topics?.find(item=>item.slug===slug) || null;
   }
@@ -68,7 +61,6 @@
     $('sessionBadge').classList.remove('hidden');
     $('signOutButton').classList.remove('hidden');
 
-    const reg = snapshot.registration;
     $('sessionBadge').textContent = `QA · ${QA_GROUP} · ${snapshot.completed_topics}/${snapshot.total_topics}`;
     $('identitySummary').textContent = `${QA_GROUP} · ${QA_EMAIL} · isolated test account`;
 
@@ -99,15 +91,13 @@
     }).join('');
   }
 
-  async function createQaSession(){
-    const data=await rpc(QA_REGISTER_RPC,{
-      p_registration_mode:'individual',
-      p_group_code:QA_GROUP,
-      p_student_emails:[QA_EMAIL],
+  async function createQaSession(password){
+    const data=await rpc(QA_LOGIN_RPC,{
+      p_password:password,
       p_session_id:crypto.randomUUID(),
-      p_user_agent:`QA Student V43 · ${navigator.userAgent}`
+      p_user_agent:`QA Student V44 · ${navigator.userAgent}`
     });
-    if(!data?.registration_id || !data?.access_token || !data?.snapshot) throw new Error('QA registration backend returned an incomplete response.');
+    if(!data?.registration_id || !data?.access_token || !data?.snapshot) throw new Error('QA login backend returned an incomplete response.');
     saveSession(data.registration_id,data.access_token);
     snapshot=data.snapshot;
     renderHub();
@@ -132,12 +122,8 @@
     status.className='inline-status';
     status.textContent='Verifying isolated QA account…';
     try{
-      const digest=await sha256Hex(password);
-      if(digest!==QA_PASSWORD_SHA256){
-        throw new Error('Incorrect QA password.');
-      }
       $('qaPassword').value='';
-      await createQaSession();
+      await createQaSession(password);
     }catch(error){
       status.className='inline-status error';
       status.textContent=error.message || 'QA sign-in failed.';
