@@ -133,27 +133,7 @@
     }
   }
 
-  async function handleQaIdentity(event){
-    const email = normalizeEmail($('studentEmail')?.value);
-    const group = String($('groupCode')?.value || '').toUpperCase();
-    if (email !== QA_EMAIL) return;
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-    const status = $('identityStatus');
-    if (group !== QA_GROUP) {
-      if (status) {
-        status.textContent = `The QA test identity belongs to ${QA_GROUP}.`;
-        status.className = 'inline-status error';
-      }
-      return;
-    }
-    showQaPasswordStep();
-  }
-
   async function handleQaPassword(event){
-    if (!qaMode) return;
     event.preventDefault();
     event.stopImmediatePropagation();
 
@@ -178,7 +158,7 @@
       const data = await rpc(QA_LOGIN_RPC, {
         p_password:password,
         p_session_id:crypto.randomUUID(),
-        p_user_agent:`Official Hub QA V45 · ${navigator.userAgent}`
+        p_user_agent:`Official Hub QA V46 · ${navigator.userAgent}`
       });
       if (!data?.registration_id || !data?.access_token || !data?.snapshot) throw new Error('QA login returned an incomplete response.');
       if ($('studentPassword')) $('studentPassword').value = '';
@@ -206,37 +186,69 @@
     renderQaHub();
   }
 
-  function qaSignOut(event){
-    if (!qaMode && !savedQaSession()) return;
-    event?.preventDefault?.();
-    event?.stopImmediatePropagation?.();
-    clearHubSession();
-    location.href = './';
-  }
+  // Robust interception at the document capture phase. This runs before the
+  // ordinary student router can process the same submit event.
+  document.addEventListener('submit', event => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement)) return;
 
-  document.addEventListener('DOMContentLoaded', event => {
-    const saved = savedQaSession();
-    if (saved) {
-      // A stored QA session must resume before the ordinary Supabase Auth gate,
-      // otherwise hub-router.js intentionally clears non-authenticated sessions.
+    if (form.id === 'identityStepForm') {
+      const email = normalizeEmail($('studentEmail')?.value);
+      if (email !== QA_EMAIL) return;
+
+      const group = String($('groupCode')?.value || '').toUpperCase();
+      event.preventDefault();
       event.stopImmediatePropagation();
-      qaMode = true;
-      resumeQa(saved).catch(() => {
-        clearHubSession();
-        location.reload();
-      });
+
+      if (group !== QA_GROUP) {
+        const status = $('identityStatus');
+        if (status) {
+          status.textContent = `The QA test identity belongs to ${QA_GROUP}.`;
+          status.className = 'inline-status error';
+        }
+        return;
+      }
+
+      showQaPasswordStep();
       return;
     }
 
-    $('identityStepForm')?.addEventListener('submit', handleQaIdentity, { capture:true });
-    $('passwordStepForm')?.addEventListener('submit', handleQaPassword, { capture:true });
-    $('backToIdentityButton')?.addEventListener('click', event => {
-      if (!qaMode) return;
+    if (form.id === 'passwordStepForm' && qaMode) {
+      handleQaPassword(event);
+    }
+  }, true);
+
+  document.addEventListener('click', event => {
+    const target = event.target instanceof Element ? event.target.closest('button, a') : null;
+    if (!target) return;
+
+    if (target.id === 'backToIdentityButton' && qaMode) {
       event.preventDefault();
       event.stopImmediatePropagation();
       qaMode = false;
+      clearHubSession();
       location.reload();
-    }, { capture:true });
-    $('changeRegistrationButton')?.addEventListener('click', qaSignOut, { capture:true });
+      return;
+    }
+
+    if (target.id === 'changeRegistrationButton' && (qaMode || savedQaSession())) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      clearHubSession();
+      location.href = './';
+    }
+  }, true);
+
+  document.addEventListener('DOMContentLoaded', event => {
+    const saved = savedQaSession();
+    if (!saved) return;
+
+    // Resume QA before hub-router.js clears unauthenticated local sessions.
+    event.stopImmediatePropagation();
+    qaMode = true;
+    resumeQa(saved).catch(() => {
+      clearHubSession();
+      location.reload();
+    });
   }, { capture:true });
 })();
