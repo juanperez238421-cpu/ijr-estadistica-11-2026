@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Isolated Statistics 11 QA student access for end-to-end testing.">
+  <title>Statistics 11 · QA Student</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
+  <link rel="stylesheet" href="styles.css?v=20260826-hub-v1">
+  <link rel="stylesheet" href="gated.css?v=20260826-hub-v3">
+  <link rel="stylesheet" href="split-layout.css?v=20260826-split-v7a">
+  <link rel="stylesheet" href="classroom-visual-v8.css?v=20260826-v8">
+  <link rel="stylesheet" href="student-progress-v29.css?v=20260827-progress-v29">
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="config-v2.js?v=20260902-auth-v31"></script>
+  <script defer src="course-data-v4.js?v=20260826-split-v7a"></script>
+  <script defer src="workshop-catalog-v27.js?v=20260827-catalog-v27"></script>
+  <script defer src="data-analyst-extension-v30.js?v=20260901-data-analyst-v30"></script>
+  <script defer src="curriculum-data-first-v32.js?v=20260904-data-first-v32"></script>
+  <script defer src="qa-student-v43.js?v=20260911-qa-v43"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Back to Statistics 11 student hub">
+      <span class="brand-mark">IJR</span>
+      <span><small>Instituto Jorge Robledo · Statistics 11</small><strong>Python Learning Hub · QA Student</strong></span>
+    </a>
+    <div class="top-actions">
+      <span id="sessionBadge" class="session-badge hidden">QA not signed in</span>
+      <button id="signOutButton" class="button button-light hidden" type="button">Sign out QA</button>
+      <a class="button button-dark" href="./">Official student page</a>
+    </div>
+  </header>
+
+  <section id="loginPanel" class="registration-screen">
+    <div class="registration-card">
+      <p class="eyebrow">ISOLATED QA STUDENT · TEST ACCESS</p>
+      <h1>Test the real student learning path without using a roster student.</h1>
+      <p class="registration-lead">This synthetic account uses the production Statistics 11 progress backend and the same Theory / Workshop routes, but it is clearly marked as a QA identity.</p>
+
+      <div class="sequence-rule">
+        <strong>QA identity</strong>
+        <span><b id="qaGroup">11A</b> · <b id="qaEmail">qa.student11@ijr.edu.co</b></span>
+        <small>Only the isolated QA password is accepted on this page. The password itself is not stored in plaintext in GitHub.</small>
+      </div>
+
+      <form id="qaLoginForm" class="hub-registration-form" autocomplete="off">
+        <fieldset class="member-fieldset">
+          <legend>Password <small>· Contraseña de prueba</small></legend>
+          <div class="member-grid">
+            <label>QA password
+              <input id="qaPassword" type="password" autocomplete="current-password" minlength="8" required placeholder="Enter QA password">
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="registration-actions">
+          <div><strong>Student-perspective test</strong><span>Sign in to create or resume the isolated QA registration, then open the normal Theory and Workshop pages.</span></div>
+          <button id="qaSignInButton" class="button button-dark" type="submit">Sign in as QA student</button>
+        </div>
+        <p id="qaStatus" class="inline-status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+
+  <main id="hubPanel" class="hub-shell hidden">
+    <section class="hub-overview">
+      <div>
+        <p class="eyebrow">QA STUDENT · PYTHON · STATISTICS 11</p>
+        <h1>Study the idea. Then solve the workshop.</h1>
+        <p id="identitySummary">11A · isolated QA student</p>
+        <p>This page uses the same course topics and the same production progress RPC contract as the student learning path. Open an available topic to test the actual theory and workshop experience.</p>
+        <div class="sequence-rule"><strong>QA isolation</strong><span>Progress belongs to the synthetic QA identity only.</span><small>No official roster student is used for this test session.</small></div>
+      </div>
+      <div class="global-progress-card"><span>QA progress</span><strong id="globalPercent">0%</strong><div class="progress-track"><span id="globalProgressBar"></span></div><small id="globalProgressCopy">0 workshop stages correct</small></div>
+    </section>
+
+    <section class="topic-grid-heading"><p class="eyebrow">LEARN BY SUBJECT</p><h2>Production topic sequence</h2><p>Topic availability follows the backend prerequisite state of the isolated QA registration.</p></section>
+    <section id="topicGrid" class="hub-topic-grid" aria-live="polite"></section>
+
+    <footer class="footer"><span>Instituto Jorge Robledo · Statistics / Programming 11° · QA 2026-2</span><a href="./">Official student page</a></footer>
+  </main>
+</body>
+</html>
