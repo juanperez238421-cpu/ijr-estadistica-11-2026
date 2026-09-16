@@ -6,13 +6,17 @@ on:
     paths:
       - "seminario-tracks/**"
       - "supabase/migrations/*seminar_specialized*"
+      - "supabase/migrations/*seminar_diagnostic*"
       - "supabase/functions/seminar-studio-student/**"
+      - "supabase/functions/seminar-diagnostic-practical/**"
       - ".github/workflows/seminar-specialized-hubs-qa.yml"
   pull_request:
     paths:
       - "seminario-tracks/**"
       - "supabase/migrations/*seminar_specialized*"
+      - "supabase/migrations/*seminar_diagnostic*"
       - "supabase/functions/seminar-studio-student/**"
+      - "supabase/functions/seminar-diagnostic-practical/**"
       - ".github/workflows/seminar-specialized-hubs-qa.yml"
   workflow_dispatch:
 
@@ -28,7 +32,7 @@ jobs:
         with:
           node-version: 20
 
-      - name: Validate five dedicated routes and retained legacy assets
+      - name: Validate five dedicated routes and retained assets
         run: |
           set -euo pipefail
           for route in web data-science cybersecurity 3d-programming robotics; do
@@ -37,6 +41,9 @@ jobs:
             grep -q "data-track=\"$route\"" "$f"
             grep -q 'config-v5.js' "$f"
             grep -q 'hub-v4.js' "$f"
+            grep -q 'diagnostic-practical-v6.css' "$f"
+            grep -q 'diagnostic-practical-v6.js' "$f"
+            grep -q 'diagnostic-practical-backend-v6.js' "$f"
             grep -q 'topic-pages-v6.js' "$f"
             grep -q 'oop-parity-v6.css' "$f"
           done
@@ -46,6 +53,9 @@ jobs:
           test -s seminario-tracks/shared/config-v5.js
           test -s seminario-tracks/shared/track-data.js
           test -s seminario-tracks/shared/hub-v4.js
+          test -s seminario-tracks/shared/diagnostic-practical-v6.js
+          test -s seminario-tracks/shared/diagnostic-practical-backend-v6.js
+          test -s seminario-tracks/shared/diagnostic-practical-v6.css
           test -s seminario-tracks/shared/topic-pages-v6.js
           test -s seminario-tracks/shared/learning-page-v6.js
           test -s seminario-tracks/shared/oop-parity-v6.css
@@ -60,6 +70,8 @@ jobs:
           node --check seminario-tracks/shared/config-v5.js
           node --check seminario-tracks/shared/track-data.js
           node --check seminario-tracks/shared/hub-v4.js
+          node --check seminario-tracks/shared/diagnostic-practical-v6.js
+          node --check seminario-tracks/shared/diagnostic-practical-backend-v6.js
           node --check seminario-tracks/shared/topic-pages-v6.js
           node --check seminario-tracks/shared/learning-page-v6.js
           node --check seminario-tracks/shared/learning-content-v7.js
@@ -90,6 +102,28 @@ jobs:
             }
           }
           NODE
+
+      - name: Validate practical diagnostic terminal V6
+        run: |
+          set -euo pipefail
+          js=seminario-tracks/shared/diagnostic-practical-v6.js
+          bridge=seminario-tracks/shared/diagnostic-practical-backend-v6.js
+          css=seminario-tracks/shared/diagnostic-practical-v6.css
+          test "$(grep -o "id:'[a-zA-Z0-9-]*'" "$js" | wc -l)" -eq 10
+          for token in "web-valid-age" "web-task-domain" "data-iqr-fences" "data-pandas-filter" "cyber-valid-code" "cyber-access-policy" "3d-translate" "3d-positive-dimension" "robotics-threshold" "robotics-failsafe"; do grep -q "$token" "$js"; done
+          grep -q 'loadPyodide' "$js"
+          grep -q 'loadPackagesFromImports' "$js"
+          grep -q "sandbox='allow-scripts'" "$js"
+          grep -q "connect-src 'none'" "$js"
+          grep -q 'Run tests' "$js"
+          grep -q 'attempted<c.total' "$js"
+          grep -q 'Passing is not required' "$js"
+          grep -q "replace(/\\\\n/g" "$js"
+          grep -q 'seminar-diagnostic-practical' "$bridge"
+          grep -q "body?.action==='diagnostic-practical'" "$bridge"
+          grep -q 'terminal-editor-v6' "$css"
+          grep -q 'practical-result-v6' "$css"
+          ! grep -R -q 'SUPABASE_SERVICE_ROLE_KEY\|service_role' "$js" "$bridge"
 
       - name: Validate OOP-parity V6 retained
         run: |
@@ -162,7 +196,7 @@ jobs:
           ! grep -R -q 'SUPABASE_SERVICE_ROLE_KEY\|service_role' seminario-tracks/shared/config-v5.js seminario-tracks/shared/hub-v4.js seminario-tracks/shared/topic-pages-v6.js seminario-tracks/shared/learning-page-v7.js seminario-tracks/shared/workshop-v7-integrity.js
           grep -q 'question-code-prompt' seminario-tracks/shared/diagnostic-v4.css
 
-      - name: Validate Supabase V1 and V5 migration contracts
+      - name: Validate Supabase diagnostic contracts
         run: |
           set -euo pipefail
           legacy=$(ls supabase/migrations/*seminar_specialized_learning_hubs_diagnostic_v1.sql | head -1)
@@ -172,8 +206,10 @@ jobs:
 
           rpc=supabase/migrations/20260916154214_seminar_specialized_diagnostic_v5_rpcs.sql
           bank=supabase/migrations/20260916154716_seminar_specialized_diagnostic_v5_question_bank.sql
+          practical=supabase/migrations/20260916163000_seminar_diagnostic_practical_v6.sql
           test -s "$rpc"
           test -s "$bank"
+          test -s "$practical"
           grep -q '2026-09-16-v5' "$rpc"
           grep -q 'stage-mastery-v5' "$rpc"
           grep -q 'revoke execute on function public.seminar_track_diagnostic_submit' "$rpc"
@@ -181,9 +217,16 @@ jobs:
           grep -q 'service_role' "$rpc"
           grep -q '2026-09-16-v5' "$bank"
           test "$(grep -o "concept_code='code_" "$bank" | wc -l)" -ge 20
+          grep -q "replace(prompt, E'\\\\n', E'\\n')" "$practical"
+          grep -q 'PRACTICAL_RUN' "$practical"
 
           fn=supabase/functions/seminar-studio-student/index.ts
+          practical_fn=supabase/functions/seminar-diagnostic-practical/index.ts
           test -s "$fn"
+          test -s "$practical_fn"
           grep -q '2026-09-16-v5' "$fn"
           grep -q 'learning-event' "$fn"
           grep -q 'workshop_completed' "$fn"
+          grep -q 'PRACTICAL_RUN' "$practical_fn"
+          grep -q 'access_token_hash' "$practical_fn"
+          grep -q 'attempt_already_completed' "$practical_fn"
