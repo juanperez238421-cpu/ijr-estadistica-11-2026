@@ -115,18 +115,22 @@ jobs:
           grep -q 'workshop_completed' seminario-tracks/shared/learning-page-v6.js
           grep -q 'prefers-reduced-motion' seminario-tracks/shared/oop-parity-v6.css
 
-      - name: Validate V5 diagnostic security contract
+      - name: Validate V5 diagnostic gateway security contract
         run: |
           set -euo pipefail
           cfg=seminario-tracks/shared/config-v5.js
           js=seminario-tracks/shared/hub-v4.js
           grep -q "gatewayFunction:'seminar-studio-student'" "$cfg"
           grep -q "bankVersion:'2026-09-16-v5'" "$cfg"
-          grep -q 'p_answers' "$js"
+          grep -q "gateway('diagnostic-start'" "$js"
+          grep -q "gateway('diagnostic-questions'" "$js"
+          grep -q "gateway('diagnostic-submit'" "$js"
+          grep -q 'answers:state.answers' "$js"
           grep -qi 'self-profile' "$js"
           grep -q 'localStorage' "$js"
           grep -q 'aria-live' "$js"
           ! grep -q 'correct_option' "$js"
+          ! grep -q 'seminar_track_diagnostic_submit' "$js"
           ! grep -R -q 'SUPABASE_SERVICE_ROLE_KEY\|service_role' seminario-tracks/shared/config-v5.js seminario-tracks/shared/hub-v4.js seminario-tracks/shared/topic-pages-v6.js seminario-tracks/shared/learning-page-v6.js
           grep -q 'question-code-prompt' seminario-tracks/shared/diagnostic-v4.css
 
