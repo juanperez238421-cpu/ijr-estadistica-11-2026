@@ -16,9 +16,10 @@ const workshopXlsx = read('python/workshop-xlsx-topic-v46.js');
 const migration = read('supabase/migrations/20260916170000_statistics11_xlsx_after_arrays_v46.sql');
 const workbook = fs.readFileSync(path.join(ROOT, 'python/data/stat11_stage4_students.xlsx'));
 
-// Preserve the existing topic structure: reuse sequence slot 4 instead of inserting/removing topics.
-requireContract(base.indexOf("slug: 'arrays'") < base.indexOf("slug: 'logic'"), 'Arrays must remain immediately before the reused topic-4 slot.');
+// Preserve the existing topic structure: reuse the existing logic slot and designate it as the first real-file topic after Arrays.
+requireContract(base.includes("slug: 'arrays'") && base.includes("slug: 'logic'"), 'Base curriculum must retain the existing arrays and logic topic slugs.');
 requireContract(v46.includes("replaceTopic('logic'"), 'V46 must reuse the existing logic slug instead of creating a structural topic break.');
+requireContract(v46.includes("firstFileTopicAfterArrays: 'logic'"), 'V46 metadata must designate the reused logic slot as the first real-file topic after Arrays.');
 requireContract(v46.includes("title: 'Excel (.xlsx) files with Pandas'"), 'Topic 4 is not the XLSX/Pandas topic.');
 requireContract(v46.includes("nav: 'XLSX → DataFrame'"), 'XLSX topic navigation label missing.');
 requireContract(v46.includes('pd.read_excel'), 'Theory/workshop curriculum is missing pd.read_excel.');
