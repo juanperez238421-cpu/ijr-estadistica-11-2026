@@ -1,0 +1,31 @@
+name: Seminar Diagnostics Live E2E
+
+on:
+  pull_request:
+    paths:
+      - 'seminario/**'
+      - 'seminario-tracks/**'
+      - 'qa/seminar-diagnostics-live-e2e.mjs'
+      - '.github/workflows/seminar-diagnostics-live-e2e.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Run all five live diagnostic start flows
+        env:
+          SEMINAR_BASE_URL: https://juanperez238421-cpu.github.io/ijr-estadistica-11-2026
+        run: node qa/seminar-diagnostics-live-e2e.mjs
