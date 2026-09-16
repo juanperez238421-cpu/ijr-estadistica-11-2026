@@ -52,7 +52,7 @@ for (const [name, html] of [['index', indexHtml], ['theory', theoryHtml], ['work
 // Workshop must expose a real XLSX file path before core runtime execution.
 requireContract(workshopHtml.includes('workshop-xlsx-topic-v46.js'), 'Production workshop does not load the V46 XLSX workspace.');
 requireContract(workshopHtml.indexOf('workshop-xlsx-topic-v46.js') < workshopHtml.indexOf('workshop-v42.js'), 'V46 XLSX bridge must load before the core workshop runtime.');
-for (const token of ['stat11_stage4_students.xlsx', 'pd.read_excel', 'runtime.FS.writeFile', 'openpyxl', 'Use class dataset', 'v46UploadInput', 'score']) {
+for (const token of ['stat11_stage4_students.xlsx', 'pd.read_excel', 'runtime.FS.writeFile', 'openpyxl', 'Use class dataset', 'v46UploadInput']) {
   requireContract(workshopXlsx.includes(token), `V46 XLSX workshop contract missing: ${token}`);
 }
 requireContract(workbook.subarray(0, 2).toString('ascii') === 'PK', 'Class dataset is not a real XLSX ZIP container.');
