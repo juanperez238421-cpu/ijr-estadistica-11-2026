@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="Seminar 11 main entry: register once, then choose OOP + UML Common Core or Specialized Studio Tracks.">
+  <title>Seminar 11 · Main Learning Hub</title>
+  <link rel="stylesheet" href="styles.css?v=20260916-v1">
+  <script defer src="main.js?v=20260916-v1"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to Statistics 11 site">
+      <span class="brand-mark">IJR</span>
+      <span><small>Instituto Jorge Robledo · Seminar 11</small><strong>Main Learning Hub</strong></span>
+    </a>
+    <div class="top-actions">
+      <span id="identityBadge" class="identity-badge hidden"></span>
+      <button id="changeStudent" class="button button-light hidden" type="button">Change student</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">SOFTWARE ENGINEERING STUDIO · THIRD PERIOD 2026</p>
+        <h1>Register once. Choose your learning space.</h1>
+        <p class="hero-copy">Seminar 11 has two connected learning environments. Complete the student entry first, then choose <strong>OOP + UML Common Core</strong> or the <strong>Specialized Studio Tracks</strong>. Existing course pages, diagnostics, theory, workshops and progress remain unchanged.</p>
+      </div>
+      <aside class="hero-summary">
+        <div><strong>1</strong><span>Student entry</span></div>
+        <div><strong>2</strong><span>Learning spaces</span></div>
+        <div><strong>5</strong><span>Specialized tracks</span></div>
+      </aside>
+    </section>
+
+    <section id="registrationSection" class="registration-section">
+      <div class="registration-copy">
+        <p class="eyebrow">STEP 01 · STUDENT ENTRY</p>
+        <h2>Identify the student before opening a learning route.</h2>
+        <p>This entry is used to prefill the existing Seminar pages. The OOP + UML Hub and each specialized diagnostic keep their own current academic logic and backend evidence.</p>
+        <div class="sequence-rule">
+          <strong>Entry flow</strong>
+          <span>Student → Group → Learning space → Existing course page</span>
+          <small>No course progress is deleted when you change the central student entry.</small>
+        </div>
+      </div>
+
+      <form id="entryForm" class="registration-card">
+        <p class="eyebrow">INDIVIDUAL REGISTRATION</p>
+        <label>Full name
+          <input id="fullName" required minlength="3" maxlength="120" autocomplete="name" placeholder="Full name">
+        </label>
+        <label>Group
+          <select id="groupCode" required>
+            <option value="">Select…</option>
+            <option value="11-A">11-A</option>
+            <option value="11-B">11-B</option>
+            <option value="11-C">11-C</option>
+          </select>
+        </label>
+        <button class="button button-dark full-button" type="submit">Register and continue</button>
+        <p id="entryStatus" class="status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="choiceSection" class="choice-section hidden" aria-live="polite">
+      <div class="section-head">
+        <p class="eyebrow">STEP 02 · CHOOSE THE LEARNING SPACE</p>
+        <h2>Two connected parts of the same Seminar.</h2>
+        <p>Choose where you need to work now. You can move between both spaces without registering again on this main page.</p>
+      </div>
+
+      <div class="choice-grid">
+        <a class="choice-card" href="../seminario-oop-uml/">
+          <div class="choice-top"><span class="choice-index">OPTION 01</span><span class="tag">Hour 1 · Common Core</span></div>
+          <h3>OOP + UML Common Core</h3>
+          <p class="choice-project">Model first. Code second.</p>
+          <p>Ten design sessions connecting objects, classes, state, constructors, encapsulation, relationships, inheritance, polymorphism, architecture and UML.</p>
+          <div class="mini-stack"><span>Python / Java</span><span>UML</span><span>Theory</span><span>Workshop</span><span>Evidence</span></div>
+          <div class="choice-bottom"><span>10 sessions · Theory + Workshop</span><strong>Open OOP + UML →</strong></div>
+        </a>
+
+        <a class="choice-card" href="../seminario-tracks/">
+          <div class="choice-top"><span class="choice-index">OPTION 02</span><span class="tag">Hour 2 · Specialized Studio</span></div>
+          <h3>Specialized Studio Tracks</h3>
+          <p class="choice-project">One Studio. Five specialized paths.</p>
+          <p>Choose Web Development, Python & Data Science, Defensive Cybersecurity, 3D Design + Programming, or Robotics & Automation.</p>
+          <div class="mini-stack"><span>Diagnostic</span><span>Theory</span><span>Workshop</span><span>Practical terminal</span><span>8 sprints</span></div>
+          <div class="choice-bottom"><span>5 tracks · diagnostic + project route</span><strong>Choose specialized track →</strong></div>
+        </a>
+      </div>
+    </section>
+
+    <section class="flow-note">
+      <div>
+        <strong>Same Seminar architecture</strong>
+        <span>Common Core builds the engineering language. Specialized tracks apply it in a technical domain.</span>
+      </div>
+      <span class="flow">register → choose → learn → build → test → defend</span>
+    </section>
+  </main>
+</body>
+</html>
