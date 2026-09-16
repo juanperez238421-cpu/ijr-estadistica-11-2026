@@ -43,77 +43,105 @@ jobs:
           test -s seminario-tracks/index.html
           test -s seminario-tracks/theory.html
           test -s seminario-tracks/workshop.html
-          test -s seminario-tracks/shared/styles.css
-          test -s seminario-tracks/shared/config.js
-          test -s seminario-tracks/shared/hub.js
           test -s seminario-tracks/shared/config-v5.js
           test -s seminario-tracks/shared/track-data.js
           test -s seminario-tracks/shared/hub-v4.js
-          test -s seminario-tracks/shared/topic-pages-v5.js
-          test -s seminario-tracks/shared/learning-page-v5.js
-          test -s seminario-tracks/shared/senior-v5.css
           test -s seminario-tracks/shared/topic-pages-v6.js
           test -s seminario-tracks/shared/learning-page-v6.js
           test -s seminario-tracks/shared/oop-parity-v6.css
+          test -s seminario-tracks/shared/learning-content-v7.js
+          test -s seminario-tracks/shared/learning-page-v7.js
+          test -s seminario-tracks/shared/learning-v7.css
+          test -s seminario-tracks/shared/workshop-v7-integrity.js
 
       - name: Validate JavaScript syntax
         run: |
           set -euo pipefail
-          node --check seminario-tracks/shared/config.js
-          node --check seminario-tracks/shared/hub.js
           node --check seminario-tracks/shared/config-v5.js
           node --check seminario-tracks/shared/track-data.js
           node --check seminario-tracks/shared/hub-v4.js
-          node --check seminario-tracks/shared/topic-pages-v5.js
-          node --check seminario-tracks/shared/learning-page-v5.js
           node --check seminario-tracks/shared/topic-pages-v6.js
           node --check seminario-tracks/shared/learning-page-v6.js
+          node --check seminario-tracks/shared/learning-content-v7.js
+          node --check seminario-tracks/shared/learning-page-v7.js
+          node --check seminario-tracks/shared/workshop-v7-integrity.js
 
-      - name: Validate curriculum contract
+      - name: Validate curriculum and expanded theory contract
         run: |
           set -euo pipefail
           node - <<'NODE'
           require('./seminario-tracks/shared/track-data.js');
+          require('./seminario-tracks/shared/learning-content-v7.js');
           const tracks=globalThis.IJR_SPECIALIZED_TRACKS;
+          const extra=globalThis.IJR_SPECIALIZED_V7_CONTENT;
           const slugs=['web','data-science','cybersecurity','3d-programming','robotics'];
           if(!tracks||Object.keys(tracks).length!==5) throw new Error('Expected exactly five tracks');
+          if(!extra||Object.keys(extra).length!==5) throw new Error('Expected V7 theory for exactly five tracks');
           for(const slug of slugs){
             const t=tracks[slug];
             if(!t||t.sprints.length!==8) throw new Error(`${slug}: expected eight sprints`);
             if(!Array.isArray(t.stages)||t.stages.length!==4) throw new Error(`${slug}: expected four technical topics/stages`);
             if(t.diagnostic.totalQuestions!==15||t.diagnostic.scoredQuestions!==12||t.diagnostic.selfProfileQuestions!==3) throw new Error(`${slug}: diagnostic contract mismatch`);
             for(const stage of t.stages){
-              if(!stage.title||!stage.theory||!stage.lab||!stage.code||!stage.language) throw new Error(`${slug} stage ${stage.n}: theory/workshop contract incomplete`);
+              if(!stage.title||!stage.theory||!stage.lab||!stage.code||!stage.language) throw new Error(`${slug} stage ${stage.n}: base theory/workshop contract incomplete`);
+              const e=extra[slug]?.[stage.n];
+              if(!e||!e.why||!Array.isArray(e.objectives)||e.objectives.length<3||!Array.isArray(e.deep)||e.deep.length<3||!Array.isArray(e.trace)||e.trace.length<3||!Array.isArray(e.checkpoints)||e.checkpoints.length<3||!e.case||!e.workshop) throw new Error(`${slug} stage ${stage.n}: V7 expanded theory incomplete`);
+              for(const k of ['predict','model','modify','explain']) if(!e.workshop[k]) throw new Error(`${slug} stage ${stage.n}: missing workshop prompt ${k}`);
             }
           }
           NODE
 
-      - name: Validate OOP-parity specialized Theory and Workshop V6
+      - name: Validate OOP-parity V6 retained
         run: |
           set -euo pipefail
           grep -q 'One topic · two dedicated pages' seminario-tracks/shared/topic-pages-v6.js
-          grep -q 'topic-card' seminario-tracks/shared/topic-pages-v6.js
           grep -q '>Theory<' seminario-tracks/shared/topic-pages-v6.js
           grep -q '>Workshop<' seminario-tracks/shared/topic-pages-v6.js
           grep -q 'QUICK REFERENCE · CURRENT CONTENT RETAINED' seminario-tracks/shared/topic-pages-v6.js
-          grep -q '../seminario-oop-uml/styles.css' seminario-tracks/theory.html
-          grep -q '../seminario-oop-uml/styles.css' seminario-tracks/workshop.html
-          grep -q 'learning-page-v6.js' seminario-tracks/theory.html
-          grep -q 'learning-page-v6.js' seminario-tracks/workshop.html
-          grep -q '>Predict<' seminario-tracks/shared/learning-page-v6.js
-          grep -q '>Model<' seminario-tracks/shared/learning-page-v6.js
-          grep -q '>Implement<' seminario-tracks/shared/learning-page-v6.js
-          grep -q '>Test<' seminario-tracks/shared/learning-page-v6.js
-          grep -q '>Modify<' seminario-tracks/shared/learning-page-v6.js
-          grep -q '>Explain<' seminario-tracks/shared/learning-page-v6.js
-          grep -q 'evModel' seminario-tracks/shared/learning-page-v6.js
-          grep -q 'evCode' seminario-tracks/shared/learning-page-v6.js
-          grep -q 'evTest' seminario-tracks/shared/learning-page-v6.js
-          grep -q 'evExplain' seminario-tracks/shared/learning-page-v6.js
-          grep -q 'cybersecurity' seminario-tracks/shared/learning-page-v6.js
-          grep -q 'Defensive security model' seminario-tracks/shared/learning-page-v6.js
-          grep -q 'workshop_completed' seminario-tracks/shared/learning-page-v6.js
           grep -q 'prefers-reduced-motion' seminario-tracks/shared/oop-parity-v6.css
+
+      - name: Validate expanded Theory V7
+        run: |
+          set -euo pipefail
+          grep -q 'learning-content-v7.js' seminario-tracks/theory.html
+          grep -q 'learning-page-v7.js' seminario-tracks/theory.html
+          grep -q 'learning-v7.css' seminario-tracks/theory.html
+          js=seminario-tracks/shared/learning-page-v7.js
+          grep -q 'WHY THIS MATTERS' "$js"
+          grep -q 'LEARNING OBJECTIVES' "$js"
+          grep -q 'DEEP DIVE' "$js"
+          grep -q 'WORKED IMPLEMENTATION' "$js"
+          grep -q 'CODE READING' "$js"
+          grep -q 'APPLIED CASE' "$js"
+          grep -q 'CONCEPT CHECKPOINT' "$js"
+          grep -q 'MASTERY EVIDENCE' "$js"
+          grep -q 'cybersecurity' seminario-tracks/shared/learning-content-v7.js
+          grep -q 'authorized local or simulated defensive scope' "$js"
+
+      - name: Validate functional Workshop V7
+        run: |
+          set -euo pipefail
+          grep -q 'pyodide/v0.27.7/full/pyodide.js' seminario-tracks/workshop.html
+          grep -q 'learning-page-v7.js' seminario-tracks/workshop.html
+          grep -q 'workshop-v7-integrity.js' seminario-tracks/workshop.html
+          js=seminario-tracks/shared/learning-page-v7.js
+          grep -q 'STEP 01 · PREDICT' "$js"
+          grep -q 'STEP 02 · MODEL' "$js"
+          grep -q 'STEP 03 · IMPLEMENT + RUN' "$js"
+          grep -q 'STEP 04 · TEST' "$js"
+          grep -q 'STEP 05 · MODIFY' "$js"
+          grep -q 'STEP 06 · EXPLAIN' "$js"
+          grep -q 'loadPyodide' "$js"
+          grep -q 'loadPackagesFromImports' "$js"
+          grep -q 'sandbox="allow-scripts"' "$js"
+          grep -q "connect-src 'none'" "$js"
+          grep -q 'normalExpected' "$js"
+          grep -q 'boundaryExpected' "$js"
+          grep -q 'failureExpected' "$js"
+          grep -q 'workshop_completed' "$js"
+          grep -q 'Complete all six evidence gates first' "$js"
+          grep -q 'Code changed after the last successful run' seminario-tracks/shared/workshop-v7-integrity.js
+          grep -q 'prefers-reduced-motion' seminario-tracks/shared/learning-v7.css
 
       - name: Validate V5 diagnostic gateway security contract
         run: |
@@ -131,7 +159,7 @@ jobs:
           grep -q 'aria-live' "$js"
           ! grep -q 'correct_option' "$js"
           ! grep -q 'seminar_track_diagnostic_submit' "$js"
-          ! grep -R -q 'SUPABASE_SERVICE_ROLE_KEY\|service_role' seminario-tracks/shared/config-v5.js seminario-tracks/shared/hub-v4.js seminario-tracks/shared/topic-pages-v6.js seminario-tracks/shared/learning-page-v6.js
+          ! grep -R -q 'SUPABASE_SERVICE_ROLE_KEY\|service_role' seminario-tracks/shared/config-v5.js seminario-tracks/shared/hub-v4.js seminario-tracks/shared/topic-pages-v6.js seminario-tracks/shared/learning-page-v7.js seminario-tracks/shared/workshop-v7-integrity.js
           grep -q 'question-code-prompt' seminario-tracks/shared/diagnostic-v4.css
 
       - name: Validate Supabase V1 and V5 migration contracts
