@@ -42,12 +42,12 @@ jobs:
             grep -Fq 'config-v5.js' "$f"
             grep -Fq 'hub-v4.js' "$f"
             grep -Fq 'diagnostic-practical-v6.css' "$f"
-            grep -Fq 'diagnostic-practical-v6.js' "$f"
+            grep -Fq 'diagnostic-practical-v7.js' "$f"
             grep -Fq 'diagnostic-practical-backend-v6.js' "$f"
             grep -Fq 'topic-pages-v6.js' "$f"
           done
           for f in \
-            seminario-tracks/shared/diagnostic-practical-v6.js \
+            seminario-tracks/shared/diagnostic-practical-v7.js \
             seminario-tracks/shared/diagnostic-practical-backend-v6.js \
             seminario-tracks/shared/diagnostic-practical-v6.css \
             seminario-tracks/shared/learning-content-v7.js \
@@ -64,7 +64,7 @@ jobs:
           node --check seminario-tracks/shared/config-v5.js
           node --check seminario-tracks/shared/track-data.js
           node --check seminario-tracks/shared/hub-v4.js
-          node --check seminario-tracks/shared/diagnostic-practical-v6.js
+          node --check seminario-tracks/shared/diagnostic-practical-v7.js
           node --check seminario-tracks/shared/diagnostic-practical-backend-v6.js
           node --check seminario-tracks/shared/topic-pages-v6.js
           node --check seminario-tracks/shared/learning-content-v7.js
@@ -94,10 +94,10 @@ jobs:
           }
           NODE
 
-      - name: Validate practical diagnostic terminal V6
+      - name: Validate practical diagnostic terminal V7
         run: |
           set -euo pipefail
-          js=seminario-tracks/shared/diagnostic-practical-v6.js
+          js=seminario-tracks/shared/diagnostic-practical-v7.js
           bridge=seminario-tracks/shared/diagnostic-practical-backend-v6.js
           css=seminario-tracks/shared/diagnostic-practical-v6.css
           count=$(grep -o "id:'[A-Za-z0-9-]*'" "$js" | wc -l | tr -d ' ')
@@ -115,8 +115,12 @@ jobs:
           grep -Fq "sandbox='allow-scripts'" "$js"
           grep -Fq "connect-src 'none'" "$js"
           grep -Fq 'Run tests' "$js"
-          grep -Fq 'Passing is not required' "$js"
+          grep -Fq 'Both must be run before submission' "$js"
           grep -Fq 'const normalized=raw.replace' "$js"
+          grep -Fq 'requestAnimationFrame' "$js"
+          grep -Fq 'MutationObserver(scheduleEnhance)' "$js"
+          grep -Fq 'const setText=' "$js"
+          if grep -Fq 'queueMicrotask(enhance)' "$js"; then exit 1; fi
           grep -Fq 'seminar-diagnostic-practical' "$bridge"
           grep -Fq "body?.action==='diagnostic-practical'" "$bridge"
           grep -Fq 'terminal-editor-v6' "$css"
