@@ -1,0 +1,73 @@
+name: Seminar Main Entry QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "seminario/**"
+      - "seminario-oop-uml/index.html"
+      - "seminario-tracks/**/index.html"
+      - ".github/workflows/seminar-main-entry-qa.yml"
+  pull_request:
+    paths:
+      - "seminario/**"
+      - "seminario-oop-uml/index.html"
+      - "seminario-tracks/**/index.html"
+      - ".github/workflows/seminar-main-entry-qa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate central Seminar entry
+        run: |
+          set -euo pipefail
+          test -s seminario/index.html
+          test -s seminario/styles.css
+          test -s seminario/main.js
+          test -s seminario/entry-bridge.js
+          node --check seminario/main.js
+          node --check seminario/entry-bridge.js
+          grep -q 'ijr-seminar-main-registration-v1' seminario/main.js
+          grep -q 'ijr-seminar-main-registration-v1' seminario/entry-bridge.js
+          grep -q '../seminario-oop-uml/' seminario/index.html
+          grep -q '../seminario-tracks/' seminario/index.html
+          grep -q 'Register once. Choose your learning space.' seminario/index.html
+          grep -q '11-A' seminario/index.html
+          grep -q '11-B' seminario/index.html
+          grep -q '11-C' seminario/index.html
+
+      - name: Validate guarded child routes and prefill bridge
+        run: |
+          set -euo pipefail
+          grep -q '../seminario/entry-bridge.js' seminario-oop-uml/index.html
+          grep -q 'data-mode="oop"' seminario-oop-uml/index.html
+          grep -q 'href="../seminario/"' seminario-oop-uml/index.html
+          grep -q '../seminario/entry-bridge.js' seminario-tracks/index.html
+          grep -q 'data-mode="specialized"' seminario-tracks/index.html
+          for route in web data-science cybersecurity 3d-programming robotics; do
+            f="seminario-tracks/$route/index.html"
+            test -s "$f"
+            grep -q '../../seminario/entry-bridge.js' "$f"
+            grep -q 'data-mode="specialized-track"' "$f"
+            grep -q 'hub-v4.js' "$f"
+            grep -q 'diagnostic-practical-v6.js' "$f"
+            grep -q 'topic-pages-v6.js' "$f"
+          done
+
+      - name: Validate existing learning assets remain present
+        run: |
+          set -euo pipefail
+          grep -q 'course-data.js' seminario-oop-uml/index.html
+          grep -q 'hub.js' seminario-oop-uml/index.html
+          grep -q 'Specialized tracks' seminario-oop-uml/index.html
+          grep -q 'One Studio. Five specialized paths.' seminario-tracks/index.html
