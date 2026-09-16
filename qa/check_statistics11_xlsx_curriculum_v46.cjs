@@ -17,7 +17,7 @@ const migration = read('supabase/migrations/20260916170000_statistics11_xlsx_aft
 const workbook = fs.readFileSync(path.join(ROOT, 'python/data/stat11_stage4_students.xlsx'));
 
 // Preserve the existing topic structure: reuse the existing logic slot and designate it as the first real-file topic after Arrays.
-requireContract(base.includes("slug: 'arrays'") && base.includes("slug: 'logic'"), 'Base curriculum must retain the existing arrays and logic topic slugs.');
+requireContract(/slug\s*:\s*['"]arrays['"]/.test(base) && /slug\s*:\s*['"]logic['"]/.test(base), 'Base curriculum must retain the existing arrays and logic topic slugs.');
 requireContract(v46.includes("replaceTopic('logic'"), 'V46 must reuse the existing logic slug instead of creating a structural topic break.');
 requireContract(v46.includes("firstFileTopicAfterArrays: 'logic'"), 'V46 metadata must designate the reused logic slot as the first real-file topic after Arrays.');
 requireContract(v46.includes("title: 'Excel (.xlsx) files with Pandas'"), 'Topic 4 is not the XLSX/Pandas topic.');
