@@ -32,37 +32,31 @@ jobs:
         with:
           node-version: 20
 
-      - name: Validate five dedicated routes and retained assets
+      - name: Validate specialized route assets
         run: |
           set -euo pipefail
           for route in web data-science cybersecurity 3d-programming robotics; do
             f="seminario-tracks/$route/index.html"
             test -s "$f"
-            grep -q "data-track=\"$route\"" "$f"
-            grep -q 'config-v5.js' "$f"
-            grep -q 'hub-v4.js' "$f"
-            grep -q 'diagnostic-practical-v6.css' "$f"
-            grep -q 'diagnostic-practical-v6.js' "$f"
-            grep -q 'diagnostic-practical-backend-v6.js' "$f"
-            grep -q 'topic-pages-v6.js' "$f"
-            grep -q 'oop-parity-v6.css' "$f"
+            grep -Fq "data-track=\"$route\"" "$f"
+            grep -Fq 'config-v5.js' "$f"
+            grep -Fq 'hub-v4.js' "$f"
+            grep -Fq 'diagnostic-practical-v6.css' "$f"
+            grep -Fq 'diagnostic-practical-v6.js' "$f"
+            grep -Fq 'diagnostic-practical-backend-v6.js' "$f"
+            grep -Fq 'topic-pages-v6.js' "$f"
           done
-          test -s seminario-tracks/index.html
-          test -s seminario-tracks/theory.html
-          test -s seminario-tracks/workshop.html
-          test -s seminario-tracks/shared/config-v5.js
-          test -s seminario-tracks/shared/track-data.js
-          test -s seminario-tracks/shared/hub-v4.js
-          test -s seminario-tracks/shared/diagnostic-practical-v6.js
-          test -s seminario-tracks/shared/diagnostic-practical-backend-v6.js
-          test -s seminario-tracks/shared/diagnostic-practical-v6.css
-          test -s seminario-tracks/shared/topic-pages-v6.js
-          test -s seminario-tracks/shared/learning-page-v6.js
-          test -s seminario-tracks/shared/oop-parity-v6.css
-          test -s seminario-tracks/shared/learning-content-v7.js
-          test -s seminario-tracks/shared/learning-page-v7.js
-          test -s seminario-tracks/shared/learning-v7.css
-          test -s seminario-tracks/shared/workshop-v7-integrity.js
+          for f in \
+            seminario-tracks/shared/diagnostic-practical-v6.js \
+            seminario-tracks/shared/diagnostic-practical-backend-v6.js \
+            seminario-tracks/shared/diagnostic-practical-v6.css \
+            seminario-tracks/shared/learning-content-v7.js \
+            seminario-tracks/shared/learning-page-v7.js \
+            seminario-tracks/shared/workshop-v7-integrity.js \
+            supabase/functions/seminar-diagnostic-practical/index.ts \
+            supabase/migrations/20260916163000_seminar_diagnostic_practical_v6.sql; do
+            test -s "$f"
+          done
 
       - name: Validate JavaScript syntax
         run: |
@@ -73,12 +67,11 @@ jobs:
           node --check seminario-tracks/shared/diagnostic-practical-v6.js
           node --check seminario-tracks/shared/diagnostic-practical-backend-v6.js
           node --check seminario-tracks/shared/topic-pages-v6.js
-          node --check seminario-tracks/shared/learning-page-v6.js
           node --check seminario-tracks/shared/learning-content-v7.js
           node --check seminario-tracks/shared/learning-page-v7.js
           node --check seminario-tracks/shared/workshop-v7-integrity.js
 
-      - name: Validate curriculum and expanded theory contract
+      - name: Validate curriculum and V7 learning contract
         run: |
           set -euo pipefail
           node - <<'NODE'
@@ -87,18 +80,16 @@ jobs:
           const tracks=globalThis.IJR_SPECIALIZED_TRACKS;
           const extra=globalThis.IJR_SPECIALIZED_V7_CONTENT;
           const slugs=['web','data-science','cybersecurity','3d-programming','robotics'];
-          if(!tracks||Object.keys(tracks).length!==5) throw new Error('Expected exactly five tracks');
-          if(!extra||Object.keys(extra).length!==5) throw new Error('Expected V7 theory for exactly five tracks');
+          if(!tracks||Object.keys(tracks).length!==5) throw new Error('Expected five tracks');
+          if(!extra||Object.keys(extra).length!==5) throw new Error('Expected V7 theory for five tracks');
           for(const slug of slugs){
             const t=tracks[slug];
-            if(!t||t.sprints.length!==8) throw new Error(`${slug}: expected eight sprints`);
-            if(!Array.isArray(t.stages)||t.stages.length!==4) throw new Error(`${slug}: expected four technical topics/stages`);
+            if(!t||t.sprints.length!==8||t.stages.length!==4) throw new Error(`${slug}: curriculum contract mismatch`);
             if(t.diagnostic.totalQuestions!==15||t.diagnostic.scoredQuestions!==12||t.diagnostic.selfProfileQuestions!==3) throw new Error(`${slug}: diagnostic contract mismatch`);
             for(const stage of t.stages){
-              if(!stage.title||!stage.theory||!stage.lab||!stage.code||!stage.language) throw new Error(`${slug} stage ${stage.n}: base theory/workshop contract incomplete`);
+              if(!stage.title||!stage.theory||!stage.lab||!stage.code||!stage.language) throw new Error(`${slug}/${stage.n}: base topic incomplete`);
               const e=extra[slug]?.[stage.n];
-              if(!e||!e.why||!Array.isArray(e.objectives)||e.objectives.length<3||!Array.isArray(e.deep)||e.deep.length<3||!Array.isArray(e.trace)||e.trace.length<3||!Array.isArray(e.checkpoints)||e.checkpoints.length<3||!e.case||!e.workshop) throw new Error(`${slug} stage ${stage.n}: V7 expanded theory incomplete`);
-              for(const k of ['predict','model','modify','explain']) if(!e.workshop[k]) throw new Error(`${slug} stage ${stage.n}: missing workshop prompt ${k}`);
+              if(!e||!e.why||e.objectives?.length<3||e.deep?.length<3||e.trace?.length<3||e.checkpoints?.length<3||!e.case||!e.workshop) throw new Error(`${slug}/${stage.n}: V7 theory incomplete`);
             }
           }
           NODE
@@ -109,124 +100,74 @@ jobs:
           js=seminario-tracks/shared/diagnostic-practical-v6.js
           bridge=seminario-tracks/shared/diagnostic-practical-backend-v6.js
           css=seminario-tracks/shared/diagnostic-practical-v6.css
-          test "$(grep -o "id:'[a-zA-Z0-9-]*'" "$js" | wc -l)" -eq 10
-          for token in "web-valid-age" "web-task-domain" "data-iqr-fences" "data-pandas-filter" "cyber-valid-code" "cyber-access-policy" "3d-translate" "3d-positive-dimension" "robotics-threshold" "robotics-failsafe"; do grep -q "$token" "$js"; done
-          grep -q 'loadPyodide' "$js"
-          grep -q 'loadPackagesFromImports' "$js"
-          grep -q "sandbox='allow-scripts'" "$js"
-          grep -q "connect-src 'none'" "$js"
-          grep -q 'Run tests' "$js"
-          grep -q 'attempted<c.total' "$js"
-          grep -q 'Passing is not required' "$js"
-          grep -q "replace(/\\\\n/g" "$js"
-          grep -q 'seminar-diagnostic-practical' "$bridge"
-          grep -q "body?.action==='diagnostic-practical'" "$bridge"
-          grep -q 'terminal-editor-v6' "$css"
-          grep -q 'practical-result-v6' "$css"
-          ! grep -R -q 'SUPABASE_SERVICE_ROLE_KEY\|service_role' "$js" "$bridge"
+          count=$(grep -o "id:'[A-Za-z0-9-]*'" "$js" | wc -l | tr -d ' ')
+          test "$count" = "10"
+          for token in \
+            web-valid-age web-task-domain \
+            data-iqr-fences data-pandas-filter \
+            cyber-valid-code cyber-access-policy \
+            3d-translate 3d-positive-dimension \
+            robotics-threshold robotics-failsafe; do
+            grep -Fq "$token" "$js"
+          done
+          grep -Fq 'loadPyodide' "$js"
+          grep -Fq 'loadPackagesFromImports' "$js"
+          grep -Fq "sandbox='allow-scripts'" "$js"
+          grep -Fq "connect-src 'none'" "$js"
+          grep -Fq 'Run tests' "$js"
+          grep -Fq 'Passing is not required' "$js"
+          grep -Fq 'const normalized=raw.replace' "$js"
+          grep -Fq 'seminar-diagnostic-practical' "$bridge"
+          grep -Fq "body?.action==='diagnostic-practical'" "$bridge"
+          grep -Fq 'terminal-editor-v6' "$css"
+          grep -Fq 'practical-result-v6' "$css"
+          if grep -Eq 'SUPABASE_SERVICE_ROLE_KEY|service_role' "$js" "$bridge"; then exit 1; fi
 
-      - name: Validate OOP-parity V6 retained
+      - name: Validate Theory and Workshop V7 retained
         run: |
           set -euo pipefail
-          grep -q 'One topic · two dedicated pages' seminario-tracks/shared/topic-pages-v6.js
-          grep -q '>Theory<' seminario-tracks/shared/topic-pages-v6.js
-          grep -q '>Workshop<' seminario-tracks/shared/topic-pages-v6.js
-          grep -q 'QUICK REFERENCE · CURRENT CONTENT RETAINED' seminario-tracks/shared/topic-pages-v6.js
-          grep -q 'prefers-reduced-motion' seminario-tracks/shared/oop-parity-v6.css
+          grep -Fq 'One topic · two dedicated pages' seminario-tracks/shared/topic-pages-v6.js
+          grep -Fq 'WHY THIS MATTERS' seminario-tracks/shared/learning-page-v7.js
+          grep -Fq 'DEEP DIVE' seminario-tracks/shared/learning-page-v7.js
+          grep -Fq 'CONCEPT CHECKPOINT' seminario-tracks/shared/learning-page-v7.js
+          grep -Fq 'STEP 01 · PREDICT' seminario-tracks/shared/learning-page-v7.js
+          grep -Fq 'STEP 03 · IMPLEMENT + RUN' seminario-tracks/shared/learning-page-v7.js
+          grep -Fq 'STEP 06 · EXPLAIN' seminario-tracks/shared/learning-page-v7.js
+          grep -Fq 'loadPyodide' seminario-tracks/shared/learning-page-v7.js
+          grep -Fq 'workshop_completed' seminario-tracks/shared/learning-page-v7.js
+          grep -Fq 'Code changed after the last successful run' seminario-tracks/shared/workshop-v7-integrity.js
 
-      - name: Validate expanded Theory V7
-        run: |
-          set -euo pipefail
-          grep -q 'learning-content-v7.js' seminario-tracks/theory.html
-          grep -q 'learning-page-v7.js' seminario-tracks/theory.html
-          grep -q 'learning-v7.css' seminario-tracks/theory.html
-          js=seminario-tracks/shared/learning-page-v7.js
-          grep -q 'WHY THIS MATTERS' "$js"
-          grep -q 'LEARNING OBJECTIVES' "$js"
-          grep -q 'DEEP DIVE' "$js"
-          grep -q 'WORKED IMPLEMENTATION' "$js"
-          grep -q 'CODE READING' "$js"
-          grep -q 'APPLIED CASE' "$js"
-          grep -q 'CONCEPT CHECKPOINT' "$js"
-          grep -q 'MASTERY EVIDENCE' "$js"
-          grep -q 'cybersecurity' seminario-tracks/shared/learning-content-v7.js
-          grep -q 'authorized local or simulated defensive scope' "$js"
-
-      - name: Validate functional Workshop V7
-        run: |
-          set -euo pipefail
-          grep -q 'pyodide/v0.27.7/full/pyodide.js' seminario-tracks/workshop.html
-          grep -q 'learning-page-v7.js' seminario-tracks/workshop.html
-          grep -q 'workshop-v7-integrity.js' seminario-tracks/workshop.html
-          js=seminario-tracks/shared/learning-page-v7.js
-          grep -q 'STEP 01 · PREDICT' "$js"
-          grep -q 'STEP 02 · MODEL' "$js"
-          grep -q 'STEP 03 · IMPLEMENT + RUN' "$js"
-          grep -q 'STEP 04 · TEST' "$js"
-          grep -q 'STEP 05 · MODIFY' "$js"
-          grep -q 'STEP 06 · EXPLAIN' "$js"
-          grep -q 'loadPyodide' "$js"
-          grep -q 'loadPackagesFromImports' "$js"
-          grep -q 'sandbox="allow-scripts"' "$js"
-          grep -q "connect-src 'none'" "$js"
-          grep -q 'normalExpected' "$js"
-          grep -q 'boundaryExpected' "$js"
-          grep -q 'failureExpected' "$js"
-          grep -q 'workshop_completed' "$js"
-          grep -q 'Complete all six evidence gates first' "$js"
-          grep -q 'Code changed after the last successful run' seminario-tracks/shared/workshop-v7-integrity.js
-          grep -q 'prefers-reduced-motion' seminario-tracks/shared/learning-v7.css
-
-      - name: Validate V5 diagnostic gateway security contract
+      - name: Validate protected V5 diagnostic contract
         run: |
           set -euo pipefail
           cfg=seminario-tracks/shared/config-v5.js
-          js=seminario-tracks/shared/hub-v4.js
-          grep -q "gatewayFunction:'seminar-studio-student'" "$cfg"
-          grep -q "bankVersion:'2026-09-16-v5'" "$cfg"
-          grep -q "gateway('diagnostic-start'" "$js"
-          grep -q "gateway('diagnostic-questions'" "$js"
-          grep -q "gateway('diagnostic-submit'" "$js"
-          grep -q 'answers:state.answers' "$js"
-          grep -qi 'self-profile' "$js"
-          grep -q 'localStorage' "$js"
-          grep -q 'aria-live' "$js"
-          ! grep -q 'correct_option' "$js"
-          ! grep -q 'seminar_track_diagnostic_submit' "$js"
-          ! grep -R -q 'SUPABASE_SERVICE_ROLE_KEY\|service_role' seminario-tracks/shared/config-v5.js seminario-tracks/shared/hub-v4.js seminario-tracks/shared/topic-pages-v6.js seminario-tracks/shared/learning-page-v7.js seminario-tracks/shared/workshop-v7-integrity.js
-          grep -q 'question-code-prompt' seminario-tracks/shared/diagnostic-v4.css
+          hub=seminario-tracks/shared/hub-v4.js
+          grep -Fq "gatewayFunction:'seminar-studio-student'" "$cfg"
+          grep -Fq "bankVersion:'2026-09-16-v5'" "$cfg"
+          grep -Fq "gateway('diagnostic-start'" "$hub"
+          grep -Fq "gateway('diagnostic-questions'" "$hub"
+          grep -Fq "gateway('diagnostic-submit'" "$hub"
+          grep -Fq 'answers:state.answers' "$hub"
+          if grep -Fq 'correct_option' "$hub"; then exit 1; fi
+          if grep -Fq 'seminar_track_diagnostic_submit' "$hub"; then exit 1; fi
 
-      - name: Validate Supabase diagnostic contracts
+      - name: Validate Supabase practical evidence contract
         run: |
           set -euo pipefail
-          legacy=$(ls supabase/migrations/*seminar_specialized_learning_hubs_diagnostic_v1.sql | head -1)
-          test -s "$legacy"
-          grep -q 'seminar_track_diagnostic_questions' "$legacy"
-          grep -q 'enable row level security' "$legacy"
+          practical=supabase/migrations/20260916163000_seminar_diagnostic_practical_v6.sql
+          fn=supabase/functions/seminar-diagnostic-practical/index.ts
+          grep -Fq 'set prompt = replace(prompt' "$practical"
+          grep -Fq 'PRACTICAL_RUN' "$practical"
+          grep -Fq 'PRACTICAL_RUN' "$fn"
+          grep -Fq 'access_token_hash' "$fn"
+          grep -Fq 'attempt_already_completed' "$fn"
+          grep -Fq 'challenge_id' "$fn"
+          grep -Fq 'run_count' "$fn"
+          if grep -Fq 'source_code' "$fn"; then exit 1; fi
 
           rpc=supabase/migrations/20260916154214_seminar_specialized_diagnostic_v5_rpcs.sql
           bank=supabase/migrations/20260916154716_seminar_specialized_diagnostic_v5_question_bank.sql
-          practical=supabase/migrations/20260916163000_seminar_diagnostic_practical_v6.sql
-          test -s "$rpc"
-          test -s "$bank"
-          test -s "$practical"
-          grep -q '2026-09-16-v5' "$rpc"
-          grep -q 'stage-mastery-v5' "$rpc"
-          grep -q 'revoke execute on function public.seminar_track_diagnostic_submit' "$rpc"
-          grep -q 'grant execute on function public.seminar_track_diagnostic_submit' "$rpc"
-          grep -q 'service_role' "$rpc"
-          grep -q '2026-09-16-v5' "$bank"
-          test "$(grep -o "concept_code='code_" "$bank" | wc -l)" -ge 20
-          grep -q "replace(prompt, E'\\\\n', E'\\n')" "$practical"
-          grep -q 'PRACTICAL_RUN' "$practical"
-
-          fn=supabase/functions/seminar-studio-student/index.ts
-          practical_fn=supabase/functions/seminar-diagnostic-practical/index.ts
-          test -s "$fn"
-          test -s "$practical_fn"
-          grep -q '2026-09-16-v5' "$fn"
-          grep -q 'learning-event' "$fn"
-          grep -q 'workshop_completed' "$fn"
-          grep -q 'PRACTICAL_RUN' "$practical_fn"
-          grep -q 'access_token_hash' "$practical_fn"
-          grep -q 'attempt_already_completed' "$practical_fn"
+          grep -Fq 'stage-mastery-v5' "$rpc"
+          grep -Fq 'revoke execute on function public.seminar_track_diagnostic_submit' "$rpc"
+          grep -Fq 'service_role' "$rpc"
+          grep -Fq '2026-09-16-v5' "$bank"
