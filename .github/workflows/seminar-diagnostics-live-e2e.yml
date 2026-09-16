@@ -25,7 +25,16 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Run all five live diagnostic start flows
+      - name: Start PR source on backend-allowed localhost origin
+        run: |
+          python3 -m http.server 8000 --bind 127.0.0.1 > /tmp/seminar-http.log 2>&1 &
+          for i in {1..20}; do
+            curl -fsS http://127.0.0.1:8000/seminario/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/seminar-http.log
+          exit 1
+      - name: Run all five diagnostic start flows against PR source
         env:
-          SEMINAR_BASE_URL: https://juanperez238421-cpu.github.io/ijr-estadistica-11-2026
+          SEMINAR_BASE_URL: http://127.0.0.1:8000
         run: node qa/seminar-diagnostics-live-e2e.mjs
