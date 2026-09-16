@@ -12,6 +12,10 @@ function install(){
   if(document.getElementById('topicPagesV5'))return true;
   const learning=document.getElementById('learningAnchor')||document.querySelector('.learning-section');
   if(!learning)return false;
+  const diagnosticEyebrow=[...document.querySelectorAll('.section-head .eyebrow')].find(x=>x.textContent.includes('DIAGNOSTIC 01'));
+  if(diagnosticEyebrow)diagnosticEyebrow.textContent='DIAGNOSTIC 01 · INDIVIDUAL · ENGLISH BASE · BANK V5';
+  const version=document.querySelector('.diagnostic-version');
+  if(version)version.textContent=`${globalThis.IJR_SPECIALIZED_HUB_CONFIG?.bankVersion||'2026-09-16-v5'} · 12 technical · 4 code-reading · 4 stages · 3 self-profile`;
   learning.insertAdjacentHTML('beforebegin',cards());
   const head=learning.querySelector('.section-head');
   if(head){head.insertAdjacentHTML('afterbegin','<p class="eyebrow retained-label">QUICK REFERENCE · CURRENT CONTENT RETAINED</p>');}
