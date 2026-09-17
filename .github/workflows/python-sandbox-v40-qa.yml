@@ -1,0 +1,41 @@
+name: Python Sandbox V40 QA
+
+on:
+  push:
+    branches:
+      - feature/python-sandbox-v40
+    paths:
+      - 'python/index.html'
+      - 'python/sandbox.html'
+      - 'python/sandbox-v39.js'
+      - 'python/sandbox-workspace-v40.js'
+      - 'python/sandbox-workspace-v40.css'
+      - 'qa/check_python_sandbox_v40.cjs'
+      - '.github/workflows/python-sandbox-v40-qa.yml'
+  pull_request:
+    paths:
+      - 'python/index.html'
+      - 'python/sandbox.html'
+      - 'python/sandbox-v39.js'
+      - 'python/sandbox-workspace-v40.js'
+      - 'python/sandbox-workspace-v40.css'
+      - 'qa/check_python_sandbox_v40.cjs'
+      - '.github/workflows/python-sandbox-v40-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sandbox-v40-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: JavaScript syntax
+        run: |
+          node --check python/sandbox-v39.js
+          node --check python/sandbox-workspace-v40.js
+          node --check qa/check_python_sandbox_v40.cjs
+      - name: Sandbox V40 source contracts
+        run: node qa/check_python_sandbox_v40.cjs
