@@ -8,6 +8,7 @@
   const QA_EMAIL = 'qa.student11@ijr.edu.co';
   const QA_GROUP = '11A';
   const QA_LOGIN_RPC = 'python_hub_qa_login_v1';
+  const QA_CODE_LENGTH = 4;
   const client = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, {
     auth: { persistSession:false, autoRefreshToken:false, detectSessionInUrl:false }
   });
@@ -109,10 +110,10 @@
     $('confirmationPanel')?.classList.add('hidden');
 
     if ($('selectedIdentity')) $('selectedIdentity').textContent = `${QA_GROUP} · ${QA_EMAIL}`;
-    if ($('passwordModeTitle')) $('passwordModeTitle').textContent = 'QA student · Enter the test password';
+    if ($('passwordModeTitle')) $('passwordModeTitle').textContent = 'QA student · Enter the 4-digit test code';
     if ($('passwordModeCopy')) $('passwordModeCopy').textContent = 'This exact synthetic account uses an isolated QA login path and the normal Statistics 11 progress backend.';
     if ($('passwordActionTitle')) $('passwordActionTitle').textContent = 'Step 2 of 2 · QA student sign in';
-    if ($('passwordActionCopy')) $('passwordActionCopy').textContent = 'Enter the QA password. Supabase Auth is intentionally bypassed only for this exact synthetic identity.';
+    if ($('passwordActionCopy')) $('passwordActionCopy').textContent = 'Enter the 4-digit QA code. Supabase Auth is intentionally bypassed only for this exact synthetic identity.';
     if ($('passwordSubmitButton')) $('passwordSubmitButton').textContent = 'Sign in';
     if ($('confirmPasswordWrap')) $('confirmPasswordWrap').classList.add('hidden');
     if ($('studentPasswordConfirm')) $('studentPasswordConfirm').required = false;
@@ -129,6 +130,11 @@
     if ($('studentPassword')) {
       $('studentPassword').value = '';
       $('studentPassword').autocomplete = 'current-password';
+      $('studentPassword').minLength = QA_CODE_LENGTH;
+      $('studentPassword').maxLength = QA_CODE_LENGTH;
+      $('studentPassword').inputMode = 'numeric';
+      $('studentPassword').pattern = '[0-9]{4}';
+      $('studentPassword').placeholder = '4-digit QA code';
       setTimeout(() => $('studentPassword')?.focus(), 0);
     }
   }
@@ -137,12 +143,12 @@
     event.preventDefault();
     event.stopImmediatePropagation();
 
-    const password = String($('studentPassword')?.value || '');
+    const password = String($('studentPassword')?.value || '').trim();
     const status = $('passwordStatus');
     const button = $('passwordSubmitButton');
-    if (password.length < 8) {
+    if (!/^\d{4}$/.test(password)) {
       if (status) {
-        status.textContent = 'Enter the QA password.';
+        status.textContent = 'Enter the 4-digit QA code.';
         status.className = 'inline-status error';
       }
       return;
@@ -158,7 +164,7 @@
       const data = await rpc(QA_LOGIN_RPC, {
         p_password:password,
         p_session_id:crypto.randomUUID(),
-        p_user_agent:`Official Hub QA V46 · ${navigator.userAgent}`
+        p_user_agent:`Official Hub QA V47 · ${navigator.userAgent}`
       });
       if (!data?.registration_id || !data?.access_token || !data?.snapshot) throw new Error('QA login returned an incomplete response.');
       if ($('studentPassword')) $('studentPassword').value = '';
@@ -186,8 +192,6 @@
     renderQaHub();
   }
 
-  // Robust interception at the document capture phase. This runs before the
-  // ordinary student router can process the same submit event.
   document.addEventListener('submit', event => {
     const form = event.target;
     if (!(form instanceof HTMLFormElement)) return;
@@ -243,7 +247,6 @@
     const saved = savedQaSession();
     if (!saved) return;
 
-    // Resume QA before hub-router.js clears unauthenticated local sessions.
     event.stopImmediatePropagation();
     qaMode = true;
     resumeQa(saved).catch(() => {
