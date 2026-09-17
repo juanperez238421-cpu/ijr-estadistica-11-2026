@@ -41,6 +41,7 @@ jobs:
           node --check python/pandas-excel-practical-v52.js
           node --check python/pandas-excel-live-v53.js
           node --check python/pandas-excel-theory-v54.js
+          node --check python/pandas-excel-theory-v56-audit.js
           node --check python/workshop-xlsx-topic-v46.js
           node --check python/workshop-startup-v50.js
           node --check python/workshop-team-gate-v50.js
@@ -54,7 +55,7 @@ jobs:
       - name: V50 workshop startup contract
         run: node qa/check_statistics11_workshop_v50.cjs
 
-      - name: Topic 04 theory V54 static contract
+      - name: Topic 04 theory V54/V56 static contract
         run: node qa/check_statistics11_theory_v54.cjs
 
       - name: Topic 04 theory responsive browser QA
@@ -79,7 +80,7 @@ jobs:
             if ! grep -q "$pattern" "$file"; then
               echo "DOM assertion failed: $label" >&2
               echo "--- HTML root/audit markers ---" >&2
-              grep -oE '<html[^>]*>|<output id="theoryV54Audit"[^>]*>[^<]*|data-theory-v54[^ >]*|data-pandas-v54[^ >]*|TOPIC 04 · [^<]+' "$file" | head -100 >&2 || true
+              grep -oE '<html[^>]*>|<output id="theoryV54Audit"[^>]*>[^<]*|<output id="theoryV56Audit"[^>]*>[^<]*|data-theory-v5[46][^ >]*|data-pandas-v54[^ >]*|TOPIC 04 · [^<]+' "$file" | head -120 >&2 || true
               echo "--- access/startup markers ---" >&2
               grep -oE 'REGISTRATION REQUIRED|TOPIC LOCKED|THEORY STARTUP RECOVERY|Connection issue|Open the Learning Hub first|Pandas \+ Excel|LIVE PANDAS|LIVE LOGIC' "$file" | head -80 >&2 || true
               exit 1
@@ -99,7 +100,9 @@ jobs:
               --dump-dom \
               "http://127.0.0.1:4173/qa/theory_v54_bootstrap.html" > "$out"
             assert_dom 'data-theory-v54="v54"' 'V54 enhancement installed' "$out"
-            assert_dom 'data-theory-v54-overflow="pass"' 'No unhandled horizontal overflow' "$out"
+            assert_dom 'data-theory-v56="v56"' 'V56 rendered-content audit installed' "$out"
+            assert_dom 'data-theory-v56-overflow="pass"' 'Rendered text/content stays inside containers' "$out"
+            assert_dom 'data-theory-v54-overflow="pass"' 'Final overflow state is clean' "$out"
             assert_dom 'data-pandas-v54="v54"' 'Semantic diagram replacement installed' "$out"
             assert_dom 'TOPIC 04 · LIVE PANDAS + EXCEL' 'Correct live Topic 04 visible' "$out"
             assert_dom 'Drop your Excel workbook here' 'Upload guide visible' "$out"
@@ -131,9 +134,9 @@ jobs:
             "http://127.0.0.1:4174/qa/theory_v54_bootstrap.html?qaAuto=1" > "$out"
           if ! grep -q 'data-theory-v54-runtime="pass"' "$out"; then
             echo "Runtime QA failed." >&2
-            grep -oE '<html[^>]*>|data-theory-v54-runtime[^ >]*|data-theory-v54-runtime-error="[^"]*"|Created: [^<]*|Shape: [^<]*' "$out" | head -100 >&2 || true
+            grep -oE '<html[^>]*>|data-theory-v54-runtime[^ >]*|data-theory-v54-runtime-error="[^"]*"|data-theory-v56-overflow="[^"]*"|Created: [^<]*|Shape: [^<]*' "$out" | head -120 >&2 || true
             exit 1
           fi
-          grep -q 'data-theory-v54-overflow="pass"' "$out"
+          grep -q 'data-theory-v56-overflow="pass"' "$out"
           grep -q 'Created: True' "$out"
           grep -q 'analysis_output.xlsx' "$out"
