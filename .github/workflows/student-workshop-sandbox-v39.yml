@@ -1,11 +1,11 @@
-name: Student Workshop Stable + Sandbox V41 QA
+name: Student Workshop V47 + Sandbox V39 QA
 
 on:
   pull_request:
     paths:
       - 'python/workshop.html'
-      - 'python/workshop-bootstrap-v33.js'
-      - 'python/workshop-page.js'
+      - 'python/workshop-v42.js'
+      - 'python/workshop-array-prompts-v28.js'
       - 'python/sandbox.html'
       - 'python/sandbox-v39.js'
       - 'python/sandbox-v39.css'
@@ -16,8 +16,8 @@ on:
     branches: [main]
     paths:
       - 'python/workshop.html'
-      - 'python/workshop-bootstrap-v33.js'
-      - 'python/workshop-page.js'
+      - 'python/workshop-v42.js'
+      - 'python/workshop-array-prompts-v28.js'
       - 'python/sandbox.html'
       - 'python/sandbox-v39.js'
       - 'python/sandbox-v39.css'
@@ -30,7 +30,7 @@ permissions:
   contents: read
 
 jobs:
-  v41-qa:
+  workshop-sandbox-v47-qa:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -39,13 +39,13 @@ jobs:
 
       - name: JavaScript syntax
         run: |
-          node --check python/workshop-bootstrap-v33.js
-          node --check python/workshop-page.js
+          node --check python/workshop-v42.js
+          node --check python/workshop-array-prompts-v28.js
           node --check python/sandbox-v39.js
           node --check qa/check_student_workshop_sandbox_v39.cjs
           node --check qa/sandbox_runtime_smoke_v39.cjs
 
-      - name: Stable workshop and sandbox source contracts
+      - name: Current workshop and sandbox source contracts
         run: node qa/check_student_workshop_sandbox_v39.cjs
 
       - name: Verify production Pyodide asset
