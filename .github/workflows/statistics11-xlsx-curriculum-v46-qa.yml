@@ -72,7 +72,22 @@ jobs:
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           sleep 1
 
+          assert_dom() {
+            local pattern="$1"
+            local label="$2"
+            local file="$3"
+            if ! grep -q "$pattern" "$file"; then
+              echo "DOM assertion failed: $label" >&2
+              echo "--- HTML root/audit markers ---" >&2
+              grep -oE '<html[^>]*>|id="theoryV54Audit"[^>]*>|data-theory-v54[^ >]*|data-pandas-v54[^ >]*|TOPIC 04 · [^<]+' "$file" | head -80 >&2 || true
+              echo "--- access/startup markers ---" >&2
+              grep -oE 'REGISTRATION REQUIRED|TOPIC LOCKED|THEORY STARTUP RECOVERY|Connection issue|Open the Learning Hub first|Pandas \+ Excel|LIVE PANDAS|LIVE LOGIC' "$file" | head -80 >&2 || true
+              exit 1
+            fi
+          }
+
           for viewport in "1440,1800" "1024,1800" "768,1800" "390,1800"; do
+            echo "Testing viewport $viewport"
             out="/tmp/theory-v54-${viewport//,/x}.html"
             "$BROWSER" \
               --headless=new \
@@ -83,12 +98,12 @@ jobs:
               --virtual-time-budget=9000 \
               --dump-dom \
               "http://127.0.0.1:4173/qa/theory_v54_bootstrap.html" > "$out"
-            grep -q 'data-theory-v54="v54"' "$out"
-            grep -q 'data-theory-v54-overflow="pass"' "$out"
-            grep -q 'data-pandas-v54="v54"' "$out"
-            grep -q 'TOPIC 04 · LIVE PANDAS + EXCEL' "$out"
-            grep -q 'Drop your Excel workbook here' "$out"
-            grep -q 'Upload ≠ read: follow the file bytes' "$out"
+            assert_dom 'data-theory-v54="v54"' 'V54 enhancement installed' "$out"
+            assert_dom 'data-theory-v54-overflow="pass"' 'No unhandled horizontal overflow' "$out"
+            assert_dom 'data-pandas-v54="v54"' 'Semantic diagram replacement installed' "$out"
+            assert_dom 'TOPIC 04 · LIVE PANDAS + EXCEL' 'Correct live Topic 04 visible' "$out"
+            assert_dom 'Drop your Excel workbook here' 'Upload guide visible' "$out"
+            assert_dom 'Upload ≠ read: follow the file bytes' 'Animated upload/read diagram visible' "$out"
             if grep -q 'TOPIC 04 · LIVE LOGIC' "$out"; then
               echo "Legacy LIVE LOGIC section is still visible at viewport $viewport" >&2
               exit 1
@@ -114,7 +129,11 @@ jobs:
             --virtual-time-budget=120000 \
             --dump-dom \
             "http://127.0.0.1:4174/qa/theory_v54_bootstrap.html?qaAuto=1" > "$out"
-          grep -q 'data-theory-v54-runtime="pass"' "$out"
+          if ! grep -q 'data-theory-v54-runtime="pass"' "$out"; then
+            echo "Runtime QA failed." >&2
+            grep -oE '<html[^>]*>|data-theory-v54-runtime[^ >]*|data-theory-v54-runtime-error="[^"]*"|Created: [^<]*|Shape: [^<]*' "$out" | head -100 >&2 || true
+            exit 1
+          fi
           grep -q 'data-theory-v54-overflow="pass"' "$out"
           grep -q 'Created: True' "$out"
           grep -q 'analysis_output.xlsx' "$out"
