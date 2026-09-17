@@ -5,14 +5,18 @@ on:
     paths:
       - 'python/**'
       - 'qa/check_statistics11_xlsx_curriculum_v46.cjs'
+      - 'qa/check_statistics11_workshop_v50.cjs'
       - 'supabase/migrations/20260916170000_statistics11_xlsx_after_arrays_v46.sql'
+      - 'supabase/migrations/20260917162107_statistics11_workshop_team_v50_token_start.sql'
       - '.github/workflows/statistics11-xlsx-curriculum-v46-qa.yml'
   push:
     branches: [main]
     paths:
       - 'python/**'
       - 'qa/check_statistics11_xlsx_curriculum_v46.cjs'
+      - 'qa/check_statistics11_workshop_v50.cjs'
       - 'supabase/migrations/20260916170000_statistics11_xlsx_after_arrays_v46.sql'
+      - 'supabase/migrations/20260917162107_statistics11_workshop_team_v50_token_start.sql'
       - '.github/workflows/statistics11-xlsx-curriculum-v46-qa.yml'
   workflow_dispatch:
 
@@ -30,6 +34,11 @@ jobs:
         run: |
           node --check python/curriculum-xlsx-first-v46.js
           node --check python/workshop-xlsx-topic-v46.js
+          node --check python/workshop-startup-v50.js
+          node --check python/workshop-team-gate-v50.js
           node --check qa/check_statistics11_xlsx_curriculum_v46.cjs
+          node --check qa/check_statistics11_workshop_v50.cjs
       - name: Curriculum and workshop contract
         run: node qa/check_statistics11_xlsx_curriculum_v46.cjs
+      - name: V50 workshop startup contract
+        run: node qa/check_statistics11_workshop_v50.cjs
