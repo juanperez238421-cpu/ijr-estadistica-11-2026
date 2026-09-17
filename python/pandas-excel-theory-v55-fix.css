@@ -1,0 +1,39 @@
+/* Topic 04 · Theory V55 layout fix.
+   V54 semantic figures are intentionally full-width: the previous generic
+   two-column diagram grid gave each complex Excel figure only half the page. */
+
+#diagramGrid[data-pandas-v54="v54"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+#diagramGrid[data-pandas-v54="v54"] > .pandas-v54-diagram-card,
+#diagramGrid[data-pandas-v54="v54"] .pandas-v54-stage,
+#diagramGrid[data-pandas-v54="v54"] .pandas-v54-file-flow,
+#diagramGrid[data-pandas-v54="v54"] .pandas-v54-anatomy,
+#diagramGrid[data-pandas-v54="v54"] .pandas-v54-mask,
+#diagramGrid[data-pandas-v54="v54"] .pandas-v54-safe-flow {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Keep long Python/file labels contained even if a browser uses a wider
+   monospace fallback font than the development machine. */
+#diagramGrid[data-pandas-v54="v54"] code,
+#diagramGrid[data-pandas-v54="v54"] strong,
+#diagramGrid[data-pandas-v54="v54"] small,
+#diagramGrid[data-pandas-v54="v54"] span,
+.pandas-v54-live-hardened code,
+.pandas-v54-live-hardened strong,
+.pandas-v54-theory-hardened code {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 760px) {
+  #diagramGrid[data-pandas-v54="v54"] .pandas-v54-stage {
+    padding-inline: 14px !important;
+  }
+}
