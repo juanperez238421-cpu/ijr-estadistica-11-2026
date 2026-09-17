@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Theory V54 QA bootstrap</title></head>
+<body>
+<script>
+(() => {
+  sessionStorage.setItem('ijr-stat11-master-teacher-session-v1', 'qa-browser-v54');
+  const source = new URL(location.href);
+  const target = new URL('../python/theory.html', location.href);
+  target.searchParams.set('topic', 'logic');
+  target.searchParams.set('masterPreview', '1');
+  if (source.searchParams.get('qaAuto') === '1') target.searchParams.set('qaAuto', '1');
+  location.replace(target.href);
+})();
+</script>
+</body>
+</html>
