@@ -2,6 +2,8 @@
   'use strict';
 
   const topics = window.IJR_PYTHON_HUB_TOPICS || [];
+  const params = new URLSearchParams(location.search);
+  const topicSlug = params.get('topic') || '';
 
   // Safety invariant: every coding stage starts empty, including topics added by later catalog files.
   for (const topic of topics) {
@@ -46,29 +48,67 @@
     if (modeLabel) modeLabel.textContent = ' · write the complete solution yourself';
   }
 
-  function removeCopyableGuidance() {
-    // V43 rendered complete executable lines for the first topics. Do not expose those lines.
-    const figure = document.getElementById('guideFigureV43');
-    if (figure) figure.remove();
+  function genericStepsHtml(markerAttribute) {
+    const steps = [
+      'Identify the information provided and the result the problem asks for.',
+      'Choose the Python idea, operator, function or structure that fits the task.',
+      'Write the complete solution yourself in the code cell. No executable solution is provided here.',
+      'Run the cell, inspect the output or error, revise if needed, and only then validate.'
+    ];
+    return steps.map((step, index) => `<li ${markerAttribute}="${index + 1}"><strong>Step ${index + 1}.</strong> ${step}</li>`).join('');
+  }
 
-    const directive = document.getElementById('v43Directive');
-    if (directive) {
-      directive.innerHTML = '<strong>Authoring rule:</strong> use the problem statement and theory as references, but construct and type the complete Python solution yourself.';
+  function softenGuidance() {
+    const guidePanel = document.getElementById('guidePanel');
+    const guideConcept = document.getElementById('guideConcept');
+    const guideSteps = document.getElementById('guideSteps');
+    if (!guidePanel || !guideConcept || !guideSteps) return;
+
+    if (topicSlug === 'operations' || topicSlug === 'types') {
+      if (!guideSteps.querySelector('[data-v43-step][data-authorship-softened="v53"]')) {
+        guideConcept.textContent = 'Plan your own solution';
+        guideSteps.innerHTML = genericStepsHtml('data-v43-step').replaceAll('<li data-v43-step=', '<li data-authorship-softened="v53" data-v43-step=');
+      }
+      const figure = document.getElementById('guideFigureV43');
+      if (figure) figure.remove();
+      const directive = document.getElementById('v43Directive');
+      if (directive) {
+        directive.innerHTML = '<strong>Authoring rule:</strong> use the problem statement and theory as references, but construct and type the complete Python solution yourself.';
+      }
+    }
+
+    if (topicSlug === 'arrays') {
+      if (!guideSteps.querySelector('[data-array-v47-step][data-authorship-softened="v53"]')) {
+        guideConcept.textContent = 'Plan your own list solution';
+        guideSteps.innerHTML = genericStepsHtml('data-array-v47-step').replaceAll('<li data-array-v47-step=', '<li data-authorship-softened="v53" data-array-v47-step=');
+      }
+      const figure = document.getElementById('guideFigureArrayV47');
+      if (figure) figure.remove();
+      const directive = document.getElementById('arrayV47Directive');
+      if (directive) {
+        directive.innerHTML = '<strong>Authoring rule:</strong> decide the list operation from the task, then write and test the complete Python solution yourself.';
+      }
     }
   }
 
   function start() {
     installEditorGuard();
-    removeCopyableGuidance();
+    softenGuidance();
 
-    // The notebook swaps stages without a full page reload, so re-apply only the UI guard.
+    // The notebook swaps stages without a full page reload. Preserve the authorship policy after each render.
     const app = document.getElementById('workshopApp');
     if (app) {
+      let queued = false;
       const observer = new MutationObserver(() => {
-        installEditorGuard();
-        removeCopyableGuidance();
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(() => {
+          queued = false;
+          installEditorGuard();
+          softenGuidance();
+        });
       });
-      observer.observe(app, { subtree: true, childList: true });
+      observer.observe(app, { subtree: true, childList: true, characterData: true });
     }
   }
 
@@ -77,6 +117,7 @@
     pasteIntoCodeEditor: false,
     dropIntoCodeEditor: false,
     copyableSolutionFigures: false,
+    conceptualGuidanceOnly: true,
     validationChanged: false,
     backendChanged: false
   });
