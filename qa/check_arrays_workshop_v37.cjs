@@ -74,6 +74,33 @@ async function masterPreviewSnapshot(topics, config) {
   must(topics.every(topic => new Set(topic.exercises.map(item => item.key)).size === 12), 'every topic has 12 unique workshop item keys');
   must(topics.every(topic => topic.exercises.every(item => item.mode === 'code' || item.mode === 'choice')), 'every workshop item has a supported mode');
 
+  const arrays = topics.find(topic => topic.slug === 'arrays');
+  must(Boolean(arrays), 'Arrays topic exists in the published curriculum');
+  must(arrays.exercises.length === 12, 'Arrays workshop exposes all 12 required stages');
+
+  const arrayGuidance = window.IJR_PYTHON_HUB_ARRAY_GUIDANCE_V47;
+  must(arrayGuidance?.topic === 'arrays', 'Arrays V47 guidance is registered for the Arrays topic');
+  must(arrayGuidance?.stages === 12, 'Arrays V47 provides explicit guidance for all 12 stages');
+  must(arrayGuidance?.explicitSteps === true && arrayGuidance?.visualModels === true, 'Arrays V47 enables explicit steps and visual models');
+
+  const guidanceKeys = Object.keys(arrayGuidance.entries || {});
+  must(guidanceKeys.length === 12, 'Arrays guidance contains exactly 12 unique stage entries');
+  for (let i = 1; i <= 12; i += 1) {
+    const key = `arr-${String(i).padStart(2, '0')}`;
+    const entry = arrayGuidance.entries[key];
+    must(Boolean(entry), `${key} has a dedicated guidance entry`);
+    must(typeof entry.concept === 'string' && entry.concept.length > 8, `${key} has a clear guided-reasoning concept`);
+    must(Array.isArray(entry.steps) && entry.steps.length >= 4, `${key} has at least four explicit construction steps`);
+    must(Array.isArray(entry.boxes) && entry.boxes.length >= 3, `${key} has a multi-step visual model`);
+    must(typeof entry.caption === 'string' && entry.caption.length > 8, `${key} explains the Python/list concept`);
+  }
+
+  must(arrayGuidance.entries['arr-01'].steps.some(step => step.includes('index 2')), 'Stage 1 explicitly teaches third-item zero-based index 2');
+  must(arrayGuidance.entries['arr-06'].boxes.includes('mean = total / count'), 'Stage 6 explicitly constructs the mean from calculated total and count');
+  must(arrayGuidance.entries['arr-08'].boxes.includes('last_index = len(values) - 1'), 'Stage 8 explicitly derives the final valid index from list length');
+  must(arrayGuidance.entries['arr-12'].boxes.includes('last_value = values[-1]'), 'Stage 12 explicitly demonstrates Python last-item indexing');
+  must(html.includes('workshop-array-prompts-v28.js?v=20260917-arrays-v47'), 'production workshop uses the V47 Arrays cache key');
+
   must(!html.includes('student-supabase-transport-v39.js'), 'V39 external Supabase transport is removed from the workshop startup path');
   must(!html.includes('student-supabase-bridge-v39.js'), 'V39 transport bridge is removed from the workshop startup path');
   must(html.indexOf('workshop-bootstrap-v33.js') >= 0 && html.indexOf('workshop-bootstrap-v33.js') < html.indexOf('workshop-page.js'), 'stable V33 bootstrap loads before the workshop controller');
@@ -99,8 +126,8 @@ async function masterPreviewSnapshot(topics, config) {
   must(snapshot?.topics?.length === 16, 'master preview exposes all 16 workshop topics');
   must(snapshot?.topics?.every(topic => topic.items?.length === 12), 'master preview and student curriculum agree on 12 stages for every topic');
 
-  console.log('Workshop V41 QA PASS (all topics, stable V33 transport, recovery, lazy runtime and master snapshot).');
+  console.log('Arrays Workshop V47 QA PASS (12 explicit guided stages, visual models, stable runtime and backend contract).');
 })().catch(error => {
-  console.error(`Workshop V41 QA FAIL: ${error.message}`);
+  console.error(`Arrays Workshop V47 QA FAIL: ${error.message}`);
   process.exit(1);
 });
