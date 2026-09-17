@@ -95,6 +95,10 @@ async function run() {
     if (await stage2.isDisabled()) throw new Error('Stage 2 remained locked after Stage 1 validation.');
     await stage2.click();
     await page.waitForFunction(() => /STAGE\s+2/i.test(document.getElementById('problemKicker')?.textContent || ''), null, { timeout:5000 });
+    await page.waitForFunction(() => {
+      const text = document.getElementById('guidePanel')?.innerText || '';
+      return text.includes('len(values)') && text.includes('count = len(values)');
+    }, null, { timeout:5000 });
     const stage2Guide = await page.locator('#guidePanel').innerText();
     if (!stage2Guide.includes('len(values)') || !stage2Guide.includes('count = len(values)')) throw new Error('Stage 2 explicit len() guidance did not replace Stage 1 guidance.');
 
