@@ -72,7 +72,7 @@ for (const token of [
   'textActuallyOverflows',
   'getBoundingClientRect',
   'document.createRange',
-  'data-theory-v56',
+  'root.dataset.theoryV56',
   'theoryV56Audit',
   "root.dataset.theoryV54Overflow = pass ? 'pass' : 'fail'"
 ]) {
