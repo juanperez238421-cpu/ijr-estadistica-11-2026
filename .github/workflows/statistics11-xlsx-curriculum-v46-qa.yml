@@ -6,6 +6,8 @@ on:
       - 'python/**'
       - 'qa/check_statistics11_xlsx_curriculum_v46.cjs'
       - 'qa/check_statistics11_workshop_v50.cjs'
+      - 'qa/check_statistics11_theory_v54.cjs'
+      - 'qa/theory_v54_bootstrap.html'
       - 'supabase/migrations/20260916170000_statistics11_xlsx_after_arrays_v46.sql'
       - 'supabase/migrations/20260917162107_statistics11_workshop_team_v50_token_start.sql'
       - '.github/workflows/statistics11-xlsx-curriculum-v46-qa.yml'
@@ -15,6 +17,8 @@ on:
       - 'python/**'
       - 'qa/check_statistics11_xlsx_curriculum_v46.cjs'
       - 'qa/check_statistics11_workshop_v50.cjs'
+      - 'qa/check_statistics11_theory_v54.cjs'
+      - 'qa/theory_v54_bootstrap.html'
       - 'supabase/migrations/20260916170000_statistics11_xlsx_after_arrays_v46.sql'
       - 'supabase/migrations/20260917162107_statistics11_workshop_team_v50_token_start.sql'
       - '.github/workflows/statistics11-xlsx-curriculum-v46-qa.yml'
@@ -26,19 +30,91 @@ permissions:
 jobs:
   curriculum-qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: JavaScript syntax
         run: |
           node --check python/curriculum-xlsx-first-v46.js
+          node --check python/pandas-excel-practical-v52.js
+          node --check python/pandas-excel-live-v53.js
+          node --check python/pandas-excel-theory-v54.js
           node --check python/workshop-xlsx-topic-v46.js
           node --check python/workshop-startup-v50.js
           node --check python/workshop-team-gate-v50.js
           node --check qa/check_statistics11_xlsx_curriculum_v46.cjs
           node --check qa/check_statistics11_workshop_v50.cjs
+          node --check qa/check_statistics11_theory_v54.cjs
+
       - name: Curriculum and workshop contract
         run: node qa/check_statistics11_xlsx_curriculum_v46.cjs
+
       - name: V50 workshop startup contract
         run: node qa/check_statistics11_workshop_v50.cjs
+
+      - name: Topic 04 theory V54 static contract
+        run: node qa/check_statistics11_theory_v54.cjs
+
+      - name: Topic 04 theory responsive browser QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          BROWSER="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$BROWSER" ]; then
+            echo "No Chrome/Chromium executable available on runner." >&2
+            exit 1
+          fi
+          "$BROWSER" --version
+          python3 -m http.server 4173 --directory . >/tmp/theory-v54-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          sleep 1
+
+          for viewport in "1440,1800" "1024,1800" "768,1800" "390,1800"; do
+            out="/tmp/theory-v54-${viewport//,/x}.html"
+            "$BROWSER" \
+              --headless=new \
+              --no-sandbox \
+              --disable-gpu \
+              --disable-dev-shm-usage \
+              --window-size="$viewport" \
+              --virtual-time-budget=9000 \
+              --dump-dom \
+              "http://127.0.0.1:4173/qa/theory_v54_bootstrap.html" > "$out"
+            grep -q 'data-theory-v54="v54"' "$out"
+            grep -q 'data-theory-v54-overflow="pass"' "$out"
+            grep -q 'data-pandas-v54="v54"' "$out"
+            grep -q 'TOPIC 04 · LIVE PANDAS + EXCEL' "$out"
+            grep -q 'Drop your Excel workbook here' "$out"
+            grep -q 'Upload ≠ read: follow the file bytes' "$out"
+            if grep -q 'TOPIC 04 · LIVE LOGIC' "$out"; then
+              echo "Legacy LIVE LOGIC section is still visible at viewport $viewport" >&2
+              exit 1
+            fi
+          done
+
+      - name: Topic 04 theory real Pandas XLSX runtime smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          BROWSER="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          python3 -m http.server 4174 --directory . >/tmp/theory-v54-runtime-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          sleep 1
+          out="/tmp/theory-v54-runtime.html"
+          timeout 180s "$BROWSER" \
+            --headless=new \
+            --no-sandbox \
+            --disable-gpu \
+            --disable-dev-shm-usage \
+            --window-size="1440,1800" \
+            --virtual-time-budget=120000 \
+            --dump-dom \
+            "http://127.0.0.1:4174/qa/theory_v54_bootstrap.html?qaAuto=1" > "$out"
+          grep -q 'data-theory-v54-runtime="pass"' "$out"
+          grep -q 'data-theory-v54-overflow="pass"' "$out"
+          grep -q 'Created: True' "$out"
+          grep -q 'analysis_output.xlsx' "$out"
