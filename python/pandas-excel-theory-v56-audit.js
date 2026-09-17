@@ -28,6 +28,17 @@
     return style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity || 1) !== 0;
   }
 
+  function clearStaleRecovery() {
+    const app = document.getElementById('theoryApp');
+    const access = document.getElementById('accessPanel');
+    if (!app || app.classList.contains('hidden') || !access) return;
+    access.classList.add('hidden');
+    access.innerHTML = '';
+    const badge = document.getElementById('sessionBadge');
+    if (badge && /connection issue/i.test(badge.textContent || '')) badge.textContent = 'Theory ready';
+    document.documentElement.dataset.theoryV56Recovery = 'clean';
+  }
+
   function rectOverflow(child, container, tolerance = 4) {
     const childRect = child.getBoundingClientRect();
     const parentRect = container.getBoundingClientRect();
@@ -72,6 +83,7 @@
     const root = document.documentElement;
     if (root.dataset.theoryV54 !== 'v54') return null;
 
+    clearStaleRecovery();
     const offenders = [];
     document.querySelectorAll(selectors.join(',')).forEach(element => {
       if (!(element instanceof HTMLElement) || !visible(element)) return;
@@ -116,6 +128,7 @@
       schedule(350);
       return;
     }
+    clearStaleRecovery();
     schedule(900);
     setTimeout(runRenderedAudit, 1800);
     setTimeout(runRenderedAudit, 3500);
