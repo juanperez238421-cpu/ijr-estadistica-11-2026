@@ -32,7 +32,7 @@ assert(gate.includes("session?.emails?.[0]"), 'gate: owner email must come from 
 assert(!gate.includes('auth.getSession'), 'gate: fragile second Supabase Auth session check returned');
 assert(!gate.includes('client.auth'), 'gate: workshop must not depend on a second auth client');
 assert(gate.includes('value="1"') && gate.includes('value="2"') && gate.includes('value="3"'), 'gate: 1/2/3 team size options missing');
-assert(!/name="stat11TeamSize"[^>]*checked/.test(gate), 'gate: team size must be explicitly selected');
+assert(!/<input[^>]*name="stat11TeamSize"[^>]*\schecked(?:\s|=|>)/.test(gate), 'gate: team size must be explicitly selected');
 assert(gate.includes('@ijr\\.edu\\.co') || gate.includes('@ijr.edu.co'), 'gate: institutional email validation missing');
 assert(gate.includes('p_access_token:session.accessToken'), 'gate: Learning Hub token not passed to backend');
 
