@@ -102,6 +102,7 @@ async function run() {
     await stage2.click();
     await page.waitForFunction(() => /STAGE\s+2/i.test(document.getElementById('problemKicker')?.textContent || ''), null, { timeout:5000 });
     await page.waitForFunction(() => (document.getElementById('problemPrompt')?.textContent || '').includes('len()'), null, { timeout:5000 });
+    await page.waitForFunction(() => !!document.querySelector('#guideSteps [data-array-v47-step][data-authorship-softened="v53"]'), null, { timeout:5000 });
     const stage2Guide = await page.locator('#guidePanel').innerText();
     if (!stage2Guide.includes('Write the complete solution yourself')) throw new Error('Stage 2 conceptual authorship guidance did not remain active.');
     if (stage2Guide.includes('count = len(values)')) throw new Error('Stage 2 guidance exposed the executable len() assignment.');
