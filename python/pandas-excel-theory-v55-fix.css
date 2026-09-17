@@ -59,6 +59,21 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .pandas-v54-theory-hardened .pandas-v52-dataset-card {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .pandas-v54-theory-hardened .pandas-v52-dataset-card > b {
+    display: none;
+  }
+
+  .pandas-v54-theory-hardened .pandas-v52-file-icon {
+    width: 48px;
+    max-width: 48px;
+  }
+
   .pandas-v54-theory-hardened .pandas-v52-flow,
   .pandas-v54-live-hardened .live-workflow-v19,
   .pandas-v54-upload-track,
