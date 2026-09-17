@@ -60,19 +60,25 @@ async function run() {
     if (!/Arrays/i.test((await page.locator('#topicTitle').innerText()).trim())) throw new Error('Arrays topic title did not render.');
     if ((await page.locator('#notebookSubtitle').innerText()).trim() !== 'Guided notebook · V47 · arrays step-by-step') throw new Error('Arrays V47 subtitle did not render.');
 
-    phase('verify explicit Stage 1 guidance matches the first workshop standard');
+    phase('verify Stage 1 authorship guidance is clear but does not expose executable solution lines');
     await page.waitForSelector('#arrayV47Directive', { state:'visible', timeout:10000 });
-    await page.waitForSelector('#guideFigureArrayV47', { state:'visible', timeout:10000 });
     const steps = page.locator('#guideSteps [data-array-v47-step]');
-    if (await steps.count() !== 5) throw new Error(`Stage 1 expected five explicit steps, got ${await steps.count()}.`);
+    if (await steps.count() !== 4) throw new Error(`Stage 1 expected four conceptual steps, got ${await steps.count()}.`);
     const guideText = await page.locator('#guidePanel').innerText();
-    for (const phrase of ['index 0','index 2','third_value = values[2]','print(third_value)','Run the cell']) {
-      if (!guideText.includes(phrase)) throw new Error(`Stage 1 guidance missing: ${phrase}`);
+    for (const phrase of ['Plan your own list solution','Write the complete solution yourself','Run the cell']) {
+      if (!guideText.includes(phrase)) throw new Error(`Stage 1 conceptual guidance missing: ${phrase}`);
     }
-    const visualText = await page.locator('#guideFigureArrayV47').innerText();
-    for (const phrase of ['values = [6, 10, 15, 21]','index 2','third_value = values[2]','print(third_value)']) {
-      if (!visualText.includes(phrase)) throw new Error(`Stage 1 visual model missing: ${phrase}`);
+    for (const leaked of ['third_value = values[2]','print(third_value)','values = [6, 10, 15, 21]']) {
+      if (guideText.includes(leaked)) throw new Error(`Stage 1 guidance leaked executable solution text: ${leaked}`);
     }
+    if (await page.locator('#guideFigureArrayV47').count() !== 0) throw new Error('Copyable Arrays solution figure should not be rendered under authorship policy V53.');
+
+    phase('verify paste is blocked only in the code editor');
+    const pasteBlocked = await page.locator('#codeEditor').evaluate(editor => {
+      const event = new Event('paste', { bubbles:true, cancelable:true });
+      return editor.dispatchEvent(event) === false;
+    });
+    if (!pasteBlocked) throw new Error('Code editor paste event was not blocked by authorship policy V53.');
 
     phase('verify mutation observer remains stable instead of re-render looping');
     const before = await page.locator('#guideSteps').innerHTML();
@@ -90,19 +96,17 @@ async function run() {
     await page.locator('#validateButton').click();
     await page.waitForFunction(() => document.querySelector('[data-stage="0"]')?.classList.contains('stage-complete'), null, { timeout:10000 });
 
-    phase('verify sequential progression unlocks Stage 2');
+    phase('verify sequential progression unlocks Stage 2 while conceptual guidance remains');
     const stage2 = page.locator('[data-stage="1"]');
     if (await stage2.isDisabled()) throw new Error('Stage 2 remained locked after Stage 1 validation.');
     await stage2.click();
     await page.waitForFunction(() => /STAGE\s+2/i.test(document.getElementById('problemKicker')?.textContent || ''), null, { timeout:5000 });
-    await page.waitForFunction(() => {
-      const text = document.getElementById('guidePanel')?.innerText || '';
-      return text.includes('len(values)') && text.includes('count = len(values)');
-    }, null, { timeout:5000 });
+    await page.waitForFunction(() => (document.getElementById('problemPrompt')?.textContent || '').includes('len()'), null, { timeout:5000 });
     const stage2Guide = await page.locator('#guidePanel').innerText();
-    if (!stage2Guide.includes('len(values)') || !stage2Guide.includes('count = len(values)')) throw new Error('Stage 2 explicit len() guidance did not replace Stage 1 guidance.');
+    if (!stage2Guide.includes('Write the complete solution yourself')) throw new Error('Stage 2 conceptual authorship guidance did not remain active.');
+    if (stage2Guide.includes('count = len(values)')) throw new Error('Stage 2 guidance exposed the executable len() assignment.');
 
-    phase('mobile smoke for explicit guidance');
+    phase('mobile smoke for conceptual guidance');
     await page.setViewportSize({ width:390, height:844 });
     await page.waitForTimeout(250);
     const mobile = await page.evaluate(() => ({
@@ -111,11 +115,11 @@ async function run() {
       guideVisible: !!document.querySelector('#guidePanel')?.getBoundingClientRect().width,
       steps: document.querySelectorAll('#guideSteps [data-array-v47-step]').length
     }));
-    if (!mobile.guideVisible || mobile.steps < 4) throw new Error(`Mobile Arrays guidance missing: ${JSON.stringify(mobile)}`);
+    if (!mobile.guideVisible || mobile.steps !== 4) throw new Error(`Mobile Arrays guidance missing: ${JSON.stringify(mobile)}`);
     if (mobile.scrollWidth > mobile.width + 4) throw new Error(`Unexpected mobile page overflow: ${JSON.stringify(mobile)}`);
 
     if (criticalErrors.length) throw new Error(`Critical browser errors:\n${criticalErrors.join('\n')}`);
-    console.log('ARRAYS WORKSHOP V47 E2E PASS stages=12 explicit_steps=PASS visual_model=PASS real_python=PASS validation=PASS progression=PASS mobile=PASS');
+    console.log('ARRAYS WORKSHOP V47 E2E PASS stages=12 conceptual_guidance=PASS no_solution_leak=PASS paste_guard=PASS real_python=PASS validation=PASS progression=PASS mobile=PASS');
   } finally {
     if (browser) await browser.close().catch(() => {});
     if (!server.killed) server.kill('SIGKILL');
