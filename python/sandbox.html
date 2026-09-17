@@ -4,11 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="light">
-  <meta name="description" content="Statistics 11 browser Python sandbox with a Colab-style notebook interface, real Pyodide execution, CSV upload, Pandas and Matplotlib support.">
+  <meta name="description" content="Statistics 11 browser Python sandbox with a Colab-style notebook interface, real Pyodide execution, file upload and download, Pandas and Matplotlib support.">
   <title>Statistics 11 · Python Sandbox</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="sandbox-v39.css?v=20260910-v39">
+  <link rel="stylesheet" href="sandbox-workspace-v40.css?v=20260917-v40">
+  <script defer data-runtime-src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js" src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
   <script defer src="sandbox-v39.js?v=20260910-v39"></script>
+  <script defer src="sandbox-workspace-v40.js?v=20260917-v40"></script>
 </head>
 <body>
   <header class="sandbox-topbar">
@@ -29,7 +32,7 @@
         <div>
           <p class="eyebrow">STUDENT PYTHON LAB · REAL BROWSER RUNTIME</p>
           <h1>Colab-style Python Sandbox</h1>
-          <p>Write Python, run real code in your browser, inspect output, upload CSV files, and experiment without changing workshop grades or progress.</p>
+          <p>Write Python, run real code in your browser, inspect output, upload data or documents, create files from Python, and download them again without changing workshop grades or progress.</p>
         </div>
         <div class="notebook-status-card">
           <span>Runtime</span>
@@ -42,6 +45,7 @@
         <button id="runAllButton" class="button primary" type="button">▶ Run all</button>
         <button id="addCellButton" class="button secondary" type="button">＋ Code</button>
         <button id="clearOutputsButton" class="button secondary" type="button">Clear outputs</button>
+        <button id="downloadCodeButton" class="button secondary" type="button">Download .py</button>
         <button id="resetNotebookButton" class="button danger" type="button">Reset notebook</button>
         <span class="toolbar-hint">Ctrl/⌘ + Enter runs the active cell</span>
       </div>
@@ -57,11 +61,23 @@
     <aside class="sandbox-sidebar" aria-label="Sandbox tools">
       <section class="side-card">
         <p class="eyebrow">FILES</p>
-        <h2>Upload data</h2>
-        <p>Upload a CSV or text file. It will be copied into the temporary Python filesystem for this tab.</p>
-        <label class="file-button" for="fileInput">Choose CSV / TXT</label>
-        <input id="fileInput" type="file" accept=".csv,.txt,text/csv,text/plain" multiple>
-        <div id="fileList" class="file-list"><span>No files uploaded yet.</span></div>
+        <h2>Upload & download</h2>
+        <p>Upload multiple files of any type. They are copied into the temporary Python filesystem and can be opened from your code.</p>
+        <code class="workspace-path">/home/pyodide/uploads/</code>
+        <label class="file-button" for="fileInput">Choose files</label>
+        <input id="fileInput" type="file" multiple>
+        <div id="fileList" class="file-list legacy-file-list"><span>No files uploaded yet.</span></div>
+        <div class="side-actions">
+          <button id="refreshWorkspaceButton" class="button secondary small" type="button">Refresh files</button>
+        </div>
+        <div id="workspaceStatus" class="workspace-status" role="status" aria-live="polite">Run a cell or upload a file to start the Python runtime.</div>
+        <div id="workspaceFileList" class="workspace-file-list"><span class="workspace-empty">No workspace files yet.</span></div>
+      </section>
+
+      <section class="side-card">
+        <p class="eyebrow">WORKSPACE</p>
+        <h2>Files created by Python</h2>
+        <p>Files your code writes under <strong>/home/pyodide</strong> appear automatically in the file manager. You can download or delete them from this page. Use <strong>/home/pyodide/outputs/</strong> for generated reports, CSV, images or other exports.</p>
       </section>
 
       <section class="side-card">
@@ -70,15 +86,17 @@
         <ul>
           <li>Python variables, lists, conditionals and functions</li>
           <li>NumPy and Pandas when imported</li>
-          <li>CSV reading from uploaded files</li>
+          <li>CSV, XLSX, JSON, TXT, images and other uploaded files</li>
           <li>Matplotlib figures rendered below the code cell</li>
           <li>Printed output and Python exceptions</li>
+          <li>Download the current code as a .py file</li>
+          <li>Download files generated inside the Python workspace</li>
         </ul>
       </section>
 
       <section class="side-card compact">
         <p class="eyebrow">IMPORTANT</p>
-        <p>This sandbox is for exploration. It does <strong>not</strong> submit workshop answers, mark problems correct, or modify your saved course progress.</p>
+        <p>This sandbox is for exploration. It does <strong>not</strong> submit workshop answers, mark problems correct, or modify your saved course progress. Runtime files are temporary unless you download them.</p>
       </section>
     </aside>
   </main>
@@ -106,7 +124,7 @@
 
   <footer class="sandbox-footer">
     <span>Instituto Jorge Robledo · Statistics / Programming 11° · 2026-2</span>
-    <span>Python execution: Pyodide in the browser</span>
+    <span>Python execution: Pyodide in the browser · Sandbox isolated from grading</span>
   </footer>
 </body>
 </html>
