@@ -9,14 +9,16 @@
   <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
   <link rel="stylesheet" href="styles.css?v=20260825-master-code-v11">
   <link rel="stylesheet" href="master-v10.css?v=20260825-master-code-v11">
+  <link rel="stylesheet" href="master-student-progress-v1.css?v=20260917-student-progress-v1">
   <link rel="stylesheet" href="course-inspector-v1.css?v=20260904-master-student-preview-v2">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="../python/course-data-v4.js?v=20260826-split-v7a"></script>
   <script defer src="../python/workshop-catalog-v27.js?v=20260827-catalog-v27"></script>
   <script defer src="../python/data-analyst-extension-v30.js?v=20260901-data-analyst-v30"></script>
   <script defer src="../python/curriculum-data-first-v32.js?v=20260904-data-first-v32"></script>
-  <script defer src="config.js?v=20260825-master-code-v11"></script>
+  <script defer src="config.js?v=20260917-student-progress-v1"></script>
   <script defer src="app.js?v=20260825-master-code-v11"></script>
+  <script defer src="master-student-progress-v1.js?v=20260917-student-progress-v1"></script>
   <script defer src="course-inspector-v1.js?v=20260904-course-inspector-v1"></script>
 </head>
 <body>
@@ -99,6 +101,36 @@
       </section>
 
       <p class="footnote">Each row is one registration/session. Use <strong>Inspect</strong> for full stage history, <strong>Edit</strong> to correct group or institutional emails, and <strong>Delete</strong> only for invalid/test registrations.</p>
+
+      <section id="studentProgressPanel" class="student-progress-panel" aria-labelledby="studentProgressTitle">
+        <div class="student-progress-head">
+          <div>
+            <span class="eyebrow">MASTER · PYTHON HUB · READ-ONLY PROGRESS</span>
+            <h2 id="studentProgressTitle">Student progress by workshop and validated exercise</h2>
+            <p>This view is an additional reporting layer over the existing Python Hub records. It shows the latest workshop worked, validated exercises, workshop completion state, and the complete 16-workshop history. It does not edit or delete registrations, answers, grades, or student progress.</p>
+          </div>
+          <div class="student-progress-source">Source: existing Supabase Python Hub stage matrix</div>
+        </div>
+
+        <div class="student-progress-toolbar">
+          <input id="spSearch" type="search" placeholder="Search student, email, group or workshop" aria-label="Search Python Hub progress">
+          <select id="spGroupFilter" aria-label="Python Hub group filter"><option value="">Todos los grupos</option></select>
+          <select id="spActivityFilter" aria-label="Python Hub activity filter">
+            <option value="today" selected>Actividad hoy</option>
+            <option value="activity">Con actividad</option>
+            <option value="active">Activos ahora</option>
+            <option value="all">Todo el roster</option>
+          </select>
+          <button id="spRefresh" type="button" class="quiet">Actualizar progreso</button>
+          <span id="studentProgressLive" class="sp-live">Esperando sesión maestra</span>
+          <span id="studentProgressCount" class="muted">0 mostrados</span>
+        </div>
+
+        <div id="studentProgressMetrics" class="student-progress-metrics" aria-label="Python Hub progress summary"></div>
+        <div id="studentProgressList" class="student-progress-list" aria-live="polite">
+          <div class="sp-empty">Inicia sesión maestra para ver el progreso del Python Hub.</div>
+        </div>
+      </section>
 
       <section id="courseInspector" class="course-inspector" aria-labelledby="courseInspectorTitle">
         <div class="course-inspector-head">
