@@ -10,6 +10,8 @@ const curriculum = read('python/pandas-excel-practical-v52.js');
 const live = read('python/pandas-excel-live-v53.js');
 const visual = read('python/pandas-excel-theory-v54.js');
 const visualCss = read('python/pandas-excel-theory-v54.css');
+const responsiveFix = read('python/pandas-excel-theory-v55-fix.css');
+const renderedAudit = read('python/pandas-excel-theory-v56-audit.js');
 const bootstrap = read('qa/theory_v54_bootstrap.html');
 
 requireContract(curriculum.includes("const TOPIC = 'logic'"), 'Topic 04 must preserve the backend-compatible logic slug.');
@@ -56,13 +58,46 @@ for (const token of [
   requireContract(visualCss.includes(token), `V54 responsive/animation CSS missing: ${token}`);
 }
 
-for (const asset of ['pandas-excel-practical-v52.css', 'pandas-excel-theory-v54.css', 'pandas-excel-practical-v52.js', 'theory-page.js', 'theory-live-lab-v19.js', 'pandas-excel-live-v53.js', 'pandas-excel-theory-v54.js']) {
+for (const token of [
+  '#diagramGrid[data-pandas-v54="v54"]',
+  '@media (max-width: 800px)',
+  '.pandas-v52-dataset-card',
+  'display: block',
+  'width: auto'
+]) {
+  requireContract(responsiveFix.includes(token), `V55 responsive fix missing: ${token}`);
+}
+
+for (const token of [
+  'textActuallyOverflows',
+  'getBoundingClientRect',
+  'document.createRange',
+  'data-theory-v56',
+  'theoryV56Audit',
+  "root.dataset.theoryV54Overflow = pass ? 'pass' : 'fail'"
+]) {
+  requireContract(renderedAudit.includes(token), `V56 rendered overflow QA missing: ${token}`);
+}
+
+for (const asset of [
+  'pandas-excel-practical-v52.css',
+  'pandas-excel-theory-v54.css',
+  'pandas-excel-theory-v55-fix.css',
+  'pandas-excel-practical-v52.js',
+  'theory-page.js',
+  'theory-live-lab-v19.js',
+  'pandas-excel-live-v53.js',
+  'pandas-excel-theory-v54.js',
+  'pandas-excel-theory-v56-audit.js'
+]) {
   requireContract(theory.includes(asset), `theory.html does not load ${asset}.`);
 }
 requireContract(theory.indexOf('pandas-excel-practical-v52.css') < theory.indexOf('pandas-excel-theory-v54.css'), 'V54 CSS must load after V52 CSS.');
+requireContract(theory.indexOf('pandas-excel-theory-v54.css') < theory.indexOf('pandas-excel-theory-v55-fix.css'), 'V55 CSS fix must load after V54 CSS.');
 requireContract(theory.indexOf('pandas-excel-practical-v52.js') < theory.indexOf('theory-page.js'), 'Pandas curriculum must patch Topic 04 before theory-page renders it.');
 requireContract(theory.indexOf('theory-live-lab-v19.js') < theory.indexOf('pandas-excel-live-v53.js'), 'V53 must replace the legacy V19 live section after V19 is loaded.');
 requireContract(theory.indexOf('pandas-excel-live-v53.js') < theory.indexOf('pandas-excel-theory-v54.js'), 'V54 must harden the final V53 live section.');
+requireContract(theory.indexOf('pandas-excel-theory-v54.js') < theory.indexOf('pandas-excel-theory-v56-audit.js'), 'V56 rendered audit must run after V54 installs the final theory layout.');
 
 requireContract(bootstrap.includes("sessionStorage.setItem('ijr-stat11-master-teacher-session-v1'"), 'Browser QA bootstrap does not create a teacher-preview session.');
 requireContract(bootstrap.includes("target.searchParams.set('masterPreview', '1')"), 'Browser QA bootstrap does not use isolated master preview.');
@@ -73,5 +108,5 @@ for (const file of ['pandas_excel_students.xlsx', 'pandas_excel_sales.xlsx', 'pa
   requireContract(bytes.length > 5000, `${file} is unexpectedly small.`);
 }
 
-console.log('STATISTICS 11 THEORY V54 STATIC QA PASS');
-console.log('topic04=pandas+xlsx live=12-real-examples upload=drag-drop diagrams=4-semantic layout=self-audited runtime=qa-auto datasets=real-xlsx');
+console.log('STATISTICS 11 THEORY V54/V56 STATIC QA PASS');
+console.log('topic04=pandas+xlsx live=12-real-examples upload=drag-drop diagrams=4-semantic layout=rendered-content-audited runtime=qa-auto datasets=real-xlsx');
