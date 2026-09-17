@@ -1,53 +1,44 @@
-name: Statistics 11 Guided Colab Workshop V45 E2E
+name: Statistics 11 Guided Colab Workshop V47 E2E
 
 on:
   pull_request:
     paths:
       - 'python/workshop.html'
-      - 'python/workshop-v42.html'
-      - 'python/workshop-v42.css'
       - 'python/workshop-v42.js'
       - 'python/workshop-guidance-v43.css'
       - 'python/workshop-guidance-v43.js'
       - 'python/workshop-progression-guard-v44.css'
       - 'python/workshop-progression-guard-v44.js'
-      - 'python/workshop-excel-stage-v45.css'
-      - 'python/workshop-excel-stage-v45.js'
-      - 'python/workshop-excel-stage-v45-post.js'
-      - 'python/data/stat11_stage4_students.xlsx'
+      - 'python/workshop-array-prompts-v28.js'
       - 'python/config-v2.js'
       - 'python/course-data-v4.js'
       - 'python/workshop-catalog-v27.js'
       - 'python/data-analyst-extension-v30.js'
       - 'python/curriculum-data-first-v32.js'
-      - 'qa/check_workshop_v42_contract.cjs'
-      - 'qa/check_workshop_progression_guard_v44.cjs'
-      - 'qa/check_workshop_excel_v45.cjs'
-      - 'qa/workshop_v42_e2e.cjs'
-      - 'qa/workshop_progression_guard_v44_e2e.cjs'
-      - 'qa/workshop_excel_stage_v45_e2e.cjs'
+      - 'python/curriculum-xlsx-first-v46.js'
+      - 'qa/check_arrays_workshop_v37.cjs'
+      - 'qa/check_workshop_v47_contract.cjs'
+      - 'qa/arrays_workshop_v47_e2e.cjs'
       - '.github/workflows/workshop-v42-e2e.yml'
   push:
     branches: [main]
     paths:
       - 'python/workshop.html'
-      - 'python/workshop-v42.html'
-      - 'python/workshop-v42.css'
       - 'python/workshop-v42.js'
       - 'python/workshop-guidance-v43.css'
       - 'python/workshop-guidance-v43.js'
       - 'python/workshop-progression-guard-v44.css'
       - 'python/workshop-progression-guard-v44.js'
-      - 'python/workshop-excel-stage-v45.css'
-      - 'python/workshop-excel-stage-v45.js'
-      - 'python/workshop-excel-stage-v45-post.js'
-      - 'python/data/stat11_stage4_students.xlsx'
-      - 'qa/check_workshop_v42_contract.cjs'
-      - 'qa/check_workshop_progression_guard_v44.cjs'
-      - 'qa/check_workshop_excel_v45.cjs'
-      - 'qa/workshop_v42_e2e.cjs'
-      - 'qa/workshop_progression_guard_v44_e2e.cjs'
-      - 'qa/workshop_excel_stage_v45_e2e.cjs'
+      - 'python/workshop-array-prompts-v28.js'
+      - 'python/config-v2.js'
+      - 'python/course-data-v4.js'
+      - 'python/workshop-catalog-v27.js'
+      - 'python/data-analyst-extension-v30.js'
+      - 'python/curriculum-data-first-v32.js'
+      - 'python/curriculum-xlsx-first-v46.js'
+      - 'qa/check_arrays_workshop_v37.cjs'
+      - 'qa/check_workshop_v47_contract.cjs'
+      - 'qa/arrays_workshop_v47_e2e.cjs'
       - '.github/workflows/workshop-v42-e2e.yml'
   workflow_dispatch:
 
@@ -55,46 +46,29 @@ permissions:
   contents: read
 
 jobs:
-  guided-colab-e2e:
+  guided-colab-v47-e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: JavaScript syntax and workshop static contracts
+      - name: Current production syntax and contracts
         run: |
           node --check python/workshop-v42.js
+          node --check python/workshop-array-prompts-v28.js
           node --check python/workshop-guidance-v43.js
           node --check python/workshop-progression-guard-v44.js
-          node --check python/workshop-excel-stage-v45.js
-          node --check python/workshop-excel-stage-v45-post.js
-          node --check qa/check_workshop_v42_contract.cjs
-          node --check qa/check_workshop_progression_guard_v44.cjs
-          node --check qa/check_workshop_excel_v45.cjs
-          node --check qa/workshop_v42_e2e.cjs
-          node --check qa/workshop_progression_guard_v44_e2e.cjs
-          node --check qa/workshop_excel_stage_v45_e2e.cjs
-          node qa/check_workshop_v42_contract.cjs
-          node qa/check_workshop_progression_guard_v44.cjs
-          node qa/check_workshop_excel_v45.cjs
+          node --check qa/check_arrays_workshop_v37.cjs
+          node --check qa/check_workshop_v47_contract.cjs
+          node --check qa/arrays_workshop_v47_e2e.cjs
+          node qa/check_workshop_v47_contract.cjs
+          node qa/check_arrays_workshop_v37.cjs
 
       - name: Install deterministic browser runtime
         run: |
           npm install --no-save --no-package-lock playwright@1.55.0 pyodide@0.27.7
           npx playwright install --with-deps chromium
 
-      - name: Full point-to-point Chromium smoke
-        run: |
-          node qa/workshop_v42_e2e.cjs
-          node qa/workshop_progression_guard_v44_e2e.cjs
-          node qa/workshop_excel_stage_v45_e2e.cjs
-
-      - name: Upload V45 visual QA screenshots
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: workshop-v45-visual-qa
-          path: qa-artifacts/workshop-v45-*.png
-          if-no-files-found: ignore
-          retention-days: 14
+      - name: Arrays V47 full point-to-point Chromium smoke
+        run: node qa/arrays_workshop_v47_e2e.cjs
