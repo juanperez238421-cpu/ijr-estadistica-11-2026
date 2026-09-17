@@ -8,6 +8,7 @@ window.IJR_MASTER_CONFIG = Object.freeze({
     dashboard:'teacher_learning_activity_dashboard_v11',
     detail:'teacher_learning_activity_detail_v11',
     updateRegistration:'teacher_learning_activity_update_registration_v10',
-    deleteRegistration:'teacher_learning_activity_delete_v10'
+    deleteRegistration:'teacher_learning_activity_delete_v10',
+    pythonHubStageMatrix:'python_hub_teacher_stage_matrix_v1'
   }
 });
