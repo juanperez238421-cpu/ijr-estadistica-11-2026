@@ -32,6 +32,23 @@
   word-break: break-word;
 }
 
+/* CSS Grid children default to min-width:auto. The dataset card's middle
+   column contains long .xlsx filenames, so explicitly allow it to shrink. */
+.pandas-v54-theory-hardened .pandas-v52-dataset-card,
+.pandas-v54-theory-hardened .pandas-v52-dataset-card > div {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.pandas-v54-theory-hardened .pandas-v52-dataset-card code,
+.pandas-v54-theory-hardened .pandas-v52-dataset-card strong,
+.pandas-v54-theory-hardened .pandas-v52-dataset-card small,
+.pandas-v54-theory-hardened .pandas-v52-dataset-card p {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 /* 768px tablets were the remaining stress case in real Chromium QA.
    Switch to the compact teaching layout slightly before the legacy 760px
    breakpoint so no card depends on a few pixels of spare width. */
