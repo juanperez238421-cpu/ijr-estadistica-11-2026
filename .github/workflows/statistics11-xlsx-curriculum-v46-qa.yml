@@ -79,7 +79,7 @@ jobs:
             if ! grep -q "$pattern" "$file"; then
               echo "DOM assertion failed: $label" >&2
               echo "--- HTML root/audit markers ---" >&2
-              grep -oE '<html[^>]*>|id="theoryV54Audit"[^>]*>|data-theory-v54[^ >]*|data-pandas-v54[^ >]*|TOPIC 04 · [^<]+' "$file" | head -80 >&2 || true
+              grep -oE '<html[^>]*>|<output id="theoryV54Audit"[^>]*>[^<]*|data-theory-v54[^ >]*|data-pandas-v54[^ >]*|TOPIC 04 · [^<]+' "$file" | head -100 >&2 || true
               echo "--- access/startup markers ---" >&2
               grep -oE 'REGISTRATION REQUIRED|TOPIC LOCKED|THEORY STARTUP RECOVERY|Connection issue|Open the Learning Hub first|Pandas \+ Excel|LIVE PANDAS|LIVE LOGIC' "$file" | head -80 >&2 || true
               exit 1
