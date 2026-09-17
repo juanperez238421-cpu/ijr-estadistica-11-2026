@@ -31,7 +31,9 @@
   const token = () => sessionStorage.getItem(cfg.teacherSessionKey) || '';
   const esc = (value) => String(value ?? '').replace(/[&<>\"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const dateOf = (value) => { if (!value) return null; const d = new Date(value); return Number.isNaN(d.getTime()) ? null : d; };
-  const fmtTime = (value) => { const d = dateOf(value); return d ? d.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Bogota' }) : '—'; };\n  const bogotaDay = (value) => { const d = dateOf(value); if (!d) return ''; return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d); };\n  const isTodayBogota = (value) => { const key = bogotaDay(value); return Boolean(key && key === bogotaDay(new Date())); };
+  const fmtTime = (value) => { const d = dateOf(value); return d ? d.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Bogota' }) : '—'; };
+  const bogotaDay = (value) => { const d = dateOf(value); if (!d) return ''; return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d); };
+  const isTodayBogota = (value) => { const key = bogotaDay(value); return Boolean(key && key === bogotaDay(new Date())); };
   const latestDate = (values) => values.map(dateOf).filter(Boolean).reduce((a, b) => a > b ? a : b, null);
   const students = () => Array.isArray(state.data?.students) ? state.data.students : [];
   const topicMeta = (slug, source = null) => { const fallback = META.get(slug) || { slug, sequence: 0, title: slug || 'Workshop' }; return { slug, sequence: Number(source?.sequence ?? fallback.sequence ?? 0), title: source?.title || fallback.title || slug || 'Workshop' }; };
