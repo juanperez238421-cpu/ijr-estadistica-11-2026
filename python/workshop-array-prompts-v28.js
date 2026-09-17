@@ -220,6 +220,9 @@
     const hintBox = document.getElementById('hintBox');
     if (!prompt || !concept || !steps || !guidePanel || !hintBox) return;
 
+    const marker = steps.querySelector('[data-array-v47-step]');
+    if (guidePanel.dataset.arrayV47Signature === key && marker && prompt.textContent === prompts[key]) return;
+
     if (prompts[key]) prompt.textContent = prompts[key];
     concept.textContent = entry.concept;
     steps.innerHTML = entry.steps.map((step, index) => `<li data-array-v47-step="${index + 1}"><strong>Step ${index + 1}.</strong> ${escapeHtml(step)}</li>`).join('');
