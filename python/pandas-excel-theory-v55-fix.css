@@ -32,8 +32,53 @@
   word-break: break-word;
 }
 
-@media (max-width: 760px) {
+/* 768px tablets were the remaining stress case in real Chromium QA.
+   Switch to the compact teaching layout slightly before the legacy 760px
+   breakpoint so no card depends on a few pixels of spare width. */
+@media (max-width: 800px) {
+  .pandas-v54-theory-hardened .pandas-v52-library-grid,
+  .pandas-v54-theory-hardened .pandas-v52-code-grid,
+  .pandas-v54-theory-hardened .pandas-v52-dataset-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pandas-v54-theory-hardened .pandas-v52-flow,
+  .pandas-v54-live-hardened .live-workflow-v19,
+  .pandas-v54-upload-track,
+  .pandas-v54-file-flow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pandas-v54-theory-hardened .pandas-v52-flow span::after,
+  .pandas-v54-upload-track > i,
+  .pandas-v54-file-flow > .pandas-v54-arrow {
+    display: none;
+  }
+
+  .pandas-v54-dropzone {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pandas-v54-upload-control {
+    grid-column: auto;
+    justify-content: stretch;
+  }
+
+  .pandas-v54-upload-button {
+    width: 100%;
+    white-space: normal;
+  }
+
   #diagramGrid[data-pandas-v54="v54"] .pandas-v54-stage {
     padding-inline: 14px !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .pandas-v54-theory-hardened .pandas-v52-flow,
+  .pandas-v54-live-hardened .live-workflow-v19,
+  .pandas-v54-upload-track,
+  .pandas-v54-file-flow {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
