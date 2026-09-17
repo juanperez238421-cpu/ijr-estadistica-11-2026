@@ -1,7 +1,8 @@
 name: Python Learning Hub V47 QA
 
 # Current production contract: 16-topic curriculum, 12 workshop stages per topic,
-# V42 runtime, V43 guided UI, V44 progression, V46 XLSX curriculum, and V47 Arrays guidance.
+# V42 runtime, V43 guided UI, V44 progression, V46 XLSX curriculum, V47 Arrays guidance,
+# and V54 manual-entry workshop authorship safeguards.
 # Legacy pre-V42 split-page checks remain in the repository for historical regression work,
 # but are no longer authoritative for the production workshop.html entry point.
 on:
@@ -12,6 +13,7 @@ on:
       - 'qa/check_workshop_v47_contract.cjs'
       - 'qa/arrays_workshop_v47_e2e.cjs'
       - 'qa/check_statistics11_xlsx_curriculum_v46.cjs'
+      - 'qa/check_workshop_authorship_v54.cjs'
       - 'supabase/migrations/*python_learning_hub*.sql'
       - 'supabase/migrations/*python_hub*.sql'
       - '.github/workflows/python-learning-hub-qa.yml'
@@ -23,6 +25,7 @@ on:
       - 'qa/check_workshop_v47_contract.cjs'
       - 'qa/arrays_workshop_v47_e2e.cjs'
       - 'qa/check_statistics11_xlsx_curriculum_v46.cjs'
+      - 'qa/check_workshop_authorship_v54.cjs'
       - 'supabase/migrations/*python_learning_hub*.sql'
       - 'supabase/migrations/*python_hub*.sql'
       - '.github/workflows/python-learning-hub-qa.yml'
@@ -51,10 +54,12 @@ jobs:
           node --check python/workshop-v42.js
           node --check python/workshop-guidance-v43.js
           node --check python/workshop-progression-guard-v44.js
+          node --check python/workshop-authorship-v54.js
           node --check python/hub-router.js
           node --check qa/check_arrays_workshop_v37.cjs
           node --check qa/check_workshop_v47_contract.cjs
           node --check qa/check_statistics11_xlsx_curriculum_v46.cjs
+          node --check qa/check_workshop_authorship_v54.cjs
           node --check qa/arrays_workshop_v47_e2e.cjs
 
       - name: Current production course contracts
@@ -62,6 +67,7 @@ jobs:
           node qa/check_workshop_v47_contract.cjs
           node qa/check_arrays_workshop_v37.cjs
           node qa/check_statistics11_xlsx_curriculum_v46.cjs
+          node qa/check_workshop_authorship_v54.cjs
 
       - name: Verify production Pyodide asset
         run: curl --fail --silent --show-error --location --head https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js >/dev/null
