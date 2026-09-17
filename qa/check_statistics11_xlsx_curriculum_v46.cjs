@@ -13,6 +13,7 @@ const indexHtml = read('python/index.html');
 const theoryHtml = read('python/theory.html');
 const workshopHtml = read('python/workshop.html');
 const workshopXlsx = read('python/workshop-xlsx-topic-v46.js');
+const livePandas = read('python/pandas-excel-live-v53.js');
 const migration = read('supabase/migrations/20260916170000_statistics11_xlsx_after_arrays_v46.sql');
 const workbook = fs.readFileSync(path.join(ROOT, 'python/data/stat11_stage4_students.xlsx'));
 
@@ -49,6 +50,33 @@ for (const [name, html] of [['index', indexHtml], ['theory', theoryHtml], ['work
   requireContract(html.indexOf('curriculum-data-first-v32.js') < html.indexOf('curriculum-xlsx-first-v46.js'), `${name}.html loads V46 before V32.`);
 }
 
+// Topic 04 executable theory must override the legacy logic live-lab with real Pandas + Excel programming.
+requireContract(theoryHtml.includes('pandas-excel-live-v53.js'), 'Theory page does not load the Pandas/Excel live programming override.');
+requireContract(theoryHtml.indexOf('theory-live-lab-v19.js') < theoryHtml.indexOf('pandas-excel-live-v53.js'), 'Pandas/Excel live override must load after the legacy live-lab renderer.');
+for (const token of [
+  'TOPIC 04 · LIVE PANDAS + EXCEL',
+  'import pandas as pd',
+  'pd.ExcelFile',
+  'pd.read_excel',
+  'pandas_excel_students.xlsx',
+  'pandas_excel_sales.xlsx',
+  'pandas_excel_dirty.xlsx',
+  "runtime.loadPackage(['pandas', 'openpyxl'])",
+  'runtime.FS.writeFile',
+  'df.loc[',
+  'sort_values',
+  'isna().sum()',
+  'duplicated().sum()',
+  'pd.ExcelWriter',
+  'analysis_output.xlsx',
+  'Upload your .xlsx'
+]) {
+  requireContract(livePandas.includes(token), `Topic 04 live Pandas/Excel contract missing: ${token}`);
+}
+requireContract(!livePandas.includes('TOPIC 04 · LIVE LOGIC'), 'Topic 04 live override regressed to LIVE LOGIC.');
+requireContract(!livePandas.includes('Run comparisons and watch Python produce True or False'), 'Topic 04 live override still presents the obsolete logic-only lesson.');
+requireContract(livePandas.includes("oldSection.replaceWith(section)"), 'Topic 04 live override must replace the legacy logic section rather than append a duplicate.');
+
 // Workshop must expose a real XLSX file path before core runtime execution.
 requireContract(workshopHtml.includes('workshop-xlsx-topic-v46.js'), 'Production workshop does not load the V46 XLSX workspace.');
 requireContract(workshopHtml.indexOf('workshop-xlsx-topic-v46.js') < workshopHtml.indexOf('workshop-v42.js'), 'V46 XLSX bridge must load before the core workshop runtime.');
@@ -76,4 +104,4 @@ for (const token of [
 }
 
 console.log('STATISTICS 11 XLSX-FIRST CURRICULUM V46 STATIC CONTRACT PASS');
-console.log('sequence=Arrays→XLSX→CSV/Pandas control_structures=integrated xlsx=real 12_stages=PASS later_pandas_matplotlib_analysis=PASS backend_read_excel=PASS');
+console.log('sequence=Arrays→XLSX→CSV/Pandas live_topic04=Pandas+Excel real_xlsx=PASS control_structures=integrated 12_stages=PASS backend_read_excel=PASS');
