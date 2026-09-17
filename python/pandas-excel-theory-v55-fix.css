@@ -50,8 +50,8 @@
 }
 
 /* 768px tablets were the remaining stress case in real Chromium QA.
-   Switch to the compact teaching layout slightly before the legacy 760px
-   breakpoint so no card depends on a few pixels of spare width. */
+   Switch to a normal block card instead of keeping the three-column grid:
+   this removes the grid item's intrinsic min-content width entirely. */
 @media (max-width: 800px) {
   .pandas-v54-theory-hardened .pandas-v52-library-grid,
   .pandas-v54-theory-hardened .pandas-v52-code-grid,
@@ -60,9 +60,17 @@
   }
 
   .pandas-v54-theory-hardened .pandas-v52-dataset-card {
-    width: 100%;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 10px;
+    display: block;
+    width: auto;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .pandas-v54-theory-hardened .pandas-v52-dataset-card > div {
+    display: block;
+    width: auto;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .pandas-v54-theory-hardened .pandas-v52-dataset-card > b {
@@ -70,8 +78,10 @@
   }
 
   .pandas-v54-theory-hardened .pandas-v52-file-icon {
+    display: flex;
     width: 48px;
     max-width: 48px;
+    margin-bottom: 10px;
   }
 
   .pandas-v54-theory-hardened .pandas-v52-flow,
