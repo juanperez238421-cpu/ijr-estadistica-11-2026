@@ -32,6 +32,12 @@
   word-break: break-word;
 }
 
+/* Dataset cards are links already. The old decorative trailing arrow added
+   no function and was the only painted element leaving a card at tablet size. */
+.pandas-v52-dataset-card > b {
+  display: none !important;
+}
+
 /* CSS Grid children default to min-width:auto. The dataset card's middle
    column contains long .xlsx filenames, so explicitly allow it to shrink. */
 .pandas-v54-theory-hardened .pandas-v52-dataset-card,
@@ -71,10 +77,6 @@
     width: auto;
     min-width: 0;
     max-width: 100%;
-  }
-
-  .pandas-v54-theory-hardened .pandas-v52-dataset-card > b {
-    display: none;
   }
 
   .pandas-v54-theory-hardened .pandas-v52-file-icon {
