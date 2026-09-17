@@ -136,7 +136,8 @@
     if(!cfg) return;
     const session = readJson(cfg.sessionStorageKey);
     if(!session?.registrationId || !session?.accessToken){
-      const returnTo = `workshop-v42.html?topic=${encodeURIComponent(topicSlug)}`;
+      const page = location.pathname.split('/').pop() || 'workshop.html';
+      const returnTo = `${page}?topic=${encodeURIComponent(topicSlug)}`;
       location.replace(`./?returnTo=${encodeURIComponent(returnTo)}`);
       return;
     }
