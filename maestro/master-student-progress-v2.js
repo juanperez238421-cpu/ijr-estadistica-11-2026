@@ -89,6 +89,71 @@
     return '<small class="sp2-daily">Sin actividad registrada en ningún workshop</small>';
   }
 
+
+  function todayRegisterData() {
+    const allStudents = students();
+    const groups = [...new Set(allStudents.map((s) => s.group_code).filter(Boolean))].sort();
+    const rosterByGroup = Object.fromEntries(groups.map((g) => [g, allStudents.filter((s) => s.group_code === g).length]));
+    const activeByGroup = Object.fromEntries(groups.map((g) => [
+      g,
+      allStudents.filter((s) => s.group_code === g && studentActivity(s).todayRows.length > 0).length
+    ]));
+    const topicRows = topics().map((meta) => {
+      const counts = Object.fromEntries(groups.map((g) => [
+        g,
+        allStudents.filter((s) => {
+          if (s.group_code !== g) return false;
+          const p = itemProgress(topicFor(s, meta.slug));
+          return Boolean(p.lastActivity && isTodayBogota(p.lastActivity));
+        }).length
+      ]));
+      const total = groups.reduce((sum, g) => sum + Number(counts[g] || 0), 0);
+      return { meta, counts, total };
+    }).filter((row) => row.total > 0);
+
+    const unresolvedToday = (Array.isArray(state.data?.unmatched_registrations) ? state.data.unmatched_registrations : [])
+      .filter((row) => isTodayBogota(row.last_response_at));
+
+    return {
+      groups,
+      rosterByGroup,
+      activeByGroup,
+      topicRows,
+      unresolvedToday,
+      distinctToday: allStudents.filter((s) => studentActivity(s).todayRows.length > 0).length
+    };
+  }
+
+  function renderTodayRegister() {
+    const el = $('sp2TodayRegisterV2');
+    if (!el) return;
+    const d = todayRegisterData();
+    const header = d.groups.map((g) => `<th>${esc(g)}</th>`).join('');
+    const groupCards = d.groups.map((g) =>
+      `<div><span>${esc(g)} · trabajaron hoy</span><strong>${esc(d.activeByGroup[g] || 0)} / ${esc(d.rosterByGroup[g] || 0)}</strong></div>`
+    ).join('');
+    const rows = d.topicRows.map((row) => {
+      const cells = d.groups.map((g) => `<td><strong>${esc(row.counts[g] || 0)}</strong></td>`).join('');
+      return `<tr><td><span>W${esc(row.meta.sequence)}</span><strong>${esc(row.meta.title)}</strong></td>${cells}<td><strong>${esc(row.total)}</strong></td></tr>`;
+    }).join('');
+    const unresolved = d.unresolvedToday.length
+      ? `<div class="sp2-register-audit">⚠ ${esc(d.unresolvedToday.length)} registro(s) con actividad de hoy aún no pertenecen al roster oficial y no se incluyen en los totales de estudiantes.</div>`
+      : '<div class="sp2-register-audit ok">✓ Toda la actividad de estudiantes identificados hoy está vinculada al roster oficial.</div>';
+
+    el.innerHTML = `
+      <div class="sp2-register-head">
+        <div><span class="eyebrow">REGISTRO REAL · AMERICA/BOGOTA</span><h3>Actividad de hoy por grupo y workshop</h3></div>
+        <strong>${esc(d.distinctToday)} estudiantes únicos</strong>
+      </div>
+      <div class="sp2-register-groups">${groupCards}<div><span>Total único hoy</span><strong>${esc(d.distinctToday)}</strong></div></div>
+      <div class="sp2-register-table-wrap">
+        <table class="sp2-register-table"><thead><tr><th>Workshop</th>${header}<th>Total</th></tr></thead><tbody>${rows || '<tr><td colspan="5">Sin actividad registrada hoy.</td></tr>'}</tbody></table>
+      </div>
+      <div class="sp2-register-note">Un estudiante puede aparecer en más de un workshop; el total superior cuenta estudiantes únicos una sola vez.</div>
+      ${unresolved}
+    `;
+  }
+
   function progressBar(progress) {
     return `<div class="sp2-progress"><div class="sp2-progress-top"><strong>${progress.validated.length}/${progress.total}</strong><span>${progress.pct}%</span></div><div class="sp2-track"><i style="width:${progress.pct}%"></i></div></div>`;
   }
@@ -161,6 +226,7 @@
       : '';
 
     $('studentProgressCountV2').textContent = `${groupStudents.length} estudiantes · ${todayAnyWorkshop} con actividad hoy`;
+    renderTodayRegister();
     renderDataQuality();
     list.innerHTML = selected
       ? (groupStudents.length ? groupStudents.map((s) => studentCard(s, selectedMeta)).join('') : '<div class="sp2-empty">No hay estudiantes en el grupo seleccionado.</div>')
@@ -223,7 +289,7 @@
   function mount() {
     const panel = $('studentProgressPanel');
     if (!panel || !cfg?.rpc?.pythonHubStageMatrix) return;
-    panel.innerHTML = `<div class="sp2-head"><div><span class="eyebrow">MASTER · PROGRESO PYTHON HUB</span><h2>Progreso por grupo y workshop</h2><p>Selecciona el grupo y el workshop. Se muestra el avance de cada estudiante y los ejercicios validados, usando los registros actuales de Supabase.</p></div><div id="studentProgressLiveV2" class="sp2-live loading">Esperando sesión maestra</div></div><div class="sp2-controls"><label>Grupo<select id="sp2GroupFilter"><option value="">Todos los grupos</option></select></label><label>Workshop · tema<select id="sp2TopicFilter"><option value="">Seleccionar workshop…</option></select></label><button id="sp2Refresh" type="button" class="quiet">Actualizar</button><button id="sp2Reset" type="button" class="quiet">Restablecer</button><span id="studentProgressCountV2" class="muted">0 estudiantes</span></div><div id="studentProgressSummaryV2" class="sp2-summary"></div><div id="sp2DataQualityV2" class="sp2-data-quality hidden"></div><div id="studentProgressListV2" class="sp2-list" aria-live="polite"><div class="sp2-empty">Inicia sesión maestra para ver el progreso.</div></div><div class="sp2-note">✓ = ejercicio validado. Un intento incorrecto no se cuenta como validado. Los registros maestros, respuestas, notas y matrículas existentes no se modifican desde esta vista.</div>`;
+    panel.innerHTML = `<div class="sp2-head"><div><span class="eyebrow">MASTER · PROGRESO PYTHON HUB</span><h2>Progreso por grupo y workshop</h2><p>Selecciona el grupo y el workshop. Se muestra el avance de cada estudiante y los ejercicios validados, usando los registros actuales de Supabase.</p></div><div id="studentProgressLiveV2" class="sp2-live loading">Esperando sesión maestra</div></div><div class="sp2-controls"><label>Grupo<select id="sp2GroupFilter"><option value="">Todos los grupos</option></select></label><label>Workshop · tema<select id="sp2TopicFilter"><option value="">Seleccionar workshop…</option></select></label><button id="sp2Refresh" type="button" class="quiet">Actualizar</button><button id="sp2Reset" type="button" class="quiet">Restablecer</button><span id="studentProgressCountV2" class="muted">0 estudiantes</span></div><div id="sp2TodayRegisterV2" class="sp2-today-register"></div><div id="studentProgressSummaryV2" class="sp2-summary"></div><div id="sp2DataQualityV2" class="sp2-data-quality hidden"></div><div id="studentProgressListV2" class="sp2-list" aria-live="polite"><div class="sp2-empty">Inicia sesión maestra para ver el progreso.</div></div><div class="sp2-note">✓ = ejercicio validado. Un intento incorrecto no se cuenta como validado. Los registros maestros, respuestas, notas y matrículas existentes no se modifican desde esta vista.</div>`;
     bind();
     const check = () => { if (token() && !state.running && !state.data) load(true); if (!token() && state.data) { state.data = null; setLive('error', 'Sesión maestra requerida'); } };
     setInterval(check, 1000);
