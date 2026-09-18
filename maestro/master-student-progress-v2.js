@@ -157,7 +157,7 @@
         <span>Respondidos hoy <b>${esc(todayItems.length)}</b></span>
         <span>Δ validados hoy <b>${esc(delta)}</b></span>
         <span>Sin validar hoy <b>${esc(pending)}</b></span>
-        <span>Ventana <b>${esc(fmtClock(p.firstToday))} – ${esc(fmtClock(p.lastToday))}</b></span>
+        <span>Primer/último ejercicio con respuesta <b>${esc(fmtClock(p.firstToday))} – ${esc(fmtClock(p.lastToday))}</b></span>
       </div>
       <div class="sp2-trace-chip-row">${chips || '<span class="sp2-muted">Sin ejercicios respondidos hoy.</span>'}</div>
       ${todayItems.length ? `<details class="sp2-evidence-detail"><summary>Ver trazabilidad exacta de ${todayItems.length} ejercicio${todayItems.length === 1 ? '' : 's'}</summary><div class="sp2-evidence-table-wrap"><table class="sp2-evidence-table"><thead><tr><th>#</th><th>Key</th><th>Ejercicio real</th><th>Estado actual</th><th>Intentos acum.</th><th>Última respuesta</th><th>Origen</th></tr></thead><tbody>${details}</tbody></table></div></details>` : ''}
@@ -171,8 +171,9 @@
     const attempted = rows.reduce((sum,row) => sum + row.progress.attemptedToday.length, 0);
     const newValid = rows.reduce((sum,row) => sum + row.progress.newlyValidatedToday.length, 0);
     const pending = rows.reduce((sum,row) => sum + row.progress.pendingToday.length, 0);
+    const workshopSummary = rows.map((row) => `W${row.meta.sequence} ${row.progress.validated.length}/${row.progress.total} · ${fmtPct(row.progress.pct)}`).join(' · ');
     return `<details class="sp2-student-evidence" ${open ? 'open' : ''}>
-      <summary><strong>Evidencia de hoy</strong><span>${esc(rows.length)} W · ${esc(attempted)} ejercicios respondidos · +${esc(newValid)} validados · ${esc(pending)} sin validar</span></summary>
+      <summary><strong>Evidencia de hoy</strong><span>${esc(workshopSummary)} · ${esc(attempted)} ejercicios respondidos · +${esc(newValid)} validados · ${esc(pending)} sin validar</span></summary>
       <div class="sp2-student-evidence-body">${rows.map(workshopEvidenceHtml).join('')}</div>
     </details>`;
   }
@@ -303,7 +304,7 @@
       <div class="sp2-progress-cell"><span class="sp2-label">Avance acumulado</span>${progressBar(p)}<small class="sp2-delta-line">Hoy: ${esc(p.attemptedToday.length)} respondidos · +${esc(p.newlyValidatedToday.length)} validados</small></div>
       <div class="sp2-validated"><span class="sp2-label">Ejercicios · estado acumulado</span><div class="sp2-chip-row">${exerciseChips(p)}</div></div>
       <div class="sp2-status-cell">${status(topic, selectedMeta)}<small>Este workshop: ${fmtTime(p.lastActivity)}</small>${dailyActivityHtml(student)}</div>
-      <div class="sp2-selected-trace">${studentTodayEvidenceHtml(student, false)}</div>
+      <div class="sp2-selected-trace">${studentTodayEvidenceHtml(student, true)}</div>
     </article>`;
   }
 
