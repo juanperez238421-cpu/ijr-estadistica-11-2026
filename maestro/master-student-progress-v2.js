@@ -48,7 +48,12 @@
 
   function topicFor(student, slug) { return (student.topics || []).find((topic) => topic.slug === slug) || null; }
   function selectedStudents() { return students().filter((s) => !state.group || s.group_code === state.group).sort((a, b) => String(a.display_name || '').localeCompare(String(b.display_name || ''), 'es')); }
-  function selectedTopicFor(student) { return state.topicSlug ? topicFor(student, state.topicSlug) : null; }
+  function selectedTopicFor(student) { return state.topicSlug && state.topicSlug !== '__today__' ? topicFor(student, state.topicSlug) : null; }
+  function isTestRegistration(row) {
+    const email = String(row?.institutional_email || '').trim().toLowerCase();
+    const name = String(row?.display_name || '').trim();
+    return email === 'qa.student11@ijr.edu.co' || /^qa\b/i.test(name);
+  }
 
   function itemProgress(topic) {
     const items = Array.isArray(topic?.items) ? topic.items : [];
@@ -89,6 +94,29 @@
     return '<small class="sp2-daily">Sin actividad registrada en ningún workshop</small>';
   }
 
+  function todayStudentCard(student) {
+    const d = studentActivity(student);
+    const rows = [...d.todayRows].sort((a, b) => a.meta.sequence - b.meta.sequence);
+    const email = student.account?.email || student.hub_identity?.email || 'Sin cuenta o correo Hub asociado';
+    const attemptedToday = rows.reduce((sum, row) => sum + row.progress.items.filter((item) => item.last_answered_at && isTodayBogota(item.last_answered_at)).length, 0);
+    const validatedToday = rows.reduce((sum, row) => sum + row.progress.items.filter((item) => item.correct === true && item.last_answered_at && isTodayBogota(item.last_answered_at)).length, 0);
+    const workshopHtml = rows.length
+      ? rows.map((row) => `<div class="sp2-today-workshop-row"><span>W${esc(row.meta.sequence)}</span><strong>${esc(row.progress.validated.length)}/${esc(row.progress.total)}</strong><small>${esc(row.meta.title)}</small></div>`).join('')
+      : '<span class="sp2-muted">Sin respuestas registradas hoy.</span>';
+    const last = d.lastActivity;
+    const statusHtml = rows.length
+      ? `<span class="sp2-status today">Trabajó hoy</span><small>Última respuesta: ${esc(fmtTime(last))}</small>`
+      : `<span class="sp2-status none">Sin respuestas hoy</span><small>${last ? `Última histórica: ${esc(fmtTime(last))}` : 'Sin actividad histórica registrada'}</small>`;
+
+    return `<article class="sp2-student sp2-today-student${rows.length ? '' : ' no-today'}">
+      <div class="sp2-identity"><span class="sp2-group">${esc(student.group_code || '—')}</span><div><strong>${esc(student.display_name || 'Estudiante')}</strong><small>${esc(email)}</small></div></div>
+      <div class="sp2-workshop"><span class="sp2-label">WORKSHOPS DE HOY</span><div class="sp2-today-workshops">${workshopHtml}</div></div>
+      <div class="sp2-progress-cell"><span class="sp2-label">Respuestas hoy</span><strong>${esc(attemptedToday)}</strong><small>${esc(validatedToday)} validadas en su última respuesta de hoy</small></div>
+      <div class="sp2-validated"><span class="sp2-label">Cobertura hoy</span><strong>${esc(rows.length)} workshop${rows.length === 1 ? '' : 's'}</strong><small>${rows.length ? rows.map((row) => `W${row.meta.sequence}`).join(' · ') : '—'}</small></div>
+      <div class="sp2-status-cell">${statusHtml}</div>
+    </article>`;
+  }
+
 
   function todayRegisterData() {
     const allStudents = students();
@@ -111,8 +139,10 @@
       return { meta, counts, total };
     }).filter((row) => row.total > 0);
 
-    const unresolvedToday = (Array.isArray(state.data?.unmatched_registrations) ? state.data.unmatched_registrations : [])
+    const unmatchedToday = (Array.isArray(state.data?.unmatched_registrations) ? state.data.unmatched_registrations : [])
       .filter((row) => isTodayBogota(row.last_response_at));
+    const unresolvedToday = unmatchedToday.filter((row) => !isTestRegistration(row));
+    const testToday = unmatchedToday.filter(isTestRegistration);
 
     return {
       groups,
@@ -120,6 +150,7 @@
       activeByGroup,
       topicRows,
       unresolvedToday,
+      testToday,
       distinctToday: allStudents.filter((s) => studentActivity(s).todayRows.length > 0).length
     };
   }
@@ -129,16 +160,19 @@
     if (!el) return;
     const d = todayRegisterData();
     const header = d.groups.map((g) => `<th>${esc(g)}</th>`).join('');
-    const groupCards = d.groups.map((g) =>
-      `<div><span>${esc(g)} · trabajaron hoy</span><strong>${esc(d.activeByGroup[g] || 0)} / ${esc(d.rosterByGroup[g] || 0)}</strong></div>`
-    ).join('');
+    const groupCards = d.groups.map((g) => {
+      const active = Number(d.activeByGroup[g] || 0);
+      const roster = Number(d.rosterByGroup[g] || 0);
+      return `<div><span>${esc(g)} · con respuestas hoy</span><strong>${esc(active)} / ${esc(roster)}</strong><small>${esc(Math.max(0, roster - active))} sin respuestas hoy</small></div>`;
+    }).join('');
     const rows = d.topicRows.map((row) => {
       const cells = d.groups.map((g) => `<td><strong>${esc(row.counts[g] || 0)}</strong></td>`).join('');
       return `<tr><td><span>W${esc(row.meta.sequence)}</span><strong>${esc(row.meta.title)}</strong></td>${cells}<td><strong>${esc(row.total)}</strong></td></tr>`;
     }).join('');
+    const qaNote = d.testToday.length ? ` · ${esc(d.testToday.length)} registro QA excluido del conteo real` : '';
     const unresolved = d.unresolvedToday.length
-      ? `<div class="sp2-register-audit">⚠ ${esc(d.unresolvedToday.length)} registro(s) con actividad de hoy aún no pertenecen al roster oficial y no se incluyen en los totales de estudiantes.</div>`
-      : '<div class="sp2-register-audit ok">✓ Toda la actividad de estudiantes identificados hoy está vinculada al roster oficial.</div>';
+      ? `<div class="sp2-register-audit">⚠ ${esc(d.unresolvedToday.length)} registro(s) reales con actividad de hoy todavía no están vinculados al roster oficial.${qaNote}</div>`
+      : `<div class="sp2-register-audit ok">✓ Toda la actividad real de hoy está vinculada al roster oficial${qaNote}.</div>`;
 
     el.innerHTML = `
       <div class="sp2-register-head">
@@ -192,7 +226,7 @@
     const el = $('sp2DataQualityV2');
     if (!el) return;
     const rows = Array.isArray(state.data?.unmatched_registrations) ? state.data.unmatched_registrations : [];
-    const scoped = rows.filter((row) => (!state.group || row.group_code === state.group) && isTodayBogota(row.last_response_at));
+    const scoped = rows.filter((row) => (!state.group || row.group_code === state.group) && isTodayBogota(row.last_response_at) && !isTestRegistration(row));
     if (!scoped.length) {
       el.className = 'sp2-data-quality hidden';
       el.innerHTML = '';
@@ -213,11 +247,26 @@
   function render() {
     const list = $('studentProgressListV2');
     if (!list) return;
-    const selectedMeta = topicMeta(state.topicSlug);
-    const selected = state.topicSlug ? topics().find((t) => t.slug === state.topicSlug) : null;
+    const todayMode = state.topicSlug === '__today__';
+    const selectedMeta = todayMode ? null : topicMeta(state.topicSlug);
+    const selected = !todayMode && state.topicSlug ? topics().find((t) => t.slug === state.topicSlug) : null;
     const groupStudents = selectedStudents();
-    const withActivity = selected ? groupStudents.filter((s) => itemProgress(selectedTopicFor(s)).lastActivity).length : 0;
     const todayAnyWorkshop = groupStudents.filter((s) => studentActivity(s).todayRows.length > 0).length;
+
+    renderTodayRegister();
+    renderDataQuality();
+
+    if (todayMode) {
+      const activeWorkshopCount = new Set(groupStudents.flatMap((s) => studentActivity(s).todayRows.map((row) => row.meta.slug))).size;
+      $('studentProgressSummaryV2').innerHTML = `<div><span>Grupo</span><strong>${esc(state.group || 'Todos')}</strong></div><div><span>Roster oficial</span><strong>${esc(groupStudents.length)}</strong></div><div><span>Con respuestas hoy</span><strong>${esc(todayAnyWorkshop)}</strong></div><div><span>Sin respuestas hoy</span><strong>${esc(Math.max(0, groupStudents.length - todayAnyWorkshop))}</strong></div><div><span>Workshops activos hoy</span><strong>${esc(activeWorkshopCount)}</strong></div><div><span>Fecha de corte</span><strong>Hoy</strong></div><div><span>Zona horaria</span><strong>Bogotá</strong></div>`;
+      $('studentProgressCountV2').textContent = `${groupStudents.length} estudiantes revisados uno por uno · ${todayAnyWorkshop} con respuestas hoy`;
+      list.innerHTML = groupStudents.length
+        ? groupStudents.map(todayStudentCard).join('')
+        : '<div class="sp2-empty">No hay estudiantes en el grupo seleccionado.</div>';
+      return;
+    }
+
+    const withActivity = selected ? groupStudents.filter((s) => itemProgress(selectedTopicFor(s)).lastActivity).length : 0;
     const validated = selected ? groupStudents.reduce((sum, s) => sum + itemProgress(selectedTopicFor(s)).validated.length, 0) : 0;
     const totalExercises = selected ? Number(groupStudents.map((s) => topicFor(s, state.topicSlug)?.total_count || 0).find(Boolean) || 0) : 0;
 
@@ -226,11 +275,9 @@
       : '';
 
     $('studentProgressCountV2').textContent = `${groupStudents.length} estudiantes · ${todayAnyWorkshop} con actividad hoy`;
-    renderTodayRegister();
-    renderDataQuality();
     list.innerHTML = selected
       ? (groupStudents.length ? groupStudents.map((s) => studentCard(s, selectedMeta)).join('') : '<div class="sp2-empty">No hay estudiantes en el grupo seleccionado.</div>')
-      : '<div class="sp2-empty">Selecciona un workshop para consultar el avance.</div>';
+      : '<div class="sp2-empty">Selecciona “Hoy · todos los workshops” o un workshop específico.</div>';
   }
 
   function populateControls() {
@@ -244,12 +291,11 @@
 
     const allTopics = topics();
     const currentTopic = state.topicSlug;
-    topicSelect.innerHTML = '<option value="">Seleccionar workshop…</option>' + allTopics.map((t) => `<option value="${esc(t.slug)}">Workshop ${esc(t.sequence)} · ${esc(t.title)}</option>`).join('');
-    if (allTopics.some((t) => t.slug === currentTopic)) {
+    topicSelect.innerHTML = '<option value="__today__">Hoy · todos los workshops · estudiante por estudiante</option><option value="">Workshop específico…</option>' + allTopics.map((t) => `<option value="${esc(t.slug)}">Workshop ${esc(t.sequence)} · ${esc(t.title)}</option>`).join('');
+    if (currentTopic === '__today__' || allTopics.some((t) => t.slug === currentTopic)) {
       topicSelect.value = currentTopic;
     } else {
-      const latestWorked = allTopics.filter((t) => students().some((s) => itemProgress(topicFor(s, t.slug)).lastActivity)).sort((a, b) => b.sequence - a.sequence)[0];
-      state.topicSlug = latestWorked?.slug || '';
+      state.topicSlug = '__today__';
       topicSelect.value = state.topicSlug;
     }
   }
@@ -278,7 +324,7 @@
     } finally { state.running = false; }
   }
 
-  function resetSelection() { state.group = ''; state.topicSlug = ''; if ($('sp2GroupFilter')) $('sp2GroupFilter').value = ''; populateControls(); render(); }
+  function resetSelection() { state.group = ''; state.topicSlug = '__today__'; if ($('sp2GroupFilter')) $('sp2GroupFilter').value = ''; populateControls(); render(); }
   function bind() {
     $('sp2GroupFilter')?.addEventListener('change', (e) => { state.group = e.target.value; render(); });
     $('sp2TopicFilter')?.addEventListener('change', (e) => { state.topicSlug = e.target.value; render(); });
@@ -289,7 +335,7 @@
   function mount() {
     const panel = $('studentProgressPanel');
     if (!panel || !cfg?.rpc?.pythonHubStageMatrix) return;
-    panel.innerHTML = `<div class="sp2-head"><div><span class="eyebrow">MASTER · PROGRESO PYTHON HUB</span><h2>Progreso por grupo y workshop</h2><p>Selecciona el grupo y el workshop. Se muestra el avance de cada estudiante y los ejercicios validados, usando los registros actuales de Supabase.</p></div><div id="studentProgressLiveV2" class="sp2-live loading">Esperando sesión maestra</div></div><div class="sp2-controls"><label>Grupo<select id="sp2GroupFilter"><option value="">Todos los grupos</option></select></label><label>Workshop · tema<select id="sp2TopicFilter"><option value="">Seleccionar workshop…</option></select></label><button id="sp2Refresh" type="button" class="quiet">Actualizar</button><button id="sp2Reset" type="button" class="quiet">Restablecer</button><span id="studentProgressCountV2" class="muted">0 estudiantes</span></div><div id="sp2TodayRegisterV2" class="sp2-today-register"></div><div id="studentProgressSummaryV2" class="sp2-summary"></div><div id="sp2DataQualityV2" class="sp2-data-quality hidden"></div><div id="studentProgressListV2" class="sp2-list" aria-live="polite"><div class="sp2-empty">Inicia sesión maestra para ver el progreso.</div></div><div class="sp2-note">✓ = ejercicio validado. Un intento incorrecto no se cuenta como validado. Los registros maestros, respuestas, notas y matrículas existentes no se modifican desde esta vista.</div>`;
+    panel.innerHTML = `<div class="sp2-head"><div><span class="eyebrow">MASTER · PROGRESO PYTHON HUB</span><h2>Registro real por estudiante, grupo y workshop</h2><p>La vista predeterminada revisa hoy a cada estudiante del roster oficial, sin confundir “sin actividad en un workshop” con “no trabajó hoy”. Puedes filtrar después por grupo o por workshop específico.</p></div><div id="studentProgressLiveV2" class="sp2-live loading">Esperando sesión maestra</div></div><div class="sp2-controls"><label>Grupo<select id="sp2GroupFilter"><option value="">Todos los grupos</option></select></label><label>Workshop · tema<select id="sp2TopicFilter"><option value="">Seleccionar workshop…</option></select></label><button id="sp2Refresh" type="button" class="quiet">Actualizar</button><button id="sp2Reset" type="button" class="quiet">Restablecer</button><span id="studentProgressCountV2" class="muted">0 estudiantes</span></div><div id="sp2TodayRegisterV2" class="sp2-today-register"></div><div id="studentProgressSummaryV2" class="sp2-summary"></div><div id="sp2DataQualityV2" class="sp2-data-quality hidden"></div><div id="studentProgressListV2" class="sp2-list" aria-live="polite"><div class="sp2-empty">Inicia sesión maestra para ver el progreso.</div></div><div class="sp2-note">✓ = ejercicio validado. Un intento incorrecto no se cuenta como validado. Los registros maestros, respuestas, notas y matrículas existentes no se modifican desde esta vista.</div>`;
     bind();
     const check = () => { if (token() && !state.running && !state.data) load(true); if (!token() && state.data) { state.data = null; setLive('error', 'Sesión maestra requerida'); } };
     setInterval(check, 1000);
