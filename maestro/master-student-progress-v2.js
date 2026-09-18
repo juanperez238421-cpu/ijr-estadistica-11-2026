@@ -32,6 +32,8 @@
   const esc = (value) => String(value ?? '').replace(/[&<>\"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const dateOf = (value) => { if (!value) return null; const d = new Date(value); return Number.isNaN(d.getTime()) ? null : d; };
   const fmtTime = (value) => { const d = dateOf(value); return d ? d.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Bogota' }) : '—'; };
+  const fmtClock = (value) => { const d = dateOf(value); return d ? d.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit', second: '2-digit', timeZone: 'America/Bogota' }) : '—'; };
+  const fmtPct = (value) => `${Number(value || 0).toFixed(1)}%`;
   const bogotaDay = (value) => { const d = dateOf(value); if (!d) return ''; return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d); };
   const isTodayBogota = (value) => { const key = bogotaDay(value); return Boolean(key && key === bogotaDay(new Date())); };
   const latestDate = (values) => values.map(dateOf).filter(Boolean).reduce((a, b) => a > b ? a : b, null);
@@ -59,8 +61,27 @@
     const items = Array.isArray(topic?.items) ? topic.items : [];
     const total = Number(topic?.total_count || items.length || 0);
     const validated = items.filter((item) => item.correct === true);
+    const attemptedToday = items.filter((item) => item.last_answered_at && isTodayBogota(item.last_answered_at));
+    const newlyValidatedToday = validated.filter((item) => item.completed_at && isTodayBogota(item.completed_at));
+    const validatedBeforeToday = validated.filter((item) => !item.completed_at || !isTodayBogota(item.completed_at));
+    const pendingToday = attemptedToday.filter((item) => item.correct !== true);
     const lastActivity = latestDate(items.flatMap((item) => [item.last_answered_at, item.completed_at]));
-    return { items, total, validated, lastActivity, pct: total ? Math.round(validated.length * 100 / total) : 0 };
+    const firstToday = attemptedToday.map((item) => dateOf(item.last_answered_at)).filter(Boolean).sort((a,b) => a-b)[0] || null;
+    const lastToday = attemptedToday.map((item) => dateOf(item.last_answered_at)).filter(Boolean).sort((a,b) => b-a)[0] || null;
+    return {
+      items,
+      total,
+      validated,
+      attemptedToday,
+      newlyValidatedToday,
+      validatedBeforeToday,
+      pendingToday,
+      lastActivity,
+      firstToday,
+      lastToday,
+      pct: total ? validated.length * 100 / total : 0,
+      pctBeforeToday: total ? validatedBeforeToday.length * 100 / total : 0
+    };
   }
 
   function studentActivity(student) {
@@ -94,26 +115,87 @@
     return '<small class="sp2-daily">Sin actividad registrada en ningún workshop</small>';
   }
 
+  function evidenceItemChip(item) {
+    const valid = item.correct === true;
+    const seq = item.sequence ?? '·';
+    const key = item.key || '';
+    const tries = Number(item.tries || 0);
+    const state = valid ? 'validated' : 'attempted';
+    const title = `${key} · ${item.title || 'Ejercicio'} · ${valid ? 'validado' : 'intentado, no validado'} · ${tries} intento${tries === 1 ? '' : 's'} acumulado${tries === 1 ? '' : 's'} · última ${fmtTime(item.last_answered_at)}`;
+    return `<span class="sp2-trace-chip ${state}" title="${esc(title)}">E${esc(seq)}${valid ? ' ✓' : ' !'}</span>`;
+  }
+
+  function workshopEvidenceHtml(row) {
+    const p = row.progress;
+    const todayItems = [...p.attemptedToday].sort((a,b) => Number(a.sequence || 0) - Number(b.sequence || 0));
+    const newValid = p.newlyValidatedToday.length;
+    const before = p.validatedBeforeToday.length;
+    const current = p.validated.length;
+    const pending = p.pendingToday.length;
+    const delta = newValid ? `+${newValid}` : '0';
+    const chips = todayItems.map(evidenceItemChip).join('');
+    const details = todayItems.map((item) => {
+      const valid = item.correct === true;
+      const modes = Array.isArray(item.source_modes) && item.source_modes.length ? item.source_modes.join(', ') : '—';
+      return `<tr>
+        <td>E${esc(item.sequence ?? '·')}</td>
+        <td><code>${esc(item.key || '—')}</code></td>
+        <td>${esc(item.title || 'Ejercicio')}</td>
+        <td><strong class="${valid ? 'sp2-ok-text' : 'sp2-warn-text'}">${valid ? 'Validado' : 'No validado'}</strong></td>
+        <td>${esc(item.tries || 0)}</td>
+        <td>${esc(fmtClock(item.last_answered_at))}</td>
+        <td>${esc(modes)}</td>
+      </tr>`;
+    }).join('');
+
+    return `<section class="sp2-workshop-evidence">
+      <div class="sp2-workshop-evidence-head">
+        <div><span class="sp2-wbadge">W${esc(row.meta.sequence)}</span><strong>${esc(row.meta.title)}</strong></div>
+        <div class="sp2-pct-pair"><span>Antes de hoy <b>${esc(before)}/${esc(p.total)} · ${esc(fmtPct(p.pctBeforeToday))}</b></span><i>→</i><span>Actual <b>${esc(current)}/${esc(p.total)} · ${esc(fmtPct(p.pct))}</b></span></div>
+      </div>
+      <div class="sp2-evidence-metrics">
+        <span>Respondidos hoy <b>${esc(todayItems.length)}</b></span>
+        <span>Δ validados hoy <b>${esc(delta)}</b></span>
+        <span>Sin validar hoy <b>${esc(pending)}</b></span>
+        <span>Ventana <b>${esc(fmtClock(p.firstToday))} – ${esc(fmtClock(p.lastToday))}</b></span>
+      </div>
+      <div class="sp2-trace-chip-row">${chips || '<span class="sp2-muted">Sin ejercicios respondidos hoy.</span>'}</div>
+      ${todayItems.length ? `<details class="sp2-evidence-detail"><summary>Ver trazabilidad exacta de ${todayItems.length} ejercicio${todayItems.length === 1 ? '' : 's'}</summary><div class="sp2-evidence-table-wrap"><table class="sp2-evidence-table"><thead><tr><th>#</th><th>Key</th><th>Ejercicio real</th><th>Estado actual</th><th>Intentos acum.</th><th>Última respuesta</th><th>Origen</th></tr></thead><tbody>${details}</tbody></table></div></details>` : ''}
+    </section>`;
+  }
+
+  function studentTodayEvidenceHtml(student, open = false) {
+    const d = studentActivity(student);
+    const rows = [...d.todayRows].sort((a, b) => a.meta.sequence - b.meta.sequence);
+    if (!rows.length) return '<div class="sp2-no-evidence">Sin respuestas registradas hoy en ningún workshop.</div>';
+    const attempted = rows.reduce((sum,row) => sum + row.progress.attemptedToday.length, 0);
+    const newValid = rows.reduce((sum,row) => sum + row.progress.newlyValidatedToday.length, 0);
+    const pending = rows.reduce((sum,row) => sum + row.progress.pendingToday.length, 0);
+    return `<details class="sp2-student-evidence" ${open ? 'open' : ''}>
+      <summary><strong>Evidencia de hoy</strong><span>${esc(rows.length)} W · ${esc(attempted)} ejercicios respondidos · +${esc(newValid)} validados · ${esc(pending)} sin validar</span></summary>
+      <div class="sp2-student-evidence-body">${rows.map(workshopEvidenceHtml).join('')}</div>
+    </details>`;
+  }
+
   function todayStudentCard(student) {
     const d = studentActivity(student);
     const rows = [...d.todayRows].sort((a, b) => a.meta.sequence - b.meta.sequence);
     const email = student.account?.email || student.hub_identity?.email || 'Sin cuenta o correo Hub asociado';
-    const attemptedToday = rows.reduce((sum, row) => sum + row.progress.items.filter((item) => item.last_answered_at && isTodayBogota(item.last_answered_at)).length, 0);
-    const validatedToday = rows.reduce((sum, row) => sum + row.progress.items.filter((item) => item.correct === true && item.last_answered_at && isTodayBogota(item.last_answered_at)).length, 0);
-    const workshopHtml = rows.length
-      ? rows.map((row) => `<div class="sp2-today-workshop-row"><span>W${esc(row.meta.sequence)}</span><strong>${esc(row.progress.validated.length)}/${esc(row.progress.total)}</strong><small>${esc(row.meta.title)}</small></div>`).join('')
-      : '<span class="sp2-muted">Sin respuestas registradas hoy.</span>';
-    const last = d.lastActivity;
-    const statusHtml = rows.length
-      ? `<span class="sp2-status today">Trabajó hoy</span><small>Última respuesta: ${esc(fmtTime(last))}</small>`
-      : `<span class="sp2-status none">Sin respuestas hoy</span><small>${last ? `Última histórica: ${esc(fmtTime(last))}` : 'Sin actividad histórica registrada'}</small>`;
-
-    return `<article class="sp2-student sp2-today-student${rows.length ? '' : ' no-today'}">
-      <div class="sp2-identity"><span class="sp2-group">${esc(student.group_code || '—')}</span><div><strong>${esc(student.display_name || 'Estudiante')}</strong><small>${esc(email)}</small></div></div>
-      <div class="sp2-workshop"><span class="sp2-label">WORKSHOPS DE HOY</span><div class="sp2-today-workshops">${workshopHtml}</div></div>
-      <div class="sp2-progress-cell"><span class="sp2-label">Respuestas hoy</span><strong>${esc(attemptedToday)}</strong><small>${esc(validatedToday)} validadas en su última respuesta de hoy</small></div>
-      <div class="sp2-validated"><span class="sp2-label">Cobertura hoy</span><strong>${esc(rows.length)} workshop${rows.length === 1 ? '' : 's'}</strong><small>${rows.length ? rows.map((row) => `W${row.meta.sequence}`).join(' · ') : '—'}</small></div>
-      <div class="sp2-status-cell">${statusHtml}</div>
+    const attempted = rows.reduce((sum,row) => sum + row.progress.attemptedToday.length, 0);
+    const newValid = rows.reduce((sum,row) => sum + row.progress.newlyValidatedToday.length, 0);
+    const pending = rows.reduce((sum,row) => sum + row.progress.pendingToday.length, 0);
+    return `<article class="sp2-today-card${rows.length ? '' : ' no-today'}">
+      <header class="sp2-today-card-head">
+        <div class="sp2-identity"><span class="sp2-group">${esc(student.group_code || '—')}</span><div><strong>${esc(student.display_name || 'Estudiante')}</strong><small>${esc(email)}</small></div></div>
+        <div class="sp2-today-card-stats">
+          <span><b>${esc(rows.length)}</b> workshops</span>
+          <span><b>${esc(attempted)}</b> ejercicios hoy</span>
+          <span><b>+${esc(newValid)}</b> validados hoy</span>
+          <span class="${pending ? 'warn' : ''}"><b>${esc(pending)}</b> sin validar</span>
+          <span>Última <b>${esc(fmtTime(d.lastActivity))}</b></span>
+        </div>
+      </header>
+      ${rows.length ? `<div class="sp2-today-evidence-list">${rows.map(workshopEvidenceHtml).join('')}</div>` : '<div class="sp2-no-evidence">No existe una respuesta de workshop con fecha de hoy para este estudiante.</div>'}
     </article>`;
   }
 
@@ -189,7 +271,8 @@
   }
 
   function progressBar(progress) {
-    return `<div class="sp2-progress"><div class="sp2-progress-top"><strong>${progress.validated.length}/${progress.total}</strong><span>${progress.pct}%</span></div><div class="sp2-track"><i style="width:${progress.pct}%"></i></div></div>`;
+    const width = Math.max(0, Math.min(100, Number(progress.pct || 0)));
+    return `<div class="sp2-progress"><div class="sp2-progress-top"><strong>${progress.validated.length}/${progress.total}</strong><span>${esc(fmtPct(progress.pct))}</span></div><div class="sp2-track"><i style="width:${width}%"></i></div></div>`;
   }
 
   function exerciseChips(progress) {
@@ -197,9 +280,10 @@
     return progress.items.map((item) => {
       const valid = item.correct === true;
       const attempted = item.last_answered_at || item.completed_at;
+      const today = item.last_answered_at && isTodayBogota(item.last_answered_at);
       const cls = valid ? 'validated' : attempted ? 'attempted' : 'pending';
-      const title = `${item.title || item.key || 'Ejercicio'}${valid ? ' · validado' : attempted ? ' · intentado, no validado' : ' · pendiente'}`;
-      return `<span class="sp2-chip ${cls}" title="${esc(title)}">${esc(item.sequence ?? '·')}${valid ? ' ✓' : ''}</span>`;
+      const title = `${item.key || ''} · ${item.title || 'Ejercicio'}${valid ? ' · validado' : attempted ? ' · intentado, no validado' : ' · pendiente'} · intentos acumulados: ${item.tries || 0}${attempted ? ` · última: ${fmtTime(item.last_answered_at || item.completed_at)}` : ''}`;
+      return `<span class="sp2-chip ${cls}${today ? ' today-trace' : ''}" title="${esc(title)}">${esc(item.sequence ?? '·')}${valid ? ' ✓' : attempted ? ' !' : ''}</span>`;
     }).join('');
   }
 
@@ -216,9 +300,10 @@
     return `<article class="sp2-student">
       <div class="sp2-identity"><span class="sp2-group">${esc(student.group_code || '—')}</span><div><strong>${esc(student.display_name || 'Estudiante')}</strong><small>${esc(email)}</small></div></div>
       <div class="sp2-workshop"><span class="sp2-label">WORKSHOP ${esc(selectedMeta.sequence)}</span><strong>${esc(selectedMeta.title)}</strong><small>${lastExercise ? `Último ejercicio: ${esc(lastExercise.sequence)} · ${esc(lastExercise.title || lastExercise.key || '')}` : 'No ha registrado respuestas en este workshop'}</small></div>
-      <div class="sp2-progress-cell"><span class="sp2-label">Avance</span>${progressBar(p)}</div>
-      <div class="sp2-validated"><span class="sp2-label">Ejercicios validados</span><div class="sp2-chip-row">${exerciseChips(p)}</div></div>
+      <div class="sp2-progress-cell"><span class="sp2-label">Avance acumulado</span>${progressBar(p)}<small class="sp2-delta-line">Hoy: ${esc(p.attemptedToday.length)} respondidos · +${esc(p.newlyValidatedToday.length)} validados</small></div>
+      <div class="sp2-validated"><span class="sp2-label">Ejercicios · estado acumulado</span><div class="sp2-chip-row">${exerciseChips(p)}</div></div>
       <div class="sp2-status-cell">${status(topic, selectedMeta)}<small>Este workshop: ${fmtTime(p.lastActivity)}</small>${dailyActivityHtml(student)}</div>
+      <div class="sp2-selected-trace">${studentTodayEvidenceHtml(student, false)}</div>
     </article>`;
   }
 
@@ -335,7 +420,7 @@
   function mount() {
     const panel = $('studentProgressPanel');
     if (!panel || !cfg?.rpc?.pythonHubStageMatrix) return;
-    panel.innerHTML = `<div class="sp2-head"><div><span class="eyebrow">MASTER · PROGRESO PYTHON HUB</span><h2>Registro real por estudiante, grupo y workshop</h2><p>La vista predeterminada revisa hoy a cada estudiante del roster oficial, sin confundir “sin actividad en un workshop” con “no trabajó hoy”. Puedes filtrar después por grupo o por workshop específico.</p></div><div id="studentProgressLiveV2" class="sp2-live loading">Esperando sesión maestra</div></div><div class="sp2-controls"><label>Grupo<select id="sp2GroupFilter"><option value="">Todos los grupos</option></select></label><label>Workshop · tema<select id="sp2TopicFilter"><option value="">Seleccionar workshop…</option></select></label><button id="sp2Refresh" type="button" class="quiet">Actualizar</button><button id="sp2Reset" type="button" class="quiet">Restablecer</button><span id="studentProgressCountV2" class="muted">0 estudiantes</span></div><div id="sp2TodayRegisterV2" class="sp2-today-register"></div><div id="studentProgressSummaryV2" class="sp2-summary"></div><div id="sp2DataQualityV2" class="sp2-data-quality hidden"></div><div id="studentProgressListV2" class="sp2-list" aria-live="polite"><div class="sp2-empty">Inicia sesión maestra para ver el progreso.</div></div><div class="sp2-note">✓ = ejercicio validado. Un intento incorrecto no se cuenta como validado. Los registros maestros, respuestas, notas y matrículas existentes no se modifican desde esta vista.</div>`;
+    panel.innerHTML = `<div class="sp2-head"><div><span class="eyebrow">MASTER · PROGRESO PYTHON HUB</span><h2>Registro trazable por estudiante, grupo y workshop</h2><p>Cada porcentaje se calcula como ejercicios validados acumulados / total del workshop. La evidencia de hoy muestra los ejercicios reales con respuesta, nuevas validaciones, pendientes, intentos acumulados y hora registrada en Supabase.</p></div><div id="studentProgressLiveV2" class="sp2-live loading">Esperando sesión maestra</div></div><div class="sp2-controls"><label>Grupo<select id="sp2GroupFilter"><option value="">Todos los grupos</option></select></label><label>Workshop · tema<select id="sp2TopicFilter"><option value="">Seleccionar workshop…</option></select></label><button id="sp2Refresh" type="button" class="quiet">Actualizar</button><button id="sp2Reset" type="button" class="quiet">Restablecer</button><span id="studentProgressCountV2" class="muted">0 estudiantes</span></div><div id="sp2TodayRegisterV2" class="sp2-today-register"></div><div id="studentProgressSummaryV2" class="sp2-summary"></div><div id="sp2DataQualityV2" class="sp2-data-quality hidden"></div><div id="studentProgressListV2" class="sp2-list" aria-live="polite"><div class="sp2-empty">Inicia sesión maestra para ver el progreso.</div></div><div class="sp2-note">Trazabilidad: ✓ validado · ! respondido pero no validado · borde azul = respuesta registrada hoy. % acumulado = validados / total. Δ hoy = ejercicios cuya validación se registró hoy. Esta vista es de lectura y no modifica respuestas, notas ni matrículas.</div>`;
     bind();
     const check = () => { if (token() && !state.running && !state.data) load(true); if (!token() && state.data) { state.data = null; setLive('error', 'Sesión maestra requerida'); } };
     setInterval(check, 1000);
