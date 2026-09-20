@@ -29,3 +29,4 @@
 #workshopApp[data-v59-class="2"] .notebook-hero{border-top:4px solid #2563eb}
 @media(max-width:850px){.v59-roadmap-head{display:block}.v59-route-badge{display:inline-block;margin-top:10px}.v59-class-cards{grid-template-columns:1fr}}
 @media(max-width:600px){.v59-class-roadmap{padding:14px}.v59-colab-rule{grid-template-columns:1fr}}
+html[data-topic04-two-class="v59"] #pandasExcelWorkshopV52{display:none!important}
