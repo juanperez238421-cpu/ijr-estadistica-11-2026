@@ -31,7 +31,7 @@
     codeExercise(
       'logic-02',
       'Class 1 · Use a statistics library',
-      'Import the standard library statistics. Create values = [72, 86, 91]. Calculate mean_value = statistics.mean(values). Print round(mean_value, 1). This demonstrates that specialized libraries package reusable analytical operations.'
+      'Import the standard library statistics. Create values = [72, 86, 91]. Calculate mean_value = statistics.mean(values). Print mean_value. This demonstrates that specialized libraries package reusable analytical operations.'
     ),
     codeExercise(
       'logic-03',
