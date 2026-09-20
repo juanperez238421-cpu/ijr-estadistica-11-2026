@@ -3,8 +3,8 @@
 
   const VERSION = 'v46';
   const TOPIC = 'logic';
-  const CLASS_FILE = 'stat11_stage4_students.xlsx';
-  const CLASS_DATASET_URL = 'data/stat11_stage4_students.xlsx';
+  const CLASS_FILE = 'pandas_excel_students.xlsx';
+  const CLASS_DATASET_URL = 'data/pandas_excel_students.xlsx';
   const MAX_FILE_BYTES = 8 * 1024 * 1024;
   const params = new URLSearchParams(location.search);
   const requestedTopic = params.get('topic') || 'statistics';
@@ -14,6 +14,8 @@
     runtime: null,
     runtimePromise: null,
     packagesPromise: null,
+    packagesReady: false,
+    preparingRun: false,
     files: new Map(),
     activeFile: null,
     workspace: null,
@@ -131,7 +133,8 @@
         await runtime.loadPackage('micropip');
         await runtime.runPythonAsync("import micropip\nawait micropip.install('openpyxl==3.1.5')");
       }
-      setStatus('Excel tools ready in this runtime.', 'ready');
+      state.packagesReady = true;
+      setStatus('openpyxl + pandas ready in this runtime.', 'ready');
     })().catch(error => {
       state.packagesPromise = null;
       setStatus(`Could not prepare Excel tools: ${error.message}`, 'error');
@@ -274,7 +277,7 @@ json.dumps({
         <div id="v46Dropzone" class="v45-dropzone" tabindex="0"><strong>Drop an Excel file here</strong><span>or use Upload .xlsx, like the Colab Files pane.</span></div>
         <div class="v45-class-dataset-note"><div><strong>Class workbook</strong><code>${CLASS_FILE}</code></div><a href="${CLASS_DATASET_URL}" download="${CLASS_FILE}">Download</a></div>
         <div id="v46FileTree" class="v45-file-tree"><div class="v45-file-empty">No files in session storage yet.</div></div>
-        <div id="v46FileStatus" class="v45-file-status">Load the class dataset before running a coding stage.</div>
+        <div id="v46FileStatus" class="v45-file-status">Class 1 starts with core libraries. The real XLSX workbook is prepared automatically when a file stage needs it.</div>
       </aside>
       <section class="v45-inspector-pane" aria-label="Dataset visual inspection">
         <div class="v45-inspector-head"><div><span class="v45-inspector-label">Dataset inspector</span><strong>XLSX → pandas DataFrame</strong></div><div class="v45-runtime-badge"><span></span> real workbook</div></div>
@@ -311,13 +314,48 @@ json.dumps({
       if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); uploadInput.click(); }
     });
 
+    const activeStageNumber = () => {
+      const text = document.getElementById('problemKicker')?.textContent || '';
+      const match = text.match(/STAGE\s+(\d+)/i);
+      return match ? Number(match[1]) : 1;
+    };
+    const needsPackages = stage => stage >= 4;
+    const needsClassWorkbook = stage => [4,5,7,8,9,10,11,12].includes(stage);
+
     document.getElementById('runButton')?.addEventListener('click', event => {
       const choiceMode = !document.getElementById('choiceEditor')?.classList.contains('hidden');
-      if (choiceMode || state.activeFile) return;
+      if (choiceMode) return;
+      const stage = activeStageNumber();
+      if (!needsPackages(stage)) return;
+      const workbookReady = state.files.has(CLASS_FILE);
+      if (state.packagesReady && (!needsClassWorkbook(stage) || workbookReady)) return;
+
       event.preventDefault();
       event.stopImmediatePropagation();
-      setStatus('Load an Excel workbook before running this XLSX coding stage.', 'error');
-      section.scrollIntoView({ behavior:'smooth', block:'center' });
+      if (state.preparingRun) return;
+      state.preparingRun = true;
+
+      (async () => {
+        try {
+          setStatus(stage <= 6 ? 'Preparing Class 1 Excel tools…' : 'Preparing Class 2 Pandas tools…', 'loading');
+          if (needsClassWorkbook(stage) && !state.files.has(CLASS_FILE)) {
+            await loadClassDataset();
+          } else {
+            const runtime = await waitForRuntime();
+            await ensurePackages(runtime);
+          }
+          state.activeFile = state.files.has(CLASS_FILE) ? CLASS_FILE : state.activeFile;
+          renderFileTree();
+          setStatus(`Ready for Stage ${stage}: ${stage <= 6 ? 'libraries + XLSX' : 'Pandas + DataFrame'}.`, 'ready');
+          requestAnimationFrame(() => document.getElementById('runButton')?.click());
+        } catch (error) {
+          setStatus(`Could not prepare this stage: ${error.message}`, 'error');
+          setInspector('error', error.message);
+          section.scrollIntoView({ behavior:'smooth', block:'center' });
+        } finally {
+          state.preparingRun = false;
+        }
+      })();
     }, true);
 
     return section;
@@ -326,8 +364,15 @@ json.dumps({
   function syncGuide() {
     const concept = document.getElementById('guideConcept');
     const subtitle = document.getElementById('notebookSubtitle');
-    if (concept) concept.textContent = 'XLSX file → DataFrame → inspect → operate';
-    if (subtitle) subtitle.textContent = 'Guided notebook · V46 · XLSX after Arrays';
+    const kicker = document.getElementById('problemKicker')?.textContent || '';
+    const match = kicker.match(/STAGE\s+(\d+)/i);
+    const stage = match ? Number(match[1]) : 1;
+    if (concept) concept.textContent = stage <= 6
+      ? 'Class 1 · library → file path → XLSX workbook'
+      : 'Class 2 · Pandas → DataFrame → inspect → transform → export';
+    if (subtitle) subtitle.textContent = stage <= 6
+      ? 'Class 1 of 2 · Libraries + XLSX · Colab workflow'
+      : 'Class 2 of 2 · Pandas · Colab workflow';
   }
 
   function syncUi() {
