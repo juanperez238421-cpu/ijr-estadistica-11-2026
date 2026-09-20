@@ -107,3 +107,11 @@
   .p57-stage-inner,.p57-code code>span,.p57-live-target{animation:none!important;opacity:1!important;transform:none!important}
   .p57-step-card,.p57-guide button{transition:none!important}
 }
+
+.p57-foundations{display:grid;gap:12px}
+.p57-foundations .section-heading{margin:0}
+.p57-foundation-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.p57-foundation-grid article{position:relative;border:1px solid var(--line);background:#fff;border-radius:11px;padding:12px 12px 13px 46px;min-width:0}
+.p57-foundation-grid article>span{position:absolute;left:12px;top:12px;display:flex;align-items:center;justify-content:center;width:25px;height:25px;border-radius:7px;background:#eff6ff;color:#1d4ed8;font-size:.6rem;font-weight:900}
+.p57-foundation-grid h3{margin:0 0 5px;font-size:.82rem}.p57-foundation-grid p{margin:0;color:#64748b;font-size:.7rem;line-height:1.48}.p57-foundation-grid code{display:block;margin-top:8px;border:1px solid #e2e8f0;background:#f8fafc;border-radius:6px;padding:6px 7px;color:#0f172a;font-size:.65rem;overflow-wrap:anywhere}
+@media(max-width:760px){.p57-foundation-grid{grid-template-columns:1fr}}
