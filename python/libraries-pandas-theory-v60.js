@@ -42,10 +42,12 @@
       tag:'SIGNAL PROCESSING',
       use:'Filter noise from measurements such as sensors, audio or laboratory signals.',
       code:[
+        'import numpy as np',
         'from scipy import signal',
-        'b, a = signal.butter(3, 0.15)',
-        'clean = signal.filtfilt(b, a, noisy_signal)',
-        'print(clean[:5])'
+        't = np.linspace(0, 1, 500)',
+        'noisy = np.sin(2*np.pi*5*t) + 0.35*np.random.randn(500)',
+        'b, a = signal.butter(3, 0.12)',
+        'clean = signal.filtfilt(b, a, noisy)'
       ],
       result:'noisy signal → filtered signal'
     },
@@ -57,9 +59,10 @@
       code:[
         'import pygame',
         'pygame.init()',
-        'player_x = 120',
-        'if keys[pygame.K_RIGHT]:',
-        '    player_x += 5'
+        'screen = pygame.display.set_mode((640, 360))',
+        'player = pygame.Rect(100, 150, 40, 40)',
+        'keys = pygame.key.get_pressed()',
+        'if keys[pygame.K_RIGHT]: player.x += 5'
       ],
       result:'keyboard input → player movement'
     },
@@ -69,10 +72,12 @@
       tag:'VISUALIZATION',
       use:'Turn changing numerical values into animated scientific graphics.',
       code:[
+        'import numpy as np',
         'import matplotlib.pyplot as plt',
         'from matplotlib.animation import FuncAnimation',
+        'x = np.linspace(0, 2*np.pi, 200)',
         'fig, ax = plt.subplots()',
-        'animation = FuncAnimation(fig, update, frames=100)'
+        'animation = FuncAnimation(fig, update, frames=60)'
       ],
       result:'calculation → moving figure'
     },
@@ -109,9 +114,10 @@
       use:'Fit a model from examples and use it to generate predictions.',
       code:[
         'from sklearn.linear_model import LinearRegression',
-        'model = LinearRegression()',
-        'model.fit(X, y)',
-        'prediction = model.predict(new_X)'
+        'X = [[1], [2], [3], [4]]',
+        'y = [50, 60, 72, 83]',
+        'model = LinearRegression().fit(X, y)',
+        'prediction = model.predict([[5]])'
       ],
       result:'examples → fitted model → prediction'
     }
