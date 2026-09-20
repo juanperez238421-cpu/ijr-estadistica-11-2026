@@ -51,3 +51,10 @@
 .p59-bridge-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
 .p59-bridge-actions a{display:inline-flex;align-items:center;min-height:42px;padding:0 12px;border:1px solid #bfdbfe;border-radius:8px;background:#fff;color:#1d4ed8;text-decoration:none;font-size:.86rem;font-weight:800}
 .p59-bridge-actions a:last-child{background:#2563eb;color:#fff;border-color:#2563eb}
+
+html[data-pandas-two-class-theory="v59"] #conceptSection,
+html[data-pandas-two-class-theory="v59"] .theory-diagrams-section,
+html[data-pandas-two-class-theory="v59"] #syntaxSection,
+html[data-pandas-two-class-theory="v59"] #pitfallSection,
+html[data-pandas-two-class-theory="v59"] #pandasExcelTheoryV52,
+html[data-pandas-two-class-theory="v59"] .pandas-excel-live-v53{display:none!important}
