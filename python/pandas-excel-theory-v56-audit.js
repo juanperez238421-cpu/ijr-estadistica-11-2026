@@ -13,9 +13,10 @@
     '.pandas-v54-upload-guide', '.pandas-v54-dropzone', '.live-lesson-v19',
     '.live-copy-v19', '.live-colab-v19', '.pandas-v54-diagram-card',
     '.pandas-v54-stage', '.syntax-reference-grid article', '.pitfall-grid article',
-    '.p57-guide', '.p57-foundation-grid article', '.p57-real-file', '.p57-real-file-card',
-    '.p57-translation-section', '.p57-step-card', '.p57-stage', '.p57-animation',
-    '.p57-live-visual', '.p57-live-visual-stage'
+    '.p58-guide', '.p58-hero', '.p58-foundation-grid article', '.p58-real-file',
+    '.p58-excel-compare', '.p58-nav-card', '.p58-stage', '.p58-code-shell',
+    '.p58-diagram-shell', '.p58-diagram', '.p58-practical', '.p58-final',
+    '.p58-live-upgraded .live-lesson-v19'
   ];
 
   const textSelector = 'h1,h2,h3,h4,p,span,small,strong,b,code,pre,li,a,button';
