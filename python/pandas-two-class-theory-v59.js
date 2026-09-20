@@ -351,7 +351,8 @@
     const app = document.getElementById('theoryApp');
     const concept = document.getElementById('conceptSection');
     const live = document.querySelector('.pandas-excel-live-v53');
-    if (!app || app.classList.contains('hidden') || !concept || !live) return false;
+    const next = document.querySelector('.theory-next');
+    if (!app || app.classList.contains('hidden') || !concept || !next) return false;
 
     document.getElementById('pandasGuidedTheoryV58')?.remove();
     document.getElementById('pandasGuidedTheoryV57')?.remove();
@@ -367,7 +368,7 @@
       node.classList.add('p59-condensed-legacy');
     });
 
-    live.insertAdjacentHTML('beforebegin', guideHtml());
+    next.insertAdjacentHTML('beforebegin', guideHtml());
     const section = document.getElementById('pandasTwoClassTheoryV59');
     if (!section) return false;
     bind(section);
