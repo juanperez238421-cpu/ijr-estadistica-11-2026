@@ -28,6 +28,8 @@
     const code=document.querySelector('#pandasGuidedTheoryV58 .p58-code-line code');
     const body=document.querySelector('#pandasGuidedTheoryV58 .p58-stage-inner header p:not(.eyebrow)');
     const editor=document.querySelector('.p58-live-upgraded .live-editor-v19');
+    const legacyConcept=document.querySelector('.p58-topic .concept-card p');
+    const legacyCode=document.querySelector('.p58-topic .pandas-v52-code-card pre code');
     const practical=document.querySelector('[data-p58-run-practical]');
     const workbook=document.querySelector('#pandasGuidedTheoryV58 a[href*="pandas_excel_students.xlsx"]');
 
@@ -41,6 +43,8 @@
     if(code&&px(getComputedStyle(code).fontSize)<MIN.code) failures.push(`code text too small: ${getComputedStyle(code).fontSize}`);
     if(nav[0]&&px(getComputedStyle(nav[0]).fontSize)<MIN.nav) failures.push(`navigation text too small: ${getComputedStyle(nav[0]).fontSize}`);
     if(editor&&px(getComputedStyle(editor).fontSize)<MIN.liveEditor) failures.push(`live editor text too small: ${getComputedStyle(editor).fontSize}`);
+    if(legacyConcept&&px(getComputedStyle(legacyConcept).fontSize)<MIN.body) failures.push(`legacy concept text too small: ${getComputedStyle(legacyConcept).fontSize}`);
+    if(legacyCode&&px(getComputedStyle(legacyCode).fontSize)<MIN.code) failures.push(`legacy code text too small: ${getComputedStyle(legacyCode).fontSize}`);
 
     [
       '.p58-hero','.p58-foundations','.p58-real-file','.p58-excel-compare',
