@@ -310,6 +310,25 @@
     </article>`;
   }
 
+  function foundationsHtml() {
+    const items = [
+      ['Library / package', 'Pandas is reusable Python functionality for tabular data. You import it instead of rebuilding file readers, table containers and data operations from zero.', 'pandas'],
+      ['Alias / namespace', 'The alias pd is a short name that points to Pandas inside the current Python session. It is conventional, not magical.', 'import pandas as pd'],
+      ['DataFrame', 'A two-dimensional labeled table. Rows are observations; columns are variables; each column has a name and a dtype.', 'df'],
+      ['Series', 'A one-dimensional labeled sequence. Selecting one DataFrame column normally returns a Series.', 'df["score"]'],
+      ['Index', 'Pandas keeps row labels separately from the spreadsheet columns. The index is useful in Python but is often omitted during Excel export with index=False.', 'df.index'],
+      ['dtype', 'The interpreted data type of a column. Numeric, text, Boolean and date-like columns behave differently during analysis.', 'df.dtypes'],
+      ['Vectorization', 'An expression can operate on an entire Series at once. This replaces many spreadsheet copy-down formulas and many beginner loops.', 'df["passed"] = df["score"] >= 70'],
+      ['Excel engine', 'Pandas handles the DataFrame API while an Excel engine such as openpyxl handles .xlsx encoding/decoding underneath read/write operations.', 'openpyxl'],
+      ['In-memory object', 'Filtering or sorting df changes a Python object or creates a new one. It does not silently rewrite the source workbook on disk.', 'ordered = df.sort_values("score")'],
+      ['Persistence', 'A transformation becomes a new Excel file only when you explicitly export it with to_excel or ExcelWriter.', 'df.to_excel(...)']
+    ];
+    return `<section class="p57-foundations">
+      <div class="section-heading"><p class="eyebrow">PANDAS VOCABULARY · EXPLICIT DEFINITIONS</p><h2>Build the object model before memorizing methods.</h2><p>Every later command becomes easier when students know what object is being created, selected or transformed.</p></div>
+      <div class="p57-foundation-grid">${items.map(([title, body, code], index) => `<article><span>${String(index + 1).padStart(2,'0')}</span><h3>${safe(title)}</h3><p>${safe(body)}</p><code>${safe(code)}</code></article>`).join('')}</div>
+    </section>`;
+  }
+
   function comparisonHtml() {
     return `<section class="p57-translation-section">
       <div class="section-heading"><p class="eyebrow">EXCEL ↔ PANDAS TRANSLATION</p><h2>Translate spreadsheet actions into reproducible data operations.</h2><p>The objective is not to replace Excel vocabulary. It is to connect what students already see in a spreadsheet with the object model and syntax used by Pandas.</p></div>
@@ -339,6 +358,7 @@
   function guideHtml() {
     return `<section id="pandasGuidedTheoryV57" class="p57-guide">
       <div class="p57-guide-heading"><div><p class="eyebrow">PANDAS EXPLICIT THEORY · STEP BY STEP</p><h2>See the code and the data model change together.</h2><p>The left column explains one operation at a time. The sticky visual on the right updates as each step becomes active, so code, Excel concept and Pandas result are presented as one sequence.</p></div><div class="p57-guide-controls"><button type="button" data-p57-play>▶ Play sequence</button><button type="button" data-p57-replay>↺ Restart</button></div></div>
+      ${foundationsHtml()}
       ${realFileHtml()}
       ${comparisonHtml()}
       <div class="p57-scrolly"><div class="p57-steps">${STEPS.map(stepCardHtml).join('')}</div><aside class="p57-stage" aria-live="polite"></aside></div>
