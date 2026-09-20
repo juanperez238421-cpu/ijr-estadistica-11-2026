@@ -112,6 +112,22 @@
     }
   }
 
+  function updateWorkspaceMode() {
+    const stage = stageNumber();
+    const title = document.querySelector('#xlsxTopicWorkspaceV46 .v45-inspector-head strong');
+    const preview = document.querySelector('#xlsxTopicWorkspaceV46 .v45-preview-heading span');
+    const label = document.querySelector('#xlsxTopicWorkspaceV46 .v45-inspector-label');
+    if (stage <= 6) {
+      if (label) label.textContent = 'Workbook inspector';
+      if (title) title.textContent = 'XLSX file → workbook → worksheet → cells';
+      if (preview) preview.textContent = 'Workbook preview · inspect structure before coding';
+    } else {
+      if (label) label.textContent = 'Dataset inspector';
+      if (title) title.textContent = 'XLSX → Pandas DataFrame';
+      if (preview) preview.textContent = 'Equivalent to df.head()';
+    }
+  }
+
   function ensureClassHint() {
     const guide = document.getElementById('guidePanel');
     if (!guide) return;
@@ -139,6 +155,7 @@
     updateProgress();
     updateActiveClass();
     ensureClassHint();
+    updateWorkspaceMode();
     document.documentElement.dataset.topic04TwoClass = VERSION;
   }
 
