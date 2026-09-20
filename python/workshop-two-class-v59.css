@@ -1,0 +1,31 @@
+/* Topic 04 V59 · two-class Colab workshop */
+.v59-class-roadmap{margin-top:14px;border:1px solid #cbd5e1;border-radius:14px;background:#fff;padding:18px}
+.v59-roadmap-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}
+.v59-roadmap-head h2{margin:4px 0 7px;font-size:1.45rem;line-height:1.15}
+.v59-roadmap-head>div>p:last-child{margin:0;max-width:900px;color:#475569;font-size:.96rem;line-height:1.52}
+.v59-route-badge{white-space:nowrap;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:9px;padding:8px 10px;font-size:.78rem;font-weight:900}
+.v59-class-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:15px}
+.v59-class-cards button{appearance:none;display:grid;gap:5px;text-align:left;border:1px solid #dbe2ea;border-radius:12px;background:#f8fafc;padding:14px;cursor:pointer;color:#0f172a}
+.v59-class-cards button:hover{border-color:#93c5fd;background:#f8fbff}
+.v59-class-cards button.active{border-color:#3b82f6;background:#eff6ff;box-shadow:0 0 0 2px rgba(59,130,246,.08)}
+.v59-class-cards button>span{color:#2563eb;font-size:.7rem;font-weight:900;letter-spacing:.065em}
+.v59-class-cards button>strong{font-size:1rem}
+.v59-class-cards button>small{color:#64748b;font-size:.8rem;line-height:1.4}
+.v59-class-cards button>div{display:grid;grid-template-columns:auto 1fr;gap:9px;align-items:center;margin-top:5px}
+.v59-class-cards button b{font-size:.74rem}
+.v59-class-cards button i{display:block;height:6px;border-radius:999px;background:#e2e8f0;overflow:hidden}
+.v59-class-cards button em{display:block;height:100%;width:0;background:#2563eb;transition:width .25s ease}
+.v59-colab-rule{display:grid;grid-template-columns:auto 1fr;gap:10px;margin-top:13px;padding:10px 12px;border-left:4px solid #f59e0b;background:#fffbeb;border-radius:0 9px 9px 0}
+.v59-colab-rule strong{color:#92400e;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em}
+.v59-colab-rule span{color:#78350f;font-size:.88rem;line-height:1.42}
+.v59-stage-divider{display:grid;gap:2px;padding:12px 10px 7px;border-top:1px solid #e2e8f0;margin-top:8px}
+.v59-stage-divider:first-child{border-top:0;margin-top:0}
+.v59-stage-divider span{color:#2563eb;font-size:.62rem;font-weight:900;letter-spacing:.065em}
+.v59-stage-divider strong{font-size:.78rem;color:#334155}
+.v59-class-hint{display:grid;gap:3px;margin-bottom:12px;padding:10px 11px;border:1px solid #dbeafe;border-radius:9px;background:#f8fbff}
+.v59-class-hint strong{font-size:.8rem;color:#1d4ed8}
+.v59-class-hint span{font-size:.82rem;line-height:1.42;color:#475569}
+#workshopApp[data-v59-class="1"] .notebook-hero{border-top:4px solid #f59e0b}
+#workshopApp[data-v59-class="2"] .notebook-hero{border-top:4px solid #2563eb}
+@media(max-width:850px){.v59-roadmap-head{display:block}.v59-route-badge{display:inline-block;margin-top:10px}.v59-class-cards{grid-template-columns:1fr}}
+@media(max-width:600px){.v59-class-roadmap{padding:14px}.v59-colab-rule{grid-template-columns:1fr}}
