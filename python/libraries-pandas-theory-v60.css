@@ -1,0 +1,98 @@
+/* Topic 04 V60 · simple layout aligned with the general theory page */
+.p60-page{display:grid;gap:0}
+.p60-section{margin-top:54px}
+.p60-superseded{display:none!important}
+html[data-libraries-pandas-theory="v60"] #conceptSection,
+html[data-libraries-pandas-theory="v60"] .theory-diagrams-section,
+html[data-libraries-pandas-theory="v60"] #syntaxSection,
+html[data-libraries-pandas-theory="v60"] #pitfallSection,
+html[data-libraries-pandas-theory="v60"] #pandasExcelTheoryV52,
+html[data-libraries-pandas-theory="v60"] .pandas-excel-live-v53,
+html[data-libraries-pandas-theory="v60"] #pandasTwoClassTheoryV59,
+html[data-libraries-pandas-theory="v60"] #pandasGuidedTheoryV58{display:none!important}
+
+.p60-intro{margin-top:20px;border:1px solid var(--ink);padding:30px;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,.6fr);gap:28px;background:var(--paper)}
+.p60-intro h2{font-size:clamp(2rem,4vw,3.8rem);line-height:1;margin:.4rem 0 1rem;max-width:900px}
+.p60-intro p:not(.eyebrow){font-size:1.02rem;line-height:1.65;color:#333;max-width:900px}
+.p60-intro-metrics{border-left:1px solid var(--line);padding-left:24px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-content:center}
+.p60-intro-metrics div{display:grid;gap:4px}
+.p60-intro-metrics strong{font-size:2.8rem;line-height:1}
+.p60-intro-metrics span{font-size:.75rem;color:var(--muted)}
+
+.p60-route-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.p60-route-grid article{border:1px solid var(--line);padding:24px;display:grid;gap:10px;background:var(--paper)}
+.p60-route-grid article>span{font-size:.7rem;letter-spacing:.12em;color:var(--muted)}
+.p60-route-grid h3{font-size:1.35rem;margin:0}
+.p60-route-grid p{margin:0;line-height:1.55;color:#444}
+.p60-route-grid strong{font-size:.82rem}
+.p60-route-grid a{margin-top:4px;color:var(--ink);font-weight:800;text-decoration:none;border-bottom:1px solid var(--ink);width:max-content}
+
+.p60-app-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.p60-app-card{border:1px solid var(--line);background:var(--paper);display:grid;grid-template-rows:auto auto auto;overflow:hidden}
+.p60-app-copy{padding:20px;display:grid;grid-template-columns:42px 1fr;gap:12px;border-bottom:1px solid var(--line)}
+.p60-app-number{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted)}
+.p60-app-copy span{font-size:.68rem;letter-spacing:.1em;color:var(--muted)}
+.p60-app-copy h3{margin:.35rem 0 .45rem;font-size:1.2rem}
+.p60-app-copy p{margin:0;line-height:1.5;color:#444}
+.p60-result{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:12px;align-items:center;background:#fafafa}
+.p60-result span{font-size:.65rem;letter-spacing:.1em;color:var(--muted)}
+.p60-result strong{font-size:.83rem}
+
+.p60-code{border:0;background:#fff}
+.p60-code-head{height:38px;padding:0 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.p60-code-head span{font-size:.68rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+.p60-code-head small{font-size:.68rem;color:var(--muted)}
+.p60-code pre{margin:0;padding:16px 18px;overflow:auto;background:#fbfbfb;min-height:0}
+.p60-code code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.96rem;line-height:1.6;color:var(--ink);white-space:pre}
+.p60-app-card .p60-code{border-bottom:0}
+
+.p60-module-list{display:grid;gap:14px}
+.p60-module{border:1px solid var(--line);display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);background:var(--paper)}
+.p60-module-copy{padding:24px}
+.p60-module-copy>span{font-size:.7rem;letter-spacing:.1em;color:var(--muted)}
+.p60-module-copy h3{font-size:1.4rem;margin:.55rem 0 .7rem}
+.p60-module-copy p{margin:0;line-height:1.65;color:#333}
+.p60-module>.p60-code{border-left:1px solid var(--line)}
+.p60-chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.p60-chip-row b{font-size:.72rem;font-weight:700;padding:6px 8px;border:1px solid var(--line);background:#fafafa}
+
+.p60-compare-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.p60-compare-grid article{border:1px solid var(--line);background:var(--paper);padding:22px}
+.p60-compare-grid article>span{font-size:.7rem;letter-spacing:.1em;color:var(--muted)}
+.p60-compare-grid h3{font-size:1.35rem;margin:.5rem 0 .65rem}
+.p60-compare-grid p{line-height:1.55;color:#444;margin:0 0 16px}
+.p60-compare-grid .p60-code{border:1px solid var(--line)}
+
+.p60-real{border:1px solid var(--ink);padding:28px;background:var(--paper)}
+.p60-real .section-heading{margin-bottom:20px}
+.p60-real-grid{display:grid;grid-template-columns:.75fr 1.25fr;gap:18px;align-items:start}
+.p60-real-flow{display:grid;gap:8px}
+.p60-real-flow>div{border:1px solid var(--line);padding:16px;display:grid;gap:4px}
+.p60-real-flow span{font-size:.68rem;color:var(--muted);letter-spacing:.1em}
+.p60-real-flow strong{font-size:1rem}
+.p60-real-flow small{color:var(--muted)}
+.p60-real-flow>i{font-style:normal;font-size:1.2rem;text-align:center}
+.p60-real-grid>.p60-code{border:1px solid var(--line)}
+.p60-mini-table{margin-top:18px;border:1px solid var(--line);overflow:auto}
+.p60-mini-table>div{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));min-width:720px}
+.p60-mini-table span,.p60-mini-table b{padding:10px 12px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);font-size:.78rem;text-align:left}
+.p60-mini-table span{font-weight:800;background:#fafafa}
+.p60-mini-table b{font-weight:500}
+.p60-real-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.p60-real-actions a{display:inline-flex;min-height:42px;align-items:center;padding:0 13px;border:1px solid var(--ink);color:var(--ink);text-decoration:none;font-weight:800;font-size:.86rem}
+.p60-real-actions a:last-child{background:var(--ink);color:#fff}
+
+@media(max-width:1050px){
+  .p60-intro,.p60-module,.p60-real-grid{grid-template-columns:1fr}
+  .p60-intro-metrics{border-left:0;border-top:1px solid var(--line);padding-left:0;padding-top:20px}
+  .p60-module>.p60-code{border-left:0;border-top:1px solid var(--line)}
+}
+@media(max-width:800px){
+  .p60-route-grid,.p60-app-grid,.p60-compare-grid{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .p60-intro,.p60-real{padding:20px}
+  .p60-intro-metrics{grid-template-columns:1fr 1fr 1fr}
+  .p60-code code{font-size:.86rem}
+  .p60-module-copy{padding:19px}
+}
