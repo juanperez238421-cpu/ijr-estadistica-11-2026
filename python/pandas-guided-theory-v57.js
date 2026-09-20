@@ -470,6 +470,58 @@
     }
   }
 
+  function attachLiveVisuals(live) {
+    if (!live || live.dataset.p57LinkedVisuals === 'true') return;
+    const keyMap = new Map([
+      ['pandas-import', 'import'],
+      ['excel-sheets', 'inspect-workbook'],
+      ['read-excel', 'read'],
+      ['inspect-dataframe', 'inspect'],
+      ['select-filter', 'filter'],
+      ['sort-dataframe', 'sort-derive'],
+      ['derive-column', 'sort-derive'],
+      ['clean-data', 'quality'],
+      ['export-excel', 'export']
+    ]);
+
+    live.querySelectorAll('[data-pandas-live-key]').forEach(lesson => {
+      const stepKey = keyMap.get(lesson.dataset.pandasLiveKey);
+      const step = STEPS.find(item => item.key === stepKey);
+      if (!step || lesson.querySelector('.p57-live-visual')) return;
+      const panel = document.createElement('div');
+      panel.className = 'p57-live-visual';
+      panel.dataset.p57LinkedStep = step.key;
+      panel.innerHTML = `<div class="p57-live-visual-head"><span>CODE ↔ VISUAL MODEL</span><strong>${safe(step.title)}</strong><small>The diagram is linked to this executable example.</small></div><div class="p57-live-visual-stage">${visualHtml(step.visual)}</div>`;
+      lesson.appendChild(panel);
+    });
+
+    const reveal = lesson => {
+      live.querySelectorAll('.live-lesson-v19').forEach(item => item.classList.toggle('p57-live-active', item === lesson));
+      lesson?.querySelector('.p57-live-visual')?.classList.add('is-revealed');
+    };
+
+    live.addEventListener('click', event => {
+      const trigger = event.target.closest('[data-pandas-run], [data-pandas-reset], [data-pandas-editor]');
+      const lesson = trigger?.closest?.('[data-pandas-live-key]');
+      if (lesson) reveal(lesson);
+    }, true);
+
+    live.addEventListener('focusin', event => {
+      const lesson = event.target.closest?.('[data-pandas-live-key]');
+      if (lesson) reveal(lesson);
+    });
+
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(entries => {
+        const visible = entries.filter(entry => entry.isIntersecting).sort((a,b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible?.target) reveal(visible.target);
+      }, { threshold:[0.45,0.7], rootMargin:'-10% 0px -22% 0px' });
+      live.querySelectorAll('.live-lesson-v19').forEach(lesson => observer.observe(lesson));
+    }
+
+    live.dataset.p57LinkedVisuals = 'true';
+  }
+
   function upgradeConceptCopy() {
     const concept = document.getElementById('conceptSection');
     if (!concept) return;
@@ -496,6 +548,7 @@
     if (!section) return false;
     bind(section);
     activate(STEPS[0].key);
+    attachLiveVisuals(live);
 
     document.documentElement.dataset.pandasGuidedTheory = VERSION;
     document.documentElement.dataset.pandasGuidedTheorySteps = String(STEPS.length);
