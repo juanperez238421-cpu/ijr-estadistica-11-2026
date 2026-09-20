@@ -356,6 +356,17 @@
     document.getElementById('pandasGuidedTheoryV58')?.remove();
     document.getElementById('pandasGuidedTheoryV57')?.remove();
 
+    [
+      concept,
+      document.querySelector('.theory-diagrams-section'),
+      document.getElementById('syntaxSection'),
+      document.getElementById('pitfallSection'),
+      document.getElementById('pandasExcelTheoryV52'),
+      live
+    ].filter(Boolean).forEach(function(node) {
+      node.classList.add('p59-condensed-legacy');
+    });
+
     live.insertAdjacentHTML('beforebegin', guideHtml());
     const section = document.getElementById('pandasTwoClassTheoryV59');
     if (!section) return false;
