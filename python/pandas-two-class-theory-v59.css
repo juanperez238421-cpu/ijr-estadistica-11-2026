@@ -47,3 +47,7 @@
 @media(max-width:800px){.p59-class-route-grid,.p59-library-grid{grid-template-columns:1fr}.p59-bridge-code,.p59-two-lanes,.p59-workbook-model,.p59-cell-vs-table,.p59-openpyxl-pandas{grid-template-columns:1fr}.p59-bridge-code>i,.p59-two-lanes>i,.p59-workbook-model>i,.p59-cell-vs-table>i,.p59-openpyxl-pandas>i{transform:rotate(90deg);justify-self:start}.p59-ecosystem{grid-template-columns:repeat(2,1fr)}.p59-ecosystem .p59-python-core{grid-column:1/-1}}
 
 .p59-condensed-legacy{display:none!important}
+
+.p59-bridge-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.p59-bridge-actions a{display:inline-flex;align-items:center;min-height:42px;padding:0 12px;border:1px solid #bfdbfe;border-radius:8px;background:#fff;color:#1d4ed8;text-decoration:none;font-size:.86rem;font-weight:800}
+.p59-bridge-actions a:last-child{background:#2563eb;color:#fff;border-color:#2563eb}
