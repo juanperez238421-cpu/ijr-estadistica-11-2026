@@ -32,3 +32,11 @@
 @keyframes lp61pulse{50%{opacity:.35;transform:scale(.82)}}
 @media(max-width:820px){.lp61-shell{padding:18px}.lp61-grid{grid-template-columns:1fr}.lp61-library-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.lp61-library-list{grid-template-columns:1fr}.lp61-runtime-row,.lp61-proof{flex-direction:column;align-items:stretch}.lp61-cell-head,.lp61-output-head{align-items:flex-start;flex-direction:column}}
+
+html[data-library-playground="v61"] .p60-page,
+html[data-library-playground="v61"] .p60-intro,
+html[data-library-playground="v61"] .p60-intro>div,
+html[data-library-playground="v61"] .p60-intro-metrics{min-width:0;max-width:100%}
+html[data-library-playground="v61"] .p60-intro{width:100%}
+html[data-library-playground="v61"] .p60-intro-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}
+html[data-library-playground="v61"] .p60-intro-metrics span{overflow-wrap:anywhere}
