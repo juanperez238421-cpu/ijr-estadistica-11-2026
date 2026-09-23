@@ -39,17 +39,19 @@ jobs:
           test -s seminario/entry-bridge.js
           node --check seminario/main.js
           node --check seminario/entry-bridge.js
-          grep -q 'ijr-seminar-main-registration-v1' seminario/main.js
-          grep -q 'ijr-seminar-main-registration-v1' seminario/entry-bridge.js
+          grep -q 'ijr-seminar-main-registration-v2' seminario/main.js
+          grep -q 'ijr-seminar-main-registration-v2' seminario/entry-bridge.js
           grep -q '../seminario-oop-uml/' seminario/index.html
           grep -q '../seminario-tracks/' seminario/index.html
           grep -q '../seminario-projects/' seminario/index.html
           grep -q 'OPTION 03' seminario/index.html
           grep -q 'Three connected parts of the same Seminar.' seminario/index.html
-          grep -q 'Register once. Choose your learning space.' seminario/index.html
-          grep -q '11-A' seminario/index.html
-          grep -q '11-B' seminario/index.html
-          grep -q '11-C' seminario/index.html
+          grep -q 'Enter with your institutional email.' seminario/index.html
+          grep -q 'id="institutionalEmail"' seminario/index.html
+          grep -q '@ijr.edu.co' seminario/index.html
+          grep -q 'seminar_email_identity_v1' seminario/main.js
+          ! grep -q 'id="fullName"' seminario/index.html
+          ! grep -q 'id="groupCode"' seminario/index.html
 
       - name: Validate guarded child routes and prefill bridge
         run: |

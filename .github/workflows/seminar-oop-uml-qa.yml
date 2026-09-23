@@ -223,6 +223,8 @@ jobs:
           set -euo pipefail
           grep -q "sb_publishable_" seminario-oop-uml/config.js
           grep -q "seminar_course_start_team" seminario-oop-uml/config.js
+          grep -q "seminar_oop_uml_start_email_v8" seminario-oop-uml/config.js
+          grep -q "startWithEmail" seminario-oop-uml/store.js
           grep -q "seminar_course_resume" seminario-oop-uml/config.js
           grep -q "seminar_oop_uml_snapshot" seminario-oop-uml/config.js
           grep -q "seminar_oop_uml_record_session" seminario-oop-uml/config.js
@@ -241,7 +243,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -q "Model first. Code second." seminario-oop-uml/index.html
+          grep -q "Enter with your institutional email." seminario-oop-uml/index.html
+          grep -q 'id="institutionalEmail"' seminario-oop-uml/index.html
+          grep -q '@ijr.edu.co' seminario-oop-uml/index.html
+          ! grep -q 'id="memberName1"' seminario-oop-uml/index.html
+          ! grep -q 'id="groupCode"' seminario-oop-uml/index.html
+          ! grep -q 'id="registrationMode"' seminario-oop-uml/index.html
           grep -q "Theory" seminario-oop-uml/index.html
           grep -q "Workshop" seminario-oop-uml/index.html
           grep -q "evModel" seminario-oop-uml/workshop.html

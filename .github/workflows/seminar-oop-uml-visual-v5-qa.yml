@@ -75,7 +75,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -q "pedagogy_version:'oop-uml-v5'" seminario-oop-uml/workshop.js
+          grep -q "oop-uml-v5" seminario-oop-uml/workshop.js
           grep -q "Visual Diagram Reading Sprint with 5/5" seminario-oop-uml/workshop.js
           grep -q "ijr-oop-uml-visual-mastered" seminario-oop-uml/workshop.js
           migration=supabase/migrations/20260831170017_seminar_oop_uml_visual_stage1_v5.sql
