@@ -50,6 +50,7 @@ for (const id of [
 
 for (const token of [
   'matplotlib',
+  'matplotlib.use("Agg", force=True)',
   'savefig',
   'io.BytesIO()',
   'base64.b64encode',
@@ -59,6 +60,7 @@ for (const token of [
   assert(js.includes(token), 'Real plot rendering contract missing: ' + token);
 }
 
+assert(!js.includes('plt.show()'), 'Browser examples must keep figures open for deterministic PNG capture.');
 assert(js.includes('Try plot example'), 'Students need an explicit plot-example action.');
 assert(js.includes('Pandas DataFrame → chart'), 'Pandas plot example missing.');
 assert(js.includes('NumPy-generated damped signal'), 'NumPy plot example missing.');
