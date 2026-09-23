@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Library Playground V62 Runtime QA</title>
+  <link rel="stylesheet" href="../python/library-playground-v62.css">
+</head>
+<body>
+  <main>
+    <section id="librariesPandasTheoryV60">
+      <section class="p60-applications"></section>
+    </section>
+    <output id="v62RuntimeAudit">waiting</output>
+  </main>
+  <script src="../python/library-playground-v62.js"></script>
+  <script>
+    (() => {
+      let started = false;
+      const audit = document.getElementById('v62RuntimeAudit');
+      const timer = setInterval(() => {
+        const shell = document.getElementById('libraryPlaygroundV62');
+        if (!shell) return;
+
+        if (!started) {
+          const matplotlib = shell.querySelector('[data-library="matplotlib"]');
+          const run = document.getElementById('lp62RunButton');
+          if (!matplotlib || !run) return;
+          started = true;
+          matplotlib.click();
+          run.click();
+          audit.textContent = 'running';
+        }
+
+        const panel = document.getElementById('lp62FigurePanel');
+        const image = document.getElementById('lp62Figure');
+        const output = document.getElementById('lp62Output');
+        if (output && output.classList.contains('error')) {
+          document.documentElement.dataset.v62Runtime = 'fail';
+          audit.textContent = output.textContent || 'runtime error';
+          clearInterval(timer);
+          return;
+        }
+
+        if (panel && !panel.hidden && image && image.src.startsWith('data:image/png;base64,') && image.src.length > 2000) {
+          document.documentElement.dataset.v62Runtime = 'pass';
+          document.documentElement.dataset.v62PlotBytes = String(image.src.length);
+          audit.textContent = 'PASS real Matplotlib PNG rendered';
+          clearInterval(timer);
+        }
+      }, 250);
+
+      setTimeout(() => {
+        if (document.documentElement.dataset.v62Runtime) return;
+        document.documentElement.dataset.v62Runtime = 'timeout';
+        audit.textContent = 'TIMEOUT waiting for real Matplotlib PNG';
+        clearInterval(timer);
+      }, 40000);
+    })();
+  </script>
+</body>
+</html>
