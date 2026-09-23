@@ -144,6 +144,9 @@
     if (includePlotting && item.package !== 'matplotlib') {
       await loadPackage(runtime, 'matplotlib', 'Matplotlib');
     }
+    if (includePlotting || item.package === 'matplotlib') {
+      await runtime.runPythonAsync('import matplotlib\nmatplotlib.use("Agg", force=True)');
+    }
 
     const probe = item.package === 'numpy'
       ? 'import numpy as _lp_lib; print(_lp_lib.__version__)'
