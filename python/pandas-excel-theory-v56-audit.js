@@ -97,7 +97,16 @@
     });
 
     const globalOverflow = root.scrollWidth > root.clientWidth + 4;
-    if (globalOverflow) offenders.push(`html [global] sw=${root.scrollWidth} cw=${root.clientWidth}`);
+    if (globalOverflow) {
+      offenders.push(`html [global] sw=${root.scrollWidth} cw=${root.clientWidth}`);
+      const viewportWidth = root.clientWidth;
+      const globalCauses = [...document.body.querySelectorAll('*')]
+        .filter(element => element instanceof HTMLElement && visible(element))
+        .map(element => ({ element, rect: element.getBoundingClientRect() }))
+        .filter(item => item.rect.right > viewportWidth + 4 || item.rect.left < -4)
+        .slice(0, 6);
+      globalCauses.forEach(item => offenders.push(`${descriptor(item.element)} [viewport] left=${Math.round(item.rect.left)} right=${Math.round(item.rect.right)} vw=${viewportWidth}`));
+    }
 
     let audit = document.getElementById('theoryV56Audit');
     if (!audit) {
