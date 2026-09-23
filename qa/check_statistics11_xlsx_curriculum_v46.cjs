@@ -8,6 +8,7 @@ const requireContract = (ok, message) => { if (!ok) throw new Error(message); };
 const base = read('python/course-data-v4.js');
 const v32 = read('python/curriculum-data-first-v32.js');
 const v46 = read('python/curriculum-xlsx-first-v46.js');
+const v59 = read('python/curriculum-libraries-xlsx-pandas-v59.js');
 const analyst = read('python/data-analyst-extension-v30.js');
 const indexHtml = read('python/index.html');
 const theoryHtml = read('python/theory.html');
@@ -15,7 +16,7 @@ const workshopHtml = read('python/workshop.html');
 const workshopXlsx = read('python/workshop-xlsx-topic-v46.js');
 const livePandas = read('python/pandas-excel-live-v53.js');
 const migration = read('supabase/migrations/20260916170000_statistics11_xlsx_after_arrays_v46.sql');
-const workbook = fs.readFileSync(path.join(ROOT, 'python/data/stat11_stage4_students.xlsx'));
+const workbook = fs.readFileSync(path.join(ROOT, 'python/data/pandas_excel_students.xlsx'));
 
 // Preserve the existing topic structure: reuse the existing logic slot and designate it as the first real-file topic after Arrays.
 requireContract(/slug\s*:\s*['"]arrays['"]/.test(base) && /slug\s*:\s*['"]logic['"]/.test(base), 'Base curriculum must retain the existing arrays and logic topic slugs.');
@@ -80,11 +81,13 @@ requireContract(livePandas.includes("oldSection.replaceWith(section)"), 'Topic 0
 // Workshop must expose a real XLSX file path before core runtime execution.
 requireContract(workshopHtml.includes('workshop-xlsx-topic-v46.js'), 'Production workshop does not load the V46 XLSX workspace.');
 requireContract(workshopHtml.indexOf('workshop-xlsx-topic-v46.js') < workshopHtml.indexOf('workshop-v42.js'), 'V46 XLSX bridge must load before the core workshop runtime.');
-for (const token of ['stat11_stage4_students.xlsx', 'pd.read_excel', 'runtime.FS.writeFile', 'openpyxl', 'Use class dataset', 'v46UploadInput']) {
+for (const token of ['pandas_excel_students.xlsx', 'pd.read_excel', 'runtime.FS.writeFile', 'openpyxl', 'Use class dataset', 'v46UploadInput']) {
   requireContract(workshopXlsx.includes(token), `V46 XLSX workshop contract missing: ${token}`);
 }
 requireContract(workbook.subarray(0, 2).toString('ascii') === 'PK', 'Class dataset is not a real XLSX ZIP container.');
 requireContract(workbook.length > 5000, 'Class XLSX workbook is unexpectedly small.');
+requireContract(v59.includes("sourceWorkbook:'pandas_excel_students.xlsx'"), 'Current V59 overlay must identify the active classroom workbook.');
+requireContract(v59.includes("title: 'Python Libraries → XLSX Files → Pandas'"), 'Current V59 Topic 04 overlay is missing.');
 
 // Exactly 12 problems remain in the reused topic, preserving the current workshop contract.
 const logicKeys = [...v46.matchAll(/key:\s*'logic-(\d{2})'/g)].map(match => match[1]);
