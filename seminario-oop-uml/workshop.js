@@ -111,10 +111,10 @@ async function saveEvidence(){
     document.getElementById('stateBehaviorLab')?.scrollIntoView({behavior:'smooth',block:'start'});
     return;
   }
-  if(topic.n===2&&(runtime.implement_success!==true||runtime.test_success!==true||runtime.modify_success!==true)){
-    $('evCode').checked=runtime.implement_success===true;
-    $('evTest').checked=runtime.test_success===true;
-    $('saveStatus').textContent='Run all three Colab stages successfully: implementation, visible state transition, and protected withdraw rule.';
+  if(topic.n===2&&(runtime.implement_success!==true||runtime.test_success!==true||runtime.modify_success!==true||stateBehavior.state_runtime_implement_validated!==true||stateBehavior.state_runtime_test_validated!==true||stateBehavior.state_runtime_modify_validated!==true)){
+    $('evCode').checked=runtime.implement_success===true&&stateBehavior.state_runtime_implement_validated===true;
+    $('evTest').checked=runtime.test_success===true&&stateBehavior.state_runtime_test_validated===true;
+    $('saveStatus').textContent='Complete and validate all three Colab stages: BankAccount implementation, visible before/after deposit transition, and protected withdraw rule.';
     document.querySelector('.state2-colab-shell')?.scrollIntoView({behavior:'smooth',block:'start'});
     return;
   }
