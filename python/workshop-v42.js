@@ -36,7 +36,195 @@
     'stat-09': {concept:'Threshold percentage',steps:['Create the five-value dataset.','Start a counter and loop through every observation.','Count each value that meets the threshold.','Convert the count to a percentage using count / len(values) * 100 and print it.'],hints:['The comparison is “at least”, so use >=.','Percentage = qualifying_count / total_count * 100.']},
     'stat-10': {concept:'Compare variability with range',steps:['Create dataset_a and dataset_b exactly as given.','Calculate maximum minus minimum for dataset_a.','Repeat the same calculation for dataset_b.','Print the two ranges in the requested order.'],hints:['Use the same range formula twice.','Keep the datasets separate so you can compare their spreads.']},
     'stat-11': {concept:'Two summaries from one dataset',steps:['Create the dataset.','Calculate the mean from total and count.','Calculate the range from maximum and minimum.','Print mean first and range second.'],hints:['You need sum, len, min and max.','Calculate both statistics from the same list before printing.']},
-    'stat-12': {concept:'Count values below the mean',steps:['Create the dataset and calculate its mean.','Initialize a counter before the loop.','Loop through each observation and compare it with the mean.','Increase the counter only for values strictly below the mean, then print the final count.'],hints:['Use < because the instruction says strictly below.','Do not reset the counter inside the loop.']}
+    'stat-12': {concept:'Count values below the mean',steps:['Create the dataset and calculate its mean.','Initialize a counter before the loop.','Loop through each observation and compare it with the mean.','Increase the counter only for values strictly below the mean, then print the final count.'],hints:['Use < because the instruction says strictly below.','Do not reset the counter inside the loop.']},
+
+    // Topic 04 V63 · explicit, literal construction guidance.
+    'logic-01': {
+      concept:'Class 1 · math.sqrt() with exact names',
+      steps:[
+        'Line 1 — import the library exactly as: import math.',
+        'Line 2 — create the result variable exactly as: root = math.sqrt(81).',
+        'Line 3 — display that variable exactly as: print(root).',
+        'Press ▶ Run. Confirm that Python prints 9.0.',
+        'If the output is correct, press Validate. If Python says math is not defined, check that Line 1 is present.'
+      ],
+      hints:[
+        'Your three required code lines are: import math → root = math.sqrt(81) → print(root).',
+        'The function name is sqrt and it belongs to math, so write math.sqrt(...), not sqrt(...) by itself.'
+      ]
+    },
+    'logic-02': {
+      concept:'Class 1 · statistics.mean() with an exact list',
+      steps:[
+        'Line 1 — import the library exactly as: import statistics.',
+        'Line 2 — create the list exactly as: values = [72, 86, 91].',
+        'Line 3 — calculate the mean exactly as: mean_value = statistics.mean(values).',
+        'Line 4 — display the result exactly as: print(mean_value).',
+        'Press ▶ Run. Confirm that Python calculates the mean from values instead of a manually typed final answer, then Validate.'
+      ],
+      hints:[
+        'Use the variable names values and mean_value exactly as written in the task.',
+        'The calculation must call statistics.mean(values); do not replace it with (72 + 86 + 91) / 3.'
+      ]
+    },
+    'logic-03': {
+      concept:'Class 1 · pathlib Path → file suffix',
+      steps:[
+        'Line 1 — import Path exactly as: from pathlib import Path.',
+        'Line 2 — create the path object exactly as: file = Path("pandas_excel_students.xlsx").',
+        'Line 3 — ask the Path object for its suffix and display it: print(file.suffix).',
+        'Press ▶ Run. The output must identify the Excel extension .xlsx.',
+        'Validate only after the output comes from file.suffix, not from typing ".xlsx" directly.'
+      ],
+      hints:[
+        'Path is imported from pathlib; Path(...) converts the filename text into a path object.',
+        'The property you need is file.suffix — no parentheses are used after suffix.'
+      ]
+    },
+    'logic-04': {
+      concept:'Class 1 · openpyxl workbook → worksheet names',
+      steps:[
+        'Line 1 — import the workbook reader: from openpyxl import load_workbook.',
+        'Line 2 — load the exact class file: wb = load_workbook("pandas_excel_students.xlsx").',
+        'Line 3 — store the worksheet-name list: sheet_names = wb.sheetnames.',
+        'Line 4 — test whether the required worksheet exists: has_students = "Students" in sheet_names.',
+        'Line 5 — display the Boolean result: print(has_students).',
+        'Press ▶ Run. The final output should be True, then Validate.'
+      ],
+      hints:[
+        'Use wb for the workbook object and sheet_names for wb.sheetnames.',
+        'Membership is checked with "Students" in sheet_names; do not compare the entire list to one string.'
+      ]
+    },
+    'logic-05': {
+      concept:'Class 1 · workbook → worksheet → cell + dimensions',
+      steps:[
+        'Line 1 — import load_workbook from openpyxl.',
+        'Line 2 — create wb by loading "pandas_excel_students.xlsx".',
+        'Line 3 — select the worksheet exactly as: ws = wb["Students"].',
+        'Line 4 — create first_cell = ws["A1"].value.',
+        'Line 5 — create rows = ws.max_row and columns = ws.max_column.',
+        'Line 6 — create check = first_cell is not None and rows > 1 and columns >= 5.',
+        'Line 7 — display the verification with print(check).',
+        'Press ▶ Run. If the result is True, the worksheet has content and the expected minimum structure; then Validate.'
+      ],
+      hints:[
+        'Use the exact object chain wb → ws → cell/dimensions. wb is the workbook; ws is the Students worksheet.',
+        'Your final Boolean combines three conditions with and: first_cell is not None, rows > 1, columns >= 5.'
+      ]
+    },
+    'logic-06': {
+      concept:'Class 1 · create workbook → write cell → save XLSX',
+      steps:[
+        'Line 1 — import Workbook: from openpyxl import Workbook.',
+        'Line 2 — import Path: from pathlib import Path.',
+        'Line 3 — create the workbook: wb = Workbook().',
+        'Line 4 — get the active worksheet: ws = wb.active.',
+        'Line 5 — rename it exactly: ws.title = "Summary".',
+        'Line 6 — write the required value: ws["A1"] = "ready".',
+        'Line 7 — create output_file = Path("xlsx_library_output.xlsx").',
+        'Line 8 — save the workbook with wb.save(output_file).',
+        'Line 9 — verify that the real file exists with print(output_file.exists()).',
+        'Press ▶ Run. The output should be True before you Validate.'
+      ],
+      hints:[
+        'The workbook must be saved before Path.exists() can return True.',
+        'Use the exact output filename xlsx_library_output.xlsx and the worksheet title Summary.'
+      ]
+    },
+    'logic-07': {
+      concept:'Class 2 · pd.read_excel() → DataFrame',
+      steps:[
+        'Line 1 — import Pandas with its standard alias: import pandas as pd.',
+        'Line 2 — read the exact worksheet: df = pd.read_excel("pandas_excel_students.xlsx", sheet_name="Students").',
+        'Line 3 — inspect the object type by displaying: print(type(df).__name__).',
+        'Press ▶ Run. The output should identify the Pandas table object as DataFrame.',
+        'Validate only after df was created by pd.read_excel(...).'
+      ],
+      hints:[
+        'Use the variable name df for the DataFrame and the alias pd for Pandas.',
+        'The worksheet name belongs in sheet_name="Students".'
+      ]
+    },
+    'logic-08': {
+      concept:'Class 2 · inspect shape, columns and first rows before analysis',
+      steps:[
+        'Line 1 — import pandas as pd.',
+        'Line 2 — create df with pd.read_excel("pandas_excel_students.xlsx", sheet_name="Students").',
+        'Line 3 — unpack the dimensions: rows, columns = df.shape.',
+        'Line 4 — create column_names = df.columns.tolist().',
+        'Line 5 — create preview = df.head().',
+        'Line 6 — create check = rows >= 1 and columns >= 5.',
+        'Line 7 — display the structural check with print(check).',
+        'Press ▶ Run. Confirm True, then Validate. The purpose is to inspect structure before analyzing values.'
+      ],
+      hints:[
+        'df.shape gives two values in this order: number of rows, number of columns.',
+        'Keep column_names = df.columns.tolist() and preview = df.head() in the code even though the final printed validation is check.'
+      ]
+    },
+    'logic-09': {
+      concept:'Class 2 · select one DataFrame column → Series',
+      steps:[
+        'Line 1 — import pandas as pd and read the Students worksheet into df.',
+        'Line 2 — select exactly one column: scores = df["score"].',
+        'Line 3 — inspect the first values: preview = scores.head().',
+        'Line 4 — display the selected object type: print(type(scores).__name__).',
+        'Press ▶ Run. The output should identify scores as a Series, then Validate.'
+      ],
+      hints:[
+        'Selecting df["score"] returns one labeled column, which Pandas represents as a Series.',
+        'Use the exact variable name scores and the exact column label "score".'
+      ]
+    },
+    'logic-10': {
+      concept:'Class 2 · Boolean condition → filtered DataFrame',
+      steps:[
+        'Line 1 — import pandas as pd and read the Students worksheet into df.',
+        'Line 2 — create the Boolean filter exactly as: filtered = df.loc[df["score"] >= 90].',
+        'Line 3 — verify that at least one row remains: has_rows = len(filtered) > 0.',
+        'Line 4 — verify every remaining score: all_high = (filtered["score"] >= 90).all().',
+        'Line 5 — combine both checks: check = has_rows and all_high.',
+        'Line 6 — display the result with print(check).',
+        'Press ▶ Run. Confirm True, inspect filtered if needed, then Validate.'
+      ],
+      hints:[
+        'The expression inside df.loc[...] is the condition df["score"] >= 90.',
+        'Use .all() to verify that every score in the filtered result satisfies the threshold.'
+      ]
+    },
+    'logic-11': {
+      concept:'Class 2 · derive a Boolean column → sort complete records',
+      steps:[
+        'Line 1 — import pandas as pd and read the Students worksheet into df.',
+        'Line 2 — create the derived column exactly as: df["passed"] = df["score"] >= 70.',
+        'Line 3 — sort complete rows exactly as: ordered = df.sort_values("score", ascending=False).',
+        'Line 4 — create has_passed = "passed" in ordered.columns.',
+        'Line 5 — create descending = ordered["score"].is_monotonic_decreasing.',
+        'Line 6 — display both requirements together: print(has_passed and descending).',
+        'Press ▶ Run. Confirm True, then Validate.'
+      ],
+      hints:[
+        'Do not sort only the score Series; sort the full DataFrame so every student record stays together.',
+        'ascending=False means highest scores appear first.'
+      ]
+    },
+    'logic-12': {
+      concept:'Class 2 · filter DataFrame → export a real XLSX file',
+      steps:[
+        'Line 1 — import pandas as pd and read the Students worksheet into df.',
+        'Line 2 — create filtered = df.loc[df["score"] >= 80].',
+        'Line 3 — export exactly as: filtered.to_excel("pandas_analysis_output.xlsx", index=False).',
+        'Line 4 — import Path: from pathlib import Path.',
+        'Line 5 — create output_file = Path("pandas_analysis_output.xlsx").',
+        'Line 6 — verify the exported file with print(output_file.exists()).',
+        'Press ▶ Run. The output should be True because Python created a real XLSX file; then Validate.'
+      ],
+      hints:[
+        'Use index=False so the Pandas row index is not exported as an extra Excel column.',
+        'The final existence check must use the same filename that you passed to to_excel(...).'
+      ]
+    }
   };
 
   const state = {

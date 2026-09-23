@@ -12,7 +12,7 @@ const sandboxHtml = read('python/sandbox.html');
 const sandboxJs = read('python/sandbox-v39.js');
 const sandboxCss = read('python/sandbox-v39.css');
 
-assert(workshop.includes('Guided Colab Workshop V47'), 'Production workshop must identify the current V47 entry point.');
+assert(workshop.includes('Statistics 11 · Topic 04 · Libraries, XLSX and Pandas · Colab Workshop') || workshop.includes('Guided Colab Workshop V47'), 'Production workshop must identify the current guided workshop entry point.');
 assert(workshop.includes('workshop-v42.js'), 'Production workshop must load the current V42 runtime.');
 assert(workshop.includes('workshop-array-prompts-v28.js?v=20260917-arrays-v47'), 'Production workshop must load the V47 Arrays guidance cache key.');
 assert(workshop.indexOf('workshop-array-prompts-v28.js') < workshop.indexOf('workshop-v42.js'), 'Arrays guidance must be available before the runtime renders stages.');

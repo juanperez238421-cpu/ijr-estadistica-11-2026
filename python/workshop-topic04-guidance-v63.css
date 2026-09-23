@@ -1,0 +1,30 @@
+.v63-guide-scaffold{display:grid;gap:12px;margin:14px 0 2px}
+.v63-section{border:1px solid #d7e3f7;border-radius:10px;background:#fff;padding:13px}
+.v63-section-title{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.v63-section-title>span{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#e8f0fe;color:#174ea6;font-size:12px;font-weight:900}
+.v63-section-title strong{font-size:14px;color:#1f2937}
+.v63-name-grid{display:flex;flex-wrap:wrap;gap:8px}
+.v63-name-chip{display:grid;gap:2px;min-width:120px;padding:8px 10px;border:1px solid #dbeafe;border-radius:8px;background:#f8fbff}
+.v63-name-chip code{font:700 14px/1.25 var(--mono);color:#174ea6;overflow-wrap:anywhere}
+.v63-name-chip small{font-size:11px;line-height:1.25;color:#64748b}
+.v63-flow{display:flex;align-items:center;flex-wrap:wrap;gap:7px}
+.v63-flow-node{display:inline-flex;align-items:center;min-height:38px;padding:7px 9px;border:1px solid #bfdbfe;border-radius:8px;background:#eff6ff}
+.v63-flow-node code{font:700 12.5px/1.3 var(--mono);color:#1d4ed8;white-space:normal;overflow-wrap:anywhere}
+.v63-flow-arrow{font-size:18px;font-weight:900;color:#64748b}
+.v63-check{background:#fbfdff}
+.v63-check-grid{display:grid;grid-template-columns:minmax(110px,.34fr) minmax(0,1fr);gap:10px}
+.v63-check-grid>div{border:1px solid #e2e8f0;border-radius:8px;padding:9px 10px;background:#fff}
+.v63-check-grid small{display:block;margin-bottom:5px;color:#64748b;font-size:10px;font-weight:800;letter-spacing:.06em}
+.v63-check-grid code{font:800 15px/1.2 var(--mono);color:#166534}
+.v63-check-grid p{margin:0;color:#334155;font-size:12.5px;line-height:1.45}
+.v63-mistake{margin-top:9px;padding:8px 10px;border-left:3px solid #f59e0b;border-radius:0 7px 7px 0;background:#fffbeb;color:#78350f;font-size:12.5px;line-height:1.45}
+.v63-mistake strong{color:#92400e}
+html[data-topic04-guidance="v63"] .guide-steps{margin-top:13px}
+html[data-topic04-guidance="v63"] .guide-steps::before{content:"4  TYPE THE CODE — LINE BY LINE";display:block;margin:0 0 7px -4px;color:#174ea6;font-size:11px;font-weight:900;letter-spacing:.055em}
+@media(max-width:620px){
+  .v63-check-grid{grid-template-columns:1fr}
+  .v63-name-chip{min-width:0;flex:1 1 120px}
+  .v63-flow{align-items:stretch}
+  .v63-flow-node{flex:1 1 130px}
+  .v63-flow-arrow{align-self:center}
+}
