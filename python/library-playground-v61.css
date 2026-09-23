@@ -40,3 +40,7 @@ html[data-library-playground="v61"] .p60-intro-metrics{min-width:0;max-width:100
 html[data-library-playground="v61"] .p60-intro{width:100%}
 html[data-library-playground="v61"] .p60-intro-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}
 html[data-library-playground="v61"] .p60-intro-metrics span{overflow-wrap:anywhere}
+
+
+html[data-library-playground="v61"] .p60-page{width:calc(100vw - 60px);justify-self:start}
+@media(max-width:760px){html[data-library-playground="v61"] .p60-page{width:calc(100vw - 28px)}}
