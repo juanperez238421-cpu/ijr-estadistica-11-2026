@@ -18,9 +18,35 @@
         cell('theory-try','Your turn: controlled state change','Complete a method that decreases available stock.',['Store stock in the object.','Subtract quantity only when enough stock exists.','Print stock before and after.'],`class Product:\n    def __init__(self, name, stock):\n        self.name = name\n        self.stock = stock\n\n    def sell(self, quantity):\n        # TODO: change stock only when quantity is valid\n        pass\n\nitem = Product("Notebook", 10)\nprint("before:", item.stock)\n# TODO: call sell(...)\nprint("after:", item.stock)`)
       ],
       workshop:[
-        cell('implement','Cell 1 · Implement state + behavior','Create an object whose method changes one stored value.',['Define one numeric state attribute.','Write one method that changes it.','Make the rule visible in the code.'],`class Counter:\n    def __init__(self, value=0):\n        self.value = value\n\n    def change(self, amount):\n        # TODO: update self.value\n        pass`),
-        cell('test','Cell 2 · Test the transition','Show the state before and after the method call.',['Create one object.','Print the initial state.','Call the method and print the new state.'],`# counter = Counter(...)\n# print("before:", ...)\n# counter.change(...)\n# print("after:", ...)`),
-        cell('modify','Cell 3 · Add a business rule','Prevent one invalid state change.',['Choose a meaningful invariant.','Update the method in Cell 1.','Re-run Cell 1 and test both valid and invalid changes.'],`# Test one valid and one invalid state transition here.`)
+        cell('implement','Cell 1 · Build BankAccount state + deposit behavior','Translate the UML class into executable Python without leaving placeholder code.',['Create BankAccount with owner and balance stored as object state.','Implement deposit(amount) so a positive amount changes self.balance.','Reject zero or negative deposits with a clear rule, then run this cell.'],`# SESSION 02 · STATE & BEHAVIOR
+# Complete the class. Do not leave TODO or pass in the final version.
+
+class BankAccount:
+    def __init__(self, owner, balance=0):
+        # TODO 1: store owner and balance as object state
+        pass
+
+    def deposit(self, amount):
+        # TODO 2: allow only positive deposits
+        # TODO 3: update the persistent balance state
+        pass`),
+        cell('test','Cell 2 · Prove the state transition','Create a concrete object and make the before → method call → after transition visible.',['Create account = BankAccount("Ana", 120).','Print the balance before the call, execute account.deposit(35), then print the balance after.','A correct run must visibly show two states connected by one behavior call.'],`# Use the BankAccount class from Cell 1.
+# Show the state transition with real output.
+
+# account = BankAccount("Ana", 120)
+# print("before:", account.balance)
+# account.deposit(35)
+# print("after:", account.balance)`),
+        cell('modify','Cell 3 · Add a protected withdraw rule','Extend the design, then test a valid and an invalid withdrawal.',['Return to Cell 1 and add withdraw(amount) so the balance cannot go below zero; re-run Cell 1.','Here, call withdraw with one valid amount and show the new balance.','Try one amount larger than the available balance and prove the invariant is preserved.'],`# First update Cell 1 with a withdraw(amount) method and run Cell 1 again.
+# Then test the rule here. Your test should include a valid withdrawal
+# and an attempted invalid withdrawal without corrupting the balance.
+
+# account = BankAccount("Ana", 155)
+# print("start:", account.balance)
+# account.withdraw(...)
+# print("after valid:", account.balance)
+# account.withdraw(...)
+# print("after invalid:", account.balance)`)
       ]
     },
     3:{
