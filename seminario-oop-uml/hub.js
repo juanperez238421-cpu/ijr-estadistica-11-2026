@@ -4,21 +4,23 @@ const cfg=window.IJR_OOP_UML_CONFIG;
 const data=window.IJR_OOP_UML_DATA;
 const store=new OopUmlStore(cfg);
 const $=id=>document.getElementById(id);
+const ACCESS_KEY='ijr-seminar-oop-email-v2';
 let attempt=null;
 
-function esc(value=''){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function esc(value=''){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));}
 function isComplete(topic){return attempt?.sessions?.[topic.sessionKey]?.status==='completed';}
-function setStatus(message,type=''){const node=$('registrationStatus');node.textContent=message;node.className=`inline-status ${type}`.trim();}
-function currentLanguage(){return attempt?.language||$('language')?.value||'python';}
-
-function updateRegistrationFields(){
-  const team=$('registrationMode').value==='team';
-  $('teamSizeWrap').classList.toggle('hidden',!team);
-  const size=team?Number($('teamSize').value):1;
-  $('member2Wrap').classList.toggle('hidden',size<2);
-  $('member3Wrap').classList.toggle('hidden',size<3);
-  $('memberName2').required=size>=2;
-  $('memberName3').required=size>=3;
+function setStatus(message,type=''){const node=$('registrationStatus');if(!node)return;node.textContent=message;node.className=`inline-status ${type}`.trim();}
+function normalizeEmail(value){return String(value||'').trim().toLowerCase();}
+function institutionalEmail(value){return /^[^\s@]+@ijr\.edu\.co$/i.test(normalizeEmail(value));}
+function currentLanguage(){return attempt?.language||'python';}
+function saveEmail(email){localStorage.setItem(ACCESS_KEY,JSON.stringify({email:normalizeEmail(email),validatedAt:Date.now()}));}
+function savedEmail(){try{const x=JSON.parse(localStorage.getItem(ACCESS_KEY)||'null');return x&&institutionalEmail(x.email)?normalizeEmail(x.email):'';}catch{return '';}}
+function friendlyError(error){
+  const raw=String(error?.message||'');
+  if(raw.includes('institutional_email_not_registered'))return 'This institutional email is not registered in the active Grade 11 Seminar roster.';
+  if(raw.includes('institutional_email_required'))return 'Use only your institutional @ijr.edu.co email.';
+  if(raw.includes('invalid_student_group'))return 'The institutional email exists, but its Grade 11 group could not be resolved.';
+  return raw||'The institutional session could not be opened.';
 }
 
 function render(){
@@ -57,29 +59,44 @@ function render(){
 
 async function submitRegistration(event){
   event.preventDefault();
-  const mode=$('registrationMode').value;
-  const size=mode==='team'?Number($('teamSize').value):1;
-  const names=[$('memberName1').value,$('memberName2').value,$('memberName3').value].slice(0,size).map(v=>v.trim()).filter(Boolean);
-  setStatus('Creating classroom registration…');
+  const email=normalizeEmail($('institutionalEmail')?.value);
+  if(!institutionalEmail(email)){
+    setStatus('Use only your institutional @ijr.edu.co email.','error');
+    $('institutionalEmail')?.focus();
+    return;
+  }
   $('registerButton').disabled=true;
+  setStatus('Validating institutional email…');
   try{
-    attempt=await store.start({language:$('language').value,group:$('groupCode').value,names});
-    setStatus('Registration ready.','ok');
+    attempt=await store.startWithEmail({email,language:'python'});
+    saveEmail(email);
+    setStatus('Access granted.','ok');
     render();
   }catch(error){
     console.error(error);
-    setStatus(error.message||'Registration could not be created.','error');
+    attempt=null;
+    setStatus(friendlyError(error),'error');
+    render();
+    $('institutionalEmail')?.focus();
   }finally{$('registerButton').disabled=false;}
 }
 
-$('registrationMode').addEventListener('change',updateRegistrationFields);
-$('teamSize').addEventListener('change',updateRegistrationFields);
 $('registrationForm').addEventListener('submit',submitRegistration);
 $('switchButton').addEventListener('click',()=>{
-  if(confirm('Switch the active Seminar registration on this computer? Saved Supabase evidence will not be deleted.')){
-    store.reset();attempt=null;render();
+  if(confirm('Switch institutional email on this computer? Saved Supabase evidence will not be deleted.')){
+    store.reset();
+    localStorage.removeItem(ACCESS_KEY);
+    attempt=null;
+    render();
+    $('institutionalEmail').value='';
+    $('institutionalEmail').focus();
   }
 });
 
-updateRegistrationFields();
-store.restore().then(value=>{attempt=value;render();}).catch(error=>{console.warn(error);render();});
+const remembered=savedEmail();
+if(remembered)$('institutionalEmail').value=remembered;
+store.restore().then(value=>{
+  if(value?.email&&institutionalEmail(value.email)){attempt=value;saveEmail(value.email);}
+  else{if(value)store.reset();attempt=null;}
+  render();
+}).catch(error=>{console.warn(error);attempt=null;render();});

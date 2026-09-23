@@ -5,12 +5,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="light">
   <meta name="robots" content="noindex,nofollow">
-  <meta name="description" content="Seminar 11 main entry: register once, then choose OOP + UML Common Core, Specialized Studio Tracks, or your Personal Project Route.">
+  <meta name="description" content="Seminar 11 main entry with institutional-email-only access.">
   <title>Seminar 11 · Main Learning Hub</title>
+  <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="styles.css?v=20260916-v1">
-  <script defer src="main.js?v=20260916-v1"></script>
+  <script defer src="main.js?v=20260923-email-v2"></script>
 </head>
-<body>
+<body data-seminar-entry-build="20260923-email-v2">
   <header class="topbar">
     <a class="brand" href="../" aria-label="Back to Statistics 11 site">
       <span class="brand-mark">IJR</span>
@@ -26,8 +28,8 @@
     <section class="hero">
       <div>
         <p class="eyebrow">SOFTWARE ENGINEERING STUDIO · THIRD PERIOD 2026</p>
-        <h1>Register once. Choose your learning space.</h1>
-        <p class="hero-copy">Seminar 11 has three connected learning environments. Complete the student entry first, then choose <strong>OOP + UML Common Core</strong>, the <strong>Specialized Studio Tracks</strong>, or <strong>My Specific Project</strong> for your individualized project instructions and 8-sprint roadmap.</p>
+        <h1>Enter with your institutional email.</h1>
+        <p class="hero-copy">Use only your <strong>@ijr.edu.co institutional email</strong>. Supabase resolves your official name and Grade 11 group automatically, then opens the Seminar learning spaces.</p>
       </div>
       <aside class="hero-summary">
         <div><strong>1</strong><span>Student entry</span></div>
@@ -38,30 +40,22 @@
 
     <section id="registrationSection" class="registration-section">
       <div class="registration-copy">
-        <p class="eyebrow">STEP 01 · STUDENT ENTRY</p>
-        <h2>Identify the student before opening a learning route.</h2>
-        <p>This entry is used to prefill the existing Seminar pages. The OOP + UML Hub and each specialized diagnostic keep their own current academic logic and backend evidence.</p>
+        <p class="eyebrow">STEP 01 · INSTITUTIONAL ENTRY</p>
+        <h2>Use only your institutional email.</h2>
+        <p>No student name, group, password or manual registration mode is required. Supabase matches the email against the active Grade 11 Seminar roster and resolves the official identity automatically.</p>
         <div class="sequence-rule">
           <strong>Entry flow</strong>
-          <span>Student → Group → Learning space → Existing course page</span>
-          <small>No course progress is deleted when you change the central student entry.</small>
+          <span>Institutional email → official identity → learning space</span>
+          <small>Accepted domain: @ijr.edu.co.</small>
         </div>
       </div>
 
-      <form id="entryForm" class="registration-card">
-        <p class="eyebrow">INDIVIDUAL REGISTRATION</p>
-        <label>Full name
-          <input id="fullName" required minlength="3" maxlength="120" autocomplete="name" placeholder="Full name">
+      <form id="entryForm" class="registration-card" novalidate>
+        <p class="eyebrow">INSTITUTIONAL EMAIL</p>
+        <label>Institutional email
+          <input id="institutionalEmail" type="email" inputmode="email" autocomplete="email" required placeholder="nombre.apellido@ijr.edu.co">
         </label>
-        <label>Group
-          <select id="groupCode" required>
-            <option value="">Select…</option>
-            <option value="11-A">11-A</option>
-            <option value="11-B">11-B</option>
-            <option value="11-C">11-C</option>
-          </select>
-        </label>
-        <button class="button button-dark full-button" type="submit">Register and continue</button>
+        <button id="entryButton" class="button button-dark full-button" type="submit">Enter Seminar 11</button>
         <p id="entryStatus" class="status" role="status" aria-live="polite"></p>
       </form>
     </section>

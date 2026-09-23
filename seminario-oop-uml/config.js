@@ -1,12 +1,13 @@
 window.IJR_OOP_UML_CONFIG=Object.freeze({
-  version:'oop-uml-v1-20260831',
+  version:'oop-uml-email-v2-20260923',
   courseSlug:'seminario-programacion-t3-2026',
   supabaseUrl:'https://rlfxnjbqxbozjdzkbwlz.supabase.co',
   supabasePublishableKey:'sb_publishable_rmVOQ3Orx49KpW_4uMqYew_c2HpcA87',
-  sessionKey:'ijr-seminar-oop-uml-session-v1',
-  localKey:'ijr-seminar-oop-uml-local-v1',
+  sessionKey:'ijr-seminar-oop-uml-session-v2',
+  localKey:'ijr-seminar-oop-uml-local-v2',
   rpc:{
     start:'seminar_course_start_team',
+    startWithEmail:'seminar_oop_uml_start_email_v8',
     resume:'seminar_course_resume',
     umlSnapshot:'seminar_oop_uml_snapshot',
     recordSession:'seminar_oop_uml_record_session'

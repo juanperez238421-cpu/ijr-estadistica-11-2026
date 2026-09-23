@@ -29,12 +29,34 @@ export class OopUmlStore{
         const key=JSON.parse(raw);
         const course=await this.rpc(this.cfg.rpc.resume,{p_attempt_id:key.attemptId,p_attempt_token:key.token});
         let a=this.fromCourse(course.snapshot||course,key.token,local||{});
+        if(key.email)a.email=String(key.email).trim().toLowerCase();
         const uml=await this.rpc(this.cfg.rpc.umlSnapshot,{p_attempt_id:a.id,p_attempt_token:a.token});
         a=this.mergeUml(a,uml);return this.save(a);
       }catch(err){console.warn('OOP UML backend resume failed; local recovery copy used.',err);}
     }
     if(local){this.attempt=local;return local;}return null;
   }
+  async startWithEmail({email,language='python'}){
+    email=String(email||'').trim().toLowerCase();
+    if(!/^[^\\s@]+@ijr\\.edu\\.co$/i.test(email))throw new Error('institutional_email_required');
+    if(!['python','java'].includes(language))throw new Error('invalid_language');
+    if(!this.sb)throw new Error('Supabase client unavailable');
+
+    const data=await this.rpc(this.cfg.rpc.startWithEmail,{
+      p_institutional_email:email,
+      p_language:language,
+      p_session_id:uuid(),
+      p_user_agent:navigator.userAgent
+    });
+    sessionStorage.setItem(this.cfg.sessionKey,JSON.stringify({attemptId:data.attempt_id,token:data.attempt_token,email}));
+    let a=this.fromCourse(data.snapshot,data.attempt_token,{language,sessions:{}});
+    a.email=email;
+    const uml=await this.rpc(this.cfg.rpc.umlSnapshot,{p_attempt_id:a.id,p_attempt_token:a.token});
+    a=this.mergeUml(a,uml);
+    a.email=email;
+    return this.save(a);
+  }
+
   async start({language,group,names}){
     names=names.map(cleanName).filter(Boolean);
     if(!['python','java'].includes(language))throw new Error('Select Python or Java.');

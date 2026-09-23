@@ -6,17 +6,20 @@
   <meta name="color-scheme" content="light">
   <meta name="description" content="Seminar 11 OOP + UML Learning Hub: classes, objects, constructors, encapsulation, relationships, inheritance, polymorphism, architecture and UML class diagrams.">
   <meta name="robots" content="noindex,nofollow">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Seminar 11 · OOP + UML Learning Hub</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20260831-v1">
+  <link rel="stylesheet" href="styles.css?v=20260923-email-v2">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="config.js?v=20260831-v1"></script>
-  <script defer src="course-data.js?v=20260831-v1"></script>
-  <script defer src="../seminario/entry-bridge.js?v=20260916-v1" data-main-href="../seminario/" data-mode="oop"></script>
-  <script type="module" src="hub.js?v=20260831-v1"></script>
+  <script defer src="config.js?v=20260923-email-v2"></script>
+  <script defer src="course-data.js?v=20260923-email-v2"></script>
+  <script defer src="../seminario/entry-bridge.js?v=20260923-email-v2" data-main-href="../seminario/" data-mode="oop"></script>
+  <script type="module" src="hub.js?v=20260923-email-v2"></script>
 </head>
-<body>
+<body data-seminar-oop-build="20260923-email-v2">
   <header class="topbar">
     <a class="brand" href="../seminario/" aria-label="Back to Seminar 11 main hub">
       <span class="brand-mark">IJR</span>
@@ -34,49 +37,31 @@
   <section id="registrationPanel" class="registration-screen">
     <div class="registration-card">
       <p class="eyebrow">SOFTWARE ENGINEERING STUDIO · COMMON CORE</p>
-      <h1>Model first. Code second.</h1>
-      <p class="registration-lead">Register the student or exact classroom team using this computer. This Common Core connects <strong>Object-Oriented Programming</strong> with <strong>UML class diagrams</strong> and stores session evidence through the Seminar Supabase backend.</p>
+      <h1>Enter with your institutional email.</h1>
+      <p class="registration-lead">Type only your <strong>@ijr.edu.co institutional email</strong>. The system resolves your official student name and Grade 11 group automatically from Supabase. No name, group, language, team mode or password is requested.</p>
 
       <div class="sequence-rule">
         <strong>10-session progression</strong>
         <span>Objects → State → Constructors → Encapsulation → Relationships → Inheritance → Polymorphism → Architecture → Refactoring → Defense</span>
-        <small>Every session has a dedicated Theory page and Workshop. Python and Java share the same UML design language.</small>
+        <small>Your institutional email is the only field required to open the OOP + UML Common Core.</small>
       </div>
 
-      <form id="registrationForm" class="hub-registration-form">
-        <div class="registration-grid">
-          <label>Language <small>· Lenguaje</small>
-            <select id="language" required><option value="python">Python</option><option value="java">Java</option></select>
-          </label>
-          <label>Registration mode <small>· Modalidad</small>
-            <select id="registrationMode" required><option value="individual">Individual · 1 student</option><option value="team">Team · 2–3 students</option></select>
-          </label>
-          <label>Group <small>· Grupo</small>
-            <select id="groupCode" required><option value="">Select…</option><option value="11-A">11-A</option><option value="11-B">11-B</option><option value="11-C">11-C</option></select>
-          </label>
-          <label id="teamSizeWrap" class="hidden">Students at this computer
-            <select id="teamSize"><option value="2">2 students</option><option value="3">3 students</option></select>
+      <form id="registrationForm" class="hub-registration-form" novalidate>
+        <div class="registration-grid email-only">
+          <label>Institutional email <small>· Correo institucional</small>
+            <input id="institutionalEmail" name="institutionalEmail" type="email" inputmode="email" autocomplete="email" placeholder="nombre.apellido@ijr.edu.co" required>
           </label>
         </div>
 
-        <fieldset class="member-fieldset">
-          <legend>Students <small>· Integrantes</small></legend>
-          <div class="member-grid">
-            <label>Student 1<input id="memberName1" required autocomplete="name" placeholder="Full name"></label>
-            <label id="member2Wrap" class="hidden">Student 2<input id="memberName2" autocomplete="name" placeholder="Full name"></label>
-            <label id="member3Wrap" class="hidden">Student 3<input id="memberName3" autocomplete="name" placeholder="Full name"></label>
-          </div>
-        </fieldset>
-
         <div class="sequence-rule">
-          <strong>Automatic progress</strong>
-          <span>Each OOP + UML session is recorded only after the student evidences model + code + test + explanation.</span>
-          <small>The active browser stores a recovery copy. Use <strong>Switch registration</strong> before another student or team begins.</small>
+          <strong>Automatic identity resolution</strong>
+          <span>Supabase matches the email against the active Grade 11 Seminar roster.</span>
+          <small>Your official name and group are attached automatically to the learning session.</small>
         </div>
 
         <div class="registration-actions">
           <div><strong>Mastery rule</strong><span>predict → model → implement → test → modify → explain. A program that only runs is not enough.</span></div>
-          <button id="registerButton" class="button button-dark" type="submit">Enter OOP + UML Hub</button>
+          <button id="registerButton" class="button button-dark" type="submit">Enter Seminar 11</button>
         </div>
         <p id="registrationStatus" class="inline-status" role="status" aria-live="polite"></p>
       </form>
