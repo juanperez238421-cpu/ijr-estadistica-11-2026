@@ -45,8 +45,8 @@ jobs:
             seminario-oop-uml/coding-labs-v2.js \
             seminario-oop-uml/stage1-foundations-v3.js \
             seminario-oop-uml/stage1-uml-depth-v4.js \
-            seminario-oop-uml/stage2-state-behavior-v6.js \
-            seminario-oop-uml/stage2-state-behavior-v6.css \
+            seminario-oop-uml/stage2-state-behavior-colab-v7.js \
+            seminario-oop-uml/stage2-state-behavior-colab-v7.css \
             seminario-oop-uml/coding-runtime-v2.js \
             seminario-oop-uml/config.js \
             seminario-oop-uml/course-data.js \
@@ -68,7 +68,7 @@ jobs:
           node --check seminario-oop-uml/coding-labs-v2.js
           node --check seminario-oop-uml/stage1-foundations-v3.js
           node --check seminario-oop-uml/stage1-uml-depth-v4.js
-          node --check seminario-oop-uml/stage2-state-behavior-v6.js
+          node --check seminario-oop-uml/stage2-state-behavior-colab-v7.js
           node --check seminario-oop-uml/coding-runtime-v2.js
           python - <<'PY'
           import pathlib, re
@@ -177,17 +177,21 @@ jobs:
           console.log('10 sessions · 20 theory cells · 30 workshop cells');
           NODE
 
-      - name: Validate Session 02 State and Behavior Colab V6
+      - name: Validate Session 02 State and Behavior Colab V7
         shell: bash
         run: |
           set -euo pipefail
-          grep -q "Session 02 V6" seminario-oop-uml/workshop.js
-          grep -q "state-behavior-colab-v6" seminario-oop-uml/workshop.js
-          grep -q "stage2-state-behavior-v6.js?v=20260923-v6" seminario-oop-uml/workshop.html
-          grep -q "Seminar11_S02_State_Behavior.ipynb" seminario-oop-uml/stage2-state-behavior-v6.js
-          grep -q "state2Classification" seminario-oop-uml/stage2-state-behavior-v6.js
-          grep -q "state2Expected" seminario-oop-uml/stage2-state-behavior-v6.js
-          grep -q "validateRuntimeCell" seminario-oop-uml/stage2-state-behavior-v6.js
+          grep -q "Session 02 V7" seminario-oop-uml/workshop.js
+          grep -q "state-behavior-colab-v7" seminario-oop-uml/workshop.js
+          grep -q "stage2-state-behavior-colab-v7.js?v=20260923-v7" seminario-oop-uml/workshop.html
+          grep -q "Seminar11_S02_State_Behavior.ipynb" seminario-oop-uml/stage2-state-behavior-colab-v7.js
+          grep -q "state2FullColabApp" seminario-oop-uml/stage2-state-behavior-colab-v7.js
+          grep -q "state2-titlebar" seminario-oop-uml/stage2-state-behavior-colab-v7.css
+          grep -q "state2-sidebar" seminario-oop-uml/stage2-state-behavior-colab-v7.css
+          grep -q "state2-notebook-scroll" seminario-oop-uml/stage2-state-behavior-colab-v7.css
+          grep -q "state2Classification" seminario-oop-uml/stage2-state-behavior-colab-v7.js
+          grep -q "state2Expected" seminario-oop-uml/stage2-state-behavior-colab-v7.js
+          grep -q "validateRuntimeCell" seminario-oop-uml/stage2-state-behavior-colab-v7.js
           grep -q "class BankAccount" seminario-oop-uml/coding-labs-v2.js
           grep -q "deposit(self, amount)" seminario-oop-uml/coding-labs-v2.js
           grep -q "withdraw" seminario-oop-uml/coding-labs-v2.js
@@ -196,7 +200,7 @@ jobs:
           grep -q "v_key = 's02'" supabase/migrations/20260923174000_seminar_oop_uml_state_behavior_v6.sql
           grep -q "state_behavior_mastery" supabase/migrations/20260923174000_seminar_oop_uml_state_behavior_v6.sql
           grep -q "state_runtime_modify_validated" supabase/migrations/20260923175500_seminar_oop_uml_state_behavior_v6_integrity.sql
-          echo "Session 02 Colab V6 contract verified"
+          echo "Session 02 full Colab V7 contract verified"
 
       - name: Validate executable runtime contract
         shell: bash
