@@ -2,7 +2,7 @@
   'use strict';
   const INDEX='https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
   const VERSION='Pyodide 0.27.7';
-  const state={runtime:null,runs:0,successfulRuns:0,lastOk:false,lastOutput:'',lastCode:'',mounted:false,cells:new Map()};
+  const state={runtime:null,runs:0,successfulRuns:0,lastOk:false,lastOutput:'',lastCode:'',mounted:false,cells:new Map(),capture:null};
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const storageKey=(mode,topic)=>`ijr-seminar-oop-uml-v2:${mode}:s${String(topic).padStart(2,'0')}`;
 
@@ -17,6 +17,7 @@
     const out=terminal(); if(!out)return;
     const line=document.createElement('div'); line.className=`terminal-line ${kind}`; line.textContent=String(message);
     out.appendChild(line); out.scrollTop=out.scrollHeight;
+    if(state.capture&&['stdout','stderr','result'].includes(kind))state.capture.push(String(message));
     state.lastOutput=(state.lastOutput+'\n'+String(message)).trim().slice(-4000);
   }
   function clearTerminal(){const out=terminal();if(out)out.innerHTML='';state.lastOutput='';}
@@ -38,6 +39,7 @@
     const source=String(code||'');
     if(!source.trim()){write(`[${label}] Nothing to run.`,'system');return {ok:false,empty:true};}
     const py=await ensureRuntime();
+    const captured=[];state.capture=captured;
     state.runs+=1; state.lastCode=source; state.lastOk=false;
     write(`>>> run ${label}`,'command');
     try{
@@ -50,13 +52,15 @@
       }
       state.successfulRuns+=1; state.lastOk=true;
       write(`✓ ${label} completed without a Python exception`,'success');
-      document.dispatchEvent(new CustomEvent('ijr-oop-cell-run',{detail:{label,ok:true,code:source,runs:state.runs,successfulRuns:state.successfulRuns}}));
-      return {ok:true};
+      const output=captured.join('\n').trim().slice(-4000);state.capture=null;
+      document.dispatchEvent(new CustomEvent('ijr-oop-cell-run',{detail:{label,ok:true,code:source,output,runs:state.runs,successfulRuns:state.successfulRuns}}));
+      return {ok:true,output};
     }catch(error){
       const message=String(error?.message||error||'Python execution failed');
       write(message,'stderr');
-      document.dispatchEvent(new CustomEvent('ijr-oop-cell-run',{detail:{label,ok:false,code:source,runs:state.runs,successfulRuns:state.successfulRuns}}));
-      return {ok:false,error:message};
+      const output=captured.join('\n').trim().slice(-4000);state.capture=null;
+      document.dispatchEvent(new CustomEvent('ijr-oop-cell-run',{detail:{label,ok:false,code:source,output,runs:state.runs,successfulRuns:state.successfulRuns}}));
+      return {ok:false,error:message,output};
     }
   }
 
@@ -84,7 +88,7 @@
         <div class="cell-heading"><div><span class="cell-kicker">${mode==='theory'?'GUIDED THEORY CELL':'GUIDED WORKSHOP CELL'}</span><h3>${esc(item.title)}</h3><p>${esc(item.purpose)}</p></div><span class="cell-runtime-badge">Python</span></div>
         <ol class="cell-guide">${steps}</ol>
         <textarea class="code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Python code editor">${esc(saved)}</textarea>
-        <div class="cell-actions"><button type="button" class="button button-dark run-cell">Run cell</button><button type="button" class="button button-light reset-cell">Reset code</button><span class="cell-state">Not run yet</span></div>
+        <div class="cell-actions"><button type="button" class="button button-dark run-cell">Run cell</button><button type="button" class="button button-light reset-cell">Reset code</button><span class="cell-state">Not run yet</span></div><section class="cell-output-panel hidden" aria-live="polite"><div class="cell-output-head">Output</div><pre class="cell-output"></pre></section>
       </div>
     </article>`;
   }
@@ -100,17 +104,18 @@
 
   function bindCell(root,item,key){
     const article=root.querySelector(`[data-cell-id="${CSS.escape(item.id)}"]`);
-    const textarea=article.querySelector('.code-editor'),play=article.querySelector('.cell-play'),run=article.querySelector('.run-cell'),reset=article.querySelector('.reset-cell'),status=article.querySelector('.cell-state'),count=article.querySelector('.exec-count');
-    const entry={textarea,item,runs:0,lastOk:false}; state.cells.set(item.id,entry);
+    const textarea=article.querySelector('.code-editor'),play=article.querySelector('.cell-play'),run=article.querySelector('.run-cell'),reset=article.querySelector('.reset-cell'),status=article.querySelector('.cell-state'),count=article.querySelector('.exec-count'),outputPanel=article.querySelector('.cell-output-panel'),output=article.querySelector('.cell-output');
+    const entry={textarea,item,runs:0,lastOk:false,lastOutput:''}; state.cells.set(item.id,entry);
     const execute=async()=>{
       play.disabled=run.disabled=true; status.textContent='Running…'; status.className='cell-state running';
-      const result=await runCode(textarea.value,item.id); entry.runs+=1;entry.lastOk=result.ok===true;count.textContent=`[${entry.runs}]`;
-      status.textContent=result.ok?'Executed successfully':'Python error — inspect terminal';status.className=`cell-state ${result.ok?'ok':'error'}`;
+      const result=await runCode(textarea.value,item.id); entry.runs+=1;entry.lastOk=result.ok===true;entry.lastOutput=result.output||'';count.textContent=`[${entry.runs}]`;
+      status.textContent=result.ok?'Executed successfully':'Python error — inspect output';status.className=`cell-state ${result.ok?'ok':'error'}`;
+      output.textContent=result.output||(result.ok?'Cell completed with no printed output.':result.error||'Python error');outputPanel.classList.remove('hidden');outputPanel.classList.toggle('error',!result.ok);
       play.disabled=run.disabled=false; saveDraft(key);
     };
     play.addEventListener('click',execute);run.addEventListener('click',execute);
-    reset.addEventListener('click',()=>{textarea.value=item.code;entry.lastOk=false;status.textContent='Code reset';status.className='cell-state';saveDraft(key);textarea.focus();});
-    textarea.addEventListener('input',()=>saveDraft(key));
+    reset.addEventListener('click',()=>{textarea.value=item.code;entry.lastOk=false;entry.lastOutput='';status.textContent='Code reset';status.className='cell-state';outputPanel.classList.add('hidden');saveDraft(key);textarea.focus();});
+    textarea.addEventListener('input',()=>{entry.lastOk=false;status.textContent='Edited · run again';status.className='cell-state';outputPanel.classList.add('hidden');saveDraft(key);});
     textarea.addEventListener('keydown',event=>{if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();execute();}});
   }
 
@@ -131,9 +136,9 @@
   }
 
   function evidence(){
-    const cells={}; let combined=''; let implementOk=false,testOk=false;
-    state.cells.forEach((entry,id)=>{cells[id]={code:entry.textarea.value,runs:entry.runs,last_ok:entry.lastOk};combined+=`\n\n# --- ${id} ---\n${entry.textarea.value}`;if(id==='implement'&&entry.lastOk)implementOk=true;if(id==='test'&&entry.lastOk)testOk=true;});
-    return {runtime:'pyodide-0.27.7',run_count:state.runs,successful_run_count:state.successfulRuns,run_success:state.lastOk,implement_success:implementOk,test_success:testOk,code_snapshot:combined.trim().slice(0,12000),last_output:state.lastOutput.slice(-4000),cells};
+    const cells={}; let combined=''; let implementOk=false,testOk=false,modifyOk=false;
+    state.cells.forEach((entry,id)=>{cells[id]={code:entry.textarea.value,runs:entry.runs,last_ok:entry.lastOk,last_output:entry.lastOutput||''};combined+=`\n\n# --- ${id} ---\n${entry.textarea.value}`;if(id==='implement'&&entry.lastOk)implementOk=true;if(id==='test'&&entry.lastOk)testOk=true;if(id==='modify'&&entry.lastOk)modifyOk=true;});
+    return {runtime:'pyodide-0.27.7',run_count:state.runs,successful_run_count:state.successfulRuns,run_success:state.lastOk,implement_success:implementOk,test_success:testOk,modify_success:modifyOk,code_snapshot:combined.trim().slice(0,12000),last_output:state.lastOutput.slice(-4000),cells};
   }
 
   window.IJR_OOP_NOTEBOOK={mount,evidence,runCode,resetRuntime,clearTerminal};
