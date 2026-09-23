@@ -9,7 +9,7 @@ const slug=params.get('topic')||'object-model';
 let topic=(data?.topics||[]).find(x=>x.slug===slug)||data.topics[0];
 let attempt=null;
 // Stage 01 V5 combines conceptual classification, a live UML draft and visual diagram-reading evidence.
-// Session 02 V6 adds a Colab-style state-transition lab with server-enforced runtime evidence.
+// Session 02 V7 uses the full Statistics-style Colab shell while preserving the V6 server evidence contract.
 // Legacy contract marker retained for the original QA suite: pedagogy_version:'oop-uml-v4'
 
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -125,7 +125,7 @@ async function saveEvidence(){
     explain:$('evExplain').checked,
     notes:$('evidenceNotes').value.trim(),
     pedagogy_version:topic.n===2?'oop-uml-v6':'oop-uml-v5',
-    learning_focus:topic.n===1?'oop-foundations-plus-visual-uml-atlas':topic.n===2?'state-behavior-colab-v6':'oop-uml-common-core',
+    learning_focus:topic.n===1?'oop-foundations-plus-visual-uml-atlas':topic.n===2?'state-behavior-colab-v7':'oop-uml-common-core',
     ...umlPractice,
     ...stateBehavior,
     ...runtime
