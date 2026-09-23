@@ -56,6 +56,21 @@ function validToken(token: string) {
 function validUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
+function normalizeRosterName(value: string) {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+async function findRosterStudent(admin: any, groupCode: string, fullName: string) {
+  const rosterGroup = groupCode.replace(/-/g, "");
+  const { data, error } = await admin
+    .from("student_registry")
+    .select("id,display_name,group_code")
+    .eq("active", true)
+    .eq("group_code", rosterGroup)
+    .limit(100);
+  if (error) throw error;
+  const key = normalizeRosterName(fullName);
+  return (data ?? []).find((row: any) => normalizeRosterName(String(row.display_name ?? "")) === key) ?? null;
+}
 async function releaseState(admin: ReturnType<typeof createClient>) {
   const { data, error } = await admin
     .from("seminar_studio_settings")
@@ -134,22 +149,39 @@ Deno.serve(async (req: Request) => {
         (workMode === "Individual" && partnerName)
       ) return json(origin, 400, { error: "invalid_partner" });
 
+      // Roster matching is best-effort only. Any valid entered name may start the diagnostic.
+      // If the name matches the institutional roster, keep the optional registry linkage for analytics.
+      const primaryRoster = await findRosterStudent(admin, groupCode, fullName);
+      let partnerRoster: any = null;
+      if (workMode === "Pareja") {
+        partnerRoster = await findRosterStudent(admin, groupCode, partnerName ?? "");
+        if (
+          normalizeRosterName(partnerName ?? "") === normalizeRosterName(fullName) ||
+          (primaryRoster && partnerRoster && partnerRoster.id === primaryRoster.id)
+        ) return json(origin, 400, { error: "duplicate_partner" });
+      }
+      const canonicalFullName = primaryRoster ? String(primaryRoster.display_name) : fullName;
+      const canonicalPartnerName = partnerRoster ? String(partnerRoster.display_name) : partnerName;
+      const identityVerifiedAt = primaryRoster ? new Date().toISOString() : null;
       const trackSlug = TRACKS[firstChoice];
       const { data: existing } = await admin
         .from("seminar_studio_profiles")
-        .select("id,response_id")
+        .select("id,response_id,student_registry_id")
         .eq("edit_token_hash", tokenHash)
         .maybeSingle();
       let row;
       if (existing) {
         const result = await admin.from("seminar_studio_profiles").update({
-          full_name: fullName,
+          full_name: canonicalFullName,
+          student_registry_id: primaryRoster?.id ?? null,
+          partner_student_registry_id: partnerRoster?.id ?? null,
+          identity_verified_at: identityVerifiedAt,
           group_code: groupCode,
           topics,
           first_choice: firstChoice,
           track_slug: trackSlug,
           work_mode: workMode,
-          partner_name: workMode === "Pareja" ? partnerName : null,
+          partner_name: workMode === "Pareja" ? canonicalPartnerName : null,
           project_idea: projectIdea,
           updated_at: new Date().toISOString(),
           last_student_activity_at: new Date().toISOString(),
@@ -159,13 +191,16 @@ Deno.serve(async (req: Request) => {
       } else {
         const result = await admin.from("seminar_studio_profiles").insert({
           edit_token_hash: tokenHash,
-          full_name: fullName,
+          full_name: canonicalFullName,
+          student_registry_id: primaryRoster?.id ?? null,
+          partner_student_registry_id: partnerRoster?.id ?? null,
+          identity_verified_at: identityVerifiedAt,
           group_code: groupCode,
           topics,
           first_choice: firstChoice,
           track_slug: trackSlug,
           work_mode: workMode,
-          partner_name: workMode === "Pareja" ? partnerName : null,
+          partner_name: workMode === "Pareja" ? canonicalPartnerName : null,
           project_idea: projectIdea,
         }).select().single();
         if (result.error) throw result.error;
@@ -174,7 +209,12 @@ Deno.serve(async (req: Request) => {
       await admin.from("seminar_studio_events").insert({
         profile_id: row.id,
         event_type: "register",
-        payload: { track_slug: trackSlug, group_code: groupCode },
+        payload: {
+          track_slug: trackSlug,
+          group_code: groupCode,
+          roster_matched: Boolean(primaryRoster),
+          partner_roster_matched: workMode === "Pareja" ? Boolean(partnerRoster) : null,
+        },
         ip_hash: ipHash,
         user_agent: userAgent,
       });
@@ -316,6 +356,13 @@ Deno.serve(async (req: Request) => {
         p_user_agent: userAgent,
       });
       if (error) throw error;
+      if (data?.attempt_id && profile.student_registry_id) {
+        const { error: identityError } = await admin
+          .from("seminar_track_diagnostic_attempts")
+          .update({ student_registry_id: profile.student_registry_id })
+          .eq("id", data.attempt_id);
+        if (identityError) throw identityError;
+      }
       return json(origin, 200, data);
     }
 
