@@ -92,7 +92,7 @@ jobs:
           node --check actividad-colab-01/sw-v7.js
           node --check maestro/app.js
           node --check maestro/config.js
-          node --check maestro/master-student-progress-v1.js
+          node --check maestro/master-student-progress-v2.js
           python -m py_compile tools/check_backend_readiness.py tools/import_academic_source.py tools/open_assessment.py qa/check_colab_class1_v10.py
           python qa/check_colab_class1_v10.py
 
@@ -116,8 +116,9 @@ jobs:
           test -s maestro/app.js
           test -s maestro/config.js
           test -s maestro/master-v10.css
-          test -s maestro/master-student-progress-v1.js
+          test -s maestro/master-student-progress-v2.js
           test -s maestro/master-student-progress-v1.css
+          test -s maestro/master-student-progress-v2.css
           test -s supabase/migrations/20260820154120_colab_class1_v11_random_variant_bank_36packs.sql
           ! grep -R "REPLACE_WITH_SUPABASE" evaluacion-conteo-permutaciones/config.js
           grep -q "student_start_attempt_v2" evaluacion-conteo-permutaciones/config.js
@@ -142,8 +143,9 @@ jobs:
           grep -q "teacher_learning_activity_delete_v10" maestro/config.js
           grep -q "pythonHubStageMatrix" maestro/config.js
           grep -q "studentProgressPanel" maestro/index.html
-          grep -q "master-student-progress-v1.js" maestro/index.html
+          grep -q "master-student-progress-v2.js" maestro/index.html
           grep -q "master-student-progress-v1.css" maestro/index.html
+          grep -q "master-student-progress-v2.css" maestro/index.html
           touch .nojekyll
 
       - name: Setup Pages
