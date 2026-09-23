@@ -367,7 +367,9 @@ json.dumps({
     const kicker = document.getElementById('problemKicker')?.textContent || '';
     const match = kicker.match(/STAGE\s+(\d+)/i);
     const stage = match ? Number(match[1]) : 1;
-    if (concept) concept.textContent = stage <= 6
+    // V63: workshop-v42 now provides stage-specific concepts for Topic 04.
+    // Keep those explicit concepts instead of replacing them with one generic class label.
+    if (concept && !concept.textContent.trim()) concept.textContent = stage <= 6
       ? 'Class 1 · library → file path → XLSX workbook'
       : 'Class 2 · Pandas → DataFrame → inspect → transform → export';
     if (subtitle) subtitle.textContent = stage <= 6
