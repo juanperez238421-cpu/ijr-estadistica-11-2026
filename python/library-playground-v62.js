@@ -12,7 +12,7 @@
       kind: 'Python standard library',
       package: null,
       code: 'import math\n\nradius = 6\narea = math.pi * radius ** 2\nprint(round(area, 2))',
-      visualCode: 'import math\nimport matplotlib.pyplot as plt\n\nx = [i * 0.1 for i in range(63)]\ny = [math.sin(value) for value in x]\n\nplt.figure(figsize=(7, 3.6))\nplt.plot(x, y, marker="o", markevery=8)\nplt.axhline(0, linewidth=1)\nplt.title("math.sin(x)")\nplt.xlabel("x (radians)")\nplt.ylabel("sin(x)")\nplt.grid(alpha=0.25)\nplt.show()',
+      visualCode: 'import math\nimport matplotlib.pyplot as plt\n\nx = [i * 0.1 for i in range(63)]\ny = [math.sin(value) for value in x]\n\nplt.figure(figsize=(7, 3.6))\nplt.plot(x, y, marker="o", markevery=8)\nplt.axhline(0, linewidth=1)\nplt.title("math.sin(x)")\nplt.xlabel("x (radians)")\nplt.ylabel("sin(x)")\nplt.grid(alpha=0.25)',
       note: 'math is part of Python. Use the normal example for calculations, or the plot example to turn math functions into a visual pattern.'
     },
     statistics: {
@@ -20,7 +20,7 @@
       kind: 'Python standard library',
       package: null,
       code: 'import statistics\n\nscores = [72, 86, 91, 84, 87]\nprint(statistics.mean(scores))\nprint(statistics.median(scores))',
-      visualCode: 'import statistics\nimport matplotlib.pyplot as plt\n\nscores = [72, 86, 91, 84, 87, 95, 78, 88, 90]\nmean_score = statistics.mean(scores)\nmedian_score = statistics.median(scores)\n\nplt.figure(figsize=(7, 3.6))\nplt.hist(scores, bins=[70, 75, 80, 85, 90, 95, 100], edgecolor="black")\nplt.axvline(mean_score, linestyle="--", label=f"mean = {mean_score:.1f}")\nplt.axvline(median_score, linestyle=":", label=f"median = {median_score:.1f}")\nplt.title("Distribution of scores")\nplt.xlabel("score")\nplt.ylabel("frequency")\nplt.legend()\nplt.show()',
+      visualCode: 'import statistics\nimport matplotlib.pyplot as plt\n\nscores = [72, 86, 91, 84, 87, 95, 78, 88, 90]\nmean_score = statistics.mean(scores)\nmedian_score = statistics.median(scores)\n\nplt.figure(figsize=(7, 3.6))\nplt.hist(scores, bins=[70, 75, 80, 85, 90, 95, 100], edgecolor="black")\nplt.axvline(mean_score, linestyle="--", label=f"mean = {mean_score:.1f}")\nplt.axvline(median_score, linestyle=":", label=f"median = {median_score:.1f}")\nplt.title("Distribution of scores")\nplt.xlabel("score")\nplt.ylabel("frequency")\nplt.legend()',
       note: 'statistics provides descriptive statistics for ordinary Python data. The visual example connects mean and median to a real score distribution.'
     },
     numpy: {
@@ -28,7 +28,7 @@
       kind: 'External scientific library',
       package: 'numpy',
       code: 'import numpy as np\n\nvalues = np.array([10, 12, 15, 18, 20])\nprint(values.mean())\nprint(values.std().round(2))',
-      visualCode: 'import numpy as np\nimport matplotlib.pyplot as plt\n\nx = np.linspace(0, 12, 240)\ny = np.sin(x) * np.exp(-0.08 * x)\n\nplt.figure(figsize=(7, 3.6))\nplt.plot(x, y)\nplt.fill_between(x, y, 0, alpha=0.15)\nplt.title("NumPy-generated damped signal")\nplt.xlabel("x")\nplt.ylabel("amplitude")\nplt.grid(alpha=0.25)\nplt.show()',
+      visualCode: 'import numpy as np\nimport matplotlib.pyplot as plt\n\nx = np.linspace(0, 12, 240)\ny = np.sin(x) * np.exp(-0.08 * x)\n\nplt.figure(figsize=(7, 3.6))\nplt.plot(x, y)\nplt.fill_between(x, y, 0, alpha=0.15)\nplt.title("NumPy-generated damped signal")\nplt.xlabel("x")\nplt.ylabel("amplitude")\nplt.grid(alpha=0.25)',
       note: 'NumPy is a real scientific package. Its arrays can generate hundreds of values efficiently, which becomes much easier to understand when the result is plotted.'
     },
     pandas: {
@@ -36,14 +36,14 @@
       kind: 'External data-analysis library',
       package: 'pandas',
       code: 'import pandas as pd\n\ndata = {"student": ["A", "B", "C"], "score": [72, 86, 91]}\ndf = pd.DataFrame(data)\nprint(df)\nprint("Mean:", round(df["score"].mean(), 2))',
-      visualCode: 'import pandas as pd\nimport matplotlib.pyplot as plt\n\ndata = {\n    "student": ["A", "B", "C", "D", "E"],\n    "score": [72, 86, 91, 78, 94]\n}\ndf = pd.DataFrame(data)\n\nax = df.plot(kind="bar", x="student", y="score", legend=False, figsize=(7, 3.6))\nax.axhline(df["score"].mean(), linestyle="--", label="class mean")\nax.set_title("Pandas DataFrame → chart")\nax.set_xlabel("student")\nax.set_ylabel("score")\nax.legend()\nplt.tight_layout()\nplt.show()',
+      visualCode: 'import pandas as pd\nimport matplotlib.pyplot as plt\n\ndata = {\n    "student": ["A", "B", "C", "D", "E"],\n    "score": [72, 86, 91, 78, 94]\n}\ndf = pd.DataFrame(data)\n\nax = df.plot(kind="bar", x="student", y="score", legend=False, figsize=(7, 3.6))\nax.axhline(df["score"].mean(), linestyle="--", label="class mean")\nax.set_title("Pandas DataFrame → chart")\nax.set_xlabel("student")\nax.set_ylabel("score")\nax.legend()\nplt.tight_layout()',
       note: 'Pandas creates real DataFrames. The plot example shows how a table can move directly into a chart without manually copying values.'
     },
     matplotlib: {
       label: 'Matplotlib',
       kind: 'Visualization library',
       package: 'matplotlib',
-      code: 'import matplotlib.pyplot as plt\n\nmonths = ["Jan", "Feb", "Mar", "Apr", "May"]\nvisits = [120, 145, 138, 170, 190]\n\nplt.figure(figsize=(7, 3.6))\nplt.plot(months, visits, marker="o")\nplt.title("Monthly visits")\nplt.xlabel("month")\nplt.ylabel("visits")\nplt.grid(alpha=0.25)\nplt.show()',
+      code: 'import matplotlib.pyplot as plt\n\nmonths = ["Jan", "Feb", "Mar", "Apr", "May"]\nvisits = [120, 145, 138, 170, 190]\n\nplt.figure(figsize=(7, 3.6))\nplt.plot(months, visits, marker="o")\nplt.title("Monthly visits")\nplt.xlabel("month")\nplt.ylabel("visits")\nplt.grid(alpha=0.25)',
       visualCode: null,
       note: 'Matplotlib is a dedicated visualization library. This example creates a real Python figure in the browser and renders it below the code output.'
     }
