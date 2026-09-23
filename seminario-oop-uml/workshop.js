@@ -9,6 +9,7 @@ const slug=params.get('topic')||'object-model';
 let topic=(data?.topics||[]).find(x=>x.slug===slug)||data.topics[0];
 let attempt=null;
 // Stage 01 V5 combines conceptual classification, a live UML draft and visual diagram-reading evidence.
+// Session 02 V6 adds a Colab-style state-transition lab with server-enforced runtime evidence.
 // Legacy contract marker retained for the original QA suite: pedagogy_version:'oop-uml-v4'
 
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -53,6 +54,7 @@ function hydrateEvidence(){
   $('evExplain').checked=evidence.explain===true;
   $('evidenceNotes').value=evidence.notes||'';
   window.IJR_OOP_UML_STAGE1_PRACTICE?.hydrate(evidence);
+  if(topic.n===2)window.IJR_OOP_STATE_BEHAVIOR?.hydrate(evidence);
   const done=record?.status==='completed';
   $('completionStamp').textContent=done?'Completed':'Not recorded';
   $('completionStamp').classList.toggle('done',done);
@@ -87,17 +89,33 @@ function renderTopic(){
   $('sessionBadge').textContent=`${attempt.group} · ${attempt.label}`;
   $('sessionBadge').classList.remove('hidden');
   window.IJR_OOP_UML_STAGE1_PRACTICE?.activate(topic.n===1);
+  window.IJR_OOP_STATE_BEHAVIOR?.activate(topic.n===2);
   hydrateEvidence();
   window.IJR_OOP_NOTEBOOK?.mount({mode:'workshop',topicNumber:topic.n,lang});
+  if(topic.n===2)window.IJR_OOP_STATE_BEHAVIOR?.enhanceNotebook();
 }
 
 async function saveEvidence(){
   const runtime=window.IJR_OOP_NOTEBOOK?.evidence?.()||{};
   const umlPractice=topic.n===1?(window.IJR_OOP_UML_STAGE1_PRACTICE?.evidence?.()||{}):{};
+  const stateBehavior=topic.n===2?(window.IJR_OOP_STATE_BEHAVIOR?.evidence?.()||{}):{};
   if(topic.n===1&&umlPractice.uml_visual_mastery!==true){
     $('evModel').checked=false;
     $('saveStatus').textContent='Complete the Visual Diagram Reading Sprint with 5/5 before recording Stage 01 V5 model evidence.';
     document.getElementById('umlVisualChallengeV51')?.scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+  if(topic.n===2&&stateBehavior.state_behavior_mastery!==true){
+    $('evModel').checked=false;
+    $('saveStatus').textContent='Complete the 8/8 State & Behavior classification and verify the numerical transition before recording Session 02 evidence.';
+    document.getElementById('stateBehaviorLab')?.scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+  if(topic.n===2&&(runtime.implement_success!==true||runtime.test_success!==true||runtime.modify_success!==true)){
+    $('evCode').checked=runtime.implement_success===true;
+    $('evTest').checked=runtime.test_success===true;
+    $('saveStatus').textContent='Run all three Colab stages successfully: implementation, visible state transition, and protected withdraw rule.';
+    document.querySelector('.state2-colab-shell')?.scrollIntoView({behavior:'smooth',block:'start'});
     return;
   }
   const evidence={
@@ -106,9 +124,10 @@ async function saveEvidence(){
     test:$('evTest').checked,
     explain:$('evExplain').checked,
     notes:$('evidenceNotes').value.trim(),
-    pedagogy_version:'oop-uml-v5',
-    learning_focus:topic.n===1?'oop-foundations-plus-visual-uml-atlas':'oop-uml-common-core',
+    pedagogy_version:topic.n===2?'oop-uml-v6':'oop-uml-v5',
+    learning_focus:topic.n===1?'oop-foundations-plus-visual-uml-atlas':topic.n===2?'state-behavior-colab-v6':'oop-uml-common-core',
     ...umlPractice,
+    ...stateBehavior,
     ...runtime
   };
   $('saveEvidence').disabled=true;
@@ -128,6 +147,14 @@ async function saveEvidence(){
 // Successful guided implementation/test cells can mark the corresponding evidence.
 document.addEventListener('ijr-oop-cell-run',event=>{
   if(event.detail?.ok!==true)return;
+  if(topic.n===2&&['implement','test','modify'].includes(event.detail.label)){
+    const result=window.IJR_OOP_STATE_BEHAVIOR?.validateRuntimeCell(event.detail)||{ok:false,message:'Session 02 validation unavailable.'};
+    if(event.detail.label==='implement'){$('evCode').checked=result.ok===true;}
+    if(event.detail.label==='test'){$('evTest').checked=result.ok===true;}
+    $('saveStatus').textContent=result.message;
+    window.IJR_OOP_STATE_BEHAVIOR?.refreshRail?.();
+    return;
+  }
   if(event.detail.label==='implement'){$('evCode').checked=true;$('saveStatus').textContent='Implementation cell executed successfully. Code evidence marked.';}
   if(event.detail.label==='test'){$('evTest').checked=true;$('saveStatus').textContent='Test cell executed successfully. Test evidence marked.';}
 });
@@ -140,6 +167,11 @@ document.addEventListener('ijr-oop-uml-visual-mastered',event=>{
   const detail=event.detail||{};
   const base=window.IJR_OOP_UML_STAGE1_PRACTICE?.evidence?.()||{};
   $('saveStatus').textContent=base.uml_mastery===true?`Visual UML reading verified ${detail.score||0}/${detail.total||0}. Stage 01 model gate is now complete.`:`Visual UML reading verified ${detail.score||0}/${detail.total||0}. Complete the conceptual identification lab and your own UML draft next.`;
+});
+document.addEventListener('ijr-oop-state-behavior-model-mastered',event=>{
+  const detail=event.detail||{};
+  $('saveStatus').textContent=`State & Behavior model verified ${detail.score||0}/${detail.total||0} plus a correct numerical transition. Continue with the Colab cells.`;
+  window.IJR_OOP_STATE_BEHAVIOR?.refreshRail?.();
 });
 document.addEventListener('ijr-oop-runtime-reset',()=>{
   $('saveStatus').textContent='Python runtime reset. Re-run implementation and test cells before recording new runtime evidence.';
