@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="Seminar 11 personal project route: institutional-email access to each student's specific project, definition questions and 8-sprint roadmap.">
+  <title>Seminar 11 · My Specific Project</title>
+  <link rel="stylesheet" href="styles.css?v=20260923-v1">
+  <script defer src="app.js?v=20260923-v1"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../seminario/" aria-label="Back to Seminar 11 main hub">
+      <span class="brand-mark">IJR</span>
+      <span><small>Instituto Jorge Robledo · Seminar 11</small><strong>Personal Project Route</strong></span>
+    </a>
+    <div class="top-actions">
+      <a class="button button-light" href="../seminario/">Seminar home</a>
+      <a class="button button-light" href="../seminario-tracks/">Specialized tracks</a>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">SOFTWARE ENGINEERING STUDIO · PERSONAL ROUTE</p>
+        <h1>Your project. Your scope. Your roadmap.</h1>
+        <p class="hero-copy">This is the third Seminar space. Enter your institutional email to open the project module assigned to you. Students in the same technical track can have different project topics, datasets, users, deliverables and milestones.</p>
+      </div>
+      <aside class="hero-summary">
+        <div><strong>1</strong><span>Institutional email</span></div>
+        <div><strong>1</strong><span>Personal project route</span></div>
+        <div><strong>8</strong><span>Project sprints</span></div>
+      </aside>
+    </section>
+
+    <section id="accessPanel" class="access-panel">
+      <div class="access-copy">
+        <p class="eyebrow">STEP 01 · OPEN YOUR PROJECT</p>
+        <h2>Use your institutional email.</h2>
+        <p>The email is matched against the Seminar student registry and opens only the project module associated with that student.</p>
+        <div class="privacy-note">
+          <strong>Read-only student access</strong>
+          <span>The page does not expose the full class roster. Project data is returned only after a matching institutional email is supplied.</span>
+        </div>
+      </div>
+
+      <form id="accessForm" class="access-card">
+        <p class="eyebrow">PERSONAL PROJECT ACCESS</p>
+        <label for="institutionalEmail">Institutional email</label>
+        <input id="institutionalEmail" type="email" autocomplete="email" inputmode="email" spellcheck="false" placeholder="name.lastname@ijr.edu.co" required>
+        <button id="accessButton" class="button button-dark full-button" type="submit">Open my project</button>
+        <p id="accessStatus" class="status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="projectPanel" class="project-panel hidden" aria-live="polite">
+      <div class="project-heading">
+        <div>
+          <div class="badge-row">
+            <span id="groupBadge" class="pill"></span>
+            <span id="trackBadge" class="pill soft"></span>
+            <span id="modeBadge" class="pill mode"></span>
+          </div>
+          <p class="eyebrow">YOUR PERSONAL PROJECT MODULE</p>
+          <h2 id="studentName"></h2>
+          <h3 id="projectTitle"></h3>
+          <p id="projectSummary" class="project-summary"></p>
+        </div>
+        <button id="changeEmail" class="button button-light" type="button">Change email</button>
+      </div>
+
+      <section class="definition-panel">
+        <div class="definition-head">
+          <div>
+            <p class="eyebrow">TODAY · PROJECT DEFINITION</p>
+            <h3 id="definitionTitle">Define the exact scope</h3>
+          </div>
+          <span id="decisionBadge" class="decision-badge"></span>
+        </div>
+        <p id="decisionNote" class="definition-copy"></p>
+        <ol id="definitionQuestions" class="question-list"></ol>
+      </section>
+
+      <div class="info-grid">
+        <article class="info-card">
+          <p class="eyebrow">OBJECTIVE</p>
+          <h3>What you must achieve</h3>
+          <p id="objective"></p>
+        </article>
+        <article class="info-card">
+          <p class="eyebrow">TECH STACK</p>
+          <h3>Base tools</h3>
+          <div id="stack" class="stack-list"></div>
+        </article>
+      </div>
+
+      <section id="safetyPanel" class="safety-panel hidden">
+        <p class="eyebrow">SCOPE / SAFETY</p>
+        <p id="safetyScope"></p>
+      </section>
+
+      <section class="roadmap-panel">
+        <div class="roadmap-head">
+          <div>
+            <p class="eyebrow">STEP 02 · BUILD THE PROJECT</p>
+            <h2>8-sprint personal roadmap</h2>
+          </div>
+          <span class="roadmap-rule">define → design → build → test → document → defend</span>
+        </div>
+        <p class="roadmap-copy">Each sprint ends with verifiable evidence. The technical track gives you tools; this roadmap applies them to your own project.</p>
+        <div id="sprintGrid" class="sprint-grid"></div>
+      </section>
+
+      <section class="defense-panel">
+        <div>
+          <p class="eyebrow">FINAL DEFENSE</p>
+          <h2>What you must be able to demonstrate</h2>
+        </div>
+        <div class="evidence-grid">
+          <span>Problem + scope</span>
+          <span>Design / UML</span>
+          <span>GitHub repository</span>
+          <span>Functional MVP</span>
+          <span>Testing + QA</span>
+          <span>Individual defense</span>
+        </div>
+      </section>
+    </section>
+  </main>
+</body>
+</html>
