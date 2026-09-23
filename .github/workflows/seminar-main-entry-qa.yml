@@ -5,12 +5,14 @@ on:
     branches: [main]
     paths:
       - "seminario/**"
+      - "seminario-projects/**"
       - "seminario-oop-uml/index.html"
       - "seminario-tracks/**/index.html"
       - ".github/workflows/seminar-main-entry-qa.yml"
   pull_request:
     paths:
       - "seminario/**"
+      - "seminario-projects/**"
       - "seminario-oop-uml/index.html"
       - "seminario-tracks/**/index.html"
       - ".github/workflows/seminar-main-entry-qa.yml"
@@ -41,6 +43,9 @@ jobs:
           grep -q 'ijr-seminar-main-registration-v1' seminario/entry-bridge.js
           grep -q '../seminario-oop-uml/' seminario/index.html
           grep -q '../seminario-tracks/' seminario/index.html
+          grep -q '../seminario-projects/' seminario/index.html
+          grep -q 'OPTION 03' seminario/index.html
+          grep -q 'Three connected parts of the same Seminar.' seminario/index.html
           grep -q 'Register once. Choose your learning space.' seminario/index.html
           grep -q '11-A' seminario/index.html
           grep -q '11-B' seminario/index.html
@@ -60,9 +65,21 @@ jobs:
             grep -q '../../seminario/entry-bridge.js' "$f"
             grep -q 'data-mode="specialized-track"' "$f"
             grep -q 'hub-v4.js' "$f"
-            grep -q 'diagnostic-practical-v6.js' "$f"
+            grep -q 'diagnostic-practical-v7.js' "$f"
             grep -q 'topic-pages-v6.js' "$f"
           done
+
+      - name: Validate personal project route
+        run: |
+          set -euo pipefail
+          test -s seminario-projects/index.html
+          test -s seminario-projects/styles.css
+          test -s seminario-projects/app.js
+          node --check seminario-projects/app.js
+          grep -q 'seminar-project-access' seminario-projects/app.js
+          grep -q '@ijr\\.edu\\.co' seminario-projects/app.js
+          grep -q '8-sprint personal roadmap' seminario-projects/index.html
+          grep -q 'href="../seminario/"' seminario-projects/index.html
 
       - name: Validate existing learning assets remain present
         run: |
