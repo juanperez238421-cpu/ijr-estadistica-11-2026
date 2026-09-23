@@ -28,7 +28,7 @@ for (const id of ['workshopApp','stageList','problemKicker','problemTitle','prob
 }
 
 assert(html.indexOf('workshop-array-prompts-v28.js') < html.indexOf('workshop-v42.js'), 'Arrays guidance must load before the workshop controller renders.');
-assert(html.includes('Guided Colab Workshop V47'), 'Production page title must identify V47.');
+assert(html.includes('Guided Colab Workshop V47') || html.includes('Libraries, XLSX and Pandas · Colab Workshop'), 'Production page title must identify the current guided workshop.');
 assert(html.includes('Guided notebook · V47'), 'Production notebook subtitle must identify V47.');
 
 for (let i = 1; i <= 12; i += 1) {

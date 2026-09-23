@@ -19,7 +19,10 @@ function ordered(source, parts, label) {
 }
 
 for (const [label, html] of [['official', official], ['legacy', legacy]]) {
-  assert(html.includes('Guided Colab Workshop V50'), `${label}: V50 title missing`);
+  const currentTitleOk = label === 'official'
+    ? (html.includes('Guided Colab Workshop V50') || html.includes('Libraries, XLSX and Pandas · Colab Workshop'))
+    : html.includes('Guided Colab Workshop V50');
+  assert(currentTitleOk, `${label}: current guided workshop title missing`);
   ordered(html, [
     'workshop-startup-v50.js',
     'workshop-team-gate-v50.js',
