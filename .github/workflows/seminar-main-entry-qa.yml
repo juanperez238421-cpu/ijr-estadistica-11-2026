@@ -50,6 +50,7 @@ jobs:
           grep -q 'id="institutionalEmail"' seminario/index.html
           grep -q '@ijr.edu.co' seminario/index.html
           grep -q 'seminar_email_identity_v1' seminario/main.js
+          grep -q '11-U' seminario/main.js
           ! grep -q 'id="fullName"' seminario/index.html
           ! grep -q 'id="groupCode"' seminario/index.html
 

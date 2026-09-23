@@ -4,7 +4,7 @@ const MAIN_KEY='ijr-seminar-main-registration-v2';
 function clean(v=''){return String(v).trim().replace(/\s+/g,' ')}
 function normalizeEmail(v=''){return String(v).trim().toLowerCase()}
 function read(){try{return JSON.parse(localStorage.getItem(MAIN_KEY)||'null')}catch{return null}}
-function valid(e){return e&&/^[^\s@]+@ijr\.edu\.co$/i.test(normalizeEmail(e.institutionalEmail))&&clean(e.fullName).length>=3&&/^11-[ABC]$/.test(e.groupCode||'')}
+function valid(e){return e&&/^[^\s@]+@ijr\.edu\.co$/i.test(normalizeEmail(e.institutionalEmail))&&clean(e.fullName).length>=3&&/^(11-[ABC]|11-U)$/.test(e.groupCode||'')}
 const entry=read();
 const script=document.currentScript;
 const mainHref=script?.dataset?.mainHref||'../seminario/';

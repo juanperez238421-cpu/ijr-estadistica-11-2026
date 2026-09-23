@@ -4,7 +4,7 @@ const cfg=window.IJR_OOP_UML_CONFIG;
 const data=window.IJR_OOP_UML_DATA;
 const store=new OopUmlStore(cfg);
 const $=id=>document.getElementById(id);
-const ACCESS_KEY='ijr-seminar-oop-email-v2';
+const ACCESS_KEY='ijr-seminar-oop-email-v3';
 let attempt=null;
 
 function esc(value=''){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));}
@@ -17,7 +17,6 @@ function saveEmail(email){localStorage.setItem(ACCESS_KEY,JSON.stringify({email:
 function savedEmail(){try{const x=JSON.parse(localStorage.getItem(ACCESS_KEY)||'null');return x&&institutionalEmail(x.email)?normalizeEmail(x.email):'';}catch{return '';}}
 function friendlyError(error){
   const raw=String(error?.message||'');
-  if(raw.includes('institutional_email_not_registered'))return 'This institutional email is not registered in the active Grade 11 Seminar roster.';
   if(raw.includes('institutional_email_required'))return 'Use only your institutional @ijr.edu.co email.';
   if(raw.includes('invalid_student_group'))return 'The institutional email exists, but its Grade 11 group could not be resolved.';
   return raw||'The institutional session could not be opened.';
@@ -36,8 +35,9 @@ function render(){
   const pct=Math.round(completed/data.topics.length*100);
   const backend=attempt.backend==='supabase'?'Supabase synchronized':'local recovery mode';
 
-  $('sessionBadge').textContent=`${attempt.group} · ${attempt.label}`;
-  $('identitySummary').textContent=`${attempt.group} · ${attempt.label} · ${lang==='python'?'Python':'Java'} · ${backend}`;
+  const identityLabel=attempt.group==='11-U'?attempt.label:`${attempt.group} · ${attempt.label}`;
+  $('sessionBadge').textContent=identityLabel;
+  $('identitySummary').textContent=`${identityLabel} · ${lang==='python'?'Python':'Java'} · ${backend}`;
   $('languageLabel').textContent=lang==='python'?'Python':'Java';
   $('globalPercent').textContent=`${pct}%`;
   $('globalProgressBar').style.width=`${pct}%`;

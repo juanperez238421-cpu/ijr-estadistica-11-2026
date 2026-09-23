@@ -223,7 +223,7 @@ jobs:
           set -euo pipefail
           grep -q "sb_publishable_" seminario-oop-uml/config.js
           grep -q "seminar_course_start_team" seminario-oop-uml/config.js
-          grep -q "seminar_oop_uml_start_email_v8" seminario-oop-uml/config.js
+          grep -q "seminar_oop_uml_start_email_v9" seminario-oop-uml/config.js
           grep -q "startWithEmail" seminario-oop-uml/store.js
           grep -q "seminar_course_resume" seminario-oop-uml/config.js
           grep -q "seminar_oop_uml_snapshot" seminario-oop-uml/config.js

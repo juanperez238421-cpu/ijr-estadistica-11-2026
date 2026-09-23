@@ -19,15 +19,15 @@ const next=new URLSearchParams(location.search).get('next')||'';
 function normalizeEmail(v=''){return String(v).trim().toLowerCase();}
 function validEmail(v){return /^[^\s@]+@ijr\.edu\.co$/i.test(normalizeEmail(v));}
 function read(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch{return null}}
-function valid(entry){return entry&&validEmail(entry.institutionalEmail)&&String(entry.fullName||'').trim().length>=3&&/^11-[ABC]$/.test(entry.groupCode||'')}
+function valid(entry){return entry&&validEmail(entry.institutionalEmail)&&String(entry.fullName||'').trim().length>=3&&/^(11-[ABC]|11-U)$/.test(entry.groupCode||'')}
 function save(entry){localStorage.setItem(KEY,JSON.stringify(entry));localStorage.removeItem(LEGACY_KEY);}
-function routeNext(){if(next==='oop'){location.replace('../seminario-oop-uml/?v=20260923-email-v2');return true;}return false;}
+function routeNext(){if(next==='oop'){location.replace('../seminario-oop-uml/?v=20260923-email-v3');return true;}return false;}
 function render(){
   const entry=read();
   if(valid(entry)){
     registration.classList.add('hidden');
     choices.classList.remove('hidden');
-    badge.textContent=`${entry.fullName} · ${entry.groupCode}`;
+    badge.textContent=entry.groupCode==='11-U'?entry.institutionalEmail:`${entry.fullName} · ${entry.groupCode}`;
     badge.classList.remove('hidden');
     change.classList.remove('hidden');
   }else{
@@ -42,10 +42,7 @@ async function resolveIdentity(email){
   if(!client)throw new Error('Supabase client unavailable.');
   const {data,error}=await client.rpc(RPC,{p_email:email});
   if(error)throw new Error(error.message||'Could not validate the institutional email.');
-  if(!data?.ok){
-    if(data?.error==='institutional_email_not_registered')throw new Error('This institutional email is not registered in the active Grade 11 Seminar roster.');
-    throw new Error('Use only your institutional @ijr.edu.co email.');
-  }
+  if(!data?.ok)throw new Error('Use only your institutional @ijr.edu.co email.');
   return data;
 }
 
