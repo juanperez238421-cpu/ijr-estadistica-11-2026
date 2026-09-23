@@ -1,0 +1,43 @@
+.lp62-shell,.lp62-grid,.lp62-library-list,.lp62-workspace,.lp62-cell,.lp62-output,.lp62-figure{min-width:0;max-width:100%;box-sizing:border-box}
+.lp62-shell{margin:28px 0;padding:28px;border:1px solid rgba(20,32,44,.14);border-radius:24px;background:rgba(255,255,255,.96);box-shadow:0 18px 48px rgba(20,32,44,.08)}
+.lp62-heading{margin-bottom:22px}
+.lp62-grid{display:grid;grid-template-columns:minmax(210px,.72fr) minmax(0,2fr);gap:20px}
+.lp62-library-list{display:grid;gap:10px;align-content:start}
+.lp62-library-button{width:100%;text-align:left;border:1px solid rgba(20,32,44,.14);border-radius:16px;background:#fff;padding:14px 15px;cursor:pointer;display:grid;gap:4px;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
+.lp62-library-button:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(20,32,44,.08)}
+.lp62-library-button.active{border-color:rgba(20,32,44,.55);box-shadow:0 0 0 2px rgba(20,32,44,.08)}
+.lp62-library-button span,.lp62-library-button small,.lp62-explainer span,.lp62-cell-head small,.lp62-output-head small,.lp62-figure-head span,.lp62-figure-head small{font-size:.75rem;letter-spacing:.04em;color:#607080}
+.lp62-library-button strong{font-size:1.05rem}
+.lp62-workspace{display:grid;gap:14px}
+.lp62-runtime-row,.lp62-explainer,.lp62-proof{border:1px solid rgba(20,32,44,.12);border-radius:16px;padding:14px 16px;background:#f8fafc}
+.lp62-runtime-row{display:flex;justify-content:space-between;gap:16px;align-items:center}
+.lp62-runtime-row>div{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;align-items:center;min-width:0}
+.lp62-runtime-row small{grid-column:2;color:#607080;overflow-wrap:anywhere}
+.lp62-status-dot{width:10px;height:10px;border-radius:50%;background:#98a2ad;grid-row:1/3}
+.lp62-shell[data-runtime="loading"] .lp62-status-dot{animation:lp62pulse 1s infinite}
+.lp62-shell[data-runtime="ready"] .lp62-status-dot{background:#27855b}
+.lp62-shell[data-runtime="error"] .lp62-status-dot{background:#b83a3a}
+.lp62-explainer{display:grid;gap:5px}
+.lp62-explainer strong{font-size:1.25rem}
+.lp62-explainer p{margin:2px 0 0;color:#41505f;line-height:1.55}
+.lp62-cell,.lp62-output{border-radius:18px;overflow:hidden;border:1px solid rgba(20,32,44,.18);background:#111923}
+.lp62-cell-head,.lp62-output-head{display:flex;justify-content:space-between;gap:12px;padding:10px 14px;background:#202b37;color:#f7fafc}
+.lp62-cell textarea{display:block;width:100%;max-width:100%;box-sizing:border-box;min-height:240px;resize:vertical;border:0;outline:0;padding:18px;background:#111923;color:#f4f7fb;font:500 .92rem/1.6 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;tab-size:4}
+.lp62-cell-actions{display:flex;gap:10px;flex-wrap:wrap;padding:12px 14px;background:#f5f7fa;border-top:1px solid rgba(20,32,44,.12)}
+.lp62-cell-actions button:disabled{opacity:.48;cursor:not-allowed}
+.lp62-output pre{margin:0;min-height:100px;padding:18px;white-space:pre-wrap;overflow:auto;color:#e8edf3;font:500 .9rem/1.55 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace}
+.lp62-output pre.error{color:#ffd8d8}
+.lp62-figure{margin:0;border:1px solid rgba(20,32,44,.18);border-radius:18px;overflow:hidden;background:#fff}
+.lp62-figure[hidden]{display:none!important}
+.lp62-figure-head{display:flex;justify-content:space-between;gap:18px;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(20,32,44,.12);background:#f8fafc}
+.lp62-figure-head>div{display:grid;gap:3px}
+.lp62-figure-head strong{font-size:1rem}
+.lp62-figure-stage{padding:16px;display:grid;place-items:center;overflow:auto;background:#fff}
+.lp62-figure-stage img{display:block;max-width:100%;height:auto;border:0}
+.lp62-figure figcaption{padding:11px 16px;border-top:1px solid rgba(20,32,44,.1);font-size:.78rem;line-height:1.45;color:#607080;background:#fbfcfd}
+.lp62-proof{display:flex;gap:12px;align-items:flex-start}
+.lp62-proof strong{white-space:nowrap}
+.lp62-proof span{color:#4c5b69;line-height:1.5}
+@keyframes lp62pulse{50%{opacity:.35;transform:scale(.82)}}
+@media(max-width:820px){.lp62-shell{padding:18px}.lp62-grid{grid-template-columns:1fr}.lp62-library-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.lp62-library-list{grid-template-columns:1fr}.lp62-runtime-row,.lp62-proof,.lp62-figure-head{flex-direction:column;align-items:stretch}.lp62-cell-head,.lp62-output-head{align-items:flex-start;flex-direction:column}.lp62-cell-actions{display:grid}.lp62-cell-actions .button{width:100%}}
