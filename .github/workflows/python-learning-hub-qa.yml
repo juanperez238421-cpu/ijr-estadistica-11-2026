@@ -14,9 +14,11 @@ on:
       - 'qa/check_statistics11_xlsx_curriculum_v46.cjs'
       - 'qa/check_library_playground_v62.cjs'
       - 'qa/check_topic04_guidance_v63.cjs'
+      - 'qa/check_statistics11_team_progress_v66.cjs'
       - 'qa/library_playground_v62_pyodide_smoke.mjs'
       - 'supabase/migrations/*python_learning_hub*.sql'
       - 'supabase/migrations/*python_hub*.sql'
+      - 'supabase/migrations/*statistics11*.sql'
       - '.github/workflows/python-learning-hub-qa.yml'
   push:
     branches: [main]
@@ -65,6 +67,7 @@ jobs:
           node --check qa/arrays_workshop_v47_e2e.cjs
           node --check qa/check_library_playground_v62.cjs
           node --check qa/check_topic04_guidance_v63.cjs
+          node --check qa/check_statistics11_team_progress_v66.cjs
           node --check qa/library_playground_v62_pyodide_smoke.mjs
 
       - name: Current production course contracts
@@ -74,6 +77,7 @@ jobs:
           node qa/check_statistics11_xlsx_curriculum_v46.cjs
           node qa/check_library_playground_v62.cjs
           node qa/check_topic04_guidance_v63.cjs
+          node qa/check_statistics11_team_progress_v66.cjs
 
       - name: Verify production Pyodide asset
         run: curl --fail --silent --show-error --location --head https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js >/dev/null
