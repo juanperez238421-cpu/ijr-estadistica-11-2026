@@ -1,12 +1,13 @@
-name: Real Student Auth V37
+name: Statistics 11 Student Lab Access V65
 
 on:
   pull_request:
     paths:
       - 'python/index.html'
       - 'python/hub-router.js'
-      - 'python/theory-page.js'
-      - 'python/workshop-page.js'
+      - 'python/supabase-rpc-facade-v65.js'
+      - 'python/workshop-v42.js'
+      - 'python/workshop-startup-v50.js'
       - 'python/config-v2.js'
       - 'qa/check_qa_student_v36.cjs'
       - '.github/workflows/qa-student-v36.yml'
@@ -15,6 +16,10 @@ on:
     paths:
       - 'python/index.html'
       - 'python/hub-router.js'
+      - 'python/supabase-rpc-facade-v65.js'
+      - 'python/workshop-v42.js'
+      - 'python/workshop-startup-v50.js'
+      - 'python/config-v2.js'
       - 'qa/check_qa_student_v36.cjs'
       - '.github/workflows/qa-student-v36.yml'
   workflow_dispatch:
@@ -23,7 +28,7 @@ permissions:
   contents: read
 
 jobs:
-  qa-student:
+  student-lab-access:
     runs-on: ubuntu-latest
     timeout-minutes: 4
     steps:
@@ -32,6 +37,9 @@ jobs:
       - name: JavaScript syntax
         run: |
           node --check python/hub-router.js
+          node --check python/supabase-rpc-facade-v65.js
+          node --check python/workshop-v42.js
+          node --check python/workshop-startup-v50.js
           node --check qa/check_qa_student_v36.cjs
-      - name: Student login contract
+      - name: Current student lab access contract
         run: node qa/check_qa_student_v36.cjs
