@@ -3,14 +3,78 @@
 
   const config = window.IJR_PYTHON_HUB_CONFIG;
   const topics = window.IJR_PYTHON_HUB_TOPICS || [];
-  if (!config || !window.supabase || !topics.length) {
+  if (!config || !topics.length) {
     document.body.innerHTML = '<main style="padding:40px;font-family:sans-serif">Learning Hub configuration could not be loaded.</main>';
     return;
   }
 
-  const client = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, {
-    auth: { persistSession:false, autoRefreshToken:false, detectSessionInUrl:false }
-  });
+  // Classroom-resilient REST transport. The Hub must remain usable even if the
+  // optional Supabase JS CDN bundle is slow or temporarily unavailable.
+  const RPC_TIMEOUT_MS = 6500;
+  const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+  const sleep = ms => new Promise(resolve => window.setTimeout(resolve, ms));
+
+  function rpcError(message, {status=0, transient=false} = {}) {
+    const error = new Error(message || 'Backend request failed.');
+    error.status = status;
+    error.transient = Boolean(transient);
+    return error;
+  }
+
+  async function restRpc(name, args = {}, attempt = 0) {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), RPC_TIMEOUT_MS);
+    try {
+      const response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/${encodeURIComponent(name)}`, {
+        method: 'POST',
+        headers: {
+          apikey: config.supabasePublishableKey,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'x-ijr-client': 'statistics11-hub-v65'
+        },
+        body: JSON.stringify(args || {}),
+        signal: controller.signal,
+        cache: 'no-store'
+      });
+
+      const raw = await response.text();
+      let payload = null;
+      try { payload = raw ? JSON.parse(raw) : null; }
+      catch { payload = raw || null; }
+
+      if (response.ok) return payload;
+
+      const transient = RETRYABLE_STATUS.has(response.status);
+      if (transient && attempt === 0) {
+        await sleep(350);
+        return restRpc(name, args, 1);
+      }
+
+      throw rpcError(
+        payload?.message || payload?.details || payload?.hint || `Backend request failed (${response.status}).`,
+        {status:response.status, transient}
+      );
+    } catch (rawError) {
+      if (rawError?.status) throw rawError;
+      const transient = rawError?.name === 'AbortError'
+        || /network|fetch|load failed|failed to fetch/i.test(rawError?.message || '');
+
+      if (transient && attempt === 0) {
+        await sleep(350);
+        return restRpc(name, args, 1);
+      }
+
+      throw rpcError(
+        rawError?.name === 'AbortError'
+          ? 'The service took too long to respond. Retry without closing this page.'
+          : (rawError?.message || 'Network request failed.'),
+        {transient:true}
+      );
+    } finally {
+      window.clearTimeout(timer);
+    }
+  }
 
   const $ = id => document.getElementById(id);
   const escapeHtml = value => String(value ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
@@ -50,9 +114,7 @@
   }
 
   async function rpc(name,args){
-    const {data,error}=await client.rpc(name,args);
-    if(error) throw new Error(error.message || 'Backend request failed');
-    return data;
+    return restRpc(name,args);
   }
 
   function normalizeEmail(value){ return String(value||'').trim().toLowerCase(); }
@@ -196,8 +258,10 @@
       state.snapshot=data.snapshot;
       showHub();
       return true;
-    }catch{
-      clearHubSession();
+    }catch(error){
+      // Preserve a valid browser session through temporary network/CDN/backend
+      // disturbances. Only clear it for a definitive non-transient rejection.
+      if(!error?.transient) clearHubSession();
       return false;
     }
   }
@@ -264,8 +328,13 @@
     $('passwordStepForm')?.classList.add('hidden');
     $('confirmationPanel')?.classList.add('hidden');
 
+    const hadStoredSession=Boolean(getStoredSession()?.registrationId && getStoredSession()?.accessToken);
     if(await resumeStoredSession()) return;
     showIdentityStep({preserve:true});
+    if(hadStoredSession && getStoredSession()?.registrationId){
+      $('identityStatus').textContent='Temporary connection issue while restoring progress. Your saved session was preserved; retry or reload this page.';
+      $('identityStatus').className='inline-status error';
+    }
   }
 
   document.addEventListener('DOMContentLoaded',init);
