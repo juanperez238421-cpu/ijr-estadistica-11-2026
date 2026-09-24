@@ -4,7 +4,7 @@
   const config = window.IJR_PYTHON_HUB_CONFIG;
   if (!config) return;
 
-  const SDK_URL = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+  const SDK_URL = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1/+esm';
   const SDK_LOAD_TIMEOUT_MS = 2500;
   const DEFAULT_RPC_TIMEOUT_MS = 6500;
   let sdkPromise = null;
