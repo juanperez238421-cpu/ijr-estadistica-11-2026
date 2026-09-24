@@ -1,0 +1,128 @@
+name: Statistics 11 Classroom Health
+
+on:
+  pull_request:
+    paths:
+      - 'python/**'
+      - '.github/workflows/stat11-classroom-health.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'python/**'
+      - '.github/workflows/stat11-classroom-health.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stat11-classroom-health-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  classroom-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Student transport syntax and resilience contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check python/hub-router.js
+          node --check python/supabase-rpc-facade-v65.js
+          node --check python/workshop-v42.js
+          node --check python/workshop-team-gate-v50.js
+          grep -q "statistics11-hub-v65" python/hub-router.js
+          grep -q "statistics11-rpc-facade-v65" python/supabase-rpc-facade-v65.js
+          grep -q "RETRYABLE_STATUS" python/hub-router.js
+          grep -q "RPC_TIMEOUT_MS = 6500" python/hub-router.js
+          grep -q "supabase-rpc-facade-v65.js" python/index.html
+          grep -q "async src=\"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1\"" python/index.html
+
+      - name: 30 concurrent Supabase database-path probes
+        shell: bash
+        run: |
+          set -euo pipefail
+          SUPABASE_URL="$(sed -n "s/.*supabaseUrl: '\([^']*\)'.*/\1/p" python/config-v2.js | head -1)"
+          SUPABASE_KEY="$(sed -n "s/.*supabasePublishableKey: '\([^']*\)'.*/\1/p" python/config-v2.js | head -1)"
+          test -n "$SUPABASE_URL"
+          test -n "$SUPABASE_KEY"
+
+          rm -rf /tmp/stat11-health && mkdir -p /tmp/stat11-health
+          pids=()
+          for n in $(seq 1 30); do
+            (
+              result="$(curl --silent --show-error --output "/tmp/stat11-health/body-$n.json"                 --write-out '%{http_code} %{time_total}'                 --connect-timeout 5 --max-time 10                 -X POST                 -H "apikey: $SUPABASE_KEY"                 -H "Content-Type: application/json"                 -H "Accept: application/json"                 --data '{"p_group_code":"HEALTH","p_institutional_email":"classroom.health@ijr.edu.co","p_session_id":"00000000-0000-0000-0000-000000000000","p_user_agent":"github-classroom-health"}'                 "$SUPABASE_URL/rest/v1/rpc/python_hub_lab_login_v51")"
+              code="$(awk '{print $1}' <<<"$result")"
+              seconds="$(awk '{print $2}' <<<"$result")"
+              if [ "$code" != "400" ]; then
+                echo "Probe $n unexpected HTTP $code ($seconds s)"
+                cat "/tmp/stat11-health/body-$n.json" || true
+                exit 1
+              fi
+              awk -v t="$seconds" 'BEGIN { if (t > 5.0) exit 1 }'
+              echo "$n $code $seconds" > "/tmp/stat11-health/probe-$n.txt"
+            ) &
+            pids+=("$!")
+          done
+
+          failed=0
+          for pid in "${pids[@]}"; do
+            if ! wait "$pid"; then failed=1; fi
+          done
+          cat /tmp/stat11-health/probe-*.txt | sort -n
+          test "$failed" -eq 0
+
+          max_time="$(awk '{if ($3>m) m=$3} END{print m+0}' /tmp/stat11-health/probe-*.txt)"
+          echo "30 concurrent DB-path probes passed; slowest=${max_time}s"
+
+      - name: 30 concurrent CORS gateway probes
+        shell: bash
+        run: |
+          set -euo pipefail
+          SUPABASE_URL="$(sed -n "s/.*supabaseUrl: '\([^']*\)'.*/\1/p" python/config-v2.js | head -1)"
+          SUPABASE_KEY="$(sed -n "s/.*supabasePublishableKey: '\([^']*\)'.*/\1/p" python/config-v2.js | head -1)"
+          for rpc in python_hub_lab_login_v51 python_hub_resume_v1 python_hub_start_workshop_team_v3; do
+            pids=()
+            for n in $(seq 1 10); do
+              (
+                code="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}'                   --connect-timeout 5 --max-time 10 -X OPTIONS                   -H "apikey: $SUPABASE_KEY"                   "$SUPABASE_URL/rest/v1/rpc/$rpc")"
+                case "$code" in 200|204) ;; *) echo "$rpc probe $n HTTP $code"; exit 1;; esac
+              ) &
+              pids+=("$!")
+            done
+            failed=0
+            for pid in "${pids[@]}"; do
+              if ! wait "$pid"; then failed=1; fi
+            done
+            test "$failed" -eq 0
+          done
+
+      - name: Pinned workshop CDN dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --head             --connect-timeout 5 --max-time 15             https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1 >/dev/null
+
+      - name: Production Pages burst reachability
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://juanperez238421-cpu.github.io/ijr-estadistica-11-2026/python/"
+          pids=()
+          for n in $(seq 1 12); do
+            (
+              curl --fail --silent --show-error --retry 3 --retry-delay 2                 --connect-timeout 5 --max-time 20                 "$URL?classroom-health=${GITHUB_RUN_ID}-$n"                 -o "/tmp/stat11-page-$n.html"
+              grep -q "Statistics 11 · Python Learning Hub" "/tmp/stat11-page-$n.html"
+            ) &
+            pids+=("$!")
+          done
+          failed=0
+          for pid in "${pids[@]}"; do
+            if ! wait "$pid"; then failed=1; fi
+          done
+          test "$failed" -eq 0
