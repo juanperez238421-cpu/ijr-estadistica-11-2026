@@ -52,13 +52,17 @@ function render(){
   const pct=Math.round(completed/data.topics.length*100);
   const backend=attempt.backend==='supabase'?'Supabase synchronized':'Not synchronized';
   const identityLabel=attempt.group==='11-U'?(attempt.label||'Institutional access'):`${attempt.group} · ${attempt.label||'Student'}`;
+  const teamSize=Math.max(1,Array.isArray(attempt.names)?attempt.names.length:1);
+  const collaboration=teamSize>1?`Team ×${teamSize} · shared progress`:'Individual progress';
 
   $('sessionBadge').textContent=identityLabel;
-  $('identitySummary').textContent=`${identityLabel} · ${lang==='python'?'Python':'Java'} · ${backend}`;
+  $('identitySummary').textContent=`${identityLabel} · ${collaboration} · ${lang==='python'?'Python':'Java'} · ${backend}`;
   $('languageLabel').textContent=lang==='python'?'Python':'Java';
   $('globalPercent').textContent=`${pct}%`;
   $('globalProgressBar').style.width=`${pct}%`;
-  $('globalProgressCopy').textContent=`${completed} of ${data.topics.length} sessions evidenced`;
+  const progressTrack=$('globalProgressBar')?.parentElement;
+  if(progressTrack){progressTrack.setAttribute('role','progressbar');progressTrack.setAttribute('aria-label','OOP + UML progress');progressTrack.setAttribute('aria-valuemin','0');progressTrack.setAttribute('aria-valuemax','100');progressTrack.setAttribute('aria-valuenow',String(pct));}
+  $('globalProgressCopy').textContent=teamSize>1?`${completed} of ${data.topics.length} sessions evidenced · shared with ${teamSize} team members`:`${completed} of ${data.topics.length} sessions evidenced`;
 
   $('topicGrid').innerHTML=data.topics.map(topic=>{
     const done=isComplete(topic);
