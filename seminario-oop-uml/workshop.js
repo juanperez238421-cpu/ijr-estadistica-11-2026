@@ -1,4 +1,4 @@
-import {OopUmlStore} from './store.js';
+import {OopUmlStore} from './store.js?v=20260930-access-v4';
 
 const cfg=window.IJR_OOP_UML_CONFIG;
 const data=window.IJR_OOP_UML_DATA;
