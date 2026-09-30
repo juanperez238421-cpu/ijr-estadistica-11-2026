@@ -42,7 +42,7 @@ function renderProject(data){
   const central=readMainRegistration();
 
   $('studentName').textContent=student.name||'Student';
-  $('groupBadge').textContent=student.group_code||'—';
+  $('groupBadge').textContent=student.group_code||'â€”';
   $('trackBadge').textContent=trackNames[project.track_slug]||project.track_slug||'Personal route';
   $('modeBadge').textContent=project.project_mode==='fixed'?'Specific project':'Define today';
   $('modeBadge').dataset.mode=project.project_mode||'guided_definition';
@@ -55,7 +55,7 @@ function renderProject(data){
 
   let note=project.decision_note||'Use the questions below to define the project with your teacher.';
   if(central?.groupCode && student.group_code && central.groupCode.replace('-','')!==student.group_code.replace('-','')){
-    note+=' Note: the group saved on Seminar Home does not match this institutional email. Use “Change student” on Seminar Home if needed.';
+    note+=' Note: the group saved on Seminar Home does not match this institutional email. Use â€œChange studentâ€ on Seminar Home if needed.';
   }
   $('decisionNote').textContent=note;
 
@@ -77,13 +77,18 @@ function renderProject(data){
   const studioKey=routeKey==='cad'||routeKey==='cyber'?routeKey:project.project_slug==='gomez-gta-v-mod-showcase'?'gta':project.track_slug==='web'?'clients':null;
   const studio=window.STUDIO_COURSES?.[studioKey];
   const sprints=studio?studio.classes.map((step,i)=>({n:i+1,title:step.title,goal:step.lead,deliverable:step.gate})):route?route.stages.map((step,i)=>({n:i+1,title:step.title,goal:step.build.join(' '),deliverable:step.evidence})):Array.isArray(project.sprints)?project.sprints:[];
-  $('roadmapTitle').textContent=route?'4 etapas de construcción':`${sprints.length} etapas del proyecto`;
-  $('roadmapCopy').textContent=route?'Cada etapa corresponde a una clase con Theory, Workshop, Test, Evidence y criterio de avance. Abre la guía completa para trabajar.':'Each stage ends with verifiable evidence. The technical track gives you tools; this roadmap applies them to your own project.';
-  $('routeActions').innerHTML=routeKey==='animation'?'<a class="button button-dark" href="rico/index.html">Abrir proyecto Rico · Colab real</a><a class="button button-light" href="rico/workshop.html?class=1">Construir el mensaje · Workshop</a>':route?'<a class="button button-dark" href="route.html?project='+routeKey+'">Abrir Theory + Workshop · 4 etapas</a>':'';
+  $('roadmapTitle').textContent=route?'4 etapas de construcciÃ³n':`${sprints.length} etapas del proyecto`;
+  $('roadmapCopy').textContent=route?'Cada etapa corresponde a una clase con Theory, Workshop, Test, Evidence y criterio de avance. Abre la guÃ­a completa para trabajar.':'Each stage ends with verifiable evidence. The technical track gives you tools; this roadmap applies them to your own project.';
+  $('routeActions').innerHTML=routeKey==='animation'?'<a class="button button-dark" href="rico/index.html">Abrir proyecto Rico Â· Colab real</a><a class="button button-light" href="rico/workshop.html?class=1">Construir el mensaje Â· Workshop</a>':route?'<a class="button button-dark" href="route.html?project='+routeKey+'">Abrir Theory + Workshop Â· 4 etapas</a>':'';
   if(studio){
-    $('roadmapTitle').textContent='4 clases · construir, ejecutar y descargar';
-    $('roadmapCopy').textContent=project.project_mode==='guided_definition'?'Taller de partida para definir tu producto con el docente. La asignación y las decisiones pendientes se mantienen.':'Theory, Workshop ejecutable, pruebas y producto descargable en cada ruta.';
-    $('routeActions').innerHTML='<a class="button button-dark" href="studio/index.html?project='+studioKey+'">Abrir proyecto · Colab real</a><a class="button button-light" href="studio/workshop.html?project='+studioKey+'&class=1">Construir · Workshop</a>'+(project.track_slug==='web'?'<a class="button button-light" href="studio/index.html">Elegir registro de clientes o catálogo GTA V</a>':'');
+    $('roadmapTitle').textContent='4 clases Â· construir, ejecutar y descargar';
+    $('roadmapCopy').textContent=project.project_mode==='guided_definition'?'Taller de partida para definir tu producto con el docente. La asignaciÃ³n y las decisiones pendientes se mantienen.':'Theory, Workshop ejecutable, pruebas y producto descargable en cada ruta.';
+    $('routeActions').innerHTML='<a class="button button-dark" href="studio/index.html?project='+studioKey+'">Abrir proyecto Â· Colab real</a><a class="button button-light" href="studio/workshop.html?project='+studioKey+'&class=1">Construir Â· Workshop</a>'+(project.track_slug==='web'?'<a class="button button-light" href="studio/index.html">Elegir registro de clientes o catÃ¡logo GTA V</a>':'');
+  }
+  if(!route&&!studio&&project.is_defined===false){
+    $('roadmapTitle').textContent='Elige un taller para comenzar';
+    $('roadmapCopy').textContent='Tu correo institucional permite entrar. Si todavÃ­a no tienes proyecto asignado, puedes trabajar en los talleres y definir tu propuesta con el docente.';
+    $('routeActions').innerHTML='<a class="button button-dark" href="studio/index.html">Talleres de CAD, ciberseguridad y HTML</a><a class="button button-light" href="rico/index.html">AnimaciÃ³n Python Â· corazÃ³n y flores</a>';
   }
 
   $('sprintGrid').innerHTML=sprints.map(step=>{
@@ -109,7 +114,7 @@ $('accessForm')?.addEventListener('submit',async event=>{
 
   const button=$('accessButton');
   button.disabled=true;
-  setStatus('Opening your personal project…');
+  setStatus('Opening your personal projectâ€¦');
 
   try{
     const response=await fetch(API,{
