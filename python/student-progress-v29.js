@@ -5,6 +5,7 @@
   if(!config || !window.supabase) return;
 
   const $=id=>document.getElementById(id);
+  const percent=value=>Math.max(0,Math.min(100,Number(value)||0));
   const escapeHtml=value=>String(value??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
   const client=window.supabase.createClient(config.supabaseUrl,config.supabasePublishableKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
   let loading=false;
@@ -18,7 +19,7 @@
     const topics=member?.progress?.topics||[];
     return topics.map(topic=>`<div class="student-topic-progress-row">
       <span class="student-topic-number">${String(Number(topic.sequence||0)).padStart(2,'0')}</span>
-      <div class="student-topic-copy"><strong>${escapeHtml(topic.title||topic.slug)}</strong><small>${Number(topic.percent||0)}% individual stage mastery</small></div>
+      <div class="student-topic-copy"><strong>${escapeHtml(topic.title||topic.slug)}</strong><small>${percent(topic.percent)}% individual stage mastery</small><div class="progress-track" role="progressbar" aria-label="${escapeHtml(topic.title||topic.slug)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent(topic.percent)}"><span style="width:${percent(topic.percent)}%"></span></div></div>
       <div class="student-topic-result"><strong>${Number(topic.correct_count||0)} / ${Number(topic.total_count||0)}</strong>${topic.historical_credit?'<small>Historical credit</small>':''}</div>
     </div>`).join('');
   }
@@ -41,11 +42,22 @@
       identitySummary.textContent=`${reg.group_code} · ${reg.mode==='team'?'Team registration':'Individual registration'} · ${regDisplay}`;
     }
 
-    const globalCopy=$('globalProgressCopy');
-    if(globalCopy && !globalCopy.dataset.v29Label){
-      globalCopy.dataset.v29Label='true';
-      const current=globalCopy.textContent;
-      globalCopy.textContent=`Current registration: ${current}`;
+    // Use the same consolidated server record for the individual header and card.
+    if(members.length===1 && members[0].progress){
+      const progress=members[0].progress;
+      const value=percent(progress.percent);
+      if($('globalPercent')) $('globalPercent').textContent=`${value}%`;
+      const bar=$('globalProgressBar');
+      if(bar){
+        bar.style.width=`${value}%`;
+        const track=bar.parentElement;
+        track.setAttribute('role','progressbar');
+        track.setAttribute('aria-label','Individual progress');
+        track.setAttribute('aria-valuemin','0');
+        track.setAttribute('aria-valuemax','100');
+        track.setAttribute('aria-valuenow',String(value));
+      }
+      if($('globalProgressCopy')) $('globalProgressCopy').textContent=`${Number(progress.correct_count||0)} / ${Number(progress.total_count||0)} workshop stages correct`;
     }
 
     const mount=$('identityProgressPanel');
