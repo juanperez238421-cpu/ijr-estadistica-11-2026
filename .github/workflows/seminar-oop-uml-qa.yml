@@ -80,6 +80,36 @@ jobs:
           PY
           node --check /tmp/theory-inline.js
 
+      - name: Validate institutional-email access gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp seminario-oop-uml/store.js /tmp/oop-store.mjs
+          node --input-type=module <<'NODE'
+          import { isInstitutionalEmail } from 'file:///tmp/oop-store.mjs';
+
+          const accepted = [
+            'alejandro.rico@ijr.edu.co',
+            'student@ijr.edu.co',
+            ' STUDENT@IJR.EDU.CO '
+          ];
+          const rejected = [
+            'student@gmail.com',
+            'student@sub.ijr.edu.co',
+            'student@ijr.edu.com',
+            'student @ijr.edu.co',
+            'student@ijr.edu.co.example'
+          ];
+
+          for (const email of accepted) {
+            if (!isInstitutionalEmail(email)) throw new Error(`Expected institutional email to pass: ${email}`);
+          }
+          for (const email of rejected) {
+            if (isInstitutionalEmail(email)) throw new Error(`Expected non-institutional email to fail: ${email}`);
+          }
+          console.log('Institutional @ijr.edu.co access validator verified');
+          NODE
+
       - name: Validate ten-session curriculum contract
         shell: bash
         run: |

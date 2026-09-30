@@ -1,5 +1,5 @@
 window.IJR_OOP_UML_CONFIG=Object.freeze({
-  version:'oop-uml-email-v3-20260923',
+  version:'oop-uml-email-v4-20260930',
   courseSlug:'seminario-programacion-t3-2026',
   supabaseUrl:'https://rlfxnjbqxbozjdzkbwlz.supabase.co',
   supabasePublishableKey:'sb_publishable_rmVOQ3Orx49KpW_4uMqYew_c2HpcA87',

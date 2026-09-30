@@ -1,6 +1,10 @@
 function uuid(){if(globalThis.crypto?.randomUUID)return crypto.randomUUID();return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0,v=c==='x'?r:(r&3|8);return v.toString(16);});}
 function cleanName(v){return String(v||'').trim().replace(/\s+/g,' ');}
 function teamLabel(names){return names.map(cleanName).filter(Boolean).join(' · ');}
+export function isInstitutionalEmail(value){
+  const email=String(value||'').trim().toLowerCase();
+  return email.length<=254 && /^[^\s@]+@ijr\.edu\.co$/i.test(email);
+}
 
 export class OopUmlStore{
   constructor(config){
@@ -38,7 +42,7 @@ export class OopUmlStore{
   }
   async startWithEmail({email,language='python'}){
     email=String(email||'').trim().toLowerCase();
-    if(!/^[^\\s@]+@ijr\\.edu\\.co$/i.test(email))throw new Error('institutional_email_required');
+    if(!isInstitutionalEmail(email))throw new Error('institutional_email_required');
     if(!['python','java'].includes(language))throw new Error('invalid_language');
     if(!this.sb)throw new Error('Supabase client unavailable');
 
