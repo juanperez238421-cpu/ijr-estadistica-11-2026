@@ -77,7 +77,7 @@ function renderProject(data){
   const sprints=route?route.stages.map((step,i)=>({n:i+1,title:step.title,goal:step.build.join(' '),deliverable:step.evidence})):Array.isArray(project.sprints)?project.sprints:[];
   $('roadmapTitle').textContent=route?'4 etapas de construcción':`${sprints.length} etapas del proyecto`;
   $('roadmapCopy').textContent=route?'Cada etapa corresponde a una clase con Theory, Workshop, Test, Evidence y criterio de avance. Abre la guía completa para trabajar.':'Each stage ends with verifiable evidence. The technical track gives you tools; this roadmap applies them to your own project.';
-  $('routeActions').innerHTML=route?'<a class="button button-dark" href="route.html?project='+routeKey+'">Abrir Theory + Workshop · 4 etapas</a>':'';
+  $('routeActions').innerHTML=routeKey==='animation'?'<a class="button button-dark" href="rico/index.html">Abrir proyecto Rico · Colab real</a><a class="button button-light" href="rico/workshop.html?class=1">Construir el mensaje · Workshop</a>':route?'<a class="button button-dark" href="route.html?project='+routeKey+'">Abrir Theory + Workshop · 4 etapas</a>':'';
 
   $('sprintGrid').innerHTML=sprints.map(step=>{
     return '<article class="sprint-card">'+

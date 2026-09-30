@@ -1,6 +1,7 @@
 (()=>{'use strict';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const key=new URLSearchParams(location.search).get('project');
+if(key==='animation'){location.replace('rico/index.html');return;}
 const route=window.PROJECT_ROUTES[key];
 if(!route){document.getElementById('routeTitle').textContent='Selecciona una ruta desde Mi proyecto.';return;}
 document.title='Seminario 11 · '+route.title;
