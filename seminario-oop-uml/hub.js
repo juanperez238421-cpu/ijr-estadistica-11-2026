@@ -1,4 +1,4 @@
-import {OopUmlStore} from './store.js';
+import {OopUmlStore,isInstitutionalEmail} from './store.js?v=20260930-access-v4';
 
 const cfg=window.IJR_OOP_UML_CONFIG;
 const data=window.IJR_OOP_UML_DATA;
@@ -11,7 +11,7 @@ function esc(value=''){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;',
 function isComplete(topic){return attempt?.sessions?.[topic.sessionKey]?.status==='completed';}
 function setStatus(message,type=''){const node=$('registrationStatus');if(!node)return;node.textContent=message;node.className=`inline-status ${type}`.trim();}
 function normalizeEmail(value){return String(value||'').trim().toLowerCase();}
-function institutionalEmail(value){return /^[^\s@]+@ijr\.edu\.co$/i.test(normalizeEmail(value));}
+function institutionalEmail(value){return isInstitutionalEmail(value);}
 function currentLanguage(){return attempt?.language||'python';}
 function saveEmail(email){localStorage.setItem(ACCESS_KEY,JSON.stringify({email:normalizeEmail(email),validatedAt:Date.now()}));}
 function savedEmail(){try{const x=JSON.parse(localStorage.getItem(ACCESS_KEY)||'null');return x&&institutionalEmail(x.email)?normalizeEmail(x.email):'';}catch{return '';}}
