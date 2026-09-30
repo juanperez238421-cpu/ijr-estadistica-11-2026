@@ -72,7 +72,13 @@ function renderProject(data){
     $('safetyPanel').classList.add('hidden');
   }
 
-  const sprints=Array.isArray(project.sprints)?project.sprints:[];
+  const routeKey=project.project_slug==='rico-portable-python-visual-show'||/RICO\s+PARAMO/i.test(student.name||'')?'animation':project.track_slug==='3d-programming'?'cad':project.track_slug==='cybersecurity'?'cyber':null;
+  const route=window.PROJECT_ROUTES?.[routeKey];
+  const sprints=route?route.stages.map((step,i)=>({n:i+1,title:step.title,goal:step.build.join(' '),deliverable:step.evidence})):Array.isArray(project.sprints)?project.sprints:[];
+  $('roadmapTitle').textContent=route?'4 etapas de construcción':`${sprints.length} etapas del proyecto`;
+  $('roadmapCopy').textContent=route?'Cada etapa corresponde a una clase con Theory, Workshop, Test, Evidence y criterio de avance. Abre la guía completa para trabajar.':'Each stage ends with verifiable evidence. The technical track gives you tools; this roadmap applies them to your own project.';
+  $('routeActions').innerHTML=route?'<a class="button button-dark" href="route.html?project='+routeKey+'">Abrir Theory + Workshop · 4 etapas</a>':'';
+
   $('sprintGrid').innerHTML=sprints.map(step=>{
     return '<article class="sprint-card">'+
       '<div class="sprint-number">S'+esc(step.n)+'</div>'+
