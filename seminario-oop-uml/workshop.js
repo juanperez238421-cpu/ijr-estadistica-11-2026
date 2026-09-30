@@ -1,4 +1,4 @@
-import {OopUmlStore} from './store.js?v=20260930-direct-v5';
+import {OopUmlStore} from './store.js?v=20260930-progress-v6';
 
 const cfg=window.IJR_OOP_UML_CONFIG;
 const data=window.IJR_OOP_UML_DATA;
@@ -180,7 +180,12 @@ document.addEventListener('ijr-oop-runtime-reset',()=>{
 $('saveEvidence').addEventListener('click',saveEvidence);
 store.restore().then(value=>{
   attempt=value;
-  if(!attempt){$('accessPanel').classList.remove('hidden');return;}
+  if(!attempt||attempt.backend!=='supabase'){
+    if(attempt)store.reset();
+    attempt=null;
+    $('accessPanel').classList.remove('hidden');
+    return;
+  }
   $('workshopPanel').classList.remove('hidden');
   renderTopic();
 }).catch(error=>{

@@ -40,23 +40,6 @@ export class OopUmlStore{
     }
     if(local){this.attempt=local;return local;}return null;
   }
-  startOpen({language='python',label='Open access',group='11-U'}={}){
-    if(!['python','java'].includes(language))language='python';
-    return this.save({
-      id:uuid(),
-      token:null,
-      backend:'local',
-      language,
-      group,
-      names:[],
-      label:cleanName(label)||'Open access',
-      email:null,
-      identityMode:'open',
-      sessions:{},
-      startedAt:new Date().toISOString()
-    });
-  }
-
   async startWithEmail({email,language='python'}){
     email=String(email||'').trim().toLowerCase();
     if(!isInstitutionalEmail(email))throw new Error('institutional_email_required');

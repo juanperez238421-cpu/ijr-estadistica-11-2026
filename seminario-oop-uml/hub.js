@@ -1,4 +1,4 @@
-import {OopUmlStore,isInstitutionalEmail} from './store.js?v=20260930-direct-v5';
+import {OopUmlStore,isInstitutionalEmail} from './store.js?v=20260930-progress-v6';
 
 const cfg=window.IJR_OOP_UML_CONFIG;
 const data=window.IJR_OOP_UML_DATA;
@@ -6,6 +6,7 @@ const store=new OopUmlStore(cfg);
 const $=id=>document.getElementById(id);
 const ACCESS_KEY='ijr-seminar-oop-email-v3';
 let attempt=null;
+let booting=false;
 
 function esc(value=''){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function isComplete(topic){return attempt?.sessions?.[topic.sessionKey]?.status==='completed';}
@@ -33,6 +34,11 @@ function mainIdentity(){
     groupCode:String(entry.groupCode||entry.group_code||'11-U').trim()||'11-U'
   };
 }
+function setBoot(message,error=false){
+  const status=$('bootStatus');
+  if(status)status.textContent=message;
+  $('bootActions')?.classList.toggle('hidden',!error);
+}
 
 function render(){
   const ready=!!attempt;
@@ -44,8 +50,8 @@ function render(){
   const lang=currentLanguage();
   const completed=data.topics.filter(isComplete).length;
   const pct=Math.round(completed/data.topics.length*100);
-  const backend=attempt.backend==='supabase'?'Supabase synchronized':'Open local session';
-  const identityLabel=attempt.group==='11-U'?(attempt.label||'Open access'):`${attempt.group} · ${attempt.label||'Student'}`;
+  const backend=attempt.backend==='supabase'?'Supabase synchronized':'Not synchronized';
+  const identityLabel=attempt.group==='11-U'?(attempt.label||'Institutional access'):`${attempt.group} · ${attempt.label||'Student'}`;
 
   $('sessionBadge').textContent=identityLabel;
   $('identitySummary').textContent=`${identityLabel} · ${lang==='python'?'Python':'Java'} · ${backend}`;
@@ -69,44 +75,40 @@ function render(){
 }
 
 async function initialize(){
-  const status=$('bootStatus');
+  if(booting)return;
+  booting=true;
+  attempt=null;
+  render();
+  $('bootActions')?.classList.add('hidden');
+
   const central=mainIdentity();
-  const remembered=savedEmail();
-  let restored=null;
+  const preferredEmail=central?.email||savedEmail();
 
-  if(status)status.textContent='Opening the OOP + UML Common Core…';
-  try{restored=await store.restore();}catch(error){console.warn('OOP restore skipped.',error);}
-
-  const preferredEmail=central?.email||remembered;
-  if(preferredEmail){
-    if(restored?.email===preferredEmail&&restored?.backend==='supabase'){
-      attempt=restored;
-      saveEmail(preferredEmail);
-    }else{
-      if(restored)store.reset();
-      try{
-        attempt=await store.startWithEmail({email:preferredEmail,language:'python'});
-        saveEmail(preferredEmail);
-      }catch(error){
-        console.warn('Supabase identity sync unavailable; opening locally.',error);
-        attempt=store.startOpen({
-          language:'python',
-          label:central?.fullName||'Open access',
-          group:central?.groupCode||'11-U'
-        });
-      }
-    }
-  }else if(restored){
-    attempt=restored;
-  }else{
-    attempt=store.startOpen({language:'python'});
+  if(!preferredEmail){
+    location.replace('../seminario/?next=oop');
+    return;
   }
 
-  render();
+  setBoot('Restoring your original registered progress from Supabase…');
+  try{
+    /*
+     * Always resolve against the backend on entry.
+     * v10 deliberately reuses the canonical historical attempt with real
+     * OOP/UML evidence, so an empty newer shell cannot replace old progress.
+     */
+    attempt=await store.startWithEmail({email:preferredEmail,language:'python'});
+    saveEmail(preferredEmail);
+    setBoot('Progress restored.');
+    render();
+  }catch(error){
+    console.error('Tracked OOP progress could not be restored.',error);
+    attempt=null;
+    render();
+    setBoot('Could not restore tracked Supabase progress. No local/untracked session was created. Retry the connection or return to Seminar home.',true);
+  }finally{
+    booting=false;
+  }
 }
 
-initialize().catch(error=>{
-  console.error(error);
-  attempt=store.startOpen({language:'python'});
-  render();
-});
+$('retryBoot')?.addEventListener('click',initialize);
+initialize();

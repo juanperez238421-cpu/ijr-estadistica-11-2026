@@ -12,14 +12,14 @@
   <title>Seminar 11 · OOP + UML Learning Hub</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20260930-direct-v5">
+  <link rel="stylesheet" href="styles.css?v=20260930-progress-v6">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="config.js?v=20260930-direct-v5"></script>
-  <script defer src="course-data.js?v=20260930-direct-v5"></script>
-  <script defer src="../seminario/entry-bridge.js?v=20260930-direct-v5" data-main-href="../seminario/" data-mode="oop"></script>
-  <script type="module" src="hub.js?v=20260930-direct-v5"></script>
+  <script defer src="config.js?v=20260930-progress-v6"></script>
+  <script defer src="course-data.js?v=20260930-progress-v6"></script>
+  <script defer src="../seminario/entry-bridge.js?v=20260930-progress-v6" data-main-href="../seminario/" data-mode="oop"></script>
+  <script type="module" src="hub.js?v=20260930-progress-v6"></script>
 </head>
-<body data-seminar-oop-build="20260930-direct-v5">
+<body data-seminar-oop-build="20260930-progress-v6">
   <header class="topbar">
     <a class="brand" href="../seminario/" aria-label="Back to Seminar 11 main hub">
       <span class="brand-mark">IJR</span>
@@ -37,11 +37,15 @@
     <div class="registration-card">
       <p class="eyebrow">SOFTWARE ENGINEERING STUDIO · COMMON CORE</p>
       <h1>Opening OOP + UML…</h1>
-      <p class="registration-lead">This module opens directly from Seminar 11. It reuses the current Seminar session automatically when one exists, so students are not asked for their institutional email a second time.</p>
+      <p class="registration-lead">This module opens directly from Seminar 11 and reuses the current institutional identity automatically. Supabase restores the student's original registered OOP/UML attempt, including prior team evidence, without asking for the email a second time.</p>
       <div class="sequence-rule">
         <strong>10-session progression</strong>
         <span>Objects → State → Constructors → Encapsulation → Relationships → Inheritance → Polymorphism → Architecture → Refactoring → Defense</span>
-        <small id="bootStatus">Opening the OOP + UML Common Core…</small>
+        <small id="bootStatus">Restoring tracked OOP + UML progress…</small>
+      </div>
+      <div id="bootActions" class="registration-actions hidden" style="margin-top:16px">
+        <div><strong>Tracked progress only</strong><span>The hub will not create an untracked local replacement if Supabase is unavailable.</span></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><button id="retryBoot" class="button button-dark" type="button">Retry</button><a class="button button-light" href="../seminario/">Seminar home</a></div>
       </div>
     </div>
   </section>

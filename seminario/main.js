@@ -21,7 +21,7 @@ function validEmail(v){return /^[^\s@]+@ijr\.edu\.co$/i.test(normalizeEmail(v));
 function read(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch{return null}}
 function valid(entry){return entry&&validEmail(entry.institutionalEmail)&&String(entry.fullName||'').trim().length>=3&&/^(11-[ABC]|11-U)$/.test(entry.groupCode||'')}
 function save(entry){localStorage.setItem(KEY,JSON.stringify(entry));localStorage.removeItem(LEGACY_KEY);}
-function routeNext(){if(next==='oop'){location.replace('../seminario-oop-uml/?v=20260923-email-v3');return true;}return false;}
+function routeNext(){if(next==='oop'){location.replace('../seminario-oop-uml/?v=20260930-progress-v6');return true;}return false;}
 function render(){
   const entry=read();
   if(valid(entry)){
