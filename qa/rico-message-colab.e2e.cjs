@@ -1,13 +1,14 @@
+const {installTeamFixture,startTeam}=require('./seminar-team-fixture.cjs');
 const {chromium}=require('playwright');
 const assert=require('node:assert/strict');const fs=require('node:fs');
 const base=process.env.RICO_TEST_BASE||'http://127.0.0.1:4173/seminario-projects/rico/';
 (async()=>{
 fs.mkdirSync('work',{recursive:true});
 const browser=await chromium.launch({...(process.env.RICO_TEST_BROWSER?{executablePath:process.env.RICO_TEST_BROWSER}:{}),headless:true});
-const context=await browser.newContext({acceptDownloads:true});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+const context=await browser.newContext({acceptDownloads:true});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));await installTeamFixture(page);
 async function run(){await page.locator('#runCodeButton').click();await page.waitForFunction(()=>!document.getElementById('runCodeButton').disabled,{},{timeout:90000});}
 for(let c=1;c<=4;c++){
- await page.goto(base+'workshop.html?class='+c);
+ await page.goto(base+'workshop.html?class='+c);await startTeam(page);
  const count=await page.locator('#stepRail button').count();assert.ok(count>=3);
  for(let i=0;i<count;i++){
   await page.locator('#stepRail button').nth(i).click();
@@ -28,7 +29,7 @@ const portable=await context.newPage();await portable.route('http://**/*',r=>r.a
 await page.screenshot({path:'work/rico-colab-preview.png',fullPage:true});
 const pythonPromise=page.waitForEvent('download');await page.locator('#downloadPython').click();await (await pythonPromise).saveAs('work/crear_mensaje_test.py');
 const notebookPromise=page.waitForEvent('download');await page.locator('#downloadNotebook').click();const nb=await notebookPromise;await nb.saveAs('work/rico-test.ipynb');assert.equal(JSON.parse(fs.readFileSync('work/rico-test.ipynb')).nbformat,4);
-await page.goto(base+'workshop.html?class=4');await page.locator('#stepRail button').nth(1).click();assert.match(await page.locator('#codeEditor').inputValue(),/flower_count=4/);console.log('PASS downloads and edited draft restoration');
+await page.goto(base+'workshop.html?class=4');await startTeam(page);await page.locator('#stepRail button').nth(1).click();assert.match(await page.locator('#codeEditor').inputValue(),/flower_count=4/);console.log('PASS downloads and edited draft restoration');
 await page.goto(base+'index.html');assert.equal(await page.locator('.class-card').count(),4);
 for(let c=1;c<=4;c++){await page.goto(base+'theory.html?class='+c);assert.equal(await page.locator('#workshopTop').getAttribute('href'),'workshop.html?class='+c);}
 await page.route('**/functions/v1/seminar-project-access',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({student:{name:'RICO PARAMO ALEJANDRO',group_code:'11B'},project:{project_slug:'rico-portable-python-visual-show',track_slug:'data-science',project_mode:'fixed',sprints:[]}})}));await page.goto(new URL('../index.html',base).href);await page.locator('#institutionalEmail').fill('test@ijr.edu.co');await page.locator('#accessButton').click();await page.locator('#routeActions a').first().waitFor();assert.equal(await page.locator('#routeActions a').first().getAttribute('href'),'rico/index.html');await page.locator('#routeActions a').first().click();await page.locator('.class-card').first().waitFor();assert.equal(await page.locator('.class-card').count(),4);console.log('PASS Rico assignment opens the specific Colab hub');

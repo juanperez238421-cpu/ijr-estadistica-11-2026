@@ -1,0 +1,58 @@
+name: Seminar Shared Workshop Teams QA
+on:
+  push:
+    branches: [main]
+    paths: ['seminario-projects/**', 'qa/seminar-team*', 'supabase/functions/seminar-workshop-team/**', 'supabase/migrations/*seminar_workshop_shared_team_progress*', '.github/workflows/seminar-team-qa.yml']
+  pull_request:
+    paths: ['seminario-projects/**', 'qa/seminar-team*', 'supabase/functions/seminar-workshop-team/**', 'supabase/migrations/*seminar_workshop_shared_team_progress*', '.github/workflows/seminar-team-qa.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: |
+          node --check seminario-projects/team.js
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Team selection, actual Python/HTML, shared resume and offline retry
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/team-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          sleep 1
+          node qa/seminar-team.e2e.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: seminar-shared-team-ui
+          path: work/seminar-team-shared.png
+  database:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: team_qa
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGDATABASE: team_qa
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Atomic member synchronization, independent resume and permissions
+        run: |
+          psql -v ON_ERROR_STOP=1 -c 'create schema private; create role anon; create role authenticated; create role service_role bypassrls;'
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260930185445_seminar_workshop_shared_team_progress_v1.sql
+          psql -v ON_ERROR_STOP=1 -f qa/seminar-team-schema.sql

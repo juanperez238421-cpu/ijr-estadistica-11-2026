@@ -1,11 +1,12 @@
+const {installTeamFixture,startTeam}=require('./seminar-team-fixture.cjs');
 const {chromium}=require('playwright');
 const assert=require('node:assert/strict'),fs=require('node:fs');
 (async()=>{
 fs.mkdirSync('work',{recursive:true});
-const browser=await chromium.launch({...(process.env.STUDIO_TEST_BROWSER?{executablePath:process.env.STUDIO_TEST_BROWSER}:{}),headless:true});const context=await browser.newContext({acceptDownloads:true}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));const base=process.env.STUDIO_TEST_BASE||'http://127.0.0.1:4173/seminario-projects/studio/';
+const browser=await chromium.launch({...(process.env.STUDIO_TEST_BROWSER?{executablePath:process.env.STUDIO_TEST_BROWSER}:{}),headless:true});const context=await browser.newContext({acceptDownloads:true}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));await installTeamFixture(page);const base=process.env.STUDIO_TEST_BASE||'http://127.0.0.1:4173/seminario-projects/studio/';
 for(const project of ['cyber','cad','clients','gta']){
  for(let c=1;c<=4;c++){
-  await page.goto(base+'workshop.html?project='+project+'&class='+c);const count=await page.locator('#stepRail button').count();
+  await page.goto(base+'workshop.html?project='+project+'&class='+c);await startTeam(page);const count=await page.locator('#stepRail button').count();
   for(let i=0;i<count;i++){await page.locator('#stepRail button').nth(i).click();await page.locator('#runCodeButton').click();await page.waitForFunction(()=>!document.querySelector('#runCodeButton').disabled,{},{timeout:90000});assert.match(await page.locator('#activityStatus').innerText(),/Código ejecutado/,project+' C'+c+' cell'+i+' '+await page.locator('#terminalOutput').innerText());}
   await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),project+' mobile');await page.setViewportSize({width:1440,height:1000});console.log('PASS '+project+' C'+c+' all cells real execution');
  }
@@ -16,7 +17,7 @@ for(const project of ['cyber','cad','clients','gta']){
  }else{
   const frame=page.frameLocator('#webPreview');const fields=project==='clients'?{name:'Demo local',email:'demo@example.test',phone:'000'}:{name:'Mod demo QA',category:'graphics',build:'1.0',requirements:'Ficticio'};
   for(const [name,value]of Object.entries(fields)){const input=frame.locator('[name="'+name+'"]');if(name==='category')await input.selectOption(value);else await input.fill(value);}await frame.locator('#recordForm button').click();await frame.getByText('Guardado en la base local').waitFor();assert.equal(await frame.locator('#rows tr').count(),1);
-  await page.reload();await page.locator('#runCodeButton').click();await page.waitForFunction(()=>!document.querySelector('#runCodeButton').disabled,{},{timeout:90000});assert.equal(await page.frameLocator('#webPreview').locator('#rows tr').count(),1);
+  await page.reload();await startTeam(page);await page.locator('#runCodeButton').click();await page.waitForFunction(()=>!document.querySelector('#runCodeButton').disabled,{},{timeout:90000});assert.equal(await page.frameLocator('#webPreview').locator('#rows tr').count(),1);
   const d=page.waitForEvent('download');await page.locator('#downloadAnimation').click();await(await d).saveAs('work/'+project+'-app.html');
   const offline=await context.newPage();await offline.route('https://**/*',r=>r.abort());await offline.route('http://**/*',r=>r.abort());await offline.goto('file:///'+process.cwd().replace(/\\/g,'/')+'/work/'+project+'-app.html');await offline.locator('#recordForm').waitFor();
   for(const [name,value]of Object.entries(fields)){const input=offline.locator('[name="'+name+'"]');if(name==='category')await input.selectOption(value);else await input.fill(value);}await offline.locator('#recordForm button').click();await offline.getByText('Guardado en la base local').waitFor();await offline.reload();await offline.locator('#rows tr').waitFor();assert.equal(await offline.locator('#rows tr').count(),1);await offline.close();console.log('PASS '+project+' real form, persisted database and offline standalone export');
