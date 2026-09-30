@@ -4,11 +4,13 @@
   const course=window.RICO_COURSE;
   const n=Math.max(1,Math.min(4,Math.trunc(Number(new URLSearchParams(location.search).get('class'))||1)));
   const lesson=course[n-1];let active=0,worker=null,request=0,busy=false,ready=false,player=null,preview=null,configSnapshot=null;
-  const pending=new Map();const key='ijr-rico-message-colab-v1';
+  const pending=new Map(),executed=new Set(),resultURLs=new Map();const key='ijr-rico-message-colab-v1';
   let saved;
   try{saved=JSON.parse(localStorage.getItem(key)||'{}');}catch{saved={};}
   if(!saved || typeof saved!=='object')saved={};
   saved.cells=saved.cells||{};saved.notes=saved.notes||{};
+  // Upgrade the old unedited static starter while preserving students' custom drafts.
+  for(const id of ['1:first','1:modify']){const e=saved.cells[id];if(e?.code?.includes('preview_frames["frames"][0]["shapes"][0]["text"] = config.message')||e?.code?.includes('"fps": 1, "seconds": 1, "frames": [{')){e.previousCode=e.code;delete e.code;e.ok=false;}}
   const cellKey=(c,item)=>`${c}:${item.id}`;
   const item=()=>lesson.cells[active];
   const entry=(c,it)=>saved.cells[cellKey(c,it)]||{};
@@ -26,11 +28,13 @@
     const it=item(),e=entry(n,it);$('cellTitle').textContent=it.title;$('codeInstruction').textContent=it.purpose;$('codeEditor').value=source(n,it);$('lessonTitle').textContent=it.title;$('lessonConcept').textContent=it.purpose;
     $('lessonSteps').innerHTML='';it.steps.forEach(t=>{const li=document.createElement('li');li.textContent=t;$('lessonSteps').appendChild(li);});
     $('executionCount').textContent=e.runs?`[${e.runs}]`:'[ ]';$('activityStatus').textContent=e.ok?'Última ejecución correcta · vuelve a ejecutar para restaurar el estado':'Celda pendiente o editada';$('activityStatus').className='validation-status'+(e.ok?' ok':'');
-    $('previousCell').disabled=active===0||busy;$('nextCell').disabled=active===lesson.cells.length-1||busy;renderRail();
+    $('journey').textContent=`Clase ${n} · Paso ${active+1} de ${lesson.cells.length}. ${it.steps[0]} Después pulsa ▶ Ejecutar celda y comprueba la consola.`;
+    $('nextCell').textContent=executed.has(cellKey(n,it))?'Siguiente paso →':'Ejecuta este paso para continuar';
+    $('previousCell').disabled=active===0||busy;$('nextCell').disabled=active===lesson.cells.length-1||busy||!executed.has(cellKey(n,it));renderRail();
   }
-  function lock(value){busy=value;for(const id of ['runCellButton','runCodeButton','resetCodeButton','downloadNotebook','downloadPython','downloadEvidence','restartRuntime'])$(id).disabled=value;$('codeEditor').readOnly=value;$('terminalCommand').disabled=value;$('terminalForm').querySelector('button').disabled=value;$('previousCell').disabled=value||active===0;$('nextCell').disabled=value||active===lesson.cells.length-1;$('classNav').style.pointerEvents=value?'none':'';renderRail();}
+  function lock(value){busy=value;for(const id of ['runCellButton','runCodeButton','resetCodeButton','downloadNotebook','downloadPython','downloadEvidence','restartRuntime','buildAnimation'])$(id).disabled=value;for(const id of ['playPreview','pausePreview','downloadAnimation','downloadVideo'])$(id).disabled=value||!preview;$('codeEditor').readOnly=value;$('terminalCommand').disabled=value;$('terminalForm').querySelector('button').disabled=value;$('previousCell').disabled=value||active===0;$('nextCell').disabled=value||active===lesson.cells.length-1||!executed.has(cellKey(n,item()));$('classNav').style.pointerEvents=value?'none':'';renderRail();}
   function resetWorker(reason='Runtime reiniciado. Ejecuta las celdas de nuevo.'){
-    worker?.terminate();worker=null;ready=false;for(const [id,p] of pending){clearTimeout(p.timer);p.reject(new Error(reason));}pending.clear();badge('Python por iniciar','offline');
+    worker?.terminate();worker=null;ready=false;executed.clear();for(const [id,p] of pending){clearTimeout(p.timer);p.reject(new Error(reason));}pending.clear();badge('Python por iniciar','offline');
   }
   function run(code){
     if(!worker){worker=new Worker('worker.js?v=1');worker.onmessage=({data})=>{const p=pending.get(data.id);if(!p)return;if(data.status==='loading'){badge('Cargando Python…','loading');return;}clearTimeout(p.timer);pending.delete(data.id);badge('Python listo','ready');p.resolve(data);};worker.onerror=()=>resetWorker('No se pudo cargar Python. Revisa la conexión y vuelve a ejecutar.');}
@@ -47,25 +51,45 @@
   }
   function updatePreview(raw){
     if(!raw)return;const next=JSON.parse(raw);player?.pause();player=window.RICO_PLAYER.createPlayer($('animationCanvas'),next,(a,b)=>$('frameInfo').textContent=`${a} / ${b} cuadros · ${next.fps} FPS`);preview=next;
-    for(const id of ['playPreview','pausePreview','downloadAnimation'])$(id).disabled=false;player.play();
+    for(const id of ['playPreview','pausePreview','downloadAnimation','downloadVideo'])$(id).disabled=false;player.play();
+    $('previewHelp').textContent=`Resultado generado: ${next.frames.length} cuadros, ${(next.frames.length/next.fps).toFixed(1)} segundos. Reproduce, descarga el HTML sin conexión o graba el video WebM. La clase 2 añade el corazón y las flores.`;
   }
   async function execute(code,terminal=false){
     if(busy)return;saveCode();lock(true);$('activityStatus').textContent='Ejecutando Python…';$('terminalOutput').classList.remove('error');
     try{
-      await prepare();log(`>>> ${terminal?'Terminal':item().title}`);const result=await run(code);log(result.output);if(!result.ok){log(result.error);$('terminalOutput').classList.add('error');}
-      if(result.ok){updatePreview(result.preview);if(result.config)configSnapshot=result.config;}
+      await prepare();
+      if(!terminal)for(let i=0;i<active;i++){const it=lesson.cells[i],id=cellKey(n,it);if(executed.has(id))continue;log(`>>> Preparar paso ${i+1}: ${it.title}`);const dep=await run(source(n,it));log(dep.output);if(!dep.ok)throw new Error(`Corrige el paso ${i+1}:\n${dep.error}`);executed.add(id);}
+      log(`>>> ${terminal?'Terminal':item().title}`);const result=await run(code);log(result.output);if(!result.ok){log(result.error);$('terminalOutput').classList.add('error');}
+      if(result.ok){if(item().id!=='config'||terminal)updatePreview(result.preview);if(result.config)configSnapshot=result.config;}
       if(!terminal){const id=cellKey(n,item()),e=entry(n,item());saved.cells[id]={...e,code,runs:(e.runs||0)+1,ok:result.ok,output:result.output,error:result.error||'',executedAt:new Date().toISOString()};persist();$('executionCount').textContent=`[${saved.cells[id].runs}]`;}
+      if(!terminal){if(result.ok)executed.add(cellKey(n,item()));else executed.delete(cellKey(n,item()));}
       $('activityStatus').textContent=result.ok?'Python ejecutado · revisa las pruebas y la vista previa':'Error Python real · corrige y vuelve a ejecutar';$('activityStatus').className='validation-status '+(result.ok?'ok':'bad');
+      $('journey').textContent=result.ok?(active===lesson.cells.length-1?'Clase construida. Descarga el resultado y abre la siguiente clase.':`Paso ${active+1} ejecutado. ${preview?'Comprueba el resultado en la vista previa.':'La configuración está lista; el siguiente paso genera cuadros.'} Pulsa Siguiente paso →.`):'Lee el error en la consola, corrige la celda y vuelve a ejecutar.';
+      $('nextCell').textContent=result.ok?'Siguiente paso →':'Corrige y ejecuta para continuar';
     }catch(e){log(e.message);$('activityStatus').textContent='No se completó la ejecución · revisa la consola';$('activityStatus').className='validation-status bad';}
     finally{lock(false);}
   }
-  function download(name,text,type='text/plain'){const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+  function download(name,text,type='text/plain'){const blob=text instanceof Blob?text:new Blob([text],{type});const old=resultURLs.get(name);if(old){URL.revokeObjectURL(old.url);old.link.remove();}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.textContent=`Guardar ${name} (${Math.ceil(blob.size/1024)} KB)`;$('resultLinks').appendChild(a);resultURLs.set(name,{url,link:a});a.click();$('previewHelp').textContent='Archivo preparado. Si el navegador no inicia la descarga, pulsa el enlace Guardar que aparece debajo de la vista previa.';}
+  async function video(){
+    if(!preview||busy)return;
+    if(typeof MediaRecorder==='undefined'||!$('animationCanvas').captureStream){$('previewHelp').textContent='Este navegador no admite grabación de video. Descarga el HTML para conservar y reproducir la animación.';return;}
+    const data=preview;lock(true);player.pause();const chunks=[];let stream,recorder,timer;
+    try{
+      const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));if(!mime)throw new Error('WebM no disponible. Descarga la animación HTML.');
+      player.draw(0);stream=$('animationCanvas').captureStream(data.fps);recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:2500000});recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+      const stopped=new Promise((resolve,reject)=>{recorder.onstop=resolve;recorder.onerror=e=>reject(e.error||new Error('No se pudo grabar el video'));});
+      recorder.start(250);const started=performance.now(),duration=data.frames.length/data.fps*1000;
+      await new Promise(resolve=>{const tick=()=>{const elapsed=performance.now()-started;const frame=Math.min(data.frames.length-1,Math.floor(elapsed*data.fps/1000));player.draw(frame);$('previewHelp').textContent=`Generando video: ${Math.min(100,Math.round(elapsed/duration*100))} %. Mantén esta pestaña visible.`;if(elapsed>=duration){resolve();return;}timer=setTimeout(tick,1000/data.fps);};tick();});
+      recorder.stop();await stopped;const blob=new Blob(chunks,{type:'video/webm'});if(blob.size<100)throw new Error('El video quedó vacío. Vuelve a grabar.');download('mensaje-rico.webm',blob);
+    }catch(e){$('previewHelp').textContent=e.message;}
+    finally{clearTimeout(timer);if(recorder?.state==='recording')recorder.stop();stream?.getTracks().forEach(t=>t.stop());lock(false);}
+  }
   function notebook(){saveCode();return {nbformat:4,nbformat_minor:5,metadata:{kernelspec:{display_name:'Python 3',language:'python',name:'python3'},language_info:{name:'python'}},cells:course.flatMap((c,i)=>[{cell_type:'markdown',metadata:{},source:[`# Clase ${i+1}: ${c.title}\n${c.lead}\n`]},...c.cells.map(it=>({cell_type:'code',execution_count:null,metadata:{},outputs:[],source:source(i+1,it).split(/(?<=\n)/)}))])};}
   $('classLabel').textContent=`Clase ${n} / 4 · ${lesson.title}`;$('lessonTag').textContent=`C${n} · WORKSHOP`;$('classGate').textContent=lesson.gate;$('uml').textContent=lesson.uml.join(' → ');
   for(const id of ['theoryLink','theorySide'])$(id).href='theory.html?class='+n;
   course.forEach((c,i)=>{const a=document.createElement('a');a.href='workshop.html?class='+(i+1);a.className='class-link'+(i+1===n?' active':'');a.textContent='Clase '+(i+1);$('classNav').appendChild(a);});
   $('runCodeButton').onclick=$('runCellButton').onclick=()=>execute($('codeEditor').value);
-  $('codeEditor').addEventListener('input',()=>{saveCode(true);$('activityStatus').textContent='Código editado · vuelve a ejecutar';renderRail();});
+  $('codeEditor').addEventListener('input',()=>{saveCode(true);for(let i=active;i<lesson.cells.length;i++)executed.delete(cellKey(n,lesson.cells[i]));$('activityStatus').textContent='Código editado · vuelve a ejecutar';$('nextCell').disabled=true;renderRail();});
   $('codeEditor').addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();execute($('codeEditor').value);}});
   $('resetCodeButton').onclick=()=>{$('codeEditor').value=item().code;saveCode(true);render();};
   $('previousCell').onclick=()=>select(active-1);$('nextCell').onclick=()=>select(active+1);
@@ -73,6 +97,8 @@
   $('terminalForm').onsubmit=e=>{e.preventDefault();const code=$('terminalCommand').value;if(code.trim())execute(code,true);};
   $('playPreview').onclick=()=>player?.play();$('pausePreview').onclick=()=>player?.pause();
   $('downloadAnimation').onclick=()=>{if(preview)download('mensaje-rico.html',window.RICO_PLAYER.standalone(preview),'text/html');};
+  $('downloadVideo').onclick=video;
+  $('buildAnimation').onclick=()=>{select(n===1?1:0);execute($('codeEditor').value);};
   $('downloadNotebook').onclick=()=>download('rico-mensaje.ipynb',JSON.stringify(notebook(),null,2),'application/x-ipynb+json');
   $('downloadPython').onclick=()=>{saveCode();let code=source(1,course[0].cells[0])+'\n'+source(2,course[1].cells[0]);if(configSnapshot)code+='\nconfig = Config(**json.loads('+JSON.stringify(configSnapshot)+')).validate()\nscene = Scene(config)\npreview_frames = scene.render()\n';const renderer=window.RICO_PLAYER.standalone({fps:1,frames:[{width:720,height:480,background:'#14142b',shapes:[]}]});const before=renderer.indexOf('const data=');const after=renderer.indexOf(';const player=',before);const prefix=renderer.slice(0,before)+'const data=';const suffix=renderer.slice(after);download('crear_mensaje.py',code+'\nfrom pathlib import Path\nhtml = '+JSON.stringify(prefix)+' + json.dumps(preview_frames, ensure_ascii=False).replace("<", "\\\\u003c") + '+JSON.stringify(suffix)+'\nPath(__file__).resolve().with_name("mensaje-rico.html").write_text(html, encoding="utf-8")\nprint("EXPORT: mensaje-rico.html creado junto al generador")\n');};
   $('downloadEvidence').onclick=()=>{saveCode();download('rico-evidencia.json',JSON.stringify({project:'rico-message-animation',exportedAt:new Date().toISOString(),runtime:'Pyodide 0.27.7',cells:saved.cells,notes:saved.notes,preview:{frames:preview?.frames.length||0,fps:preview?.fps||0},approval:'Pendiente de revisión docente; las notas offline son evidencia manual.'},null,2),'application/json');};
