@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="light">
   <meta name="robots" content="noindex,nofollow">
-  <meta name="description" content="Seminar 11 personal project route: institutional-email access to each student's specific project, definition questions and 8-sprint roadmap.">
+  <meta name="description" content="Seminar 11 personal project route: institutional-email access to each student's specific project, definition questions and project construction routes.">
   <title>Seminar 11 · My Specific Project</title>
-  <link rel="stylesheet" href="styles.css?v=20260923-v1">
-  <script defer src="app.js?v=20260923-v1"></script>
+  <link rel="stylesheet" href="styles.css?v=20260930">
+  <script defer src="routes-data.js?v=20260930"></script>
+  <script defer src="app.js?v=20260930"></script>
 </head>
 <body>
   <header class="topbar">
@@ -32,7 +33,7 @@
       <aside class="hero-summary">
         <div><strong>1</strong><span>Institutional email</span></div>
         <div><strong>1</strong><span>Personal project route</span></div>
-        <div><strong>8</strong><span>Project sprints</span></div>
+        <div><strong>4</strong><span>Stages · animation, CAD, cybersecurity</span></div>
       </aside>
     </section>
 
@@ -106,11 +107,12 @@
         <div class="roadmap-head">
           <div>
             <p class="eyebrow">STEP 02 · BUILD THE PROJECT</p>
-            <h2>8-sprint personal roadmap</h2>
+            <h2 id="roadmapTitle">Personal project roadmap</h2>
           </div>
           <span class="roadmap-rule">define → design → build → test → document → defend</span>
         </div>
-        <p class="roadmap-copy">Each sprint ends with verifiable evidence. The technical track gives you tools; this roadmap applies them to your own project.</p>
+        <div id="routeActions" class="top-actions"></div>
+        <p id="roadmapCopy" class="roadmap-copy">Each sprint ends with verifiable evidence. The technical track gives you tools; this roadmap applies them to your own project.</p>
         <div id="sprintGrid" class="sprint-grid"></div>
       </section>
 
