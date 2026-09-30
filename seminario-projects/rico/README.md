@@ -40,3 +40,6 @@ native Python. Artifacts contain a workshop screenshot and generated deliverable
 
 The editable Python runtime runs in a worker; a 60-second timeout terminates
 the worker and allows retry instead of leaving the UI blocked by a loop.
+
+## Guided animation and video
+Class 1 now renders a moving text sequence. Generate animation restores prerequisites and displays the result. The next step unlocks after successful execution. HTML and WebM exports use actual Python frames; persistent save links remain available if the browser does not start a download. WebM recording takes the animation duration and requires a canvas/MediaRecorder-capable browser; HTML remains available otherwise.

@@ -1,7 +1,7 @@
 window.RICO_COURSE = [
   {
-    "title": "Contrato y primera escena",
-    "lead": "Define tu mensaje, fondo y duración. Construye la primera salida visible antes de añadir efectos.",
+    "title": "Mensaje y primera animación",
+    "lead": "Escribe tu mensaje, genera cuadros en Python, comprueba el movimiento y descarga tu primera animación. En la clase 2 construirás el corazón y las flores.",
     "theory": [
       "Config conserva datos; la escena los utiliza. La validación convierte el contrato en reglas comprobables.",
       "Un cuadro es una lista de instrucciones visuales. Python calcula esa lista y el canvas la representa."
@@ -18,22 +18,22 @@ window.RICO_COURSE = [
         "title": "1 · Contrato y configuración",
         "purpose": "Cambia el texto y los colores antes de ejecutar.",
         "steps": [
-          "Predice qué cambia al modificar message.",
-          "Edita los valores de Config.",
-          "Ejecuta y lee CONTRACT en la consola."
+          "Busca message: str y escribe tu mensaje entre comillas. Cambia background si quieres otro fondo.",
+          "Pulsa ▶ Ejecutar celda. Espera Python listo y busca CONTRACT en la consola.",
+          "Esta celda configura los datos. Pulsa Siguiente celda para construir la animación."
         ],
         "code": "from dataclasses import dataclass, replace\nimport math, json\n\n@dataclass\nclass Config:\n    message: str = \"Para ti, con cariño\"\n    background: str = \"#14142b\"\n    heart_color: str = \"#f76491\"\n    flower_color: str = \"#ffcc65\"\n    width: int = 720\n    height: int = 480\n    seconds: float = 4.0\n    fps: int = 24\n    flower_count: int = 6\n\n    def validate(self):\n        if not self.message.strip() or len(self.message) > 60:\n            raise ValueError(\"El mensaje debe tener entre 1 y 60 caracteres\")\n        if not 1 <= self.seconds <= 8 or not 1 <= self.fps <= 60:\n            raise ValueError(\"Duración: 1–8 s; FPS: 1–60\")\n        if not 0 <= self.flower_count <= 12:\n            raise ValueError(\"Flores: 0–12\")\n        if not 320 <= self.width <= 1280 or not 240 <= self.height <= 960:\n            raise ValueError(\"Resolución fuera del rango del laboratorio\")\n        for color in (self.background, self.heart_color, self.flower_color):\n            if len(color) != 7 or not color.startswith(\"#\"):\n                raise ValueError(\"Usa colores #RRGGBB\")\n            int(color[1:], 16)\n        return self\n\nconfig = Config().validate()\nprint(\"CONTRACT:\", config.message, config.seconds, \"segundos\")\n"
       },
       {
         "id": "first",
-        "title": "2 · Fondo y mensaje",
-        "purpose": "Produce el primer cuadro visible calculado en Python.",
+        "title": "2 · Genera tu primera animación",
+        "purpose": "Python crea una secuencia: tu mensaje sube suavemente. Después podrás descargar HTML o video.",
         "steps": [
-          "Usa config como única fuente de datos.",
-          "Ejecuta y observa la vista previa.",
-          "Explica cómo pasa el mensaje del objeto al cuadro."
+          "Lee first_animation: recorre segundos × FPS; t es el tiempo de cada cuadro.",
+          "Pulsa ▶ Ejecutar celda. Deben aparecer 96 cuadros con la configuración inicial.",
+          "Observa el mensaje en movimiento. Pulsa Reproducir para repetirlo y Descargar video para guardar el resultado."
         ],
-        "code": "config.validate()\npreview_frames = {\"fps\": 1, \"seconds\": 1, \"frames\": [{\n    \"time\": 0, \"width\": config.width, \"height\": config.height,\n    \"background\": config.background,\n    \"shapes\": [{\"kind\": \"text\", \"text\": config.message,\n                \"x\": config.width / 2, \"y\": config.height / 2,\n                \"size\": 28, \"color\": \"#ffffff\", \"alpha\": 1}]}]}\nprint(\"BUILD: primera escena lista\")\n"
+        "code": "def first_animation(cfg):\n    cfg.validate()\n    frames = []\n    for i in range(round(cfg.seconds * cfg.fps)):\n        t = i / cfg.fps\n        # La posición cambia con el tiempo: esto crea movimiento.\n        y = cfg.height / 2 + 22 * math.sin(2 * math.pi * t / cfg.seconds)\n        frames.append({\"time\": t, \"width\": cfg.width, \"height\": cfg.height,\n                       \"background\": cfg.background,\n                       \"shapes\": [{\"kind\": \"text\", \"text\": cfg.message,\n                                   \"x\": cfg.width / 2, \"y\": y,\n                                   \"size\": 28, \"color\": \"#ffffff\", \"alpha\": 1}]})\n    return {\"fps\": cfg.fps, \"seconds\": cfg.seconds, \"frames\": frames}\n\npreview_frames = first_animation(config)\nprint(\"BUILD:\", len(preview_frames[\"frames\"]), \"cuadros; mensaje en movimiento\")\n"
       },
       {
         "id": "test",
@@ -44,18 +44,18 @@ window.RICO_COURSE = [
           "Prueba un mensaje vacío y observa el rechazo.",
           "El assert debe pasar antes de avanzar."
         ],
-        "code": "assert preview_frames[\"frames\"][0][\"background\"] == config.background\nassert preview_frames[\"frames\"][0][\"shapes\"][0][\"text\"] == config.message\ntry:\n    replace(config, message=\"\").validate()\nexcept ValueError:\n    print(\"PASS: el contrato rechaza texto vacío\")\nelse:\n    raise AssertionError(\"Se aceptó un mensaje vacío\")\nprint(\"PASS C1: contrato y cuadro inicial\")\n"
+        "code": "assert preview_frames[\"frames\"][0][\"background\"] == config.background\nassert preview_frames[\"frames\"][0][\"shapes\"][0][\"text\"] == config.message\ntry:\n    replace(config, message=\"\").validate()\nexcept ValueError:\n    print(\"PASS: el contrato rechaza texto vacío\")\nelse:\n    raise AssertionError(\"Se aceptó un mensaje vacío\")\nprint(\"PASS C1: contrato y cuadro inicial\")\nassert len(preview_frames[\"frames\"]) == round(config.seconds * config.fps)\nassert len({round(f[\"shapes\"][0][\"y\"], 2) for f in preview_frames[\"frames\"]}) > 1\nprint(\"PASS: el mensaje cambia de posición entre cuadros\")\n"
       },
       {
         "id": "modify",
         "title": "4 · Modifica y explica",
         "purpose": "Demuestra que el producto responde a un cambio.",
         "steps": [
-          "Elige tu propio mensaje.",
-          "Actualiza el cuadro y vuelve a ejecutar.",
-          "Explica por qué no duplicaste el texto en el motor."
+          "Escribe tu mensaje en message=\"Gracias por estar aquí\".",
+          "Pulsa ▶ Ejecutar celda: se recalculan todos los cuadros con el mensaje nuevo.",
+          "Descarga la animación HTML o el video. Abre el archivo y comprueba tu mensaje antes de pasar a Clase 2."
         ],
-        "code": "config = replace(config, message=\"Gracias por estar aquí\").validate()\npreview_frames[\"frames\"][0][\"shapes\"][0][\"text\"] = config.message\nprint(\"MODIFY:\", config.message)\n"
+        "code": "config = replace(config, message=\"Gracias por estar aquí\").validate()\npreview_frames = first_animation(config)\nprint(\"MODIFY:\", config.message, \"en todos los cuadros\")\n"
       }
     ]
   },
