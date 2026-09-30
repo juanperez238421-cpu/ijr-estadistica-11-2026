@@ -101,7 +101,7 @@ export class OopUmlStore{
     return this.attempt;
   }
   async recordSession(sessionKey,evidence){
-    if(!this.attempt)throw new Error('Register before recording evidence.');
+    if(!this.attempt)throw new Error('Open the OOP + UML Hub before recording evidence.');
     const complete=['model','code','test','explain'].every(k=>evidence?.[k]===true);
     if(!complete)throw new Error('Complete model, code, test and explanation evidence first.');
     if(this.attempt.backend==='supabase'&&this.attempt.token){
