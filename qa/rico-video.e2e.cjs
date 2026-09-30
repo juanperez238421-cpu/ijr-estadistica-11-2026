@@ -9,7 +9,7 @@ assert.equal(await page.locator('#nextCell').isEnabled(),false);
 await page.locator('#buildAnimation').click();await page.waitForFunction(()=>!document.querySelector('#buildAnimation').disabled,{},{timeout:90000});
 assert.match(await page.locator('#frameInfo').innerText(),/96 cuadros/);assert.equal(await page.locator('#downloadVideo').isEnabled(),true);
 const promise=page.waitForEvent('download');await page.locator('#downloadVideo').click();const d=await promise;await d.saveAs('work/rico-video-test.webm');const bytes=fs.readFileSync('work/rico-video-test.webm');assert.equal(bytes.subarray(0,4).toString('hex'),'1a45dfa3');assert.ok(bytes.length>5000);
-assert.equal(await page.locator('#resultLinks a').count(),1);
+assert.equal(await page.locator('#resultLinks a[download]').count(),1);
 await page.screenshot({path:'work/rico-video-ready.png',fullPage:true});
 const player=await browser.newPage();await player.setContent('<video controls src="file:///'+process.cwd().replace(/\\/g,'/')+'/work/rico-video-test.webm"></video>');
 // A file-origin player can decode the real saved file without contacting the web.

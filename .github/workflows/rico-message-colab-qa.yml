@@ -2,9 +2,9 @@ name: Rico Message Colab QA
 on:
   push:
     branches: [main]
-    paths: ['seminario-projects/**', 'qa/rico-message-colab.e2e.cjs', '.github/workflows/rico-message-colab-qa.yml']
+    paths: ['seminario-projects/**', 'qa/rico-message-colab.e2e.cjs', 'qa/rico-video.e2e.cjs', '.github/workflows/rico-message-colab-qa.yml']
   pull_request:
-    paths: ['seminario-projects/**', 'qa/rico-message-colab.e2e.cjs', '.github/workflows/rico-message-colab-qa.yml']
+    paths: ['seminario-projects/**', 'qa/rico-message-colab.e2e.cjs', 'qa/rico-video.e2e.cjs', '.github/workflows/rico-message-colab-qa.yml']
   workflow_dispatch:
 permissions:
   contents: read

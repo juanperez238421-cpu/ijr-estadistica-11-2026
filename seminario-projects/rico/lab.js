@@ -10,7 +10,11 @@
   if(!saved || typeof saved!=='object')saved={};
   saved.cells=saved.cells||{};saved.notes=saved.notes||{};
   // Upgrade the old unedited static starter while preserving students' custom drafts.
-  for(const id of ['1:first','1:modify']){const e=saved.cells[id];if(e?.code?.includes('preview_frames["frames"][0]["shapes"][0]["text"] = config.message')||e?.code?.includes('"fps": 1, "seconds": 1, "frames": [{')){e.previousCode=e.code;delete e.code;e.ok=false;}}
+  const legacy={
+    '1:first':'config.validate()\npreview_frames = {"fps": 1, "seconds": 1, "frames": [{\n    "time": 0, "width": config.width, "height": config.height,\n    "background": config.background,\n    "shapes": [{"kind": "text", "text": config.message,\n                "x": config.width / 2, "y": config.height / 2,\n                "size": 28, "color": "#ffffff", "alpha": 1}]}]}\nprint("BUILD: primera escena lista")\n',
+    '1:modify':'config = replace(config, message="Gracias por estar aquí").validate()\npreview_frames["frames"][0]["shapes"][0]["text"] = config.message\nprint("MODIFY:", config.message)\n'
+  };
+  for(const [id,original] of Object.entries(legacy)){const e=saved.cells[id];if(e?.previousCode&&e.previousCode!==original&&!e.code)e.code=e.previousCode;if(e?.code===original){e.previousCode=e.code;delete e.code;e.ok=false;}}
   const cellKey=(c,item)=>`${c}:${item.id}`;
   const item=()=>lesson.cells[active];
   const entry=(c,it)=>saved.cells[cellKey(c,it)]||{};
@@ -69,7 +73,13 @@
     }catch(e){log(e.message);$('activityStatus').textContent='No se completó la ejecución · revisa la consola';$('activityStatus').className='validation-status bad';}
     finally{lock(false);}
   }
-  function download(name,text,type='text/plain'){const blob=text instanceof Blob?text:new Blob([text],{type});const old=resultURLs.get(name);if(old){URL.revokeObjectURL(old.url);old.link.remove();}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.textContent=`Guardar ${name} (${Math.ceil(blob.size/1024)} KB)`;$('resultLinks').appendChild(a);resultURLs.set(name,{url,link:a});a.click();$('previewHelp').textContent='Archivo preparado. Si el navegador no inicia la descarga, pulsa el enlace Guardar que aparece debajo de la vista previa.';}
+  function download(name,text,type='text/plain'){
+    const blob=text instanceof Blob?text:new Blob([text],{type}),old=resultURLs.get(name);if(old){URL.revokeObjectURL(old.url);old.link.remove();}
+    const url=URL.createObjectURL(blob),group=document.createElement('span'),a=document.createElement('a');a.href=url;a.download=name;a.textContent=`Guardar ${name} (${Math.ceil(blob.size/1024)} KB)`;group.appendChild(a);
+    if(blob.type==='video/webm'||blob.type==='text/html'){const view=document.createElement('a');view.href=url;view.target='_blank';view.rel='noopener';view.textContent=blob.type==='video/webm'?'Ver video':'Abrir animación';group.appendChild(view);}
+    if(typeof window.showSaveFilePicker==='function'){const save=document.createElement('button');save.className='run-button';save.textContent='Elegir dónde guardar';save.onclick=async()=>{try{const handle=await window.showSaveFilePicker({suggestedName:name});const file=await handle.createWritable();await file.write(blob);await file.close();$('previewHelp').textContent=`Archivo guardado: ${name}.`;}catch(e){if(e.name!=='AbortError')$('previewHelp').textContent='No se pudo usar el selector de archivos. Usa Guardar o abre esta página en Edge/Chrome.';}};group.appendChild(save);}
+    $('resultLinks').appendChild(group);resultURLs.set(name,{url,link:group});a.click();$('previewHelp').textContent='Archivo preparado. Usa Guardar o Elegir dónde guardar. Si el navegador integrado no permite descargar, abre esta misma página en Edge o Chrome.';
+  }
   async function video(){
     if(!preview||busy)return;
     if(typeof MediaRecorder==='undefined'||!$('animationCanvas').captureStream){$('previewHelp').textContent='Este navegador no admite grabación de video. Descarga el HTML para conservar y reproducir la animación.';return;}

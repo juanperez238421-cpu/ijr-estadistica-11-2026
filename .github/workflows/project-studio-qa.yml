@@ -1,0 +1,48 @@
+name: Specific Project Studios QA
+on:
+  push:
+    branches: [main]
+    paths: ['seminario-projects/**', 'qa/project-studio.e2e.cjs', '.github/workflows/project-studio-qa.yml']
+  pull_request:
+    paths: ['seminario-projects/**', 'qa/project-studio.e2e.cjs', '.github/workflows/project-studio-qa.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  executable-products:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install pinned browser
+        run: |
+          node --check seminario-projects/studio/studio.js
+          node --check seminario-projects/studio/database.js
+          node --check seminario-projects/studio/worker.js
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Four executable routes, offline products, database and real HTTP
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/studio-http.log 2>&1 &
+          STATIC_PID=$!
+          trap 'kill "$STATIC_PID" "${LAB_PID:-}" 2>/dev/null || true' EXIT
+          sleep 1
+          node qa/project-studio.e2e.cjs
+          python3 work/laboratorio_web.py > /tmp/cyber-http.log 2>&1 &
+          LAB_PID=$!
+          sleep 1
+          python3 work/prueba_local.py
+          test -s work/soporte.stl
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: specific-project-products
+          path: |
+            work/*-studio.png
+            work/*-app.html
+            work/soporte.stl
+            work/laboratorio_web.py
+            work/prueba_local.py

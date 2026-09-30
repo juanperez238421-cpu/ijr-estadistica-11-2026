@@ -74,10 +74,17 @@ function renderProject(data){
 
   const routeKey=project.project_slug==='rico-portable-python-visual-show'||/RICO\s+PARAMO/i.test(student.name||'')?'animation':project.track_slug==='3d-programming'?'cad':project.track_slug==='cybersecurity'?'cyber':null;
   const route=window.PROJECT_ROUTES?.[routeKey];
-  const sprints=route?route.stages.map((step,i)=>({n:i+1,title:step.title,goal:step.build.join(' '),deliverable:step.evidence})):Array.isArray(project.sprints)?project.sprints:[];
+  const studioKey=routeKey==='cad'||routeKey==='cyber'?routeKey:project.project_slug==='gomez-gta-v-mod-showcase'?'gta':project.track_slug==='web'?'clients':null;
+  const studio=window.STUDIO_COURSES?.[studioKey];
+  const sprints=studio?studio.classes.map((step,i)=>({n:i+1,title:step.title,goal:step.lead,deliverable:step.gate})):route?route.stages.map((step,i)=>({n:i+1,title:step.title,goal:step.build.join(' '),deliverable:step.evidence})):Array.isArray(project.sprints)?project.sprints:[];
   $('roadmapTitle').textContent=route?'4 etapas de construcción':`${sprints.length} etapas del proyecto`;
   $('roadmapCopy').textContent=route?'Cada etapa corresponde a una clase con Theory, Workshop, Test, Evidence y criterio de avance. Abre la guía completa para trabajar.':'Each stage ends with verifiable evidence. The technical track gives you tools; this roadmap applies them to your own project.';
   $('routeActions').innerHTML=routeKey==='animation'?'<a class="button button-dark" href="rico/index.html">Abrir proyecto Rico · Colab real</a><a class="button button-light" href="rico/workshop.html?class=1">Construir el mensaje · Workshop</a>':route?'<a class="button button-dark" href="route.html?project='+routeKey+'">Abrir Theory + Workshop · 4 etapas</a>':'';
+  if(studio){
+    $('roadmapTitle').textContent='4 clases · construir, ejecutar y descargar';
+    $('roadmapCopy').textContent=project.project_mode==='guided_definition'?'Taller de partida para definir tu producto con el docente. La asignación y las decisiones pendientes se mantienen.':'Theory, Workshop ejecutable, pruebas y producto descargable en cada ruta.';
+    $('routeActions').innerHTML='<a class="button button-dark" href="studio/index.html?project='+studioKey+'">Abrir proyecto · Colab real</a><a class="button button-light" href="studio/workshop.html?project='+studioKey+'&class=1">Construir · Workshop</a>'+(project.track_slug==='web'?'<a class="button button-light" href="studio/index.html">Elegir registro de clientes o catálogo GTA V</a>':'');
+  }
 
   $('sprintGrid').innerHTML=sprints.map(step=>{
     return '<article class="sprint-card">'+
