@@ -81,7 +81,24 @@ jobs:
           node --check seminario-projects/app.js
           grep -q 'seminar-project-access' seminario-projects/app.js
           grep -q '@ijr\\.edu\\.co' seminario-projects/app.js
-          grep -Eq '8-sprint personal roadmap|Personal project roadmap|4</strong><span>Stages' seminario-projects/index.html
+          grep -q 'id="roadmapTitle"' seminario-projects/index.html
+          test -s seminario-projects/route.html
+          node --check seminario-projects/routes-data.js
+          node --check seminario-projects/routes.js
+          node - <<'NODE'
+          const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');
+          const context={window:{}};
+          vm.runInNewContext(fs.readFileSync('seminario-projects/routes-data.js','utf8'),context);
+          for(const key of ['animation','cad','cyber']){
+            const route=context.window.PROJECT_ROUTES[key];
+            assert.equal(route.stages.length,4);
+            for(const stage of route.stages){
+              assert.ok(stage.theory.length && stage.build.length && stage.test.length);
+              assert.ok(stage.evidence && stage.gate);
+            }
+          }
+          console.log('PASS: three complete four-stage project guides');
+          NODE
           grep -q 'href="../seminario/"' seminario-projects/index.html
 
       - name: Validate existing learning assets remain present
