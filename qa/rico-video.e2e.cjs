@@ -1,10 +1,11 @@
+const {installTeamFixture,startTeam}=require('./seminar-team-fixture.cjs');
 const {chromium}=require('playwright');
 const fs=require('node:fs'),assert=require('node:assert/strict');
 (async()=>{
 fs.mkdirSync('work',{recursive:true});
 const browser=await chromium.launch({...(process.env.RICO_TEST_BROWSER?{executablePath:process.env.RICO_TEST_BROWSER}:{}),headless:true});
-const page=await browser.newPage({acceptDownloads:true});const errors=[];page.on('pageerror',e=>errors.push(e.message));
-await page.goto((process.env.RICO_TEST_BASE||'http://127.0.0.1:4173/seminario-projects/rico/')+'workshop.html?class=1');
+const page=await browser.newPage({acceptDownloads:true});const errors=[];page.on('pageerror',e=>errors.push(e.message));await installTeamFixture(page);
+await page.goto((process.env.RICO_TEST_BASE||'http://127.0.0.1:4173/seminario-projects/rico/')+'workshop.html?class=1');await startTeam(page);
 assert.equal(await page.locator('#nextCell').isEnabled(),false);
 await page.locator('#buildAnimation').click();await page.waitForFunction(()=>!document.querySelector('#buildAnimation').disabled,{},{timeout:90000});
 assert.match(await page.locator('#frameInfo').innerText(),/96 cuadros/);assert.equal(await page.locator('#downloadVideo').isEnabled(),true);

@@ -24,8 +24,9 @@
   function log(text){$('terminalOutput').textContent+=String(text)+'\n';$('terminalOutput').scrollTop=$('terminalOutput').scrollHeight;}
   function badge(text,kind){$('runtimeBadge').textContent=text;$('runtimeBadge').className='runtime-badge '+kind;}
   function renderRail(){
-    $('stepRail').innerHTML='';lesson.cells.forEach((it,i)=>{const b=document.createElement('button');b.className='rail-step'+(i===active?' active':'')+(entry(n,it).ok?' done':'');b.textContent=i+1;b.title=it.title;b.setAttribute('aria-current',i===active?'step':'false');b.disabled=busy;b.onclick=()=>select(i);$('stepRail').appendChild(b);});
-    const done=lesson.cells.filter(it=>entry(n,it).ok).length;$('progressBar').style.width=(done/lesson.cells.length*100)+'%';
+    const completed=it=>window.IJR_SEMINAR_TEAM?window.IJR_SEMINAR_TEAM.isComplete(n,it.id):entry(n,it).ok;
+    $('stepRail').innerHTML='';lesson.cells.forEach((it,i)=>{const b=document.createElement('button');b.className='rail-step'+(i===active?' active':'')+(completed(it)?' done':'');b.textContent=i+1;b.title=it.title;b.setAttribute('aria-current',i===active?'step':'false');b.disabled=busy;b.onclick=()=>select(i);$('stepRail').appendChild(b);});
+    const done=lesson.cells.filter(completed).length;$('progressBar').style.width=(done/lesson.cells.length*100)+'%';
   }
   function select(i){if(busy)return;saveCode();active=Math.max(0,Math.min(lesson.cells.length-1,i));render();}
   function render(){
@@ -61,11 +62,12 @@
   async function execute(code,terminal=false){
     if(busy)return;saveCode();lock(true);$('activityStatus').textContent='Ejecutando Python…';$('terminalOutput').classList.remove('error');
     try{
+      await window.IJR_SEMINAR_TEAM?.ready;
       await prepare();
-      if(!terminal)for(let i=0;i<active;i++){const it=lesson.cells[i],id=cellKey(n,it);if(executed.has(id))continue;log(`>>> Preparar paso ${i+1}: ${it.title}`);const dep=await run(source(n,it));log(dep.output);if(!dep.ok)throw new Error(`Corrige el paso ${i+1}:\n${dep.error}`);executed.add(id);}
+      if(!terminal)for(let i=0;i<active;i++){const it=lesson.cells[i],id=cellKey(n,it);if(executed.has(id))continue;log(`>>> Preparar paso ${i+1}: ${it.title}`);const dep=await run(source(n,it));log(dep.output);if(!dep.ok)throw new Error(`Corrige el paso ${i+1}:\n${dep.error}`);await window.IJR_SEMINAR_TEAM?.record(it.id,source(n,it),dep.output);executed.add(id);}
       log(`>>> ${terminal?'Terminal':item().title}`);const result=await run(code);log(result.output);if(!result.ok){log(result.error);$('terminalOutput').classList.add('error');}
       if(result.ok){if(item().id!=='config'||terminal)updatePreview(result.preview);if(result.config)configSnapshot=result.config;}
-      if(!terminal){const id=cellKey(n,item()),e=entry(n,item());saved.cells[id]={...e,code,runs:(e.runs||0)+1,ok:result.ok,output:result.output,error:result.error||'',executedAt:new Date().toISOString()};persist();$('executionCount').textContent=`[${saved.cells[id].runs}]`;}
+      if(!terminal){if(result.ok)await window.IJR_SEMINAR_TEAM?.record(item().id,code,result.output);const id=cellKey(n,item()),e=entry(n,item());saved.cells[id]={...e,code,runs:(e.runs||0)+1,ok:result.ok,output:result.output,error:result.error||'',executedAt:new Date().toISOString()};persist();$('executionCount').textContent=`[${saved.cells[id].runs}]`;}
       if(!terminal){if(result.ok)executed.add(cellKey(n,item()));else executed.delete(cellKey(n,item()));}
       $('activityStatus').textContent=result.ok?'Python ejecutado · revisa las pruebas y la vista previa':'Error Python real · corrige y vuelve a ejecutar';$('activityStatus').className='validation-status '+(result.ok?'ok':'bad');
       $('journey').textContent=result.ok?(active===lesson.cells.length-1?'Clase construida. Descarga el resultado y abre la siguiente clase.':`Paso ${active+1} ejecutado. ${preview?'Comprueba el resultado en la vista previa.':'La configuración está lista; el siguiente paso genera cuadros.'} Pulsa Siguiente paso →.`):'Lee el error en la consola, corrige la celda y vuelve a ejecutar.';
@@ -111,8 +113,10 @@
   $('buildAnimation').onclick=()=>{select(n===1?1:0);execute($('codeEditor').value);};
   $('downloadNotebook').onclick=()=>download('rico-mensaje.ipynb',JSON.stringify(notebook(),null,2),'application/x-ipynb+json');
   $('downloadPython').onclick=()=>{saveCode();let code=source(1,course[0].cells[0])+'\n'+source(2,course[1].cells[0]);if(configSnapshot)code+='\nconfig = Config(**json.loads('+JSON.stringify(configSnapshot)+')).validate()\nscene = Scene(config)\npreview_frames = scene.render()\n';const renderer=window.RICO_PLAYER.standalone({fps:1,frames:[{width:720,height:480,background:'#14142b',shapes:[]}]});const before=renderer.indexOf('const data=');const after=renderer.indexOf(';const player=',before);const prefix=renderer.slice(0,before)+'const data=';const suffix=renderer.slice(after);download('crear_mensaje.py',code+'\nfrom pathlib import Path\nhtml = '+JSON.stringify(prefix)+' + json.dumps(preview_frames, ensure_ascii=False).replace("<", "\\\\u003c") + '+JSON.stringify(suffix)+'\nPath(__file__).resolve().with_name("mensaje-rico.html").write_text(html, encoding="utf-8")\nprint("EXPORT: mensaje-rico.html creado junto al generador")\n');};
-  $('downloadEvidence').onclick=()=>{saveCode();download('rico-evidencia.json',JSON.stringify({project:'rico-message-animation',exportedAt:new Date().toISOString(),runtime:'Pyodide 0.27.7',cells:saved.cells,notes:saved.notes,preview:{frames:preview?.frames.length||0,fps:preview?.fps||0},approval:'Pendiente de revisión docente; las notas offline son evidencia manual.'},null,2),'application/json');};
+  $('downloadEvidence').onclick=()=>{saveCode();download('rico-evidencia.json',JSON.stringify({project:'rico-message-animation',exportedAt:new Date().toISOString(),runtime:'Pyodide 0.27.7',team:window.IJR_SEMINAR_TEAM?.snapshot(),cells:saved.cells,notes:saved.notes,preview:{frames:preview?.frames.length||0,fps:preview?.fps||0},approval:'Pendiente de revisión docente; las notas offline son evidencia manual.'},null,2),'application/json');};
   $('evidenceNotes').value=saved.notes[n]||'';$('evidenceNotes').oninput=()=>{saved.notes[n]=$('evidenceNotes').value;persist();};
   $('restartRuntime').onclick=()=>{resetWorker();player?.pause();preview=null;for(const id of ['playPreview','pausePreview','downloadAnimation'])$(id).disabled=true;log('Runtime reiniciado. Los borradores se conservan.');};
+  window.addEventListener('ijr:seminar-team-progress',renderRail);
+  window.addEventListener('ijr:seminar-team-started',renderRail);
   window.addEventListener('beforeunload',()=>worker?.terminate());render();
 })();
