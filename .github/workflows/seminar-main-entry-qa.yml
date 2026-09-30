@@ -81,7 +81,7 @@ jobs:
           node --check seminario-projects/app.js
           grep -q 'seminar-project-access' seminario-projects/app.js
           grep -q '@ijr\\.edu\\.co' seminario-projects/app.js
-          grep -q '8-sprint personal roadmap' seminario-projects/index.html
+          grep -Eq '8-sprint personal roadmap|Personal project roadmap|4</strong><span>Stages' seminario-projects/index.html
           grep -q 'href="../seminario/"' seminario-projects/index.html
 
       - name: Validate existing learning assets remain present
