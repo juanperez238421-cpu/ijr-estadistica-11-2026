@@ -10,6 +10,7 @@ on:
       - "supabase/migrations/20260831163247_seminar_oop_uml_deep_stage1_v4.sql"
       - "supabase/migrations/20260923174000_seminar_oop_uml_state_behavior_v6.sql"
       - "supabase/migrations/20260923175500_seminar_oop_uml_state_behavior_v6_integrity.sql"
+      - "supabase/migrations/20260930130215_seminar_oop_direct_entry_preserve_progress_v10.sql"
       - ".github/workflows/seminar-oop-uml-qa.yml"
   pull_request:
     paths:
@@ -109,11 +110,16 @@ jobs:
           }
           console.log('Institutional @ijr.edu.co access validator verified');
           NODE
-          grep -q "startOpen" seminario-oop-uml/store.js
-          grep -q "startOpen" seminario-oop-uml/hub.js
+          ! grep -q "startOpen" seminario-oop-uml/store.js
+          ! grep -q "startOpen" seminario-oop-uml/hub.js
           grep -q "IJR_SEMINAR_MAIN_ENTRY" seminario-oop-uml/hub.js
           grep -q "ijr-seminar-main-registration-v2" seminario-oop-uml/hub.js
+          grep -q "store.startWithEmail" seminario-oop-uml/hub.js
+          grep -q "No local/untracked session was created" seminario-oop-uml/hub.js
+          grep -q "seminar_oop_uml_start_email_v10" seminario-oop-uml/config.js
+          grep -q "canonical historical attempt" seminario-oop-uml/hub.js
           grep -q 'id="bootPanel"' seminario-oop-uml/index.html
+          grep -q 'id="retryBoot"' seminario-oop-uml/index.html
           ! grep -q 'id="registrationForm"' seminario-oop-uml/index.html
           ! grep -q 'id="institutionalEmail"' seminario-oop-uml/index.html
           ! grep -q "Enter with your institutional email." seminario-oop-uml/index.html
@@ -261,7 +267,10 @@ jobs:
           set -euo pipefail
           grep -q "sb_publishable_" seminario-oop-uml/config.js
           grep -q "seminar_course_start_team" seminario-oop-uml/config.js
-          grep -q "seminar_oop_uml_start_email_v9" seminario-oop-uml/config.js
+          grep -q "seminar_oop_uml_start_email_v10" seminario-oop-uml/config.js
+          grep -q "roster_canonical_resume" supabase/migrations/20260930130215_seminar_oop_direct_entry_preserve_progress_v10.sql
+          grep -q "seminar_master_dashboard_v3" supabase/migrations/20260930130215_seminar_oop_direct_entry_preserve_progress_v10.sql
+          grep -q "canonical_progress_preserved" supabase/migrations/20260930130215_seminar_oop_direct_entry_preserve_progress_v10.sql
           grep -q "startWithEmail" seminario-oop-uml/store.js
           grep -q "seminar_course_resume" seminario-oop-uml/config.js
           grep -q "seminar_oop_uml_snapshot" seminario-oop-uml/config.js
