@@ -1,0 +1,43 @@
+name: Rico Message Colab QA
+on:
+  push:
+    branches: [main]
+    paths: ['seminario-projects/**', 'qa/rico-message-colab.e2e.cjs', '.github/workflows/rico-message-colab-qa.yml']
+  pull_request:
+    paths: ['seminario-projects/**', 'qa/rico-message-colab.e2e.cjs', '.github/workflows/rico-message-colab-qa.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Syntax and pinned browser runtime
+        run: |
+          node --check seminario-projects/rico/lab.js
+          node --check seminario-projects/rico/worker.js
+          node --check seminario-projects/rico/player.js
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Real Python, animation, error recovery, export and mobile
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/rico-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          sleep 1
+          node qa/rico-message-colab.e2e.cjs
+          python3 work/crear_mensaje_test.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rico-message-colab-evidence
+          path: |
+            work/rico-colab-preview.png
+            work/mensaje-rico-test.html
+            work/crear_mensaje_test.py
+            work/rico-test.ipynb
