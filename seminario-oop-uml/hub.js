@@ -1,4 +1,4 @@
-import {OopUmlStore,isInstitutionalEmail} from './store.js?v=20260930-access-v4';
+import {OopUmlStore,isInstitutionalEmail} from './store.js?v=20260930-progress-v6';
 
 const cfg=window.IJR_OOP_UML_CONFIG;
 const data=window.IJR_OOP_UML_DATA;
@@ -6,36 +6,53 @@ const store=new OopUmlStore(cfg);
 const $=id=>document.getElementById(id);
 const ACCESS_KEY='ijr-seminar-oop-email-v3';
 let attempt=null;
+let booting=false;
 
-function esc(value=''){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));}
+function esc(value=''){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function isComplete(topic){return attempt?.sessions?.[topic.sessionKey]?.status==='completed';}
-function setStatus(message,type=''){const node=$('registrationStatus');if(!node)return;node.textContent=message;node.className=`inline-status ${type}`.trim();}
 function normalizeEmail(value){return String(value||'').trim().toLowerCase();}
-function institutionalEmail(value){return isInstitutionalEmail(value);}
 function currentLanguage(){return attempt?.language||'python';}
-function saveEmail(email){localStorage.setItem(ACCESS_KEY,JSON.stringify({email:normalizeEmail(email),validatedAt:Date.now()}));}
-function savedEmail(){try{const x=JSON.parse(localStorage.getItem(ACCESS_KEY)||'null');return x&&institutionalEmail(x.email)?normalizeEmail(x.email):'';}catch{return '';}}
-function friendlyError(error){
-  const raw=String(error?.message||'');
-  if(raw.includes('institutional_email_required'))return 'Use only your institutional @ijr.edu.co email.';
-  if(raw.includes('invalid_student_group'))return 'The institutional email exists, but its Grade 11 group could not be resolved.';
-  return raw||'The institutional session could not be opened.';
+function saveEmail(email){
+  const normalized=normalizeEmail(email);
+  if(isInstitutionalEmail(normalized))localStorage.setItem(ACCESS_KEY,JSON.stringify({email:normalized,validatedAt:Date.now()}));
+}
+function savedEmail(){
+  try{
+    const x=JSON.parse(localStorage.getItem(ACCESS_KEY)||'null');
+    return x&&isInstitutionalEmail(x.email)?normalizeEmail(x.email):'';
+  }catch{return '';}
+}
+function mainIdentity(){
+  let entry=globalThis.IJR_SEMINAR_MAIN_ENTRY||null;
+  if(!entry){
+    try{entry=JSON.parse(localStorage.getItem('ijr-seminar-main-registration-v2')||'null');}catch{entry=null;}
+  }
+  if(!entry||!isInstitutionalEmail(entry.institutionalEmail))return null;
+  return {
+    email:normalizeEmail(entry.institutionalEmail),
+    fullName:String(entry.fullName||entry.display_name||'').trim(),
+    groupCode:String(entry.groupCode||entry.group_code||'11-U').trim()||'11-U'
+  };
+}
+function setBoot(message,error=false){
+  const status=$('bootStatus');
+  if(status)status.textContent=message;
+  $('bootActions')?.classList.toggle('hidden',!error);
 }
 
 function render(){
-  const registered=!!attempt;
-  $('registrationPanel').classList.toggle('hidden',registered);
-  $('hubPanel').classList.toggle('hidden',!registered);
-  $('sessionBadge').classList.toggle('hidden',!registered);
-  $('switchButton').classList.toggle('hidden',!registered);
-  if(!registered)return;
+  const ready=!!attempt;
+  $('bootPanel')?.classList.toggle('hidden',ready);
+  $('hubPanel').classList.toggle('hidden',!ready);
+  $('sessionBadge').classList.toggle('hidden',!ready);
+  if(!ready)return;
 
   const lang=currentLanguage();
   const completed=data.topics.filter(isComplete).length;
   const pct=Math.round(completed/data.topics.length*100);
-  const backend=attempt.backend==='supabase'?'Supabase synchronized':'local recovery mode';
+  const backend=attempt.backend==='supabase'?'Supabase synchronized':'Not synchronized';
+  const identityLabel=attempt.group==='11-U'?(attempt.label||'Institutional access'):`${attempt.group} · ${attempt.label||'Student'}`;
 
-  const identityLabel=attempt.group==='11-U'?attempt.label:`${attempt.group} · ${attempt.label}`;
   $('sessionBadge').textContent=identityLabel;
   $('identitySummary').textContent=`${identityLabel} · ${lang==='python'?'Python':'Java'} · ${backend}`;
   $('languageLabel').textContent=lang==='python'?'Python':'Java';
@@ -57,46 +74,41 @@ function render(){
   }).join('');
 }
 
-async function submitRegistration(event){
-  event.preventDefault();
-  const email=normalizeEmail($('institutionalEmail')?.value);
-  if(!institutionalEmail(email)){
-    setStatus('Use only your institutional @ijr.edu.co email.','error');
-    $('institutionalEmail')?.focus();
+async function initialize(){
+  if(booting)return;
+  booting=true;
+  attempt=null;
+  render();
+  $('bootActions')?.classList.add('hidden');
+
+  const central=mainIdentity();
+  const preferredEmail=central?.email||savedEmail();
+
+  if(!preferredEmail){
+    location.replace('../seminario/?next=oop');
     return;
   }
-  $('registerButton').disabled=true;
-  setStatus('Validating institutional email…');
+
+  setBoot('Restoring your original registered progress from Supabase…');
   try{
-    attempt=await store.startWithEmail({email,language:'python'});
-    saveEmail(email);
-    setStatus('Access granted.','ok');
+    /*
+     * Always resolve against the backend on entry.
+     * v10 deliberately reuses the canonical historical attempt with real
+     * OOP/UML evidence, so an empty newer shell cannot replace old progress.
+     */
+    attempt=await store.startWithEmail({email:preferredEmail,language:'python'});
+    saveEmail(preferredEmail);
+    setBoot('Progress restored.');
     render();
   }catch(error){
-    console.error(error);
+    console.error('Tracked OOP progress could not be restored.',error);
     attempt=null;
-    setStatus(friendlyError(error),'error');
     render();
-    $('institutionalEmail')?.focus();
-  }finally{$('registerButton').disabled=false;}
+    setBoot('Could not restore tracked Supabase progress. No local/untracked session was created. Retry the connection or return to Seminar home.',true);
+  }finally{
+    booting=false;
+  }
 }
 
-$('registrationForm').addEventListener('submit',submitRegistration);
-$('switchButton').addEventListener('click',()=>{
-  if(confirm('Switch institutional email on this computer? Saved Supabase evidence will not be deleted.')){
-    store.reset();
-    localStorage.removeItem(ACCESS_KEY);
-    attempt=null;
-    render();
-    $('institutionalEmail').value='';
-    $('institutionalEmail').focus();
-  }
-});
-
-const remembered=savedEmail();
-if(remembered)$('institutionalEmail').value=remembered;
-store.restore().then(value=>{
-  if(value?.email&&institutionalEmail(value.email)){attempt=value;saveEmail(value.email);}
-  else{if(value)store.reset();attempt=null;}
-  render();
-}).catch(error=>{console.warn(error);attempt=null;render();});
+$('retryBoot')?.addEventListener('click',initialize);
+initialize();
