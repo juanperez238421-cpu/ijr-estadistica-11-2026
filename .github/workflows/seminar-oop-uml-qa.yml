@@ -80,7 +80,7 @@ jobs:
           PY
           node --check /tmp/theory-inline.js
 
-      - name: Validate institutional-email access gate
+      - name: Validate direct OOP access and identity reuse
         shell: bash
         run: |
           set -euo pipefail
@@ -109,6 +109,14 @@ jobs:
           }
           console.log('Institutional @ijr.edu.co access validator verified');
           NODE
+          grep -q "startOpen" seminario-oop-uml/store.js
+          grep -q "startOpen" seminario-oop-uml/hub.js
+          grep -q "IJR_SEMINAR_MAIN_ENTRY" seminario-oop-uml/hub.js
+          grep -q "ijr-seminar-main-registration-v2" seminario-oop-uml/hub.js
+          grep -q 'id="bootPanel"' seminario-oop-uml/index.html
+          ! grep -q 'id="registrationForm"' seminario-oop-uml/index.html
+          ! grep -q 'id="institutionalEmail"' seminario-oop-uml/index.html
+          ! grep -q "Enter with your institutional email." seminario-oop-uml/index.html
 
       - name: Validate ten-session curriculum contract
         shell: bash
@@ -273,12 +281,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -q "Enter with your institutional email." seminario-oop-uml/index.html
-          grep -q 'id="institutionalEmail"' seminario-oop-uml/index.html
-          grep -q '@ijr.edu.co' seminario-oop-uml/index.html
-          ! grep -q 'id="memberName1"' seminario-oop-uml/index.html
+          grep -q "Opening OOP + UML" seminario-oop-uml/index.html
+          grep -q "no second email prompt" seminario/index.html
+          grep -q "startOpen" seminario-oop-uml/store.js
+          grep -q "startWithEmail" seminario-oop-uml/hub.js
+          ! grep -q 'id="registrationForm"' seminario-oop-uml/index.html
+          ! grep -q 'id="institutionalEmail"' seminario-oop-uml/index.html
           ! grep -q 'id="groupCode"' seminario-oop-uml/index.html
-          ! grep -q 'id="registrationMode"' seminario-oop-uml/index.html
           grep -q "Theory" seminario-oop-uml/index.html
           grep -q "Workshop" seminario-oop-uml/index.html
           grep -q "evModel" seminario-oop-uml/workshop.html

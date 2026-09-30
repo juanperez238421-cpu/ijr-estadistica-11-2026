@@ -40,6 +40,23 @@ export class OopUmlStore{
     }
     if(local){this.attempt=local;return local;}return null;
   }
+  startOpen({language='python',label='Open access',group='11-U'}={}){
+    if(!['python','java'].includes(language))language='python';
+    return this.save({
+      id:uuid(),
+      token:null,
+      backend:'local',
+      language,
+      group,
+      names:[],
+      label:cleanName(label)||'Open access',
+      email:null,
+      identityMode:'open',
+      sessions:{},
+      startedAt:new Date().toISOString()
+    });
+  }
+
   async startWithEmail({email,language='python'}){
     email=String(email||'').trim().toLowerCase();
     if(!isInstitutionalEmail(email))throw new Error('institutional_email_required');
@@ -84,7 +101,7 @@ export class OopUmlStore{
     return this.attempt;
   }
   async recordSession(sessionKey,evidence){
-    if(!this.attempt)throw new Error('Register before recording evidence.');
+    if(!this.attempt)throw new Error('Open the OOP + UML Hub before recording evidence.');
     const complete=['model','code','test','explain'].every(k=>evidence?.[k]===true);
     if(!complete)throw new Error('Complete model, code, test and explanation evidence first.');
     if(this.attempt.backend==='supabase'&&this.attempt.token){
