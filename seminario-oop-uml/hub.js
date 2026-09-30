@@ -22,12 +22,15 @@ function savedEmail(){
   }catch{return '';}
 }
 function mainIdentity(){
-  const entry=globalThis.IJR_SEMINAR_MAIN_ENTRY;
+  let entry=globalThis.IJR_SEMINAR_MAIN_ENTRY||null;
+  if(!entry){
+    try{entry=JSON.parse(localStorage.getItem('ijr-seminar-main-registration-v2')||'null');}catch{entry=null;}
+  }
   if(!entry||!isInstitutionalEmail(entry.institutionalEmail))return null;
   return {
     email:normalizeEmail(entry.institutionalEmail),
-    fullName:String(entry.fullName||'').trim(),
-    groupCode:String(entry.groupCode||'11-U').trim()||'11-U'
+    fullName:String(entry.fullName||entry.display_name||'').trim(),
+    groupCode:String(entry.groupCode||entry.group_code||'11-U').trim()||'11-U'
   };
 }
 
