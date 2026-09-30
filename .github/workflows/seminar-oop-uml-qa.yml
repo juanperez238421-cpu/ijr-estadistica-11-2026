@@ -292,8 +292,11 @@ jobs:
           set -euo pipefail
           grep -q "Opening OOP + UML" seminario-oop-uml/index.html
           grep -q "no second email prompt" seminario/index.html
-          grep -q "startOpen" seminario-oop-uml/store.js
+          ! grep -q "startOpen" seminario-oop-uml/store.js
+          ! grep -q "startOpen" seminario-oop-uml/hub.js
           grep -q "startWithEmail" seminario-oop-uml/hub.js
+          grep -q "original tracked OOP/UML progress" seminario/index.html
+          grep -q "original registered OOP/UML attempt" seminario-oop-uml/index.html
           ! grep -q 'id="registrationForm"' seminario-oop-uml/index.html
           ! grep -q 'id="institutionalEmail"' seminario-oop-uml/index.html
           ! grep -q 'id="groupCode"' seminario-oop-uml/index.html
