@@ -267,6 +267,13 @@
     const isQaEarlyAccount=localIdentity.email==='qa.student11@ijr.edu.co'
       && localIdentity.groupCode==='11A';
 
+    // student-progress-v29 renders the canonical QA card inside the visible
+    // identity panel. Keep this older slot as a fallback only.
+    if(isQaEarlyAccount && document.getElementById('qaEvaluationAccessCard')){
+      panel.classList.add('hidden');
+      return;
+    }
+
     // Render a visible card immediately for the dedicated QA account. The
     // backend remains authoritative for starting the attempt.
     if(isQaEarlyAccount){
