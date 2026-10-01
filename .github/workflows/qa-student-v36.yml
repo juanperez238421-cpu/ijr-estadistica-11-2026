@@ -9,6 +9,7 @@ on:
       - 'python/workshop-v42.js'
       - 'python/workshop-startup-v50.js'
       - 'python/config-v2.js'
+      - 'python/student-progress-v29.js'
       - 'qa/check_qa_student_v36.cjs'
       - '.github/workflows/qa-student-v36.yml'
   push:
@@ -40,6 +41,7 @@ jobs:
           node --check python/supabase-rpc-facade-v65.js
           node --check python/workshop-v42.js
           node --check python/workshop-startup-v50.js
+          node --check python/student-progress-v29.js
           node --check qa/check_qa_student_v36.cjs
       - name: Current student lab access contract
         run: node qa/check_qa_student_v36.cjs
