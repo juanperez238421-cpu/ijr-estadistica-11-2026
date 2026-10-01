@@ -31,7 +31,8 @@
     pendingSnapshot:null,
     submitting:false,
     started:false,
-    duplicateChannel:null
+    duplicateChannel:null,
+    tabId:crypto.randomUUID()
   };
 
   if (!cfg || typeof fetch !== 'function') {
@@ -553,13 +554,14 @@
 
     if('BroadcastChannel' in window){
       state.duplicateChannel=new BroadcastChannel('ijr-stat11-modules123-evaluation');
-      state.duplicateChannel.postMessage({type:'HELLO',id:state.attemptId});
+      state.duplicateChannel.postMessage({type:'HELLO',tabId:state.tabId,attemptId:state.attemptId});
       state.duplicateChannel.onmessage=async event=>{
-        if(event.data?.type==='HELLO'&&event.data.id!==state.attemptId){
-          state.duplicateChannel.postMessage({type:'ACTIVE',id:state.attemptId});
+        if(event.data?.tabId===state.tabId) return;
+        if(event.data?.type==='HELLO'){
+          state.duplicateChannel.postMessage({type:'ACTIVE',tabId:state.tabId,attemptId:state.attemptId});
         }
         if(event.data?.type==='ACTIVE'&&state.started){
-          await logIntegrity('SECOND_TAB_DETECTED',{},true);
+          await logIntegrity('SECOND_TAB_DETECTED',{other_attempt_id:event.data?.attemptId||null},true);
         }
       };
     }
