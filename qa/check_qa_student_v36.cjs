@@ -11,6 +11,7 @@ const facade = read('python/supabase-rpc-facade-v65.js');
 const workshop = read('python/workshop-v42.js');
 const startup = read('python/workshop-startup-v50.js');
 const config = read('python/config-v2.js');
+const studentProgress = read('python/student-progress-v29.js');
 
 const checks = {
   'student page loads current classroom router': html.includes('hub-router.js?v=20260930-eval-v2'),
@@ -30,7 +31,9 @@ const checks = {
   'workshop uses direct Supabase REST RPC': workshop.includes('/rest/v1/rpc/') && workshop.includes('AbortController'),
   'workshop startup protects resume ordering': startup.includes('python_hub_resume_v1') && startup.includes('!teamReady'),
   'workshop return path is allowlisted': hub.includes("requestedReturnTo.match(/^workshop\\.html\\?topic=([a-z0-9-]+)$/)"),
-  'locked topics cannot auto-redirect': hub.includes("progress.status!=='locked'")
+  'locked topics cannot auto-redirect': hub.includes("progress.status!=='locked'"),
+  'QA evaluation card is rendered in the visible identity panel': studentProgress.includes('id="qaEvaluationAccessCard"') && studentProgress.includes('qa.student11@ijr.edu.co') && studentProgress.includes('QA EARLY ACCESS · OPEN NOW'),
+  'QA evaluation action routes to modules 1-3 assessment': studentProgress.includes('href="evaluation-modules-1-3/"') && studentProgress.includes('id="qaEvaluationStartButton"')
 };
 
 const failed = Object.entries(checks).filter(([, ok]) => !ok).map(([name]) => name);
