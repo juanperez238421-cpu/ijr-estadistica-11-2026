@@ -79,6 +79,7 @@
   const $ = id => document.getElementById(id);
   const escapeHtml = value => String(value ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
   const state = { snapshot:null, registration:null };
+  let evaluationAvailabilityTimer = null;
   const requestedReturnTo = new URLSearchParams(location.search).get('returnTo') || '';
   const LAB_LOGIN_RPC = config.rpc?.labLogin || 'python_hub_lab_login_v51';
   const EVALUATION_SLUG = 'modules-1-3-2026-10-01';
@@ -205,6 +206,10 @@
 
   async function renderEvaluationPanel(){
     const panel=$('evaluationPanel');
+    if(evaluationAvailabilityTimer){
+      window.clearTimeout(evaluationAvailabilityTimer);
+      evaluationAvailabilityTimer=null;
+    }
     if(!panel || !state.registration?.registrationId || !state.registration?.accessToken) return;
     try{
       const data=await rpc(config.rpc?.evalAvailability || 'python_hub_eval_availability_v1',{
@@ -248,6 +253,9 @@
              ${canOpen?'':'aria-disabled="true" tabindex="-1"'}>${canOpen?'Start evaluation':'Not available yet'}</a>
         </div>`;
       panel.classList.remove('hidden');
+      if(data.state==='scheduled' || data.state==='open'){
+        evaluationAvailabilityTimer=window.setTimeout(renderEvaluationPanel,30000);
+      }
     }catch(error){
       panel.classList.add('hidden');
       console.warn('Evaluation availability could not be loaded.',error);
