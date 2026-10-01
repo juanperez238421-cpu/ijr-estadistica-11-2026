@@ -81,6 +81,8 @@
   const state = { snapshot:null, registration:null };
   const requestedReturnTo = new URLSearchParams(location.search).get('returnTo') || '';
   const LAB_LOGIN_RPC = config.rpc?.labLogin || 'python_hub_lab_login_v51';
+  const EVALUATION_SLUG = 'modules-1-3-2026-10-01';
+  const EVALUATION_ROUTE = 'evaluation-modules-1-3/';
 
   function readJson(key,fallback=null){
     try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; } catch { return fallback; }
@@ -189,6 +191,69 @@
 
   function progressFor(slug){ return state.snapshot?.topics?.find(item=>item.slug===slug) || null; }
 
+  function evaluationTime(value){
+    if(!value) return '';
+    try{
+      return new Intl.DateTimeFormat('en-CO',{
+        timeZone:'America/Bogota',
+        weekday:'short',
+        hour:'numeric',
+        minute:'2-digit'
+      }).format(new Date(value));
+    }catch{return String(value);}
+  }
+
+  async function renderEvaluationPanel(){
+    const panel=$('evaluationPanel');
+    if(!panel || !state.registration?.registrationId || !state.registration?.accessToken) return;
+    try{
+      const data=await rpc(config.rpc?.evalAvailability || 'python_hub_eval_availability_v1',{
+        p_registration_id:state.registration.registrationId,
+        p_access_token:state.registration.accessToken,
+        p_evaluation_slug:EVALUATION_SLUG
+      });
+
+      if(!data?.eligible){
+        panel.classList.add('hidden');
+        return;
+      }
+
+      const windowCopy=data.opens_at&&data.closes_at
+        ? `${evaluationTime(data.opens_at)} – ${evaluationTime(data.closes_at)}`
+        : '';
+      const stateCopy={
+        scheduled:'Scheduled · opens automatically in your class window',
+        open:'OPEN NOW · Start only when the teacher instructs you',
+        attempted:'Attempt already registered for this account',
+        closed:'Evaluation window closed'
+      }[data.state] || data.state || 'Evaluation';
+
+      const canOpen=data.state==='open';
+      panel.dataset.state=data.state||'scheduled';
+      panel.innerHTML=`
+        <div>
+          <p class="eyebrow">EVALUATION · MODULES 01–03 · ${escapeHtml(data.group_code||'')}</p>
+          <h2>Python foundations · one-shot assessment</h2>
+          <p><strong>${escapeHtml(stateCopy)}</strong>. 18 questions · 40 minutes · True/False, multiple choice, open response and programming. Incorrect confirmed answers deduct 1 point and cannot be changed.</p>
+          <div class="evaluation-card-meta">
+            <span>Team: 1–3 students</span>
+            <span>Fullscreen required</span>
+            <span>Exit penalty: −1 point</span>
+            ${windowCopy?`<span>${escapeHtml(windowCopy)}</span>`:''}
+          </div>
+        </div>
+        <div class="evaluation-action">
+          <a class="button ${canOpen?'button-dark':'button-light'} ${canOpen?'':'disabled-link'}"
+             href="${canOpen?EVALUATION_ROUTE:'#'}"
+             ${canOpen?'':'aria-disabled="true" tabindex="-1"'}>${canOpen?'Start evaluation':'Not available yet'}</a>
+        </div>`;
+      panel.classList.remove('hidden');
+    }catch(error){
+      panel.classList.add('hidden');
+      console.warn('Evaluation availability could not be loaded.',error);
+    }
+  }
+
   function renderHub(){
     const snapshot=state.snapshot;
     if(!snapshot?.registration) return;
@@ -202,6 +267,7 @@
     $('globalProgressBar').style.width=`${stagePercent}%`;
     $('globalProgressCopy').textContent=`${correctStages} / ${totalStages} workshop stages correct`;
 
+    renderEvaluationPanel();
     $('topicGrid').innerHTML=topics.map(topic=>{
       const p=progressFor(topic.slug) || {status:'locked',percent:0,correct_count:0,total_count:topic.exercises.length};
       const locked=p.status==='locked';
