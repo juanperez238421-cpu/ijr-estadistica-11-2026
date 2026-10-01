@@ -1,0 +1,138 @@
+name: Render Grade 11 Counting PQH
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'render_grade11_counting/**'
+      - '.github/workflows/render_grade11_counting_pqh.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate source and scene
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC='render_grade11_counting/statistics11_counting_visual_roadmap.py'
+          test -s "$SRC"
+          python -m py_compile "$SRC"
+          grep -n '^class Statistics11CountingVisualRoadmap(MovingCameraScene)' "$SRC"
+          grep -n 'config.pixel_width = 1920' "$SRC"
+          grep -n 'config.pixel_height = 1080' "$SRC"
+          grep -n 'config.frame_rate = 30' "$SRC"
+
+      - name: Pull official ManimCE image
+        shell: bash
+        run: docker pull manimcommunity/manim:v0.20.1
+
+      - name: Run mathematical validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -v "$PWD:/manim" \
+            -w /manim/render_grade11_counting \
+            manimcommunity/manim:v0.20.1 \
+            python -c "import statistics11_counting_visual_roadmap as m; print(m.validate_grade11_counting())" \
+            | tee render_grade11_counting/math_validation.log
+
+      - name: Preview render with literal -pql
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -v "$PWD:/manim" \
+            -w /manim/render_grade11_counting \
+            --entrypoint bash \
+            manimcommunity/manim:v0.20.1 \
+            -c '
+              set -euo pipefail
+              mkdir -p /tmp/colab-bin
+              printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/colab-bin/xdg-open
+              chmod +x /tmp/colab-bin/xdg-open
+              export PATH="/tmp/colab-bin:$PATH"
+              manim -pql statistics11_counting_visual_roadmap.py Statistics11CountingVisualRoadmap --format=mp4 --disable_caching
+            ' 2>&1 | tee render_grade11_counting/render_pql.log
+
+      - name: Final render with literal -pqh
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-home \
+            -v "$PWD:/manim" \
+            -w /manim/render_grade11_counting \
+            --entrypoint bash \
+            manimcommunity/manim:v0.20.1 \
+            -c '
+              set -euo pipefail
+              mkdir -p /tmp/colab-bin
+              printf "#!/usr/bin/env bash\nexit 0\n" > /tmp/colab-bin/xdg-open
+              chmod +x /tmp/colab-bin/xdg-open
+              export PATH="/tmp/colab-bin:$PATH"
+              manim -pqh statistics11_counting_visual_roadmap.py Statistics11CountingVisualRoadmap --format=mp4 --disable_caching
+            ' 2>&1 | tee render_grade11_counting/render_pqh.log
+
+      - name: Recover genuine raw PQH render and audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT='render_grade11_counting'
+          echo '=== All MP4s produced by Manim ==='
+          find "$ROOT" -type f -name '*.mp4' -print | tee "$ROOT/mp4_inventory.txt"
+          RAW_VIDEO="$(find "$ROOT" -type f -name 'Statistics11CountingVisualRoadmap.mp4' -print0 | xargs -0 -r ls -S | head -n 1)"
+          if [ -z "$RAW_VIDEO" ]; then
+            RAW_VIDEO="$(find "$ROOT" -type f -name '*.mp4' -print0 | xargs -0 -r ls -S | head -n 1)"
+          fi
+          test -n "$RAW_VIDEO"
+          test -s "$RAW_VIDEO"
+          DELIVERY="$ROOT/delivery"
+          mkdir -p "$DELIVERY/control_frames"
+          cp "$RAW_VIDEO" "$DELIVERY/Statistics11CountingVisualRoadmap_PQH_RAW.mp4"
+          FINAL_VIDEO="$DELIVERY/Statistics11CountingVisualRoadmap_PQH_RAW.mp4"
+          ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt -show_entries format=duration,size -of default=noprint_wrappers=1 "$FINAL_VIDEO" | tee "$DELIVERY/FFPROBE_RAW.txt"
+          duration="$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$FINAL_VIDEO")"
+          midpoint="$(awk -v d="$duration" 'BEGIN { printf "%.3f", d/2 }')"
+          ffmpeg -y -v error -ss 5 -i "$FINAL_VIDEO" -frames:v 1 "$DELIVERY/control_frames/frame_start.png"
+          ffmpeg -y -v error -ss "$midpoint" -i "$FINAL_VIDEO" -frames:v 1 "$DELIVERY/control_frames/frame_middle.png"
+          ffmpeg -y -v error -sseof -5 -i "$FINAL_VIDEO" -frames:v 1 "$DELIVERY/control_frames/frame_end.png"
+          cp "$ROOT/statistics11_counting_visual_roadmap.py" "$DELIVERY/"
+          cp "$ROOT/render_pql.log" "$DELIVERY/"
+          cp "$ROOT/render_pqh.log" "$DELIVERY/"
+          cp "$ROOT/math_validation.log" "$DELIVERY/"
+          cp "$ROOT/mp4_inventory.txt" "$DELIVERY/"
+          cat > "$DELIVERY/RENDER_INFO.txt" <<'EOF'
+          Recovery classification: genuine raw ManimCE high-quality render from the historical Grade 11 Counting branch.
+          Scene: Statistics11CountingVisualRoadmap
+          Source: statistics11_counting_visual_roadmap.py
+          ManimCE: 0.20.1
+          Preview command: manim -pql statistics11_counting_visual_roadmap.py Statistics11CountingVisualRoadmap --format=mp4 --disable_caching
+          Final command: manim -pqh statistics11_counting_visual_roadmap.py Statistics11CountingVisualRoadmap --format=mp4 --disable_caching
+          Important: the raw PQH file is preserved without post-render reconstruction or synthetic replacement.
+          EOF
+          (cd "$DELIVERY" && sha256sum Statistics11CountingVisualRoadmap_PQH_RAW.mp4 statistics11_counting_visual_roadmap.py render_pql.log render_pqh.log math_validation.log FFPROBE_RAW.txt RENDER_INFO.txt > SHA256SUMS.txt)
+
+      - name: Upload genuine recovery artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Statistics11_Counting_PQH_Genuine_Raw_Recovery
+          path: render_grade11_counting/delivery/
+          if-no-files-found: error
+          retention-days: 7
