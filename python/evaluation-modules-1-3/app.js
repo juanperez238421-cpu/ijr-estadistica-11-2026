@@ -112,7 +112,38 @@
     }
   }
 
-  async function loadAvailability(){
+  async function refreshQaHubSession(){
+    const session=hubSession();
+    const email=normalizeEmail(session?.emails?.[0]);
+    const group=String(session?.groupCode||'').trim().toUpperCase();
+    if(email!=='qa.student11@ijr.edu.co' || group!=='11A') return false;
+
+    const refreshed=await rpc('python_hub_lab_login_v52',{
+      p_group_code:'11A',
+      p_institutional_email:'qa.student11@ijr.edu.co',
+      p_session_id:crypto.randomUUID(),
+      p_user_agent:navigator.userAgent
+    });
+
+    if(!refreshed?.registration_id || !refreshed?.access_token) return false;
+    const nextSession={
+      registrationId:refreshed.registration_id,
+      accessToken:refreshed.access_token,
+      fingerprint:'',
+      groupCode:'11A',
+      emails:['qa.student11@ijr.edu.co'],
+      mode:'individual-lab',
+      authProtected:false,
+      labAccessV51:true,
+      savedAt:new Date().toISOString()
+    };
+    writeJson(localStorage,cfg.sessionStorageKey,nextSession);
+    state.hubSession=nextSession;
+    return true;
+  }
+
+  async function loadAvailability(options={}){
+    const allowQaRefresh=options.allowQaRefresh!==false;
     if(state.availabilityTimer){
       clearTimeout(state.availabilityTimer);
       state.availabilityTimer=null;
@@ -156,6 +187,13 @@
       }
       return data.state==='open';
     }catch(err){
+      if(allowQaRefresh && normalizeEmail(state.hubSession?.emails?.[0])==='qa.student11@ijr.edu.co'){
+        try{
+          if(await refreshQaHubSession()) return loadAvailability({allowQaRefresh:false});
+        }catch(refreshError){
+          console.warn('QA evaluation session refresh failed.',refreshError);
+        }
+      }
       $('availabilityBox').textContent='Could not verify the evaluation window.';
       setStatus(err.message,'error');
       return false;

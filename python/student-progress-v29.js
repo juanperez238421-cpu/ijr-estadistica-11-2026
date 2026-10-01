@@ -24,6 +24,31 @@
     </div>`).join('');
   }
 
+  function qaEvaluationCard(members){
+    const qa=(Array.isArray(members)?members:[]).find(member=>
+      String(member?.email||'').trim().toLowerCase()==='qa.student11@ijr.edu.co'
+    );
+    if(!qa) return '';
+
+    return `<section id="qaEvaluationAccessCard" class="evaluation-card qa-evaluation-inline" data-state="open" aria-label="QA evaluation access">
+      <div>
+        <p class="eyebrow">EVALUATION · MODULES 01–03 · 11A</p>
+        <h2>Python foundations · one-shot assessment</h2>
+        <p><strong>QA EARLY ACCESS · OPEN NOW</strong>. This dedicated QA account can enter the evaluation immediately. The backend still validates the institutional registration before the attempt starts.</p>
+        <div class="evaluation-card-meta">
+          <span>QA Student 11 · single student</span>
+          <span>18 questions · 40 minutes</span>
+          <span>Fullscreen required</span>
+          <span>Wrong answer: −1 point</span>
+          <span>Integrity exit: −1 point</span>
+        </div>
+      </div>
+      <div class="evaluation-action">
+        <a id="qaEvaluationStartButton" class="button button-dark" href="evaluation-modules-1-3/">Start evaluation</a>
+      </div>
+    </section>`;
+  }
+
   function render(snapshot){
     if(!snapshot?.registration) return;
     const reg=snapshot.registration;
@@ -87,7 +112,12 @@
         }).join('')}
       </div>
       <div class="student-identity-note"><strong>Audit rule:</strong> current stage counts come only from server-validated workshop responses. A “Historical credit” badge is shown separately when older verified classroom evidence exists; it does not fabricate completion of the current 12 stages.</div>
+      ${qaEvaluationCard(members)}
     </div>`;
+
+    const qaCard=$('qaEvaluationAccessCard');
+    const externalEvaluation=$('evaluationPanel');
+    if(qaCard && externalEvaluation) externalEvaluation.classList.add('hidden');
   }
 
   async function refresh(){

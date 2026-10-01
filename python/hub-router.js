@@ -267,6 +267,13 @@
     const isQaEarlyAccount=localIdentity.email==='qa.student11@ijr.edu.co'
       && localIdentity.groupCode==='11A';
 
+    // student-progress-v29 renders the canonical QA card inside the visible
+    // identity panel. Keep this older slot as a fallback only.
+    if(isQaEarlyAccount && document.getElementById('qaEvaluationAccessCard')){
+      panel.classList.add('hidden');
+      return;
+    }
+
     // Render a visible card immediately for the dedicated QA account. The
     // backend remains authoritative for starting the attempt.
     if(isQaEarlyAccount){
@@ -372,6 +379,33 @@
       showHub();
       return true;
     }catch(error){
+      // Dedicated QA recovery: if an earlier QA verification rotated the lab
+      // access token, recover the exact QA account without requiring manual
+      // cache clearing or a second browser.
+      const storedEmail=normalizeEmail(stored?.emails?.[0]||'');
+      const storedGroup=String(stored?.groupCode||'').trim().toUpperCase();
+      if(!error?.transient && storedEmail==='qa.student11@ijr.edu.co' && storedGroup==='11A'){
+        try{
+          const refreshed=await rpc(LAB_LOGIN_RPC,{
+            p_group_code:'11A',
+            p_institutional_email:'qa.student11@ijr.edu.co',
+            p_session_id:crypto.randomUUID(),
+            p_user_agent:navigator.userAgent
+          });
+          if(refreshed?.registration_id && refreshed?.access_token && refreshed?.snapshot?.registration){
+            rememberSession(refreshed.registration_id,refreshed.access_token,{
+              groupCode:'11A',
+              email:'qa.student11@ijr.edu.co'
+            });
+            state.snapshot=refreshed.snapshot;
+            showHub();
+            return true;
+          }
+        }catch(qaRefreshError){
+          console.warn('QA session refresh failed.',qaRefreshError);
+        }
+      }
+
       // Preserve a valid browser session through temporary network/CDN/backend
       // disturbances. Only clear it for a definitive non-transient rejection.
       if(!error?.transient) clearHubSession();
