@@ -14,7 +14,7 @@ const config = read('python/config-v2.js');
 const studentProgress = read('python/student-progress-v29.js');
 
 const checks = {
-  'student page loads current classroom router': html.includes('hub-router.js?v=20260930-eval-v2'),
+  'student page loads current classroom router': html.includes('hub-router.js?v=20261001-eval-v5'),
   'local RPC facade loads before optional access modules': html.includes('supabase-rpc-facade-v65.js?v=20260924-classroom-v65'),
   'official Supabase SDK is non-blocking and pinned': html.includes('async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"'),
   'institutional domain remains enforced': config.includes("institutionalEmailDomain: 'ijr.edu.co'"),
