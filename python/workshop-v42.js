@@ -371,12 +371,12 @@
     if(ex.mode==='choice'){
       $('codeEditor').classList.add('hidden'); $('choiceEditor').classList.remove('hidden'); $('cellModeLabel').textContent=' · select one answer';
       $('choiceEditor').innerHTML=(ex.choices||[]).map(choice=>`<label class="choice-option"><input type="radio" name="stageChoice" value="${escapeHtml(choice)}"><span>${escapeHtml(choice)}</span></label>`).join('');
-      const selected=run?.choice||''; if(selected){const radio=[...document.querySelectorAll('input[name="stageChoice"]')].find(input=>input.value===selected);if(radio)radio.checked=true;}
+      const selected=run?.choice||(item.correct?item.latest_answer:'')||''; if(selected){const radio=[...document.querySelectorAll('input[name="stageChoice"]')].find(input=>input.value===selected);if(radio)radio.checked=true;}
       document.querySelectorAll('input[name="stageChoice"]').forEach(input=>input.addEventListener('change',()=>{state.runs.set(ex.key,{...state.runs.get(ex.key),choice:input.value,ok:true,display:false,output:'',execution:0});updateValidationState();}));
       $('runButton').disabled=true; $('resetButton').textContent='Clear choice';
     }else{
       $('choiceEditor').classList.add('hidden'); $('codeEditor').classList.remove('hidden'); $('cellModeLabel').textContent=' · write your complete solution'; $('runButton').disabled=false; $('resetButton').textContent='Reset';
-      $('codeEditor').value=Object.prototype.hasOwnProperty.call(drafts,ex.key)?drafts[ex.key]:'';
+      $('codeEditor').value=item.correct && typeof item.code_snapshot==='string' ? item.code_snapshot : (Object.prototype.hasOwnProperty.call(drafts,ex.key)?drafts[ex.key]:(item.code_snapshot||''));
       $('codeEditor').oninput=()=>{saveDraft(ex.key,$('codeEditor').value);state.runs.delete(ex.key);$('outputPanel').classList.add('hidden');$('executionCount').textContent='[ ]';updateValidationState();};
     }
     updateValidationState();
