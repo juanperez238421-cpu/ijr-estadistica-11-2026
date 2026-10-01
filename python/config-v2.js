@@ -17,7 +17,13 @@
       studentAccount: 'python_hub_student_account_v1',
       resume: 'python_hub_resume_v1',
       recover: 'python_hub_recover_v1',
-      submit: 'python_hub_submit_v1'
+      submit: 'python_hub_submit_v1',
+      evalAvailability: 'python_hub_eval_availability_v1',
+      evalStart: 'python_hub_eval_start_v1',
+      evalResume: 'python_hub_eval_resume_v1',
+      evalSubmit: 'python_hub_eval_submit_v1',
+      evalEvent: 'python_hub_eval_log_event_v1',
+      evalFinish: 'python_hub_eval_finish_v1'
     })
   });
 
