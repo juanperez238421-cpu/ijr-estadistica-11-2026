@@ -32,6 +32,7 @@
     submitting:false,
     started:false,
     duplicateChannel:null,
+    availabilityTimer:null,
     tabId:crypto.randomUUID()
   };
 
@@ -112,6 +113,10 @@
   }
 
   async function loadAvailability(){
+    if(state.availabilityTimer){
+      clearTimeout(state.availabilityTimer);
+      state.availabilityTimer=null;
+    }
     state.hubSession=hubSession();
     if(!state.hubSession?.registrationId || !state.hubSession?.accessToken || !validEmail(ownerEmail())){
       $('availabilityBox').textContent='Open the Statistics 11 Learning Hub first and enter with your @ijr.edu.co institutional email.';
@@ -134,13 +139,18 @@
       $('memberEmail1').value=ownerEmail();
       const windowText=`${fmtWindow(data.opens_at)} – ${fmtWindow(data.closes_at)}`;
       if(data.state==='scheduled'){
+        $('teamForm').classList.add('hidden');
         $('availabilityBox').innerHTML=`<strong>${esc(data.group_code)} · Scheduled</strong><br>Start window: ${esc(windowText)}. The module will open automatically at the scheduled time.`;
+        state.availabilityTimer=setTimeout(loadAvailability,30000);
       }else if(data.state==='open'){
-        $('availabilityBox').innerHTML=`<strong>${esc(data.group_code)} · Evaluation open</strong><br>Start window: ${esc(windowText)}. Once started, your team has ${Number(data.duration_minutes)} minutes.`;
+        $('availabilityBox').innerHTML=`<strong>${esc(data.group_code)} · Evaluation open</strong><br>Start window: ${esc(windowText)}. Once started, your team has up to ${Number(data.duration_minutes)} minutes and never beyond the class-window close time.`;
         $('teamForm').classList.remove('hidden');
+        state.availabilityTimer=setTimeout(loadAvailability,30000);
       }else if(data.state==='attempted'){
+        $('teamForm').classList.add('hidden');
         $('availabilityBox').innerHTML='<strong>Attempt already registered.</strong><br>Each student may participate in only one team attempt for this evaluation.';
       }else{
+        $('teamForm').classList.add('hidden');
         $('availabilityBox').innerHTML=`<strong>Evaluation closed.</strong><br>The start window was ${esc(windowText)}.`;
       }
       return data.state==='open';
