@@ -125,11 +125,12 @@
     }
 
     try{
-      const data=await rpc(RPC.availability,{
+      const raw=await rpc(RPC.availability,{
         p_registration_id:state.hubSession.registrationId,
         p_access_token:state.hubSession.accessToken,
         p_evaluation_slug:EVALUATION_SLUG
       });
+      const data=Array.isArray(raw)?raw[0]:raw;
       state.availability=data;
       if(!data?.eligible){
         $('availabilityBox').textContent='This evaluation is not assigned to the current group.';
