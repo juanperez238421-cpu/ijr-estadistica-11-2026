@@ -1,3 +1,5 @@
 .evaluation-card{margin:18px 0 28px;padding:20px;border:1px solid #f1c46d;border-radius:18px;background:linear-gradient(135deg,#fffaf0,#ffffff);display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;box-shadow:0 10px 28px rgba(23,32,51,.06)}
 .evaluation-card.hidden{display:none}.evaluation-card .eyebrow{margin:0 0 7px;color:#a15c00;font-size:.76rem;font-weight:850;letter-spacing:.12em}.evaluation-card h2{margin:0 0 7px}.evaluation-card p{margin:0;color:#667085;line-height:1.5}.evaluation-card-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}.evaluation-card-meta span{border:1px solid #ead8b8;border-radius:999px;padding:5px 9px;background:#fff;font-size:.78rem;font-weight:750}.evaluation-card .evaluation-action{white-space:nowrap}.evaluation-card[data-state="open"]{border-color:#71c69d;background:linear-gradient(135deg,#effcf5,#fff)}.evaluation-card[data-state="open"] .eyebrow{color:#18794e}
 @media(max-width:760px){.evaluation-card{grid-template-columns:1fr}.evaluation-card .evaluation-action{width:100%}}
+
+.evaluation-card .disabled-link{pointer-events:none;opacity:.55;cursor:not-allowed}
