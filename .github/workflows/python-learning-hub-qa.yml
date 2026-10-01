@@ -17,6 +17,9 @@ on:
       - 'qa/check_statistics11_team_progress_v66.cjs'
       - 'qa/check_statistics11_cross_group_workshop_v67.cjs'
       - 'qa/library_playground_v62_pyodide_smoke.mjs'
+      - 'qa/check_statistics11_eval_integrity_v71.cjs'
+      - 'qa/statistics11_eval_pyodide_v71.mjs'
+      - 'qa/statistics11_eval_alternate_emails_v71.sql'
       - 'supabase/migrations/*python_learning_hub*.sql'
       - 'supabase/migrations/*python_hub*.sql'
       - 'supabase/migrations/*statistics11*.sql'
@@ -34,6 +37,9 @@ on:
       - 'qa/check_statistics11_team_progress_v66.cjs'
       - 'qa/check_statistics11_cross_group_workshop_v67.cjs'
       - 'qa/library_playground_v62_pyodide_smoke.mjs'
+      - 'qa/check_statistics11_eval_integrity_v71.cjs'
+      - 'qa/statistics11_eval_pyodide_v71.mjs'
+      - 'qa/statistics11_eval_alternate_emails_v71.sql'
       - 'supabase/migrations/*python_learning_hub*.sql'
       - 'supabase/migrations/*python_hub*.sql'
       - 'supabase/migrations/*statistics11*.sql'
@@ -74,6 +80,9 @@ jobs:
           node --check qa/check_statistics11_team_progress_v66.cjs
           node --check qa/check_statistics11_cross_group_workshop_v67.cjs
           node --check qa/library_playground_v62_pyodide_smoke.mjs
+          node --check python/evaluation-modules-1-3/app.js
+          node --check qa/check_statistics11_eval_integrity_v71.cjs
+          node --check qa/statistics11_eval_pyodide_v71.mjs
 
       - name: Current production course contracts
         run: |
@@ -84,6 +93,7 @@ jobs:
           node qa/check_topic04_guidance_v63.cjs
           node qa/check_statistics11_team_progress_v66.cjs
           node qa/check_statistics11_cross_group_workshop_v67.cjs
+          node qa/check_statistics11_eval_integrity_v71.cjs
 
       - name: Verify production Pyodide asset
         run: curl --fail --silent --show-error --location --head https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js >/dev/null
@@ -94,3 +104,4 @@ jobs:
           set -euo pipefail
           npm install --no-save --ignore-scripts pyodide@0.27.7
           node qa/library_playground_v62_pyodide_smoke.mjs
+          node qa/statistics11_eval_pyodide_v71.mjs

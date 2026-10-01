@@ -591,9 +591,26 @@
     });
     document.addEventListener('keydown',e=>{
       if(!state.started) return;
-      if(e.key==='PrintScreen') logIntegrity('SCREENSHOT_KEY_ATTEMPT',{key:'PrintScreen'},false);
-      if((e.ctrlKey||e.metaKey)&&String(e.key).toLowerCase()==='p'){
-        e.preventDefault();logIntegrity('PRINT_SHORTCUT',{},false);
+      const key=String(e.key||'').toLowerCase();
+      const modified=e.ctrlKey||e.metaKey;
+      if(modified&&(key==='c'||key==='x'||key==='v')){
+        e.preventDefault();
+        logIntegrity(key==='c'?'COPY_SHORTCUT_ATTEMPT':key==='x'?'CUT_SHORTCUT_ATTEMPT':'PASTE_SHORTCUT_ATTEMPT',{key},false);
+        return;
+      }
+      if(e.key==='PrintScreen'){
+        e.preventDefault();
+        logIntegrity('SCREENSHOT_KEY_ATTEMPT',{key:'PrintScreen'},false);
+        return;
+      }
+      if(e.metaKey&&e.shiftKey&&(key==='3'||key==='4'||key==='5')){
+        e.preventDefault();
+        logIntegrity('SCREENSHOT_SHORTCUT_ATTEMPT',{key},false);
+        return;
+      }
+      if(modified&&key==='p'){
+        e.preventDefault();
+        logIntegrity('PRINT_SHORTCUT',{},false);
       }
     });
     window.addEventListener('pagehide',()=>{if(state.started)logIntegrity('PAGE_HIDE',{},false);});
