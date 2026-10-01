@@ -192,6 +192,57 @@
 
   function progressFor(slug){ return state.snapshot?.topics?.find(item=>item.slug===slug) || null; }
 
+  function localEvaluationIdentity(){
+    const storedEmail=normalizeEmail(state.registration?.emails?.[0]||'');
+    const snapshotEmail=normalizeEmail(state.snapshot?.registration?.display_label||'');
+    return {
+      email: storedEmail || snapshotEmail,
+      groupCode:String(
+        state.registration?.groupCode
+        || state.snapshot?.registration?.group_code
+        || ''
+      ).trim().toUpperCase()
+    };
+  }
+
+  function renderEvaluationCard(data){
+    const panel=$('evaluationPanel');
+    if(!panel) return;
+
+    const windowCopy=data.opens_at&&data.closes_at
+      ? `${evaluationTime(data.opens_at)} – ${evaluationTime(data.closes_at)}`
+      : '';
+    const stateCopy={
+      scheduled:'Scheduled · opens automatically in your class window',
+      open:data.qa_early_access
+        ? 'QA EARLY ACCESS · OPEN NOW'
+        : 'OPEN NOW · Start only when the teacher instructs you',
+      attempted:'Attempt already registered for this account',
+      closed:'Evaluation window closed'
+    }[data.state] || data.state || 'Evaluation';
+
+    const canOpen=data.state==='open';
+    panel.dataset.state=data.state||'scheduled';
+    panel.innerHTML=`
+      <div>
+        <p class="eyebrow">EVALUATION · MODULES 01–03 · ${escapeHtml(data.group_code||'')}</p>
+        <h2>Python foundations · one-shot assessment</h2>
+        <p><strong>${escapeHtml(stateCopy)}</strong>. 18 questions · 40 minutes · True/False, multiple choice, open response and programming. Incorrect confirmed answers deduct 1 point and cannot be changed.</p>
+        <div class="evaluation-card-meta">
+          <span>${data.qa_early_access?'QA account · single student':'Team: 1–3 students'}</span>
+          <span>Fullscreen required</span>
+          <span>Exit penalty: −1 point</span>
+          ${windowCopy?`<span>${escapeHtml(windowCopy)}</span>`:''}
+        </div>
+      </div>
+      <div class="evaluation-action">
+        <a class="button ${canOpen?'button-dark':'button-light'} ${canOpen?'':'disabled-link'}"
+           href="${canOpen?EVALUATION_ROUTE:'#'}"
+           ${canOpen?'':'aria-disabled="true" tabindex="-1"'}>${canOpen?'Start evaluation':'Not available yet'}</a>
+      </div>`;
+    panel.classList.remove('hidden');
+  }
+
   function evaluationTime(value){
     if(!value) return '';
     try{
@@ -211,53 +262,41 @@
       evaluationAvailabilityTimer=null;
     }
     if(!panel || !state.registration?.registrationId || !state.registration?.accessToken) return;
+
+    const localIdentity=localEvaluationIdentity();
+    const isQaEarlyAccount=localIdentity.email==='qa.student11@ijr.edu.co'
+      && localIdentity.groupCode==='11A';
+
+    // Render a visible card immediately for the dedicated QA account. The
+    // backend remains authoritative for starting the attempt.
+    if(isQaEarlyAccount){
+      renderEvaluationCard({
+        eligible:true,
+        state:'open',
+        group_code:'11A',
+        qa_early_access:true
+      });
+    }
+
     try{
-      const data=await rpc(config.rpc?.evalAvailability || 'python_hub_eval_availability_v1',{
+      const raw=await rpc(config.rpc?.evalAvailability || 'python_hub_eval_availability_v1',{
         p_registration_id:state.registration.registrationId,
         p_access_token:state.registration.accessToken,
         p_evaluation_slug:EVALUATION_SLUG
       });
+      const data=Array.isArray(raw)?raw[0]:raw;
 
       if(!data?.eligible){
-        panel.classList.add('hidden');
+        if(!isQaEarlyAccount) panel.classList.add('hidden');
         return;
       }
 
-      const windowCopy=data.opens_at&&data.closes_at
-        ? `${evaluationTime(data.opens_at)} – ${evaluationTime(data.closes_at)}`
-        : '';
-      const stateCopy={
-        scheduled:'Scheduled · opens automatically in your class window',
-        open:'OPEN NOW · Start only when the teacher instructs you',
-        attempted:'Attempt already registered for this account',
-        closed:'Evaluation window closed'
-      }[data.state] || data.state || 'Evaluation';
-
-      const canOpen=data.state==='open';
-      panel.dataset.state=data.state||'scheduled';
-      panel.innerHTML=`
-        <div>
-          <p class="eyebrow">EVALUATION · MODULES 01–03 · ${escapeHtml(data.group_code||'')}</p>
-          <h2>Python foundations · one-shot assessment</h2>
-          <p><strong>${escapeHtml(stateCopy)}</strong>. 18 questions · 40 minutes · True/False, multiple choice, open response and programming. Incorrect confirmed answers deduct 1 point and cannot be changed.</p>
-          <div class="evaluation-card-meta">
-            <span>Team: 1–3 students</span>
-            <span>Fullscreen required</span>
-            <span>Exit penalty: −1 point</span>
-            ${windowCopy?`<span>${escapeHtml(windowCopy)}</span>`:''}
-          </div>
-        </div>
-        <div class="evaluation-action">
-          <a class="button ${canOpen?'button-dark':'button-light'} ${canOpen?'':'disabled-link'}"
-             href="${canOpen?EVALUATION_ROUTE:'#'}"
-             ${canOpen?'':'aria-disabled="true" tabindex="-1"'}>${canOpen?'Start evaluation':'Not available yet'}</a>
-        </div>`;
-      panel.classList.remove('hidden');
+      renderEvaluationCard(data);
       if(data.state==='scheduled' || data.state==='open'){
         evaluationAvailabilityTimer=window.setTimeout(renderEvaluationPanel,30000);
       }
     }catch(error){
-      panel.classList.add('hidden');
+      if(!isQaEarlyAccount) panel.classList.add('hidden');
       console.warn('Evaluation availability could not be loaded.',error);
     }
   }
