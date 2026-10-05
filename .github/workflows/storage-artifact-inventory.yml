@@ -1,0 +1,47 @@
+name: Storage Artifact Inventory
+
+on:
+  push:
+    branches:
+      - ops/storage-audit-2026-10-04
+    paths:
+      - '.github/workflows/storage-artifact-inventory.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inventory all Actions artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="${GITHUB_REPOSITORY}"
+          tmp="$(mktemp)"
+          gh api --paginate "/repos/${repo}/actions/artifacts?per_page=100" > "$tmp"
+          jq -s '
+            [.[].artifacts[]] |
+            {
+              artifact_count: length,
+              total_bytes: (map(.size_in_bytes) | add // 0),
+              artifacts: map({
+                id,
+                name,
+                size_in_bytes,
+                expired,
+                created_at,
+                expires_at,
+                workflow_run: {
+                  id: .workflow_run.id,
+                  head_branch: .workflow_run.head_branch,
+                  head_sha: .workflow_run.head_sha
+                }
+              }) | sort_by(.created_at)
+            }
+          ' "$tmp"
