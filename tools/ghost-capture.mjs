@@ -21,7 +21,7 @@ const browser = await puppeteer.launch({
   headless: true,
   args: ['--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--window-size=1660,940']
 });
-const page = await browser.newPage();
+const page = await browser.newPage();\npage.on('console',m=>console.log('BROWSER_CONSOLE',m.type(),m.text()));\npage.on('pageerror',e=>console.log('BROWSER_PAGEERROR',e.message));
 await page.setViewport({width:1660,height:940,deviceScaleFactor:1});
 await page.emulateMediaFeatures([{name:'prefers-reduced-motion',value:'reduce'}]);
 
@@ -35,7 +35,24 @@ const manifest = {
 };
 
 async function stabilizeTheory(slug){
+  try {
   await page.waitForSelector('#theoryApp:not(.hidden)',{timeout:15000});
+} catch (e) {
+  const diag=await page.evaluate(()=>({
+    url:location.href,
+    ghost:document.documentElement.dataset.ghostCapture||'',
+    appClass:document.getElementById('theoryApp')?.className||'',
+    accessClass:document.getElementById('accessPanel')?.className||'',
+    accessText:document.getElementById('accessPanel')?.innerText||'',
+    hasConfig:!!window.IJR_PYTHON_HUB_CONFIG,
+    topicsLen:(window.IJR_PYTHON_HUB_TOPICS||[]).length,
+    mapKeys:Object.keys(window.IJR_PYTHON_HUB_TOPIC_MAP||{}).length,
+    hasSupabase:!!window.supabase,
+    bodyText:document.body.innerText.slice(0,1200)
+  }));
+  console.log('THEORY_DIAGNOSTIC',JSON.stringify(diag,null,2));
+  throw e;
+}
   await new Promise(r=>setTimeout(r, slug==='logic' ? 5000 : 2600));
   await page.addStyleTag({content:`
     html{scroll-behavior:auto!important}
