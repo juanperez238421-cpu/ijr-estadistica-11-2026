@@ -21,7 +21,9 @@ const browser = await puppeteer.launch({
   headless: true,
   args: ['--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--window-size=1660,940']
 });
-const page = await browser.newPage();\npage.on('console',m=>console.log('BROWSER_CONSOLE',m.type(),m.text()));\npage.on('pageerror',e=>console.log('BROWSER_PAGEERROR',e.message));
+const page = await browser.newPage();
+page.on('console',m=>console.log('BROWSER_CONSOLE',m.type(),m.text()));
+page.on('pageerror',e=>console.log('BROWSER_PAGEERROR',e.message));
 await page.setViewport({width:1660,height:940,deviceScaleFactor:1});
 await page.emulateMediaFeatures([{name:'prefers-reduced-motion',value:'reduce'}]);
 
