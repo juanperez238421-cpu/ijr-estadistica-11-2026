@@ -1,0 +1,67 @@
+name: QA Ghost Capture
+
+on:
+  push:
+    branches:
+      - qa/ghost-capture-20261008
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout isolated ghost branch
+        uses: actions/checkout@v4
+
+      - name: Setup Chrome
+        id: chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install capture dependency
+        run: npm install --no-save puppeteer-core@24
+
+      - name: Start local ghost server
+        working-directory: python
+        run: |
+          python3 -m http.server 8000 --bind 127.0.0.1 > /tmp/stat11-ghost-http.log 2>&1 &
+          echo $! > /tmp/stat11-ghost-http.pid
+          sleep 2
+          curl --fail http://127.0.0.1:8000/theory.html?topic=operations >/dev/null
+
+      - name: Capture theory and exam
+        env:
+          CHROME_PATH: ${{ steps.chrome.outputs.chrome-path }}
+        run: node tools/ghost-capture.mjs
+
+      - name: Validate capture manifest
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, sys
+          p=pathlib.Path('captures/manifest.json')
+          d=json.loads(p.read_text())
+          assert len(d['theory']) == 16
+          assert len(d['exam']) == 20
+          assert all(x['ghost']=='true' for x in d['theory'])
+          assert all(x['slices'] >= 2 for x in d['theory'])
+          print('QA PASS', sum(x['slices'] for x in d['theory']), 'theory viewport captures')
+          PY
+
+      - name: Build ZIP
+        run: |
+          zip -qr Statistics11_REAL_SOURCE_Ghost_Captures.zip captures
+
+      - name: Upload capture ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: Statistics11_REAL_SOURCE_Ghost_Captures
+          path: Statistics11_REAL_SOURCE_Ghost_Captures.zip
+          retention-days: 1
+          compression-level: 0
