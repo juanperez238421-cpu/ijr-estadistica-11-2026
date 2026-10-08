@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="Statistics 11 secure one-shot evaluation for Modules 01–03.">
+  <title>Statistics 11 · Modules 01–03 Evaluation</title>
+  <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="styles.css?v=20260930-eval-v1">
+  
+  
+  <script defer src="ghost-app.js?v=20261008-ghost"></script>
+</head>
+<body>
+  <div id="watermark" class="watermark" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Return to Statistics 11 Python Learning Hub">
+      <span class="brand-mark">IJR</span>
+      <span><small>Instituto Jorge Robledo · Statistics 11</small><strong>Modules 01–03 Evaluation</strong></span>
+    </a>
+    <div class="top-metrics">
+      <span id="timer" class="metric timer">40:00</span>
+      <span id="pointsMetric" class="metric">18 / 18 pts</span>
+      <span id="strikeMetric" class="metric">0 / 3 exits</span>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section id="startupPanel" class="panel">
+      <p class="eyebrow">EVALUATION · MODULES 01–03</p>
+      <h1>One submission per question. No second attempt.</h1>
+      <p class="lead">This assessment covers notebook operations, variables and data types, and Python lists/arrays. It combines True/False, multiple choice, open responses and programming.</p>
+
+      <div id="availabilityBox" class="availability-box">Checking your Statistics 11 session and evaluation window…</div>
+
+      <div class="rules-grid">
+        <article><strong>18 questions · 40 minutes</strong><span>Questions are randomized for each registered team.</span></article>
+        <article><strong>Wrong answer: −1 point</strong><span>Once Confirm is pressed, the response is permanently registered and cannot be corrected.</span></article>
+        <article><strong>Fullscreen required</strong><span>Leaving fullscreen or a confirmed tab/window switch deducts 1 point. The third integrity strike ends the attempt.</span></article>
+        <article><strong>1–3 students</strong><span>Use the same institutional-email team model as the current workshops.</span></article>
+      </div>
+
+      <form id="teamForm" class="team-form hidden" novalidate>
+        <fieldset>
+          <legend>How many students will take this evaluation at this computer?</legend>
+          <div class="size-options">
+            <label><input type="radio" name="teamSize" value="1"><span>1 student</span></label>
+            <label><input type="radio" name="teamSize" value="2"><span>2 students</span></label>
+            <label><input type="radio" name="teamSize" value="3"><span>3 students</span></label>
+          </div>
+        </fieldset>
+
+        <div class="member-grid">
+          <label id="memberWrap1">Student 1 · institutional email
+            <input id="memberEmail1" type="email" readonly required>
+            <small>Current Learning Hub account.</small>
+          </label>
+          <label id="memberWrap2" class="hidden">Student 2 · institutional email
+            <input id="memberEmail2" type="email" autocomplete="off" placeholder="student@ijr.edu.co">
+          </label>
+          <label id="memberWrap3" class="hidden">Student 3 · institutional email
+            <input id="memberEmail3" type="email" autocomplete="off" placeholder="student@ijr.edu.co">
+          </label>
+        </div>
+
+        <label class="consent">
+          <input id="rulesConsent" type="checkbox" required>
+          <span>I understand that each response is final, incorrect responses deduct one point, fullscreen is mandatory, and integrity exits are penalized.</span>
+        </label>
+        <button id="startButton" class="primary" type="submit">Enter fullscreen and start evaluation</button>
+        <p id="startupStatus" class="status" role="status" aria-live="polite"></p>
+      </form>
+
+      <div class="startup-actions">
+        <a class="secondary" href="../">Return to Learning Hub</a>
+      </div>
+    </section>
+
+    <section id="examPanel" class="panel hidden" aria-live="polite">
+      <div class="exam-head">
+        <div>
+          <p id="moduleLabel" class="eyebrow">MODULE 01</p>
+          <h2 id="questionNumber">Question 1 / 18</h2>
+        </div>
+        <div id="teamBadge" class="team-badge"></div>
+      </div>
+      <div class="progress"><span id="progressBar"></span></div>
+
+      <div id="integrityBanner" class="notice hidden"></div>
+
+      <article class="question-card">
+        <p id="questionPrompt" class="question-prompt">Loading…</p>
+        <div id="answerMount"></div>
+        <div class="confirm-row">
+          <span id="answerPolicy">Confirm only when your final answer is ready.</span>
+          <button id="confirmButton" class="primary" type="button" disabled>Confirm final answer</button>
+        </div>
+      </article>
+      <p id="examStatus" class="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section id="feedbackPanel" class="panel hidden" aria-live="polite">
+      <p class="eyebrow">RESPONSE REGISTERED</p>
+      <h2 id="feedbackTitle"></h2>
+      <p id="feedbackCopy" class="lead"></p>
+      <div id="feedbackMetrics" class="feedback-metrics"></div>
+      <button id="nextButton" class="primary" type="button">Next question</button>
+    </section>
+
+    <section id="finishPanel" class="panel hidden">
+      <p class="eyebrow">EVALUATION CLOSED</p>
+      <h1 id="finishTitle">Evaluation submitted</h1>
+      <div id="finishSummary" class="finish-summary"></div>
+      <p>Your official record is stored in the Statistics 11 backend. Answers already registered remain immutable.</p>
+      <a class="secondary" href="../">Return to Learning Hub</a>
+    </section>
+  </main>
+
+  <div id="fullscreenGate" class="gate hidden" role="dialog" aria-modal="true">
+    <div class="gate-card">
+      <p class="eyebrow">FULLSCREEN REQUIRED</p>
+      <h2>Evaluation paused</h2>
+      <p>Leaving fullscreen is recorded as an integrity event and may deduct one point. Return to fullscreen to continue.</p>
+      <button id="returnFullscreen" class="primary" type="button">Return to fullscreen</button>
+    </div>
+  </div>
+
+  <div id="lockGate" class="gate hidden" role="dialog" aria-modal="true">
+    <div class="gate-card">
+      <p class="eyebrow">INTEGRITY LIMIT</p>
+      <h2>Evaluation ended</h2>
+      <p>The maximum number of confirmed integrity exits was reached. The current score and audit trail were stored.</p>
+    </div>
+  </div>
+</body>
+</html>
