@@ -116,7 +116,7 @@ jobs:
           grep -q "ijr-seminar-main-registration-v2" seminario-oop-uml/hub.js
           grep -q "store.startWithEmail" seminario-oop-uml/hub.js
           grep -q "No local/untracked session was created" seminario-oop-uml/hub.js
-          grep -q "seminar_oop_uml_start_email_v10" seminario-oop-uml/config.js
+          grep -q "seminar_oop_uml_start_email_v11" seminario-oop-uml/config.js
           grep -q "canonical historical attempt" seminario-oop-uml/hub.js
           grep -q 'id="bootPanel"' seminario-oop-uml/index.html
           grep -q 'id="retryBoot"' seminario-oop-uml/index.html
