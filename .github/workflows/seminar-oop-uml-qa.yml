@@ -267,7 +267,7 @@ jobs:
           set -euo pipefail
           grep -q "sb_publishable_" seminario-oop-uml/config.js
           grep -q "seminar_course_start_team" seminario-oop-uml/config.js
-          grep -q "seminar_oop_uml_start_email_v10" seminario-oop-uml/config.js
+          grep -q "seminar_oop_uml_start_email_v11" seminario-oop-uml/config.js
           grep -q "roster_canonical_resume" supabase/migrations/20260930130215_seminar_oop_direct_entry_preserve_progress_v10.sql
           grep -q "seminar_master_dashboard_v3" supabase/migrations/20260930130215_seminar_oop_direct_entry_preserve_progress_v10.sql
           grep -q "canonical_progress_preserved" supabase/migrations/20260930130215_seminar_oop_direct_entry_preserve_progress_v10.sql
