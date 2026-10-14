@@ -7,7 +7,7 @@ window.IJR_OOP_UML_CONFIG=Object.freeze({
   localKey:'ijr-seminar-oop-uml-local-v2',
   rpc:{
     start:'seminar_course_start_team',
-    startWithEmail:'seminar_oop_uml_start_email_v10',
+    startWithEmail:'seminar_oop_uml_start_email_v11',
     resume:'seminar_course_resume',
     umlSnapshot:'seminar_oop_uml_snapshot',
     recordSession:'seminar_oop_uml_record_session',
