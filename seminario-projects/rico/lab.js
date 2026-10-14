@@ -121,7 +121,9 @@
   $('evidenceNotes').value=saved.notes[n]||'';$('evidenceNotes').oninput=()=>{saved.notes[n]=$('evidenceNotes').value;persist();};
   $('restartRuntime').onclick=()=>{resetWorker();player?.pause();preview=null;for(const id of ['playPreview','pausePreview','downloadAnimation'])$(id).disabled=true;log('Runtime reiniciado. Los borradores se conservan.');};
   
+ const legacyDraft=structuredClone(saved);
  window.IJR_PROJECT_WORKSPACE={
+ legacyState:()=>structuredClone(legacyDraft),
  exportState:()=>{saved.activeByClass=saved.activeByClass||{};saved.activeByClass[n]=active;return structuredClone(saved);},
  restoreState:(state,members)=>{
   if(!state||typeof state!=='object'||!state.cells||!state.notes)throw Error('Borrador inválido');
