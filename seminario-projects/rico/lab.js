@@ -15,6 +15,7 @@
     '1:modify':'config = replace(config, message="Gracias por estar aquí").validate()\npreview_frames["frames"][0]["shapes"][0]["text"] = config.message\nprint("MODIFY:", config.message)\n'
   };
   for(const [id,original] of Object.entries(legacy)){const e=saved.cells[id];if(e?.previousCode&&e.previousCode!==original&&!e.code)e.code=e.previousCode;if(e?.code===original){e.previousCode=e.code;delete e.code;e.ok=false;}}
+  course.forEach((cl,c)=>cl.cells.forEach(it=>window.IJR_STEPS.initialize(saved.cells,(c+1)+":"+it.id,it)));
   const cellKey=(c,item)=>`${c}:${item.id}`;
   const item=()=>lesson.cells[active];
   const entry=(c,it)=>saved.cells[cellKey(c,it)]||{};
@@ -25,19 +26,19 @@
   function badge(text,kind){$('runtimeBadge').textContent=text;$('runtimeBadge').className='runtime-badge '+kind;}
   function renderRail(){
     const completed=it=>executed.has(cellKey(n,it));
-    $('stepRail').innerHTML='';lesson.cells.forEach((it,i)=>{const b=document.createElement('button');b.className='rail-step'+(i===active?' active':'')+(completed(it)?' done':'');b.textContent=i+1;b.title=it.title;b.setAttribute('aria-current',i===active?'step':'false');b.disabled=busy;b.onclick=()=>select(i);$('stepRail').appendChild(b);});
+    $('stepRail').innerHTML='';lesson.cells.forEach((it,i)=>{const b=document.createElement('button');b.className='rail-step'+(i===active?' active':'')+(completed(it)?' done':'');b.textContent=(i+1)+'. '+it.title;b.title=it.title;b.setAttribute('aria-current',i===active?'step':'false');b.disabled=busy;b.onclick=()=>select(i);$('stepRail').appendChild(b);});
     const done=lesson.cells.filter(completed).length;$('progressBar').style.width=(done/lesson.cells.length*100)+'%';
   }
   function select(i){if(busy)return;saveCode();active=Math.max(0,Math.min(lesson.cells.length-1,i));render();}
   function render(){
-    const it=item(),e=entry(n,it);$('cellTitle').textContent=it.title;$('codeInstruction').textContent=it.purpose;$('codeEditor').value=source(n,it);$('lessonTitle').textContent=it.title;$('lessonConcept').textContent=it.purpose;
-    $('lessonSteps').innerHTML='';it.steps.forEach(t=>{const li=document.createElement('li');li.textContent=t;$('lessonSteps').appendChild(li);});
-    $('executionCount').textContent=e.runs?`[${e.runs}]`:'[ ]';$('activityStatus').textContent=e.ok?'Última ejecución correcta · vuelve a ejecutar para restaurar el estado':'Celda pendiente o editada';$('activityStatus').className='validation-status'+(e.ok?' ok':'');
-    $('journey').textContent=`Clase ${n} · Paso ${active+1} de ${lesson.cells.length}. ${it.steps[0]} Después pulsa ▶ Ejecutar celda y comprueba la consola.`;
-    $('nextCell').textContent=executed.has(cellKey(n,it))?'Siguiente paso →':'Ejecuta este paso para continuar';
-    $('previousCell').disabled=active===0||busy;$('nextCell').disabled=active===lesson.cells.length-1||busy||!executed.has(cellKey(n,it));renderRail();
+    const it=item(),e=window.IJR_STEPS.initialize(saved.cells,cellKey(n,it),it),guide=window.IJR_STEPS.describe(it,e);$('cellTitle').textContent=guide.title;$('codeInstruction').textContent=guide.purpose;$('codeEditor').value=source(n,it);$('lessonTitle').textContent=guide.title;$('lessonConcept').textContent=guide.purpose;
+    $('lessonSteps').innerHTML='';guide.steps.forEach(t=>{const li=document.createElement('li');li.textContent=t;$('lessonSteps').appendChild(li);});
+    $('resetCodeButton').textContent=it.microsteps?'Iniciar guía':'Reset cell';$('executionCount').textContent=e.runs?`[${e.runs}]`:'[ ]';$('activityStatus').textContent=e.ok?'Última ejecución correcta · vuelve a ejecutar para restaurar el estado':'Celda pendiente o editada';$('activityStatus').className='validation-status'+(e.ok?' ok':'');
+    $('journey').textContent=`Clase ${n} · Paso ${active+1} de ${lesson.cells.length}. ${guide.steps[0]} Después pulsa ▶ Ejecutar celda y comprueba la consola.`;
+    $('nextCell').textContent=window.IJR_STEPS.canNext(it,e,executed.has(cellKey(n,it)))?'Añadir siguiente paso →':'Ejecuta este paso para continuar';
+    $('previousCell').disabled=active===0||busy;$('nextCell').disabled=(active===lesson.cells.length-1&&window.IJR_STEPS.end(item(),entry(n,item())))||busy||!window.IJR_STEPS.canNext(it,entry(n,it),executed.has(cellKey(n,it)));renderRail();
   }
-  function lock(value){busy=value;for(const id of ['runCellButton','runCodeButton','resetCodeButton','downloadNotebook','downloadPython','downloadEvidence','restartRuntime','buildAnimation'])$(id).disabled=value;for(const id of ['playPreview','pausePreview','downloadAnimation','downloadVideo'])$(id).disabled=value||!preview;$('codeEditor').readOnly=value;$('terminalCommand').disabled=value;$('terminalForm').querySelector('button').disabled=value;$('previousCell').disabled=value||active===0;$('nextCell').disabled=value||active===lesson.cells.length-1||!executed.has(cellKey(n,item()));$('classNav').style.pointerEvents=value?'none':'';renderRail();}
+  function lock(value){busy=value;for(const id of ['runCellButton','runCodeButton','resetCodeButton','downloadNotebook','downloadPython','downloadEvidence','restartRuntime','buildAnimation'])$(id).disabled=value;for(const id of ['playPreview','pausePreview','downloadAnimation','downloadVideo'])$(id).disabled=value||!preview;$('codeEditor').readOnly=value;$('terminalCommand').disabled=value;$('terminalForm').querySelector('button').disabled=value;$('previousCell').disabled=value||active===0;$('nextCell').disabled=value||(active===lesson.cells.length-1&&window.IJR_STEPS.end(item(),entry(n,item())))||!window.IJR_STEPS.canNext(item(),entry(n,item()),executed.has(cellKey(n,item())));$('classNav').style.pointerEvents=value?'none':'';renderRail();}
   function resetWorker(reason='Runtime reiniciado. Ejecuta las celdas de nuevo.'){
     worker?.terminate();worker=null;ready=false;executed.clear();for(const [id,p] of pending){clearTimeout(p.timer);p.reject(new Error(reason));}pending.clear();badge('Python por iniciar','offline');
   }
@@ -63,15 +64,15 @@
     $('previewHelp').textContent=`Resultado generado: ${next.frames.length} cuadros, ${(next.frames.length/next.fps).toFixed(1)} segundos. Reproduce, descarga el HTML sin conexión o graba el video WebM. La clase 2 añade el corazón y las flores.`;
   }
   async function execute(code,terminal=false){
-    if(busy)return;saveCode();lock(true);$('activityStatus').textContent='Ejecutando Python…';$('terminalOutput').classList.remove('error');
+    if(busy)return;saveCode();if(!terminal)entry(n,item()).microPassed=false;lock(true);$('activityStatus').textContent='Ejecutando Python…';$('terminalOutput').classList.remove('error');
     try{
       await window.IJR_SEMINAR_TEAM?.ready;
       await prepare();
-      if(!terminal)for(let i=0;i<active;i++){const it=lesson.cells[i],id=cellKey(n,it);if(executed.has(id))continue;log(`>>> Preparar paso ${i+1}: ${it.title}`);const dep=await run(source(n,it));log(dep.output);if(!dep.ok)throw new Error(`Corrige el paso ${i+1}:\n${dep.error}`);await window.IJR_SEMINAR_TEAM?.record(it.id,source(n,it),dep.output);executed.add(id);}
-      log(`>>> ${terminal?'Terminal':item().title}`);const result=await run(code);log(result.output);if(!result.ok){log(result.error);$('terminalOutput').classList.add('error');}
+      if(!terminal)for(let i=0;i<active;i++){const it=lesson.cells[i],id=cellKey(n,it);if(executed.has(id))continue;if(!window.IJR_STEPS.end(it,entry(n,it)))throw Error('Completa todos los pasos de '+it.title+' antes de avanzar.');log(`>>> Preparar paso ${i+1}: ${it.title}`);const dep=await run(source(n,it));log(dep.output);if(!dep.ok)throw new Error(`Corrige el paso ${i+1}:\n${dep.error}`);await window.IJR_SEMINAR_TEAM?.record(it.id,source(n,it),dep.output);executed.add(id);}
+      log(`>>> ${terminal?'Terminal':item().title}`);const check=terminal?'':window.IJR_STEPS.check(item(),entry(n,item()));const result=await run(code+(check?'\n'+check:''));log(result.output);if(!result.ok){log(result.error);$('terminalOutput').classList.add('error');}
       if(result.ok){if(item().id!=='config'||terminal)updatePreview(result.preview);if(result.config)configSnapshot=result.config;}
-      if(!terminal){if(result.ok)await window.IJR_SEMINAR_TEAM?.record(item().id,code,result.output);const id=cellKey(n,item()),e=entry(n,item());saved.cells[id]={...e,code,runs:(e.runs||0)+1,ok:result.ok,output:result.output,error:result.error||'',executedAt:new Date().toISOString()};persist();$('executionCount').textContent=`[${saved.cells[id].runs}]`;}
-      if(!terminal){if(result.ok)executed.add(cellKey(n,item()));else executed.delete(cellKey(n,item()));}
+      if(!terminal){if(result.ok&&window.IJR_STEPS.end(item(),entry(n,item())))await window.IJR_SEMINAR_TEAM?.record(item().id,code,result.output);const id=cellKey(n,item()),e=entry(n,item());saved.cells[id]={...e,code,runs:(e.runs||0)+1,ok:result.ok&&window.IJR_STEPS.end(item(),e),microPassed:result.ok,output:result.output,error:result.error||'',executedAt:new Date().toISOString()};persist();$('executionCount').textContent=`[${saved.cells[id].runs}]`;}
+      if(!terminal){if(result.ok&&window.IJR_STEPS.end(item(),entry(n,item())))executed.add(cellKey(n,item()));else executed.delete(cellKey(n,item()));}
       $('activityStatus').textContent=result.ok?'Python ejecutado · revisa las pruebas y la vista previa':'Error Python real · corrige y vuelve a ejecutar';$('activityStatus').className='validation-status '+(result.ok?'ok':'bad');
       $('journey').textContent=result.ok?(active===lesson.cells.length-1?'Clase construida. Descarga el resultado y abre la siguiente clase.':`Paso ${active+1} ejecutado. ${preview?'Comprueba el resultado en la vista previa.':'La configuración está lista; el siguiente paso genera cuadros.'} Pulsa Siguiente paso →.`):'Lee el error en la consola, corrige la celda y vuelve a ejecutar.';
       $('nextCell').textContent=result.ok?'Siguiente paso →':'Corrige y ejecuta para continuar';
@@ -104,10 +105,10 @@
   for(const id of ['theoryLink','theorySide'])$(id).href='theory.html?class='+n;
   course.forEach((c,i)=>{const a=document.createElement('a');a.href='workshop.html?class='+(i+1);a.className='class-link'+(i+1===n?' active':'');a.textContent='Clase '+(i+1);$('classNav').appendChild(a);});
   $('runCodeButton').onclick=$('runCellButton').onclick=()=>execute($('codeEditor').value);
-  $('codeEditor').addEventListener('input',()=>{saveCode(true);resetWorker('Código editado. Vuelve a ejecutar para reconstruir Python.');for(let i=active;i<lesson.cells.length;i++)executed.delete(cellKey(n,lesson.cells[i]));$('activityStatus').textContent='Código editado · vuelve a ejecutar';$('nextCell').disabled=true;renderRail();});
+  $('codeEditor').addEventListener('input',()=>{saveCode(true);entry(n,item()).microPassed=false;resetWorker('Código editado. Vuelve a ejecutar para reconstruir Python.');for(let i=active;i<lesson.cells.length;i++)executed.delete(cellKey(n,lesson.cells[i]));$('activityStatus').textContent='Código editado · vuelve a ejecutar';$('nextCell').disabled=true;renderRail();});
   $('codeEditor').addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();execute($('codeEditor').value);}});
-  $('resetCodeButton').onclick=()=>{$('codeEditor').value=item().code;saveCode(true);render();};
-  $('previousCell').onclick=()=>select(active-1);$('nextCell').onclick=()=>select(active+1);
+  $('resetCodeButton').onclick=()=>{const e=entry(n,item());if(item().microsteps){window.IJR_STEPS.reset(item(),e);saved.cells[cellKey(n,item())]=e;$('codeEditor').value=e.code;}else $('codeEditor').value=item().code;saveCode(true);entry(n,item()).microPassed=false;resetWorker();render();};
+  $('previousCell').onclick=()=>select(active-1);$('nextCell').onclick=()=>{saveCode();const e=entry(n,item());if(window.IJR_STEPS.advance(item(),e)){persist();resetWorker('Nuevo fragmento añadido. Ejecuta para comprobarlo.');render();}else select(active+1);};
   $('clearTerminalButton').onclick=()=>{$('terminalOutput').textContent='';};
   $('terminalForm').onsubmit=e=>{e.preventDefault();const code=$('terminalCommand').value;if(code.trim())execute(code,true);};
   $('playPreview').onclick=()=>player?.play();$('pausePreview').onclick=()=>player?.pause();
@@ -115,7 +116,7 @@
   $('downloadVideo').onclick=video;
   $('buildAnimation').onclick=()=>{select(n===1?1:0);execute($('codeEditor').value);};
   $('downloadNotebook').onclick=()=>download('rico-mensaje.ipynb',JSON.stringify(notebook(),null,2),'application/x-ipynb+json');
-  $('downloadPython').onclick=()=>{saveCode();let code=source(1,course[0].cells[0])+'\n'+source(1,course[0].cells[1])+'\n'+source(2,course[1].cells[0]);for(const c of [1,2]){const build=course[c-1].cells.find(it=>it.id==='student_build');if(build&&!/NotImplementedError/.test(source(c,build)))code+='\n'+source(c,build);}
+  $('downloadPython').onclick=()=>{saveCode();if(!window.IJR_STEPS.end(course[1].cells[0],entry(2,course[1].cells[0]))){$('previewHelp').textContent='Completa el motor de la clase 2 para exportar el generador ejecutable. El notebook conserva tu código parcial.';return;}let code=source(1,course[0].cells[0])+'\n'+source(1,course[0].cells[1])+'\n'+source(2,course[1].cells[0]);for(const c of [1,2]){const build=course[c-1].cells.find(it=>it.id==='student_build');if(build&&!/NotImplementedError/.test(source(c,build)))code+='\n'+source(c,build);}
  if(configSnapshot)code+='\nconfig = Config(**json.loads('+JSON.stringify(configSnapshot)+')).validate()\nscene = StudentScene(config) if "StudentScene" in globals() else Scene(config)\npreview_frames = scene.render()\n';const renderer=window.RICO_PLAYER.standalone({fps:1,frames:[{width:720,height:480,background:'#14142b',shapes:[]}]});const before=renderer.indexOf('const data=');const after=renderer.indexOf(';const player=',before);const prefix=renderer.slice(0,before)+'const data=';const suffix=renderer.slice(after);download('crear_mensaje.py',code+'\nfrom pathlib import Path\nhtml = '+JSON.stringify(prefix)+' + json.dumps(preview_frames, ensure_ascii=False).replace("<", "\\\\u003c") + '+JSON.stringify(suffix)+'\nPath(__file__).resolve().with_name("mensaje-rico.html").write_text(html, encoding="utf-8")\nprint("EXPORT: mensaje-rico.html creado junto al generador")\n');};
   $('downloadEvidence').onclick=()=>{saveCode();download('rico-evidencia.json',JSON.stringify({project:'rico-message-animation',exportedAt:new Date().toISOString(),runtime:'Pyodide 0.27.7',team:window.IJR_SEMINAR_TEAM?.snapshot(),cells:saved.cells,notes:saved.notes,preview:{frames:preview?.frames.length||0,fps:preview?.fps||0},approval:'Pendiente de revisión docente; las notas offline son evidencia manual.'},null,2),'application/json');};
   $('evidenceNotes').value=saved.notes[n]||'';$('evidenceNotes').oninput=()=>{saved.notes[n]=$('evidenceNotes').value;persist();};
@@ -128,8 +129,9 @@
  restoreState:(state,members)=>{
   if(!state||typeof state!=='object'||!state.cells||!state.notes)throw Error('Borrador inválido');
   const allowed=new Set(course.flatMap((cl,c)=>cl.cells.map(it=>(c+1)+':'+it.id)));
-  const cells={};for(const [id,e]of Object.entries(state.cells)){if(!allowed.has(id)||!e||typeof e.code!=='string'||e.code.length>120000)continue;cells[id]={code:e.code,ok:e.ok===true,runs:Number(e.runs)||0};}
+  const cells={};for(const [id,e]of Object.entries(state.cells)){if(!allowed.has(id)||!e||typeof e.code!=='string'||e.code.length>120000)continue;cells[id]={code:e.code,ok:e.ok===true,runs:Number(e.runs)||0,microIndex:Number.isInteger(e.microIndex)?e.microIndex:undefined,microPassed:false,legacyCode:typeof e.legacyCode==='string'?e.legacyCode.slice(0,120000):undefined,legacyMode:e.legacyMode===true,codeHistory:Array.isArray(e.codeHistory)?e.codeHistory.filter(h=>h&&typeof h.code==='string').slice(-3).map(h=>({code:h.code.slice(0,120000),at:h.at,reason:h.reason})):[]};}
   saved={cells,notes:{},activeByClass:state.activeByClass||{}};for(const [id,text]of Object.entries(state.notes))if(/^[1-4]$/.test(id)&&typeof text==='string')saved.notes[id]=text.slice(0,10000);
+  course.forEach((cl,c)=>cl.cells.forEach(it=>window.IJR_STEPS.initialize(saved.cells,(c+1)+":"+it.id,it)));
   key='ijr-project-v2:'+'rico'+':'+[...members].sort().join(',');
   active=Math.max(0,Math.min(lesson.cells.length-1,Number(saved.activeByClass[n])||0));executed.clear();resetWorker('Proyecto recuperado. Ejecuta las celdas para reconstruir Python.');
   $('evidenceNotes').value=saved.notes[n]||'';try{localStorage.setItem(key,JSON.stringify(saved));}catch{}render();
@@ -140,3 +142,4 @@
   window.addEventListener('ijr:seminar-team-started',renderRail);
   window.addEventListener('beforeunload',()=>worker?.terminate());render();
 })();
+
