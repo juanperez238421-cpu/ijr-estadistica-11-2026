@@ -8,9 +8,9 @@
   <link rel="stylesheet" href="styles.css?v=20260831-v2"><link rel="stylesheet" href="coding-runtime-v2.css?v=20260923-v6"><link rel="stylesheet" href="stage2-state-behavior-colab-v7.css?v=20260923-v7">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
-  <script defer src="config.js?v=20260930-progress-v6"></script><script defer src="course-data.js?v=20260831-v1"></script>
-  <script defer src="coding-labs-v2.js?v=20260923-v6"></script><script defer src="stage1-foundations-v3.js?v=20260831-v3"></script><script defer src="stage1-uml-depth-v4.js?v=20260831-v4"></script><script defer src="stage2-state-behavior-colab-v7.js?v=20260923-v7"></script><script defer src="coding-runtime-v2.js?v=20260923-v6"></script>
-  <script type="module" src="workshop.js?v=20260930-progress-v6"></script>
+  <script defer src="config.js?v=20261014-cloud-draft-v1"></script><script defer src="course-data.js?v=20260831-v1"></script>
+  <script defer src="coding-labs-v2.js?v=20260923-v6"></script><script defer src="stage1-foundations-v3.js?v=20260831-v3"></script><script defer src="stage1-uml-depth-v4.js?v=20260831-v4"></script><script defer src="stage2-state-behavior-colab-v7.js?v=20260923-v7"></script><script defer src="coding-runtime-v2.js?v=20261014-cloud-draft-v1"></script>
+  <script type="module" src="workshop.js?v=20261014-cloud-draft-v1"></script>
 </head>
 <body>
 <header class="topbar">
@@ -71,6 +71,7 @@
           <label><input id="evExplain" type="checkbox"><span><strong>Explain</strong><br>I can defend why the design is structured this way.</span></label>
         </div>
         <label><strong>Design notes · optional</strong><textarea id="evidenceNotes" class="evidence-notes" maxlength="2000" placeholder="Example: I changed the relationship from inheritance to composition because…"></textarea></label>
+        <div class="save-strip" style="margin-bottom:12px"><p><strong>Draft autosave:</strong> <small id="draftSaveStatus" role="status" aria-live="polite">Edits are preserved in Supabase after syncing; incomplete work is not a grade.</small></p><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="saveDraftNow" class="button button-light" type="button">Save my progress now</button><button id="recoverLegacyDraft" class="button button-light" type="button">Review earlier code on this computer</button></div></div>
         <div class="save-strip"><p><span id="completionStamp" class="completion-stamp">Not recorded</span><br><small id="saveStatus">All four evidence checks are required by the server. Runtime and Stage 01 UML evidence are attached when available.</small></p><button id="saveEvidence" class="button button-dark" type="button">Record session evidence</button></div>
       </div>
     </article>

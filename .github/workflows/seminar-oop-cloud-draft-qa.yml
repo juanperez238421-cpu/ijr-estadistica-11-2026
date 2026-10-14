@@ -1,0 +1,66 @@
+name: Seminar OOP Cloud Draft QA
+on:
+  pull_request:
+    paths:
+      - "seminario-oop-uml/**"
+      - "supabase/migrations/*seminar_oop_cloud_drafts*"
+      - ".github/workflows/seminar-oop-cloud-draft-qa.yml"
+  push:
+    branches: [main]
+    paths:
+      - "seminario-oop-uml/**"
+      - "supabase/migrations/*seminar_oop_cloud_drafts*"
+permissions:
+  contents: read
+jobs:
+  cloud-draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: JS syntax and typed HTML hooks
+        run: |
+          set -euo pipefail
+          for f in config.js store.js hub.js workshop.js coding-runtime-v2.js; do node --check "seminario-oop-uml/$f"; done
+          grep -q 'id="draftSaveStatus"' seminario-oop-uml/workshop.html
+          grep -q 'id="recoverLegacyDraft"' seminario-oop-uml/workshop.html
+          grep -q 'id="saveDraftNow"' seminario-oop-uml/workshop.html
+          grep -q "seminar_oop_uml_draft_snapshot_v1" seminario-oop-uml/config.js
+          grep -q "seminar_oop_uml_draft_save_v1" seminario-oop-uml/config.js
+          grep -q "attemptId:attempt.id" seminario-oop-uml/workshop.js
+          grep -q "cloud draft" seminario-oop-uml/hub.js
+          grep -q "legacy_browser_import_unverified" seminario-oop-uml/workshop.js
+          ! grep -q 'GRANT SELECT ON public.seminar_oop_uml_drafts_v1 TO anon' supabase/migrations/*seminar_oop_cloud_drafts*
+      - name: Storage semantics with mocked token RPC
+        run: |
+          set -euo pipefail
+          cp seminario-oop-uml/store.js /tmp/oop-cloud-store.mjs
+          node --input-type=module <<'NODE'
+          import {OopUmlStore} from 'file:///tmp/oop-cloud-store.mjs';
+          const memory=new Map();
+          globalThis.localStorage={setItem:(k,v)=>memory.set(k,v),getItem:k=>memory.get(k)||null,removeItem:k=>memory.delete(k)};
+          const s=new OopUmlStore({localKey:'test',rpc:{draftSnapshot:'read',draftSave:'write'}});
+          s.attempt={id:'test-id',token:'mock-token',backend:'supabase',drafts:{}};
+          s.rpc=async(name,args)=>{
+            if(name==='read')return {drafts:[]};
+            if(name==='write'){
+              const n=s.attempt.drafts[args.p_session_key]?.revision||0;
+              if(n!==args.p_expected_revision)throw new Error('revision mismatch');
+              return {ok:true,revision:n+1,updated_at:'2026-10-14T00:00:00Z'};
+            }
+            throw new Error('Unexpected RPC');
+          };
+          await s.refreshDrafts(s.attempt);
+          if(s.attempt.drafts.s01)throw new Error('Unexpected existing draft');
+          const payload={draft_version:1,cells:{implement:{code:'print(1)'}}};
+          await s.recordDraft('s01',payload);
+          await s.recordDraft('s01',payload);
+          if(s.attempt.drafts.s01.revision!==2)throw new Error('Revision not incremented');
+          if(s.attempt.drafts.s01.payload.cells.implement.code!=='print(1)')throw new Error('Code lost');
+          let rejected=false;
+          try{await s.recordDraft('wrong',payload)}catch{rejected=true}
+          if(!rejected)throw new Error('Unknown workshop session accepted');
+          console.log('Cloud draft save/restore + revisions + session isolation verified');
+          NODE

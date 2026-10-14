@@ -1,4 +1,4 @@
-import {OopUmlStore} from './store.js?v=20260930-progress-v6';
+import {OopUmlStore} from './store.js?v=20261014-cloud-draft-v1';
 
 const cfg=window.IJR_OOP_UML_CONFIG;
 const data=window.IJR_OOP_UML_DATA;
@@ -62,6 +62,69 @@ function hydrateEvidence(){
   $('completionHeader').classList.toggle('ok',done);
 }
 
+
+let draftTimer=null,draftSaving=false,draftDirty=false,legacyImported=false;
+function currentDraft(){
+  const notebook=window.IJR_OOP_NOTEBOOK?.evidence?.()||{};
+  const uml=topic.n===1?(window.IJR_OOP_UML_STAGE1_PRACTICE?.evidence?.()||{}):{};
+  const state=topic.n===2?(window.IJR_OOP_STATE_BEHAVIOR?.evidence?.()||{}):{};
+  return {
+    draft_version:1,
+    origin:legacyImported?'legacy_browser_import_unverified':'current_workshop',
+    student_checks:{model:$('evModel').checked,code:$('evCode').checked,
+      test:$('evTest').checked,explain:$('evExplain').checked},
+    notes:$('evidenceNotes').value.slice(0,2000),
+    model_evidence:{...uml,...state},
+    cells:notebook.cells||{},
+    runtime_summary:{
+      run_count:notebook.run_count||0,successful_run_count:notebook.successful_run_count||0,
+      implement_success:notebook.implement_success===true,
+      test_success:notebook.test_success===true,modify_success:notebook.modify_success===true
+    }
+  };
+}
+function restoreDraft(){
+  const draft=attempt?.drafts?.[topic.sessionKey]?.payload;
+  if(!draft)return;
+  if(draft.student_checks&&typeof draft.student_checks==='object'){
+    for(const [key,id] of Object.entries({model:'evModel',code:'evCode',test:'evTest',explain:'evExplain'}))
+      if(typeof draft.student_checks[key]==='boolean')$(id).checked=draft.student_checks[key];
+  }
+  if(typeof draft.notes==='string')$('evidenceNotes').value=draft.notes;
+  if(topic.n===1)window.IJR_OOP_UML_STAGE1_PRACTICE?.hydrate?.(draft.model_evidence||{});
+  if(topic.n===2)window.IJR_OOP_STATE_BEHAVIOR?.hydrate?.(draft.model_evidence||{});
+  const restored=window.IJR_OOP_NOTEBOOK?.restoreCloudCells?.(draft.cells)||0;
+  const status=$('draftSaveStatus');
+  if(status)status.textContent='Cloud draft restored · '+restored+' code cells · revision '+(attempt.drafts[topic.sessionKey].revision||0)+'. Partial work is not a graded submission.';
+  legacyImported=draft.origin==='legacy_browser_import_unverified';
+}
+function queueDraftSave(){
+  if(!$('workshopPanel')||$('workshopPanel').classList.contains('hidden')||!attempt)return;
+  draftDirty=true;
+  if(draftTimer)clearTimeout(draftTimer);
+  draftTimer=setTimeout(flushDraft,850);
+  const status=$('draftSaveStatus');
+  if(status)status.textContent='Unsaved changes · syncing soon…';
+}
+async function flushDraft(){
+  if(draftTimer){clearTimeout(draftTimer);draftTimer=null;}
+  if(!draftDirty||draftSaving||!attempt)return;
+  draftDirty=false;draftSaving=true;
+  const draft=currentDraft();
+  try{
+    attempt=await store.recordDraft(topic.sessionKey,draft);
+    const status=$('draftSaveStatus');
+    if(status)status.textContent='Saved in Supabase · revision '+(attempt?.drafts?.[topic.sessionKey]?.revision||'?')+'. Not a teacher-approved grade.';
+  }catch(error){
+    const status=$('draftSaveStatus');
+    if(status)status.textContent='NOT SYNCED: '+(error.message||String(error))+'. Keep this browser and reopen the Hub to reconnect.';
+    console.error('OOP cloud draft could not be saved',error);
+  }finally{
+    draftSaving=false;
+    if(draftDirty&&!draftTimer)draftTimer=setTimeout(flushDraft,850);
+  }
+}
+
 function renderTopic(){
   const lang=selectedLanguage();
   document.title=`Seminar 11 · ${topic.title} · Workshop`;
@@ -91,8 +154,9 @@ function renderTopic(){
   window.IJR_OOP_UML_STAGE1_PRACTICE?.activate(topic.n===1);
   window.IJR_OOP_STATE_BEHAVIOR?.activate(topic.n===2);
   hydrateEvidence();
-  window.IJR_OOP_NOTEBOOK?.mount({mode:'workshop',topicNumber:topic.n,lang});
+  window.IJR_OOP_NOTEBOOK?.mount({mode:'workshop',topicNumber:topic.n,lang,attemptId:attempt.id});
   if(topic.n===2)window.IJR_OOP_STATE_BEHAVIOR?.enhanceNotebook();
+  restoreDraft();
 }
 
 async function saveEvidence(){
@@ -173,6 +237,23 @@ document.addEventListener('ijr-oop-state-behavior-model-mastered',event=>{
   $('saveStatus').textContent=`State & Behavior model verified ${detail.score||0}/${detail.total||0} plus a correct numerical transition. Continue with the Colab cells.`;
   window.IJR_OOP_STATE_BEHAVIOR?.refreshRail?.();
 });
+
+document.addEventListener('input',event=>{if(event.target?.closest?.('#workshopPanel'))queueDraftSave();});
+document.addEventListener('change',event=>{if(event.target?.closest?.('#workshopPanel'))queueDraftSave();});
+document.addEventListener('ijr-oop-cell-run',queueDraftSave);
+document.addEventListener('ijr-oop-uml-model-mastered',queueDraftSave);
+document.addEventListener('ijr-oop-uml-visual-mastered',queueDraftSave);
+document.addEventListener('ijr-oop-state-behavior-model-mastered',queueDraftSave);
+$('saveDraftNow')?.addEventListener('click',()=>{draftDirty=true;flushDraft();});
+$('recoverLegacyDraft')?.addEventListener('click',async()=>{
+  const cells=window.IJR_OOP_NOTEBOOK?.legacyBrowserCells?.()||{};
+  if(!Object.keys(cells).length){$('draftSaveStatus').textContent='No legacy browser code found for this workshop.';return;}
+  if(!window.confirm('Legacy code may belong to someone else who used this computer. Confirm that this work is yours. The import will be marked UNVERIFIED for teacher review.'))return;
+  const imported=window.IJR_OOP_NOTEBOOK.restoreCloudCells(cells);
+  if(!imported){$('draftSaveStatus').textContent='No compatible legacy cells to import.';return;}
+  legacyImported=true;draftDirty=true;await flushDraft();
+});
+
 document.addEventListener('ijr-oop-runtime-reset',()=>{
   $('saveStatus').textContent='Python runtime reset. Re-run implementation and test cells before recording new runtime evidence.';
 });

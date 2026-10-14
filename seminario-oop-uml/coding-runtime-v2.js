@@ -2,9 +2,9 @@
   'use strict';
   const INDEX='https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
   const VERSION='Pyodide 0.27.7';
-  const state={runtime:null,runs:0,successfulRuns:0,lastOk:false,lastOutput:'',lastCode:'',mounted:false,cells:new Map(),capture:null};
+  const state={runtime:null,runs:0,successfulRuns:0,lastOk:false,lastOutput:'',lastCode:'',mounted:false,cells:new Map(),capture:null,activeKey:'',activeMode:'',activeTopic:0};
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const storageKey=(mode,topic)=>`ijr-seminar-oop-uml-v2:${mode}:s${String(topic).padStart(2,'0')}`;
+  const storageKey=(mode,topic,attemptId='')=>mode==='workshop'&&attemptId?`ijr-seminar-oop-uml-v3:${attemptId}:${mode}:s${String(topic).padStart(2,'0')}`:`ijr-seminar-oop-uml-v2:${mode}:s${String(topic).padStart(2,'0')}`;
 
   function setStatus(text,kind='idle'){
     const el=document.getElementById('oopRuntimeStatus');
@@ -119,13 +119,13 @@
     textarea.addEventListener('keydown',event=>{if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();execute();}});
   }
 
-  function mount({mode='theory',topicNumber=1,lang='python'}={}){
+  function mount({mode='theory',topicNumber=1,lang='python',attemptId=''}={}){
     const target=document.getElementById(mode==='workshop'?'workshopCodingLab':'theoryCodingLab');
     if(!target)return;
     const catalog=window.IJR_OOP_CODING_LABS?.[Number(topicNumber)];
     const items=catalog?.[mode]; if(!items?.length)return;
     state.cells.clear();state.runs=0;state.successfulRuns=0;state.lastOk=false;state.lastOutput='';state.lastCode='';
-    const key=storageKey(mode,topicNumber),draft=loadDraft(key);
+    const key=storageKey(mode,topicNumber,attemptId),draft=loadDraft(key);state.activeKey=key;state.activeMode=mode;state.activeTopic=topicNumber;
     target.innerHTML=`<div class="notebook-intro"><div><p class="eyebrow">LIVE COLAB-STYLE NOTEBOOK</p><h2>${mode==='theory'?'Read → edit → run → explain':'Model → code → run → test → modify'}</h2><p>Every cell is editable. Run cells in order so classes and objects remain available in the same Python session. Use <strong>Ctrl/⌘ + Enter</strong> to execute the focused cell.</p></div><div class="notebook-rule"><strong>Runtime rule</strong><span>Python exceptions are learning feedback. Fix the code and run again.</span></div></div>${items.map(item=>renderCell(item,draft,mode)).join('')}${terminalHtml(lang)}`;
     items.forEach(item=>bindCell(target,item,key));
     document.getElementById('clearTerminal')?.addEventListener('click',clearTerminal);
@@ -141,5 +141,28 @@
     return {runtime:'pyodide-0.27.7',run_count:state.runs,successful_run_count:state.successfulRuns,run_success:state.lastOk,implement_success:implementOk,test_success:testOk,modify_success:modifyOk,code_snapshot:combined.trim().slice(0,12000),last_output:state.lastOutput.slice(-4000),cells};
   }
 
-  window.IJR_OOP_NOTEBOOK={mount,evidence,runCode,resetRuntime,clearTerminal};
+  function restoreCloudCells(cells={}){
+    if(!cells||typeof cells!=='object')return 0;
+    let restored=0;
+    state.cells.forEach((entry,id)=>{
+      const code=cells[id]?.code;
+      if(typeof code==='string'&&code.length<=14000){
+        entry.textarea.value=code;
+        entry.lastOk=false;
+        restored++;
+      }
+    });
+    if(restored&&state.activeKey)saveDraft(state.activeKey);
+    return restored;
+  }
+  function legacyBrowserCells(){
+    if(state.activeMode!=='workshop')return {};
+    const old=loadDraft(storageKey('workshop',state.activeTopic));
+    const result={};
+    for(const [id,code] of Object.entries(old)){
+      if(typeof code==='string'&&code.length<=14000)result[id]={code};
+    }
+    return result;
+  }
+  window.IJR_OOP_NOTEBOOK={mount,evidence,runCode,resetRuntime,clearTerminal,restoreCloudCells,legacyBrowserCells};
 })();
