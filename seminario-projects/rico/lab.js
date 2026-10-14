@@ -4,7 +4,7 @@
   const course=window.RICO_COURSE;
   const n=Math.max(1,Math.min(4,Math.trunc(Number(new URLSearchParams(location.search).get('class'))||1)));
   const lesson=course[n-1];let active=0,worker=null,request=0,busy=false,ready=false,player=null,preview=null,configSnapshot=null;
-  const pending=new Map(),executed=new Set(),resultURLs=new Map();const key='ijr-rico-message-colab-v1';
+  const pending=new Map(),executed=new Set(),resultURLs=new Map();let key='ijr-rico-message-colab-v1';
   let saved;
   try{saved=JSON.parse(localStorage.getItem(key)||'{}');}catch{saved={};}
   if(!saved || typeof saved!=='object')saved={};
@@ -19,12 +19,12 @@
   const item=()=>lesson.cells[active];
   const entry=(c,it)=>saved.cells[cellKey(c,it)]||{};
   const source=(c,it)=>typeof entry(c,it).code==='string'?entry(c,it).code:it.code;
-  function persist(){try{localStorage.setItem(key,JSON.stringify(saved));$('saveStatus').textContent='Borrador guardado en este navegador · descarga tu evidencia para conservarla.';}catch{$('saveStatus').textContent='No se pudo guardar el borrador: descarga tu notebook y evidencia.';}}
+  function persist(){window.dispatchEvent(new CustomEvent('ijr:project-draft-change'));try{localStorage.setItem(key,JSON.stringify(saved));$('saveStatus').textContent='Borrador guardado en este navegador · descarga tu evidencia para conservarla.';}catch{$('saveStatus').textContent='No se pudo guardar el borrador: descarga tu notebook y evidencia.';}}
   function saveCode(invalidate=false){const it=item(),id=cellKey(n,it),e=entry(n,it);saved.cells[id]={...e,code:$('codeEditor').value,...(invalidate?{ok:false}: {})};persist();}
   function log(text){$('terminalOutput').textContent+=String(text)+'\n';$('terminalOutput').scrollTop=$('terminalOutput').scrollHeight;}
   function badge(text,kind){$('runtimeBadge').textContent=text;$('runtimeBadge').className='runtime-badge '+kind;}
   function renderRail(){
-    const completed=it=>window.IJR_SEMINAR_TEAM?window.IJR_SEMINAR_TEAM.isComplete(n,it.id):entry(n,it).ok;
+    const completed=it=>executed.has(cellKey(n,it));
     $('stepRail').innerHTML='';lesson.cells.forEach((it,i)=>{const b=document.createElement('button');b.className='rail-step'+(i===active?' active':'')+(completed(it)?' done':'');b.textContent=i+1;b.title=it.title;b.setAttribute('aria-current',i===active?'step':'false');b.disabled=busy;b.onclick=()=>select(i);$('stepRail').appendChild(b);});
     const done=lesson.cells.filter(completed).length;$('progressBar').style.width=(done/lesson.cells.length*100)+'%';
   }
@@ -51,6 +51,7 @@
     if(n>=2){dependencies.push([1,course[0].cells[0]]);if(entry(1,course[0].cells[3]).ok)dependencies.push([1,course[0].cells[1]],[1,course[0].cells[3]]);}
     if(n>=3){dependencies.push([2,course[1].cells[0]]);if(entry(2,course[1].cells[2]).ok)dependencies.push([2,course[1].cells[2]]);}
     if(n>=4 && entry(3,course[2].cells[2]).ok)dependencies.push([3,course[2].cells[2]]);
+    for(let c=1;c<n;c++){const build=course[c-1].cells.find(it=>it.id==='student_build');if(build&&!/NotImplementedError/.test(source(c,build))){if(c===1)dependencies.push([1,course[0].cells[1]]);dependencies.push([c,build]);}}
     for(const [c,it] of dependencies){log(`>>> Dependencia guardada C${c}: ${it.title}`);const r=await run(source(c,it));log(r.output);if(!r.ok)throw new Error(`Corrige la dependencia C${c} en su celda:\n${r.error}`);}
     ready=true;
   }
@@ -101,7 +102,7 @@
   for(const id of ['theoryLink','theorySide'])$(id).href='theory.html?class='+n;
   course.forEach((c,i)=>{const a=document.createElement('a');a.href='workshop.html?class='+(i+1);a.className='class-link'+(i+1===n?' active':'');a.textContent='Clase '+(i+1);$('classNav').appendChild(a);});
   $('runCodeButton').onclick=$('runCellButton').onclick=()=>execute($('codeEditor').value);
-  $('codeEditor').addEventListener('input',()=>{saveCode(true);for(let i=active;i<lesson.cells.length;i++)executed.delete(cellKey(n,lesson.cells[i]));$('activityStatus').textContent='Código editado · vuelve a ejecutar';$('nextCell').disabled=true;renderRail();});
+  $('codeEditor').addEventListener('input',()=>{saveCode(true);resetWorker('Código editado. Vuelve a ejecutar para reconstruir Python.');for(let i=active;i<lesson.cells.length;i++)executed.delete(cellKey(n,lesson.cells[i]));$('activityStatus').textContent='Código editado · vuelve a ejecutar';$('nextCell').disabled=true;renderRail();});
   $('codeEditor').addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();execute($('codeEditor').value);}});
   $('resetCodeButton').onclick=()=>{$('codeEditor').value=item().code;saveCode(true);render();};
   $('previousCell').onclick=()=>select(active-1);$('nextCell').onclick=()=>select(active+1);
@@ -112,11 +113,26 @@
   $('downloadVideo').onclick=video;
   $('buildAnimation').onclick=()=>{select(n===1?1:0);execute($('codeEditor').value);};
   $('downloadNotebook').onclick=()=>download('rico-mensaje.ipynb',JSON.stringify(notebook(),null,2),'application/x-ipynb+json');
-  $('downloadPython').onclick=()=>{saveCode();let code=source(1,course[0].cells[0])+'\n'+source(2,course[1].cells[0]);if(configSnapshot)code+='\nconfig = Config(**json.loads('+JSON.stringify(configSnapshot)+')).validate()\nscene = Scene(config)\npreview_frames = scene.render()\n';const renderer=window.RICO_PLAYER.standalone({fps:1,frames:[{width:720,height:480,background:'#14142b',shapes:[]}]});const before=renderer.indexOf('const data=');const after=renderer.indexOf(';const player=',before);const prefix=renderer.slice(0,before)+'const data=';const suffix=renderer.slice(after);download('crear_mensaje.py',code+'\nfrom pathlib import Path\nhtml = '+JSON.stringify(prefix)+' + json.dumps(preview_frames, ensure_ascii=False).replace("<", "\\\\u003c") + '+JSON.stringify(suffix)+'\nPath(__file__).resolve().with_name("mensaje-rico.html").write_text(html, encoding="utf-8")\nprint("EXPORT: mensaje-rico.html creado junto al generador")\n');};
+  $('downloadPython').onclick=()=>{saveCode();let code=source(1,course[0].cells[0])+'\n'+source(2,course[1].cells[0]);for(const c of [1,2]){const build=course[c-1].cells.find(it=>it.id==='student_build');if(build&&!/NotImplementedError/.test(source(c,build)))code+='\n'+source(c,build);}
+ if(configSnapshot)code+='\nconfig = Config(**json.loads('+JSON.stringify(configSnapshot)+')).validate()\nscene = Scene(config)\npreview_frames = scene.render()\n';const renderer=window.RICO_PLAYER.standalone({fps:1,frames:[{width:720,height:480,background:'#14142b',shapes:[]}]});const before=renderer.indexOf('const data=');const after=renderer.indexOf(';const player=',before);const prefix=renderer.slice(0,before)+'const data=';const suffix=renderer.slice(after);download('crear_mensaje.py',code+'\nfrom pathlib import Path\nhtml = '+JSON.stringify(prefix)+' + json.dumps(preview_frames, ensure_ascii=False).replace("<", "\\\\u003c") + '+JSON.stringify(suffix)+'\nPath(__file__).resolve().with_name("mensaje-rico.html").write_text(html, encoding="utf-8")\nprint("EXPORT: mensaje-rico.html creado junto al generador")\n');};
   $('downloadEvidence').onclick=()=>{saveCode();download('rico-evidencia.json',JSON.stringify({project:'rico-message-animation',exportedAt:new Date().toISOString(),runtime:'Pyodide 0.27.7',team:window.IJR_SEMINAR_TEAM?.snapshot(),cells:saved.cells,notes:saved.notes,preview:{frames:preview?.frames.length||0,fps:preview?.fps||0},approval:'Pendiente de revisión docente; las notas offline son evidencia manual.'},null,2),'application/json');};
   $('evidenceNotes').value=saved.notes[n]||'';$('evidenceNotes').oninput=()=>{saved.notes[n]=$('evidenceNotes').value;persist();};
   $('restartRuntime').onclick=()=>{resetWorker();player?.pause();preview=null;for(const id of ['playPreview','pausePreview','downloadAnimation'])$(id).disabled=true;log('Runtime reiniciado. Los borradores se conservan.');};
-  window.addEventListener('ijr:seminar-team-progress',renderRail);
+  
+ window.IJR_PROJECT_WORKSPACE={
+ exportState:()=>{saved.activeByClass=saved.activeByClass||{};saved.activeByClass[n]=active;return structuredClone(saved);},
+ restoreState:(state,members)=>{
+  if(!state||typeof state!=='object'||!state.cells||!state.notes)throw Error('Borrador inválido');
+  const allowed=new Set(course.flatMap((cl,c)=>cl.cells.map(it=>(c+1)+':'+it.id)));
+  const cells={};for(const [id,e]of Object.entries(state.cells)){if(!allowed.has(id)||!e||typeof e.code!=='string'||e.code.length>120000)continue;cells[id]={code:e.code,ok:e.ok===true,runs:Number(e.runs)||0};}
+  saved={cells,notes:{},activeByClass:state.activeByClass||{}};for(const [id,text]of Object.entries(state.notes))if(/^[1-4]$/.test(id)&&typeof text==='string')saved.notes[id]=text.slice(0,10000);
+  key='ijr-project-v2:'+'rico'+':'+[...members].sort().join(',');
+  active=Math.max(0,Math.min(lesson.cells.length-1,Number(saved.activeByClass[n])||0));executed.clear();resetWorker('Proyecto recuperado. Ejecuta las celdas para reconstruir Python.');
+  $('evidenceNotes').value=saved.notes[n]||'';try{localStorage.setItem(key,JSON.stringify(saved));}catch{}render();
+ }
+ };
+
+ window.addEventListener('ijr:seminar-team-progress',renderRail);
   window.addEventListener('ijr:seminar-team-started',renderRail);
   window.addEventListener('beforeunload',()=>worker?.terminate());render();
 })();
