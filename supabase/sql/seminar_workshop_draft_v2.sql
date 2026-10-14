@@ -1,3 +1,9 @@
+alter table private.seminar_workshop_teams add column if not exists credentials_verified boolean not null default false;
+create or replace function public.seminar_workshop_authorize_v2(p_token_hash text) returns void language sql security invoker set search_path='' as $$
+ update private.seminar_workshop_teams set credentials_verified=true where token_hash=p_token_hash and expires_at>now();
+$$;
+revoke all on function public.seminar_workshop_authorize_v2(text) from public,anon,authenticated;
+grant execute on function public.seminar_workshop_authorize_v2(text) to service_role;
 create table if not exists private.seminar_workshop_drafts_v2 (
  workspace_key text primary key, project_key text not null,
  member_emails text[] not null, revision bigint not null default 0,
@@ -14,7 +20,7 @@ create or replace function public.seminar_workshop_draft_v2(
 ) returns jsonb language plpgsql security invoker set search_path='' as $$
 declare t private.seminar_workshop_teams%rowtype; d private.seminar_workshop_drafts_v2%rowtype; k text; emails text[];
 begin
- select * into t from private.seminar_workshop_teams where token_hash=p_token_hash and expires_at>now();
+ select * into t from private.seminar_workshop_teams where token_hash=p_token_hash and expires_at>now() and credentials_verified=true;
  if t.id is null then raise exception 'team_session_expired'; end if;
  select array_agg(e order by e) into emails from unnest(t.member_emails) e;
  k=t.project_key||':'||array_to_string(emails,',');

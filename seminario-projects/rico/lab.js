@@ -48,10 +48,12 @@
   async function prepare(){
     if(ready)return;
     const dependencies=[];
-    if(n>=2){dependencies.push([1,course[0].cells[0]]);if(entry(1,course[0].cells[3]).ok)dependencies.push([1,course[0].cells[1]],[1,course[0].cells[3]]);}
-    if(n>=3){dependencies.push([2,course[1].cells[0]]);if(entry(2,course[1].cells[2]).ok)dependencies.push([2,course[1].cells[2]]);}
-    if(n>=4 && entry(3,course[2].cells[2]).ok)dependencies.push([3,course[2].cells[2]]);
-    for(let c=1;c<n;c++){const build=course[c-1].cells.find(it=>it.id==='student_build');if(build&&!/NotImplementedError/.test(source(c,build))){if(c===1)dependencies.push([1,course[0].cells[1]]);dependencies.push([c,build]);}}
+    for(let c=1;c<n;c++)for(const it of course[c-1].cells){
+      if(['test','fault','student_check'].includes(it.id))continue;
+      if(it.id==='modify'&&!entry(c,it).ok)continue;
+      if(it.id==='student_build'&&(!entry(c,it).code||/NotImplementedError/.test(source(c,it))))continue;
+      dependencies.push([c,it]);
+    }
     for(const [c,it] of dependencies){log(`>>> Dependencia guardada C${c}: ${it.title}`);const r=await run(source(c,it));log(r.output);if(!r.ok)throw new Error(`Corrige la dependencia C${c} en su celda:\n${r.error}`);}
     ready=true;
   }
@@ -113,8 +115,8 @@
   $('downloadVideo').onclick=video;
   $('buildAnimation').onclick=()=>{select(n===1?1:0);execute($('codeEditor').value);};
   $('downloadNotebook').onclick=()=>download('rico-mensaje.ipynb',JSON.stringify(notebook(),null,2),'application/x-ipynb+json');
-  $('downloadPython').onclick=()=>{saveCode();let code=source(1,course[0].cells[0])+'\n'+source(2,course[1].cells[0]);for(const c of [1,2]){const build=course[c-1].cells.find(it=>it.id==='student_build');if(build&&!/NotImplementedError/.test(source(c,build)))code+='\n'+source(c,build);}
- if(configSnapshot)code+='\nconfig = Config(**json.loads('+JSON.stringify(configSnapshot)+')).validate()\nscene = Scene(config)\npreview_frames = scene.render()\n';const renderer=window.RICO_PLAYER.standalone({fps:1,frames:[{width:720,height:480,background:'#14142b',shapes:[]}]});const before=renderer.indexOf('const data=');const after=renderer.indexOf(';const player=',before);const prefix=renderer.slice(0,before)+'const data=';const suffix=renderer.slice(after);download('crear_mensaje.py',code+'\nfrom pathlib import Path\nhtml = '+JSON.stringify(prefix)+' + json.dumps(preview_frames, ensure_ascii=False).replace("<", "\\\\u003c") + '+JSON.stringify(suffix)+'\nPath(__file__).resolve().with_name("mensaje-rico.html").write_text(html, encoding="utf-8")\nprint("EXPORT: mensaje-rico.html creado junto al generador")\n');};
+  $('downloadPython').onclick=()=>{saveCode();let code=source(1,course[0].cells[0])+'\n'+source(1,course[0].cells[1])+'\n'+source(2,course[1].cells[0]);for(const c of [1,2]){const build=course[c-1].cells.find(it=>it.id==='student_build');if(build&&!/NotImplementedError/.test(source(c,build)))code+='\n'+source(c,build);}
+ if(configSnapshot)code+='\nconfig = Config(**json.loads('+JSON.stringify(configSnapshot)+')).validate()\nscene = StudentScene(config) if "StudentScene" in globals() else Scene(config)\npreview_frames = scene.render()\n';const renderer=window.RICO_PLAYER.standalone({fps:1,frames:[{width:720,height:480,background:'#14142b',shapes:[]}]});const before=renderer.indexOf('const data=');const after=renderer.indexOf(';const player=',before);const prefix=renderer.slice(0,before)+'const data=';const suffix=renderer.slice(after);download('crear_mensaje.py',code+'\nfrom pathlib import Path\nhtml = '+JSON.stringify(prefix)+' + json.dumps(preview_frames, ensure_ascii=False).replace("<", "\\\\u003c") + '+JSON.stringify(suffix)+'\nPath(__file__).resolve().with_name("mensaje-rico.html").write_text(html, encoding="utf-8")\nprint("EXPORT: mensaje-rico.html creado junto al generador")\n');};
   $('downloadEvidence').onclick=()=>{saveCode();download('rico-evidencia.json',JSON.stringify({project:'rico-message-animation',exportedAt:new Date().toISOString(),runtime:'Pyodide 0.27.7',team:window.IJR_SEMINAR_TEAM?.snapshot(),cells:saved.cells,notes:saved.notes,preview:{frames:preview?.frames.length||0,fps:preview?.fps||0},approval:'Pendiente de revisión docente; las notas offline son evidencia manual.'},null,2),'application/json');};
   $('evidenceNotes').value=saved.notes[n]||'';$('evidenceNotes').oninput=()=>{saved.notes[n]=$('evidenceNotes').value;persist();};
   $('restartRuntime').onclick=()=>{resetWorker();player?.pause();preview=null;for(const id of ['playPreview','pausePreview','downloadAnimation'])$(id).disabled=true;log('Runtime reiniciado. Los borradores se conservan.');};

@@ -37,6 +37,8 @@ Deno.serve(async req => {
    token = (crypto.randomUUID() + crypto.randomUUID()).replaceAll("-", "");
    const started = await admin.rpc("seminar_workshop_team_start_v1", { p_project_key: body.project_key, p_emails: emails, p_token_hash: await hash(token) });
    if (started.error) throw started.error;
+   const verified=await admin.rpc("seminar_workshop_authorize_v2",{p_token_hash:await hash(token)});
+   if(verified.error)throw verified.error;
   } else if (["progress","record","load_draft","save_draft"].includes(action)) {
    token = typeof body.team_token === "string" ? body.team_token : "";
    if (!/^[a-f0-9]{64}$/.test(token)) return reply(403, { error: "team_session_required" });
