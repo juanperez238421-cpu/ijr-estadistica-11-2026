@@ -108,7 +108,7 @@ CREATE OR REPLACE FUNCTION public.teacher_seminar_progress_audit_v1(p_teacher_to
  SECURITY DEFINER
  SET search_path TO ''
 AS $function$
-DECLARE v_students jsonb;v_n integer;v_unmatched jsonb;
+DECLARE v_students jsonb;v_n integer;v_unmatched jsonb;v_snap uuid;v_snapshot_at timestamptz;v_changed integer;
 BEGIN
  IF public.teacher_code_session_id(p_teacher_token) IS NULL THEN RAISE EXCEPTION 'Invalid or expired teacher session'; END IF;
  SELECT count(*),coalesce(jsonb_agg(to_jsonb(v) ORDER BY v.group_code,v.source_position),'[]'::jsonb)
@@ -118,11 +118,22 @@ BEGIN
  INTO v_unmatched
  FROM public.seminar_course_attempt_members m
  JOIN public.seminar_course_attempts a ON a.id=m.attempt_id
- WHERE m.student_registry_id IS NULL AND a.group_code IN('11-A','11-B','11-C') AND
-  NOT (m.display_name LIKE '%@ijr.edu.co');
+ WHERE m.student_registry_id IS NULL AND a.group_code IN('11-A','11-B','11-C')
+   AND m.display_name NOT LIKE '%@ijr.edu.co';
+ SELECT snapshot_id,max(captured_at) INTO v_snap,v_snapshot_at
+ FROM private.seminar_student_audit_snapshots_v1
+ GROUP BY snapshot_id ORDER BY max(captured_at) DESC LIMIT 1;
+ SELECT count(*) INTO v_changed
+ FROM private.seminar_student_evidence_v1 live
+ LEFT JOIN private.seminar_student_audit_snapshots_v1 old
+ ON old.student_registry_id=live.student_registry_id AND old.snapshot_id=v_snap
+ WHERE old.student_registry_id IS NULL
+ OR old.evidence_sha256<>encode(extensions.digest(convert_to(to_jsonb(live)::text,'UTF8'),'sha256'),'hex');
  RETURN jsonb_build_object(
  'generated_at',clock_timestamp(),'roster_count',v_n,'students',v_students,
  'unmatched_team_members',v_unmatched,
+ 'baseline_snapshot_id',v_snap,'baseline_captured_at',v_snapshot_at,
+ 'students_changed_since_baseline',v_changed,
  'meaning','Saved draft, completed record, assigned project, and page access are separate evidence types; none alone establishes a BEAM grade');
 END $function$
 
