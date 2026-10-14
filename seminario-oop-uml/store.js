@@ -35,7 +35,7 @@ export class OopUmlStore{
         let a=this.fromCourse(course.snapshot||course,key.token,local||{});
         if(key.email)a.email=String(key.email).trim().toLowerCase();
         const uml=await this.rpc(this.cfg.rpc.umlSnapshot,{p_attempt_id:a.id,p_attempt_token:a.token});
-        a=this.mergeUml(a,uml);return this.save(a);
+        a=this.mergeUml(a,uml);return this.refreshDrafts(a);
       }catch(err){console.warn('OOP UML backend resume failed; local recovery copy used.',err);}
     }
     if(local){this.attempt=local;return local;}return null;
@@ -58,7 +58,7 @@ export class OopUmlStore{
     const uml=await this.rpc(this.cfg.rpc.umlSnapshot,{p_attempt_id:a.id,p_attempt_token:a.token});
     a=this.mergeUml(a,uml);
     a.email=email;
-    return this.save(a);
+    return this.refreshDrafts(a);
   }
 
   async start({language,group,names}){
@@ -72,7 +72,7 @@ export class OopUmlStore{
       sessionStorage.setItem(this.cfg.sessionKey,JSON.stringify({attemptId:data.attempt_id,token:data.attempt_token}));
       let a=this.fromCourse(data.snapshot,data.attempt_token,{language,group,names,label:teamLabel(names),sessions:{}});
       const uml=await this.rpc(this.cfg.rpc.umlSnapshot,{p_attempt_id:a.id,p_attempt_token:a.token});
-      a=this.mergeUml(a,uml);return this.save(a);
+      a=this.mergeUml(a,uml);return this.refreshDrafts(a);
     }
     return this.save({id:uuid(),token:null,backend:'local',language,group,names,label:teamLabel(names),sessions:{},startedAt:new Date().toISOString()});
   }
@@ -92,6 +92,30 @@ export class OopUmlStore{
       return this.save(this.mergeUml(this.attempt,snap));
     }
     this.attempt.sessions=this.attempt.sessions||{};this.attempt.sessions[sessionKey]={status:'completed',evidence,completedAt:new Date().toISOString()};return this.save(this.attempt);
+  }
+
+  async refreshDrafts(a=this.attempt){
+    if(!a||a.backend!=='supabase'||!a.token)return this.save(a);
+    const snap=await this.rpc(this.cfg.rpc.draftSnapshot,{p_attempt_id:a.id,p_attempt_token:a.token});
+    const drafts={};
+    for(const d of snap?.drafts||[]){
+      if(!/^s(0[1-9]|10)$/.test(d.session_key))continue;
+      drafts[d.session_key]={revision:Number(d.revision)||0,payload:d.payload||{},updatedAt:d.updated_at||null};
+    }
+    return this.save({...a,drafts});
+  }
+  async recordDraft(sessionKey,payload){
+    if(!this.attempt||this.attempt.backend!=='supabase'||!this.attempt.token)throw new Error('Open your tracked Supabase session first.');
+    if(!/^s(0[1-9]|10)$/.test(sessionKey))throw new Error('Invalid session');
+    const previous=this.attempt.drafts?.[sessionKey];
+    const res=await this.rpc(this.cfg.rpc.draftSave,{
+      p_attempt_id:this.attempt.id,p_attempt_token:this.attempt.token,
+      p_session_key:sessionKey,p_payload:payload,p_expected_revision:previous?.revision||0
+    });
+    if(!res?.ok)throw new Error(res?.conflict?'Cloud draft changed in another tab. Refresh from the hub and review before overwriting.':'Cloud draft was not saved.');
+    const drafts={...(this.attempt.drafts||{}),
+      [sessionKey]:{revision:Number(res.revision),payload,updatedAt:res.updated_at||null}};
+    return this.save({...this.attempt,drafts});
   }
   reset(){sessionStorage.removeItem(this.cfg.sessionKey);localStorage.removeItem(this.cfg.localKey);this.attempt=null;}
 }
