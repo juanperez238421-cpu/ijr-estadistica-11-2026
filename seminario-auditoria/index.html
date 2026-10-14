@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>IJR · Auditoría de progreso · Seminario 11</title>
+<link rel="stylesheet" href="styles.css?v=20261014-audit-v1">
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="app.js?v=20261014-audit-v1"></script>
+</head><body>
+<header><a href="../seminario/">← Seminario 11</a><span>IJR · SOLO DOCENTES</span></header>
+<main>
+<section class="intro"><h1>Auditoría de progreso · Seminario 11°</h1><p>61 estudiantes · trazabilidad de POO S01/S02, borradores, proyectos y evidencias históricas. <strong>Una actividad abierta no equivale a un taller terminado.</strong></p></section>
+<section id="loginPanel" class="panel narrow"><h2>Acceso docente</h2><p>Utiliza el código maestro institucional. Las notas y los correos no se exponen sin autenticación docente.</p><form id="loginForm"><label for="teacherCode">Código institucional</label><input id="teacherCode" type="password" autocomplete="current-password" required><button type="submit">Consultar progreso</button></form><p id="loginError" role="alert"></p></section>
+<section id="dashboard" class="hidden">
+<div class="toolbar panel"><div><strong id="lastUpdate">Sincronizando…</strong><small id="baseline"></small></div><div class="actions"><button id="refresh" type="button">Actualizar</button><button id="export" type="button">Exportar CSV</button><button id="logout" type="button">Cerrar sesión</button></div></div>
+<div id="metrics" class="metrics" aria-live="polite"></div>
+<div class="panel">
+<h2>Estudiantes y evidencias</h2>
+<p class="help">S01/S02 indican registros de finalización declarada; abre «Detalle» para comprobar componentes y pruebas. «—» significa que no consta entrega, no calificación 1,0.</p>
+<div class="filters"><label>Grupo<select id="groupFilter"><option value="">Todos</option><option value="11A">11A</option><option value="11B">11B</option><option value="11C">11C</option></select></label><label>Buscar<input id="search" type="search" placeholder="Nombre o correo institucional"></label><label>Situación<select id="statusFilter"><option value="">Todas</option><option value="evidence">Con evidencias</option><option value="drafts">Borradores en progreso</option><option value="attention">Requiere revisión</option></select></label></div>
+<p id="rowCount" class="help"></p>
+<div class="scroll"><table><thead><tr><th>Grupo</th><th>Estudiante</th><th>Correo</th><th>S01</th><th>S02</th><th>Borradores</th><th>Proyecto</th><th>Otros avances</th><th>Auditoría</th></tr></thead><tbody id="studentRows"></tbody></table></div>
+</div>
+<section id="unmatchedPanel" class="panel hidden"><h2>Registros de identidad por revisar</h2><div id="unmatched"></div></section>
+</section>
+<dialog id="details"><div class="dialog-body"><button id="closeDetail" type="button">Cerrar ×</button><h2 id="detailName"></h2><p id="detailEmail"></p><div id="detailContent"></div></div></dialog>
+<footer>Fuentes: Supabase (matrícula, POO, borradores, proyectos, laboratorios históricos y respaldo). Solo lectura; BEAM no se modifica.</footer>
+</main></body></html>
