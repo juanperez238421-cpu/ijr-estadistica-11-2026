@@ -26,7 +26,7 @@
   function badge(text,kind){$('runtimeBadge').textContent=text;$('runtimeBadge').className='runtime-badge '+kind;}
   function renderRail(){
     const completed=it=>executed.has(cellKey(n,it));
-    $('stepRail').innerHTML='';lesson.cells.forEach((it,i)=>{const b=document.createElement('button');b.className='rail-step'+(i===active?' active':'')+(completed(it)?' done':'');b.textContent=(i+1)+'. '+it.title;b.title=it.title;b.setAttribute('aria-current',i===active?'step':'false');b.disabled=busy;b.onclick=()=>select(i);$('stepRail').appendChild(b);});
+    $('stepRail').innerHTML='';lesson.cells.forEach((it,i)=>{const b=document.createElement('button');b.className='rail-step'+(i===active?' active':'')+(completed(it)?' done':'');b.textContent=(i+1)+'. '+it.title.replace(/^\d+\s*[·.]\s*/, '');b.title=it.title;b.setAttribute('aria-current',i===active?'step':'false');b.disabled=busy;b.onclick=()=>select(i);$('stepRail').appendChild(b);});
     const done=lesson.cells.filter(completed).length;$('progressBar').style.width=(done/lesson.cells.length*100)+'%';
   }
   function select(i){if(busy)return;saveCode();active=Math.max(0,Math.min(lesson.cells.length-1,i));render();}
@@ -34,7 +34,7 @@
     const it=item(),e=window.IJR_STEPS.initialize(saved.cells,cellKey(n,it),it),guide=window.IJR_STEPS.describe(it,e);$('cellTitle').textContent=guide.title;$('codeInstruction').textContent=guide.purpose;$('codeEditor').value=source(n,it);$('lessonTitle').textContent=guide.title;$('lessonConcept').textContent=guide.purpose;
     $('lessonSteps').innerHTML='';guide.steps.forEach(t=>{const li=document.createElement('li');li.textContent=t;$('lessonSteps').appendChild(li);});
     $('resetCodeButton').textContent=it.microsteps?'Iniciar guía':'Reset cell';$('executionCount').textContent=e.runs?`[${e.runs}]`:'[ ]';$('activityStatus').textContent=e.ok?'Última ejecución correcta · vuelve a ejecutar para restaurar el estado':'Celda pendiente o editada';$('activityStatus').className='validation-status'+(e.ok?' ok':'');
-    $('journey').textContent=`Clase ${n} · Paso ${active+1} de ${lesson.cells.length}. ${guide.steps[0]} Después pulsa ▶ Ejecutar celda y comprueba la consola.`;
+    $('journey').textContent=`Clase ${n} · Etapa ${active+1} de ${lesson.cells.length} · ${guide.title}. ${guide.steps[0]} Después pulsa ▶ Ejecutar celda y comprueba la consola.`;
     $('nextCell').textContent=window.IJR_STEPS.canNext(it,e,executed.has(cellKey(n,it)))?'Añadir siguiente paso →':'Ejecuta este paso para continuar';
     $('previousCell').disabled=active===0||busy;$('nextCell').disabled=(active===lesson.cells.length-1&&window.IJR_STEPS.end(item(),entry(n,item())))||busy||!window.IJR_STEPS.canNext(it,entry(n,it),executed.has(cellKey(n,it)));renderRail();
   }
