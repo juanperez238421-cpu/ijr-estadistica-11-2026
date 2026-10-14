@@ -1,0 +1,56 @@
+name: Seminar 11 Progress Audit QA
+on:
+  pull_request:
+    paths:
+      - 'seminario-auditoria/**'
+      - 'seminario-oop-colab-01/teacher.html'
+      - 'supabase/migrations/*seminar_teacher_progress_audit*'
+      - '.github/workflows/seminar-progress-audit-qa.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'seminario-auditoria/**'
+      - 'seminario-oop-colab-01/teacher.html'
+      - 'supabase/migrations/*seminar_teacher_progress_audit*'
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: JavaScript syntax and dashboard integrity
+        run: |
+          set -euo pipefail
+          node --check seminario-auditoria/app.js
+          test -s seminario-auditoria/styles.css
+          test -s seminario-auditoria/index.html
+          grep -q 'id="studentRows"' seminario-auditoria/index.html
+          grep -q 'id="loginForm"' seminario-auditoria/index.html
+          grep -q 'id="export"' seminario-auditoria/index.html
+          grep -q 'teacher_code_login' seminario-auditoria/app.js
+          grep -q 'teacher_seminar_progress_audit_v1' seminario-auditoria/app.js
+          grep -q 'teacher_code_logout' seminario-auditoria/app.js
+          grep -q 'd.students.length!==61' seminario-auditoria/app.js
+          grep -q 'historical_sessions_missing_or_changed' seminario-auditoria/app.js
+          grep -q 'Inconsistencia de la matrícula' seminario-auditoria/app.js
+          grep -q 'Auditoría completa 11A/11B/11C' seminario-oop-colab-01/teacher.html
+          ! grep -qi 'service.role.key\|SUPABASE_SERVICE_ROLE' seminario-auditoria/app.js
+      - name: Teacher-gated DB contract
+        run: |
+          set -euo pipefail
+          f=supabase/migrations/20261014191000_seminar_teacher_progress_audit_v1.sql
+          grep -q 'teacher_code_session_id(p_teacher_token)' "$f"
+          grep -q 'CREATE OR REPLACE VIEW private.seminar_student_evidence_v1' "$f"
+          grep -q 'seminar_oop_uml_session_records' "$f"
+          grep -q 'seminar_oop_uml_drafts_v1' "$f"
+          grep -q 'seminar_student_projects' "$f"
+          grep -q 'seminar_workshop_member_progress' "$f"
+          grep -q 'seminar_student_audit_snapshots_v1' "$f"
+          grep -q 'students_changed_since_baseline' "$f"
+          grep -q 'REVOKE ALL ON private.seminar_student_evidence_v1' "$f"
+          grep -q 'REVOKE ALL ON private.seminar_student_audit_snapshots_v1' "$f"
+          echo '61-student teacher-only audit contract verified'
