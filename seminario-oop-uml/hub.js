@@ -50,6 +50,7 @@ function render(){
   const lang=currentLanguage();
   const completed=data.topics.filter(isComplete).length;
   const pct=Math.round(completed/data.topics.length*100);
+  const draftCount=data.topics.filter(t=>!isComplete(t)&&attempt?.drafts?.[t.sessionKey]).length;
   const backend=attempt.backend==='supabase'?'Supabase synchronized':'Not synchronized';
   const identityLabel=attempt.group==='11-U'?(attempt.label||'Institutional access'):`${attempt.group} · ${attempt.label||'Student'}`;
   const teamSize=Math.max(1,Array.isArray(attempt.names)?attempt.names.length:1);
@@ -64,9 +65,11 @@ function render(){
   if(progressTrack){progressTrack.setAttribute('role','progressbar');progressTrack.setAttribute('aria-label','OOP + UML progress');progressTrack.setAttribute('aria-valuemin','0');progressTrack.setAttribute('aria-valuemax','100');progressTrack.setAttribute('aria-valuenow',String(pct));}
   $('globalProgressCopy').textContent=teamSize>1?`${completed} of ${data.topics.length} sessions evidenced · shared with ${teamSize} team members`:`${completed} of ${data.topics.length} sessions evidenced`;
 
+  if(draftCount)$('globalProgressCopy').textContent+=` · ${draftCount} cloud draft(s) in progress`;
+
   $('topicGrid').innerHTML=data.topics.map(topic=>{
     const done=isComplete(topic);
-    const state=done?'Completed':'Available';
+    const state=done?'Completed':attempt?.drafts?.[topic.sessionKey]?'In progress · cloud draft':'Available';
     const evidence=attempt.sessions?.[topic.sessionKey]?.evidence||{};
     const evidenceCount=['model','code','test','explain'].filter(k=>evidence[k]===true).length;
     return `<article class="topic-card">
