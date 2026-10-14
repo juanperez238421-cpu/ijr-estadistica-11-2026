@@ -1,4 +1,4 @@
-import {OopUmlStore,isInstitutionalEmail} from './store.js?v=20260930-progress-v6';
+import {OopUmlStore,isInstitutionalEmail} from './store.js?v=20261014-cloud-draft-v1';
 
 const cfg=window.IJR_OOP_UML_CONFIG;
 const data=window.IJR_OOP_UML_DATA;
