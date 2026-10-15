@@ -58,20 +58,20 @@ assert(xlsx.includes('if (concept && !concept.textContent.trim())'), 'XLSX overl
 assert(css.includes('.v63-check-grid') && css.includes('@media(max-width:620px)'), 'V63 responsive guide styling missing.');
 assert(!runtime.includes('service_role') && !overlay.includes('service_role'), 'Guidance must not expose privileged secrets.');
 
-// Regression: backend code_feedback must remain visible after the page re-renders.
-// Extract the pure helper from the production runtime and execute all response paths.
+// Regression: backend code_feedback must remain visible after re-rendering.
+// Exercise the pure formatter from the production runtime.
 const vm = require('vm');
-const feedbackFnSource = runtime.match(/function validationFeedback\\(result\\)\\s*\\{[\\s\\S]*?\\n  \\}/);
+const feedbackFnSource = runtime.match(/function validationFeedback\(result\)\s*\{[\s\S]*?\n  \}/);
 assert(feedbackFnSource, 'Missing backend validation-feedback formatter.');
 const validationFeedback = vm.runInNewContext('(' + feedbackFnSource[0] + ')');
 assert.strictEqual(validationFeedback({correct:false,code_valid:false,code_feedback:'Save xlsx_library_output.xlsx'}), 'Save xlsx_library_output.xlsx');
 assert.match(validationFeedback({correct:false,code_valid:true}), /output did not match/);
 assert.match(validationFeedback({correct:true,code_valid:true}), /Progress saved/);
 assert.match(validationFeedback({correct:false}), /Not correct yet/);
-const restored = runtime.indexOf("render();\\n      // render() reinitializes saveMessage;");
+const restored = runtime.indexOf("render();\n      // render() reinitializes saveMessage;");
 const displayed = runtime.indexOf("$('saveMessage').textContent=feedback;", restored);
 assert(restored >= 0 && displayed > restored, 'Supabase feedback must be displayed AFTER render().');
-assert.match(runtime, /catch\\(error\\)\\{updateValidationState\\(\\);\\$('saveMessage'\\)\\.textContent=/, 'Network errors must remain visible after validation state reset.');
+assert.match(runtime, /catch\(error\)\{updateValidationState\(\);\$\('saveMessage'\)\.textContent=/, 'Network errors must remain visible after validation state reset.');
 console.log('STAGE 06 VALIDATION FEEDBACK REGRESSION PASS');
 
 console.log('TOPIC 04 EXPLICIT GUIDANCE V63 CONTRACT PASS');
