@@ -66,9 +66,9 @@
     codeExercise(
       'logic-09',
       'Class 2 · Select one variable as a Series',
-      "Step 1: Read the \"Students\" sheet into df with Pandas. Step 2: Select scores = df[\"score\"]. Step 3: Inspect scores.head(). Step 4: Print type(scores).__name__. Run, confirm Series, then Validate. Use single brackets to select one column."
+      "Step 1: Reuse df from Class 2 Step 7 or 8 if it is already loaded in your Colab notebook. If you restarted Colab, first read the \"Students\" sheet from pandas_excel_students.xlsx into df. Step 2: Select scores = df[\"score\"] (one pair of brackets, so it is a Series). Step 3: Inspect scores.head(). Step 4: Run print(type(scores).__name__) and confirm the displayed output is Series. Enter Series in the answer field and Validate. You do not need to repeat read_excel in this code cell when df already exists."
     ),
-    codeExercise(
+        codeExercise(
       'logic-10',
       'Class 2 · Filter observations with a Boolean condition',
       "Step 1: Read the \"Students\" sheet into df. Step 2: Create filtered = df.loc[df[\"score\"] >= 90]. Step 3: Check that filtered has at least one row and that all its scores are >= 90. Step 4: Print the combined check with and. Run, confirm True, then Validate."
