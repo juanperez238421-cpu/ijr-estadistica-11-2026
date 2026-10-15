@@ -382,10 +382,27 @@
     updateValidationState();
   }
 
+  // Topic 04 Stage 06: prevent predictable validation failures from
+  // consuming student attempts. Supabase remains the source of truth.
+  function stage06Preflight(ex, code){
+    if(ex?.key !== 'logic-06') return null;
+    const source=String(code||'');
+    if(!source.includes('xlsx_library_output.xlsx')){
+      return 'Stage 06: save the NEW workbook as xlsx_library_output.xlsx (not pandas_excel_students). Your attempt has NOT been sent or counted.';
+    }
+    const assignment=source.match(/\bws\s*\[\s*(['"])A1\1\s*\]\s*=\s*(['"])(.*?)\2/);
+    if(assignment && assignment[3] !== 'ready'){
+      return 'Stage 06: cell A1 must contain exactly "ready" in lowercase (not "Ready"). Your attempt has NOT been sent or counted.';
+    }
+    return null;
+  }
+
   function updateValidationState(){
     const ex=activeExercise(); const run=state.runs.get(ex.key); let enabled=false;
-    if(ex.mode==='choice') enabled=Boolean(run?.choice); else enabled=Boolean(run?.ok && run.code===String($('codeEditor').value||''));
-    $('validateButton').disabled=!enabled; $('saveMessage').textContent=enabled?'Ready to validate with the course backend.':'Run the cell, inspect the output, then validate.';
+    const preflight=ex.mode==='code' ? stage06Preflight(ex,String($('codeEditor').value||'')) : null;
+    if(ex.mode==='choice') enabled=Boolean(run?.choice); else enabled=Boolean(run?.ok && run.code===String($('codeEditor').value||'') && !preflight);
+    $('validateButton').disabled=!enabled;
+    $('saveMessage').textContent=preflight || (enabled?'Ready to validate with the course backend.':'Run the cell, inspect the output, then validate.');
   }
 
   function setRuntime(mode,label){ $('connectButton').className=`runtime-button ${mode||''}`.trim(); $('runtimeLabel').textContent=label; }
@@ -438,6 +455,8 @@
   async function validate(){
     const ex=activeExercise(); const run=state.runs.get(ex.key); let answer=''; let codeSnapshot=null;
     if(ex.mode==='choice'){answer=run?.choice||'';if(!answer)return;}else{if(!run?.ok||run.code!==String($('codeEditor').value||''))return;answer=run.output||'';codeSnapshot=run.code;}
+    const preflight=stage06Preflight(ex,codeSnapshot);
+    if(preflight){$('saveMessage').textContent=preflight;return;}
     $('validateButton').disabled=true; $('validateButton').textContent='Validating…'; $('saveMessage').textContent='Checking your result with Supabase…';
     try{
       const result=await submit(ex,answer,codeSnapshot); if(result?.snapshot)state.snapshot=result.snapshot;else{const refreshed=await resume();state.snapshot=refreshed.snapshot;}
