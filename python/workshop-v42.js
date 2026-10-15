@@ -426,15 +426,26 @@
 
   function showOutput(text,ok){ $('outputPanel').classList.remove('hidden'); $('outputPanel').classList.toggle('error',!ok); $('outputText').textContent=String(text??''); }
 
+  // Read the backend's code_feedback: a correct Python output alone does not prove
+  // that the required workbook was saved under the exact requested filename.
+  function validationFeedback(result){
+    if(result?.correct) return '✓ Correct. Progress saved. You can continue to the next stage.';
+    if(result?.code_valid === false) return result?.code_feedback || 'Code validation failed. Review the required code and filename.';
+    if(result?.code_valid === true) return 'Your code structure was accepted, but its output did not match the required result. Run and inspect the cell again.';
+    return result?.message || 'Not correct yet. Inspect the problem and try again.';
+  }
+
   async function validate(){
     const ex=activeExercise(); const run=state.runs.get(ex.key); let answer=''; let codeSnapshot=null;
     if(ex.mode==='choice'){answer=run?.choice||'';if(!answer)return;}else{if(!run?.ok||run.code!==String($('codeEditor').value||''))return;answer=run.output||'';codeSnapshot=run.code;}
     $('validateButton').disabled=true; $('validateButton').textContent='Validating…'; $('saveMessage').textContent='Checking your result with Supabase…';
     try{
       const result=await submit(ex,answer,codeSnapshot); if(result?.snapshot)state.snapshot=result.snapshot;else{const refreshed=await resume();state.snapshot=refreshed.snapshot;}
-      if(result?.correct){$('saveMessage').textContent='✓ Correct. Progress saved.';}else{$('saveMessage').textContent=result?.message||'Not correct yet. Inspect the problem and try again.';}
+      const feedback=validationFeedback(result);
       render();
-    }catch(error){$('saveMessage').textContent=`Validation failed: ${error.message}`; updateValidationState();}
+      // render() reinitializes saveMessage; restore the actual Supabase feedback afterwards.
+      $('saveMessage').textContent=feedback;
+    }catch(error){updateValidationState();$('saveMessage').textContent=`Validation failed: ${error.message}`;}
     finally{$('validateButton').textContent='Validate';}
   }
 
