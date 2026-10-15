@@ -10,6 +10,7 @@
       names:[['math','library'],['root','result variable']],
       flow:['import math','math.sqrt(81)','root','print(root)','9.0'],
       expected:'9.0',
+      objective:"Find the square root of 81 using math, then print the result.",
       check:'The square root must come from math.sqrt(...), not from a manually typed answer.',
       mistake:'Writing sqrt(81) without importing math or without the math. prefix.'
     },
@@ -17,6 +18,7 @@
       names:[['statistics','library'],['values','input list'],['mean_value','calculated mean']],
       flow:['import statistics','values','statistics.mean(values)','mean_value','print'],
       expected:'83',
+      objective:"Calculate the mean of the given list using statistics, then print it.",
       check:'mean_value must be calculated from the list values.',
       mistake:'Typing the final mean directly instead of calling statistics.mean(values).'
     },
@@ -24,6 +26,7 @@
       names:[['Path','class imported from pathlib'],['file','Path object']],
       flow:['import Path','filename text','Path(...)','file.suffix','.xlsx'],
       expected:'.xlsx',
+      objective:"Use pathlib to identify the extension of the Excel filename.",
       check:'The extension must come from the Path object property file.suffix.',
       mistake:'Using suffix() with parentheses. suffix is a property, not a function.'
     },
@@ -31,6 +34,7 @@
       names:[['load_workbook','openpyxl reader'],['wb','workbook object'],['sheet_names','worksheet-name list'],['has_students','Boolean check']],
       flow:['load workbook','wb.sheetnames','sheet_names','"Students" in ...','True'],
       expected:'True',
+      objective:"Open the class Excel file and check that it contains a sheet called Students.",
       check:'The code must test membership in the real workbook sheet-name list.',
       mistake:'Comparing wb.sheetnames directly with the string "Students".'
     },
@@ -38,6 +42,7 @@
       names:[['wb','workbook'],['ws','Students worksheet'],['first_cell','A1 value'],['rows','row count'],['columns','column count'],['check','final Boolean']],
       flow:['wb','ws = wb["Students"]','A1 + dimensions','3 conditions with and','check'],
       expected:'True',
+      objective:"Open Students and check cell A1 plus the worksheet dimensions.",
       check:'All three conditions must be true: A1 has content, rows > 1, columns >= 5.',
       mistake:'Using or instead of and, which would allow an incomplete worksheet to pass.'
     },
@@ -45,6 +50,7 @@
       names:[['wb','new workbook'],['ws','active worksheet'],['output_file','Path to saved XLSX']],
       flow:['Workbook()','rename Summary','write A1','save output_file','exists()','True'],
       expected:'True',
+      objective:"Make a new Excel workbook, write ready into Summary!A1, save it and check the file.",
       check:'Save the workbook before asking Path.exists() whether the file exists.',
       mistake:'Checking output_file.exists() before wb.save(output_file).'
     },
@@ -52,6 +58,7 @@
       names:[['pd','Pandas alias'],['df','DataFrame']],
       flow:['import pandas as pd','pd.read_excel(...)','df','type(df).__name__','DataFrame'],
       expected:'DataFrame',
+      objective:"Read the Students sheet with Pandas and identify the object type.",
       check:'df must be created from the Students worksheet with pd.read_excel(...).',
       mistake:'Using read_excel(...) without the pd. prefix or omitting sheet_name="Students".'
     },
@@ -59,6 +66,7 @@
       names:[['df','DataFrame'],['rows','number of rows'],['columns','number of columns'],['column_names','list of labels'],['preview','first rows'],['check','structure Boolean']],
       flow:['read XLSX','df.shape','columns.tolist() + head()','rows/columns check','True'],
       expected:'True',
+      objective:"Check the DataFrame size, column names and first rows before analyzing.",
       check:'Inspect structure before doing any statistical transformation.',
       mistake:'Confusing df.shape with a function. Use df.shape, not df.shape().'
     },
@@ -66,6 +74,7 @@
       names:[['df','DataFrame'],['scores','selected Series'],['preview','first values']],
       flow:['df','df["score"]','scores','scores.head()','type → Series'],
       expected:'Series',
+      objective:"Select the score column and check that the result is a Series.",
       check:'Selecting one DataFrame column should produce a Pandas Series.',
       mistake:'Using double brackets df[["score"]], which returns a DataFrame instead of a Series.'
     },
@@ -73,6 +82,7 @@
       names:[['df','source DataFrame'],['filtered','filtered DataFrame'],['has_rows','non-empty check'],['all_high','threshold check'],['check','combined Boolean']],
       flow:['df["score"] >= 90','df.loc[...]','filtered','all() + len()','check'],
       expected:'True',
+      objective:"Keep scores of 90 or higher and verify all selected records qualify.",
       check:'filtered must contain rows and every remaining score must satisfy >= 90.',
       mistake:'Filtering with > 90 instead of >= 90, or forgetting .all() in the verification.'
     },
@@ -80,6 +90,7 @@
       names:[['df','source DataFrame'],['passed','new Boolean column'],['ordered','sorted DataFrame'],['has_passed','column check'],['descending','sort-order check']],
       flow:['derive passed','sort_values','ordered','verify column + order','True'],
       expected:'True',
+      objective:"Create a passed column and sort complete student records by score.",
       check:'Sort the full DataFrame so complete student records stay aligned.',
       mistake:'Sorting only df["score"] rather than the full DataFrame.'
     },
@@ -87,6 +98,7 @@
       names:[['df','source DataFrame'],['filtered','rows with score >= 80'],['output_file','export path']],
       flow:['filter >= 80','filtered','to_excel(index=False)','output_file.exists()','True'],
       expected:'True',
+      objective:"Keep scores of 80 or higher and save the filtered table as a new Excel file.",
       check:'The same exact filename must be used for export and for the existence check.',
       mistake:'Forgetting index=False or checking a different filename from the one exported.'
     }
@@ -145,20 +157,21 @@
 
     scaffold.innerHTML =
       '<div class="v63-section">' +
-        '<div class="v63-section-title"><span>1</span><strong>Use these exact names</strong></div>' +
+        '<div class="v63-section-title"><span>1</span><strong>Names to use</strong></div>' +
         '<div class="v63-name-grid">' + variablesHtml(entry.names) + '</div>' +
       '</div>' +
       '<div class="v63-section">' +
-        '<div class="v63-section-title"><span>2</span><strong>Follow this flow</strong></div>' +
+        '<div class="v63-section-title"><span>2</span><strong>Follow these steps</strong></div>' +
+        '<p class="v63-objective">' + escapeHtml(entry.objective) + '</p>' +
         '<div class="v63-flow" role="img" aria-label="Step-by-step coding flow">' + flowHtml(entry.flow) + '</div>' +
       '</div>' +
       '<div class="v63-section v63-check">' +
-        '<div class="v63-section-title"><span>3</span><strong>Check before Validate</strong></div>' +
+        '<div class="v63-section-title"><span>3</span><strong>Check your result</strong></div>' +
         '<div class="v63-check-grid">' +
-          '<div><small>EXPECTED OUTPUT</small><code>' + escapeHtml(entry.expected) + '</code></div>' +
-          '<div><small>VERIFY</small><p>' + escapeHtml(entry.check) + '</p></div>' +
+          '<div><small>EXPECTED</small><code>' + escapeHtml(entry.expected) + '</code></div>' +
+          '<div><small>MAKE SURE</small><p>' + escapeHtml(entry.check) + '</p></div>' +
         '</div>' +
-        '<div class="v63-mistake"><strong>Common mistake:</strong> ' + escapeHtml(entry.mistake) + '</div>' +
+        '<div class="v63-mistake"><strong>Watch out:</strong> ' + escapeHtml(entry.mistake) + '</div>' +
       '</div>';
 
     scaffold.dataset.stage = String(stage);
