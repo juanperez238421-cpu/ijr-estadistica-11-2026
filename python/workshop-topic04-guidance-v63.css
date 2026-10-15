@@ -28,3 +28,5 @@ html[data-topic04-guidance="v63"] .guide-steps::before{content:"4  TYPE THE CODE
   .v63-flow-node{flex:1 1 130px}
   .v63-flow-arrow{align-self:center}
 }
+/* Short goal sentence; does not alter the validator or stage state. */
+.v63-objective{margin:0 0 10px;color:#334155;font-size:13px;line-height:1.55;font-weight:600}
