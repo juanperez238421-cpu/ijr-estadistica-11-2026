@@ -11,7 +11,7 @@ const css = fs.readFileSync('python/workshop-topic04-guidance-v63.css', 'utf8');
 
 assert(workshop.includes('workshop-topic04-guidance-v63.css?v=20260922-v63'), 'Workshop must load V63 guidance CSS.');
 assert(workshop.includes('workshop-topic04-guidance-v63.js?v=20260922-v63'), 'Workshop must load V63 guidance JS.');
-assert(workshop.includes('workshop-v42.js?v=20261001-progress-v69'), 'Workshop runtime cache key must expose the saved-progress V69 update.');
+assert(workshop.includes('workshop-v42.js?v=20261015-stage06-preflight-v70'), 'Workshop must load the Stage 06 preflight runtime without losing saved progress.');
 assert(workshop.includes('workshop-xlsx-topic-v46.js?v=20260922-v63'), 'Topic 04 XLSX overlay cache key must expose the V63 concept-preservation update.');
 
 for (let stage = 1; stage <= 12; stage += 1) {
@@ -73,6 +73,25 @@ const displayed = runtime.indexOf("$('saveMessage').textContent=feedback;", rest
 assert(restored >= 0 && displayed > restored, 'Supabase feedback must be displayed AFTER render().');
 assert.match(runtime, /catch\(error\)\{updateValidationState\(\);\$\('saveMessage'\)\.textContent=/, 'Network errors must remain visible after validation state reset.');
 console.log('STAGE 06 VALIDATION FEEDBACK REGRESSION PASS');
+// Stage 06 preflight must block incorrect file names and A1 values BEFORE RPC.
+const preflightSource=runtime.match(/function stage06Preflight\(ex, code\)\s*\{[\s\S]*?\n  \}/);
+assert(preflightSource, 'Stage 06 preflight function is missing.');
+const stage06Preflight=vm.runInNewContext('('+preflightSource[0]+')');
+const stage6={key:'logic-06'};
+const correctCode='from openpyxl import Workbook\nfrom pathlib import Path\nwb = Workbook()\nws = wb.active\nws.title = "Summary"\nws["A1"] = "ready"\noutput_file = Path("xlsx_library_output.xlsx")\nwb.save(output_file)\nprint(output_file.exists())';
+const screenshotCode=correctCode.replace('"ready"','"Ready"').replace('"xlsx_library_output.xlsx"','"pandas_excel_students"');
+const wrongFile=stage06Preflight(stage6,screenshotCode);
+assert.match(wrongFile,/xlsx_library_output\.xlsx/,'Wrong filename must be explained before submission.');
+assert.match(wrongFile,/NOT been sent or counted/,'Wrong filename must not reach Supabase.');
+const wrongCase=stage06Preflight(stage6,correctCode.replace('"ready"','"Ready"'));
+assert.match(wrongCase,/lowercase/,'Wrong A1 capitalization must be explained.');
+assert.strictEqual(stage06Preflight(stage6,correctCode),null,'Exact Stage 06 solution must remain valid.');
+assert.strictEqual(stage06Preflight({key:'logic-07'},screenshotCode),null,'Stage 06 guard must not block other stages.');
+assert.match(runtime,/if\(preflight\)\{\$\('saveMessage'\)\.textContent=preflight;return;\}/,'Invalid attempt must be stopped BEFORE backend RPC.');
+assert.match(runtime,/run\.code===String\(\$\('codeEditor'\)\.value\|\|''\) && !preflight/,'Validate button should be disabled when preflight fails.');
+console.log('STAGE 06 NO-WASTED-ATTEMPTS PREFLIGHT PASS');
+
+
 
 console.log('TOPIC 04 EXPLICIT GUIDANCE V63 CONTRACT PASS');
 console.log('12_stages=PASS exact_names=PASS exact_lines=PASS flowcharts=PASS expected_output=PASS common_mistakes=PASS');
