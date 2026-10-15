@@ -26,62 +26,62 @@
     codeExercise(
       'logic-01',
       'Class 1 · Use a standard scientific library',
-      'Import the standard Python library math. Create root = math.sqrt(81). Print root. The objective is to use a library function instead of implementing square-root logic yourself.'
+      "Step 1: Import math. Step 2: Calculate root with math.sqrt(81). Step 3: Print root. Run the cell, check that Python displays 9.0, then select Validate. Do not type the final answer yourself."
     ),
     codeExercise(
       'logic-02',
       'Class 1 · Use a statistics library',
-      'Import the standard library statistics. Create values = [72, 86, 91]. Calculate mean_value = statistics.mean(values). Print mean_value. This demonstrates that specialized libraries package reusable analytical operations.'
+      "Step 1: Import statistics. Step 2: Create values = [72, 86, 91]. Step 3: Use statistics.mean(values) to calculate mean_value. Step 4: Print mean_value. Run, inspect the calculated result, then Validate."
     ),
     codeExercise(
       'logic-03',
       'Class 1 · Recognize an Excel file with pathlib',
-      'Import Path from pathlib. Create file = Path("pandas_excel_students.xlsx"). Print file.suffix. This stage connects a general file-management library with the .xlsx format before opening the workbook.'
+      "Step 1: Import Path from pathlib. Step 2: Create file for pandas_excel_students.xlsx using Path(...). Step 3: Print file.suffix. Run and check that the extension is .xlsx before validating; do not print the extension as fixed text."
     ),
     codeExercise(
       'logic-04',
       'Class 1 · Open a real XLSX workbook with openpyxl',
-      'Use the classroom workbook pandas_excel_students.xlsx. Import load_workbook from openpyxl, load the workbook, inspect wb.sheetnames, and finally print whether "Students" is one of the worksheet names.'
+      "Step 1: Import load_workbook from openpyxl. Step 2: Open pandas_excel_students.xlsx as wb. Step 3: Save wb.sheetnames in sheet_names. Step 4: Check whether \"Students\" is in sheet_names and store this in has_students. Step 5: Print has_students, run, and Validate after checking True."
     ),
     codeExercise(
       'logic-05',
       'Class 1 · Inspect worksheet structure and cells',
-      'Load pandas_excel_students.xlsx with openpyxl, select ws = wb["Students"], inspect ws["A1"].value, ws.max_row and ws.max_column, then print whether the first cell is not empty AND the worksheet has more than one row AND at least five columns.'
+      "Step 1: Open pandas_excel_students.xlsx with openpyxl. Step 2: Select ws = wb[\"Students\"]. Step 3: Read the value of A1, the number of rows, and the number of columns. Step 4: Print one check using and: A1 is not empty, rows > 1, and columns >= 5. Run and check True before validating."
     ),
     codeExercise(
       'logic-06',
       'Class 1 · Create and save a real XLSX workbook',
-      'Import Workbook from openpyxl and Path from pathlib. Create a workbook, rename the active worksheet to "Summary", write "ready" in cell A1, save it as xlsx_library_output.xlsx, and print Path("xlsx_library_output.xlsx").exists().'
+      "Step 1: Import Workbook from openpyxl and Path from pathlib. Step 2: Create wb = Workbook() and select its active sheet as ws. Step 3: Name the sheet \"Summary\" and write \"ready\" in A1. Step 4: Save the workbook as xlsx_library_output.xlsx. Step 5: Print whether the file exists using Path(...).exists(). Run, check True, then Validate."
     ),
     codeExercise(
       'logic-07',
       'Class 2 · Read XLSX with Pandas',
-      'Import pandas as pd. Read the Students worksheet from pandas_excel_students.xlsx into df with pd.read_excel(...). Print type(df).__name__. The final output should identify the table object Pandas created.'
+      "Step 1: Import pandas as pd. Step 2: Read the \"Students\" sheet from pandas_excel_students.xlsx into df using pd.read_excel(...). Step 3: Print type(df).__name__. Run, confirm DataFrame, then Validate."
     ),
     codeExercise(
       'logic-08',
       'Class 2 · Inspect DataFrame dimensions',
-      'Read the classroom workbook into df. Inspect df.shape, df.columns.tolist() and df.head(). Then print whether df has at least one row AND at least five columns. Do not analyze the data before confirming its structure.'
+      "Step 1: Import pandas and read the \"Students\" sheet into df. Step 2: Use df.shape to get rows and columns. Step 3: Inspect the column names with df.columns.tolist() and the first rows with df.head(). Step 4: Print whether rows >= 1 and columns >= 5. Run, confirm True, then Validate."
     ),
     codeExercise(
       'logic-09',
       'Class 2 · Select one variable as a Series',
-      'Read the workbook into df. Create scores = df["score"]. Inspect scores.head(). Print type(scores).__name__ to verify the object returned when one DataFrame column is selected.'
+      "Step 1: Read the \"Students\" sheet into df with Pandas. Step 2: Select scores = df[\"score\"]. Step 3: Inspect scores.head(). Step 4: Print type(scores).__name__. Run, confirm Series, then Validate. Use single brackets to select one column."
     ),
     codeExercise(
       'logic-10',
       'Class 2 · Filter observations with a Boolean condition',
-      'Read the workbook into df. Create filtered = df.loc[df["score"] >= 90]. Inspect filtered. Print whether filtered contains at least one row AND every score in filtered is at least 90.'
+      "Step 1: Read the \"Students\" sheet into df. Step 2: Create filtered = df.loc[df[\"score\"] >= 90]. Step 3: Check that filtered has at least one row and that all its scores are >= 90. Step 4: Print the combined check with and. Run, confirm True, then Validate."
     ),
     codeExercise(
       'logic-11',
       'Class 2 · Derive a variable and sort complete records',
-      'Read the workbook into df. Create df["passed"] = df["score"] >= 70. Create ordered = df.sort_values("score", ascending=False). Print whether "passed" exists in ordered.columns AND ordered["score"].is_monotonic_decreasing is True.'
+      "Step 1: Read the \"Students\" sheet into df. Step 2: Create df[\"passed\"] by checking whether each score is >= 70. Step 3: Sort the entire DataFrame by score, highest first, into ordered. Step 4: Print whether ordered has the passed column and its scores decrease in order. Run, check True, then Validate."
     ),
     codeExercise(
       'logic-12',
       'Class 2 · Export a transformed DataFrame to XLSX',
-      'Read the workbook into df. Create filtered = df.loc[df["score"] >= 80]. Export filtered to pandas_analysis_output.xlsx with index=False. Then import Path from pathlib and print Path("pandas_analysis_output.xlsx").exists().'
+      "Step 1: Read the \"Students\" sheet into df. Step 2: Keep rows with score >= 80 in filtered. Step 3: Export filtered to pandas_analysis_output.xlsx using to_excel(..., index=False). Step 4: Use Path from pathlib to check that this exact file exists. Print the check, run, confirm True, then Validate."
     )
   ];
 
