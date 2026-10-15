@@ -157,21 +157,21 @@
 
     scaffold.innerHTML =
       '<div class="v63-section">' +
-        '<div class="v63-section-title"><span>1</span><strong>Names to use</strong></div>' +
+        '<div class="v63-section-title"><span>1</span><strong>Use these exact names</strong></div>' +
         '<div class="v63-name-grid">' + variablesHtml(entry.names) + '</div>' +
       '</div>' +
       '<div class="v63-section">' +
-        '<div class="v63-section-title"><span>2</span><strong>Follow these steps</strong></div>' +
+        '<div class="v63-section-title"><span>2</span><strong>Follow this flow</strong></div>' +
         '<p class="v63-objective">' + escapeHtml(entry.objective) + '</p>' +
         '<div class="v63-flow" role="img" aria-label="Step-by-step coding flow">' + flowHtml(entry.flow) + '</div>' +
       '</div>' +
       '<div class="v63-section v63-check">' +
-        '<div class="v63-section-title"><span>3</span><strong>Check your result</strong></div>' +
+        '<div class="v63-section-title"><span>3</span><strong>Check before Validate</strong></div>' +
         '<div class="v63-check-grid">' +
-          '<div><small>EXPECTED</small><code>' + escapeHtml(entry.expected) + '</code></div>' +
-          '<div><small>MAKE SURE</small><p>' + escapeHtml(entry.check) + '</p></div>' +
+          '<div><small>EXPECTED OUTPUT</small><code>' + escapeHtml(entry.expected) + '</code></div>' +
+          '<div><small>VERIFY</small><p>' + escapeHtml(entry.check) + '</p></div>' +
         '</div>' +
-        '<div class="v63-mistake"><strong>Watch out:</strong> ' + escapeHtml(entry.mistake) + '</div>' +
+        '<div class="v63-mistake"><strong>Common mistake:</strong> ' + escapeHtml(entry.mistake) + '</div>' +
       '</div>';
 
     scaffold.dataset.stage = String(stage);
