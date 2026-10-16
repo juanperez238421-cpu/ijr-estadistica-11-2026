@@ -95,9 +95,12 @@
   }
   function fmtWindow(value){
     if(!value) return '';
+    if(String(value).toLowerCase()==='infinity') return 'No closing date';
+    const date=new Date(value);
+    if(!Number.isFinite(date.getTime())) return '';
     return new Intl.DateTimeFormat('en-CO',{
       timeZone:'America/Bogota',weekday:'short',hour:'numeric',minute:'2-digit'
-    }).format(new Date(value));
+    }).format(date);
   }
 
   function updateTeamFields(){
@@ -169,13 +172,17 @@
       }
 
       $('memberEmail1').value=ownerEmail();
-      const windowText=`${fmtWindow(data.opens_at)} – ${fmtWindow(data.closes_at)}`;
+      const permanentAccess=String(data.closes_at||'').toLowerCase()==='infinity';
+      const windowText=permanentAccess?'No closing date':`${fmtWindow(data.opens_at)} – ${fmtWindow(data.closes_at)}`;
       if(data.state==='scheduled'){
         $('teamForm').classList.add('hidden');
         $('availabilityBox').innerHTML=`<strong>${esc(data.group_code)} · Scheduled</strong><br>Start window: ${esc(windowText)}. The module will open automatically at the scheduled time.`;
         state.availabilityTimer=setTimeout(loadAvailability,30000);
       }else if(data.state==='open'){
-        $('availabilityBox').innerHTML=`<strong>${esc(data.group_code)} · Evaluation open</strong><br>Start window: ${esc(windowText)}. Once started, your team has up to ${Number(data.duration_minutes)} minutes and never beyond the class-window close time.`;
+        const accessText=permanentAccess
+          ? `Individual access: no closing date for starting. Once started, the attempt lasts up to ${Number(data.duration_minutes)} minutes.`
+          : `Start window: ${esc(windowText)}. Once started, your team has up to ${Number(data.duration_minutes)} minutes and never beyond the class-window close time.`;
+        $('availabilityBox').innerHTML=`<strong>${esc(data.group_code)} · Evaluation open</strong><br>${accessText}`;
         $('teamForm').classList.remove('hidden');
         state.availabilityTimer=setTimeout(loadAvailability,30000);
       }else if(data.state==='attempted'){
