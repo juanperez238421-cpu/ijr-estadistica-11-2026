@@ -1,0 +1,77 @@
+name: Render Estadistica 11 Periodo 2 PQH
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: estadistica11-periodo2-pqh
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout render branch
+        uses: actions/checkout@v4
+
+      - name: Reconstruct and validate exact pipeline
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat render_source/pipeline_parts/pipeline_part_*.txt > render_stats11_pipeline.sh
+          echo "874a51b8dce71711c9477df2372ed7ac7186706d6a944590bd88ae30252c24ec  render_stats11_pipeline.sh" | sha256sum -c -
+          test -s render_stats11_pipeline.sh
+          bash -n render_stats11_pipeline.sh
+          chmod +x render_stats11_pipeline.sh
+          sha256sum render_stats11_pipeline.sh | tee pipeline_sha256.txt
+
+      - name: Validate and render every scene separately
+        shell: bash
+        run: |
+          set +e
+          ./render_stats11_pipeline.sh
+          status=$?
+          set -e
+          printf '%s\n' "$status" > pipeline_status.txt
+          exit 0
+
+      - name: Upload diagnostics and per-scene logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Estadistica11_Periodo2_Diagnostics
+          path: |
+            pipeline_status.txt
+            pipeline_sha256.txt
+            diagnostics/
+            logs/
+            qa/
+            estadistica11_periodo2_manimce.py
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Enforce successful render pipeline
+        shell: bash
+        run: |
+          set -euo pipefail
+          status="$(cat pipeline_status.txt)"
+          if [ "$status" -ne 0 ]; then
+            echo "The ManimCE pipeline failed with status $status. Download the diagnostics artifact for the exact scene and traceback."
+            exit "$status"
+          fi
+
+      - name: Upload verified ManimCE PQH series
+        uses: actions/upload-artifact@v4
+        with:
+          name: Estadistica11_Periodo2_ManimCE_PQH
+          path: delivery/
+          if-no-files-found: error
+          retention-days: 7

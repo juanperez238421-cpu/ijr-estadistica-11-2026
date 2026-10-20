@@ -1,0 +1,49 @@
+OUTPUTS[$scene]}"
+  cp "$video" "$dest"
+
+  echo "===== ${OUTPUTS[$scene]} =====" | tee -a diagnostics/ffprobe_all.txt
+  ffprobe -v error \
+    -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt \
+    -show_entries format=duration,size \
+    -of default=noprint_wrappers=1 \
+    "$dest" | tee -a diagnostics/ffprobe_all.txt
+
+  test "$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of csv=p=0 "$dest")" = "h264"
+  test "$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$dest")" = "1920"
+  test "$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$dest")" = "1080"
+  test "$(ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -of csv=p=0 "$dest")" = "30/1"
+  test "$(ffprobe -v error -select_streams v:0 -show_entries stream=pix_fmt -of csv=p=0 "$dest")" = "yuv420p"
+  ffmpeg -v error -i "$dest" -f null -
+
+  duration="$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$dest")"
+  midpoint="$(awk -v d="$duration" 'BEGIN{printf "%.3f", d/2}')"
+  ffmpeg -y -v error -ss 00:00:01 -i "$dest" -frames:v 1 "qa/${scene}_start.png"
+  ffmpeg -y -v error -ss "$midpoint" -i "$dest" -frames:v 1 "qa/${scene}_middle.png"
+  ffmpeg -y -v error -sseof -2 -i "$dest" -frames:v 1 "qa/${scene}_final.png"
+  test -s "qa/${scene}_start.png"
+  test -s "qa/${scene}_middle.png"
+  test -s "qa/${scene}_final.png"
+
+  printf "file '%s'\n" "$(realpath "$dest")" >> diagnostics/concat.txt
+done
+
+test "$(find delivery -maxdepth 1 -name '*.mp4' | wc -l)" -eq 10
+
+ffmpeg -y -v error -f concat -safe 0 -i diagnostics/concat.txt -c copy delivery/00_Serie_Completa_Estadistica11_Periodo2.mp4
+test -s delivery/00_Serie_Completa_Estadistica11_Periodo2.mp4
+ffmpeg -v error -i delivery/00_Serie_Completa_Estadistica11_Periodo2.mp4 -f null -
+ffprobe -v error \
+  -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt \
+  -show_entries format=duration,size \
+  -of default=noprint_wrappers=1 \
+  delivery/00_Serie_Completa_Estadistica11_Periodo2.mp4 | tee diagnostics/ffprobe_compilation.txt
+
+cp "$SOURCE" delivery/
+cp diagnostics/ffprobe_all.txt diagnostics/ffprobe_compilation.txt delivery/
+cp logs/pql_*.log logs/pqh_*.log delivery/
+cp qa/*.png delivery/
+cat > delivery/RENDER_INFO.txt <<'INFO'
+Serie: Estadística 11° · Segundo período
+Fuente: estadistica11_periodo2_manimce.py
+Escenas: 10
+Man

@@ -1,0 +1,13 @@
+imCE: 0.20.1
+Renderer: Cairo
+Resolución: 1920 x 1080
+FPS: 30
+Validación: cada escena fue ejecutada individualmente con -pql.
+Render final: cada escena fue ejecutada individualmente con el indicador literal -pqh.
+Estabilidad: Scene fija; sin MovingCameraScene; sin camera.frame; sin interpolación externa.
+Verificación: ffprobe, decodificación completa FFmpeg, tres fotogramas QA por video y SHA-256.
+INFO
+sha256sum delivery/* > delivery/SHA256SUMS.txt
+test "$(find delivery -maxdepth 1 -name '*.mp4' | wc -l)" -eq 11
+test -s delivery/SHA256SUMS.txt
+printf '0\n' > diagnostics/pipeline_status.txt
