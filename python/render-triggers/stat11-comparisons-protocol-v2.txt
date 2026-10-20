@@ -1,0 +1,1 @@
+Trigger Python Learning Hub QA so the workflow_run render gate produces the protocol-aligned Statistics 11 comparisons video.
