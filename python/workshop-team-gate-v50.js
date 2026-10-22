@@ -158,9 +158,9 @@
   async function startTeam(cfg,session,emails){
     if(!session?.registrationId || !session?.accessToken) throw new Error('Your Statistics 11 learning session is missing. Return to the Learning Hub and sign in again.');
 
-    const request=(current)=>postRpc(cfg,'python_hub_start_workshop_team_v3',{
-      p_registration_id:current.registrationId,
-      p_access_token:current.accessToken,
+    const request=()=>postRpc(cfg,'python_hub_start_workshop_team_v3',{
+      p_registration_id:session.registrationId,
+      p_access_token:session.accessToken,
       p_topic_slug:topicSlug,
       p_student_emails:emails,
       p_session_id:crypto.randomUUID(),
@@ -168,7 +168,7 @@
     });
 
     try {
-      return await request(session);
+      return await request();
     } catch(error) {
       if(!/Invalid or expired learning hub session/i.test(String(error?.message||''))) throw error;
       // The students have explicitly clicked Start workshop. Restore only
@@ -189,7 +189,8 @@
       }
       const restored={...session,accessToken:fresh.access_token,savedAt:new Date().toISOString()};
       localStorage.setItem(cfg.sessionStorageKey,JSON.stringify(restored));
-      return request(restored);
+      session=restored;
+      return request();
     }
   }
 
