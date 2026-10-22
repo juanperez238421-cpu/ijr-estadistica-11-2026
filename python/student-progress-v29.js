@@ -89,8 +89,8 @@
     if(!mount) return;
 
     const modeCopy=members.length>1
-      ? 'Each student keeps a stable User ID. Progress below is calculated individually across every individual or team registration that includes that student. A validated stage counts once for each registered member who completed it with the team.'
-      : 'This User ID stays attached to the institutional email. Individual progress is calculated across every registration in which this student participates, so validated work follows the student rather than only this browser.';
+      ? 'Each student keeps a stable User ID. Progress follows the verified school roster identity across all linked institutional emails, individual registrations and teams. Each validated exercise counts once.'
+      : 'This User ID belongs to the current email. Workshop progress is combined with other institutional emails linked to the same verified school roster student, so correctly completed exercises follow the student across registrations.';
 
     mount.innerHTML=`<div class="student-identity-shell">
       <div class="student-identity-head">
@@ -126,9 +126,16 @@
     loading=true;
     try{
       const {data,error}=await client.rpc(config.rpc.resume,{p_registration_id:saved.registrationId,p_access_token:saved.accessToken});
-      if(error||!data?.snapshot) return;
+      if(error||!data?.snapshot) throw error||new Error('Progress snapshot unavailable.');
       lastRegistrationId=saved.registrationId;
       render(data.snapshot);
+    }catch(error){
+      console.warn('Individual progress could not be refreshed.',error);
+      const mount=$('identityProgressPanel');
+      if(mount && !mount.querySelector('.student-progress-grid')){
+        mount.innerHTML='<div class="student-identity-note"><strong>Individual progress could not be loaded.</strong> Your saved answers have not been reset. <button id="retryIndividualProgress" class="button button-light" type="button">Retry loading progress</button></div>';
+        $('retryIndividualProgress')?.addEventListener('click',refresh);
+      }
     }finally{
       loading=false;
     }
