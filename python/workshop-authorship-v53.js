@@ -30,22 +30,31 @@
 
     editor.dataset.authorshipGuard = 'v53';
 
+    // Topic 04 uses multiline openpyxl/Pandas code. Allow legitimate code
+    // pasted into its editor, then require real Run and server-side Validate.
+    // Preserve the established no-paste classroom policy for all other topics.
+    const allowTopic04Paste = topicSlug === 'logic';
     const blockTransfer = event => {
       event.preventDefault();
-      flashAuthoringMessage('Paste and drag/drop are disabled in the code cell. Type the solution yourself.');
+      flashAuthoringMessage('Paste and drag/drop are disabled in this code cell. Type the solution yourself.');
       editor.focus();
     };
 
-    editor.addEventListener('paste', blockTransfer);
+    editor.addEventListener('paste', event => {
+      if (!allowTopic04Paste) blockTransfer(event);
+    });
     editor.addEventListener('drop', blockTransfer);
     editor.addEventListener('beforeinput', event => {
-      if (event.inputType === 'insertFromPaste' || event.inputType === 'insertFromDrop') {
+      if (event.inputType === 'insertFromPaste' && !allowTopic04Paste) {
         blockTransfer(event);
       }
+      if (event.inputType === 'insertFromDrop') blockTransfer(event);
     });
 
     const modeLabel = document.getElementById('cellModeLabel');
-    if (modeLabel) modeLabel.textContent = ' · write the complete solution yourself';
+    if (modeLabel) modeLabel.textContent = allowTopic04Paste
+      ? ' · enter Python code, press Run, then Validate (server checked)'
+      : ' · write the complete solution yourself';
   }
 
   function genericStepsHtml(markerAttribute) {
@@ -114,7 +123,7 @@
 
   window.IJR_PYTHON_HUB_AUTHORSHIP_POLICY_V53 = Object.freeze({
     blankCodeCells: true,
-    pasteIntoCodeEditor: false,
+    pasteIntoCodeEditor: topicSlug === 'logic',
     dropIntoCodeEditor: false,
     copyableSolutionFigures: false,
     conceptualGuidanceOnly: true,
