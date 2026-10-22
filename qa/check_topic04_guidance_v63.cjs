@@ -77,7 +77,7 @@ console.log('STAGE 06 VALIDATION FEEDBACK REGRESSION PASS');
 const preflightSource=runtime.match(/function stage06Preflight\(ex, code\)\s*\{[\s\S]*?\n  \}/);
 assert(preflightSource, 'Stage 06 preflight function is missing.');
 const stage06Preflight=vm.runInNewContext('('+preflightSource[0]+')');
-const stage6={key:'logic-06'};
+const stage6={key:'logic-06',mode:'code'};
 const correctCode='from openpyxl import Workbook\nfrom pathlib import Path\nwb = Workbook()\nws = wb.active\nws.title = "Summary"\nws["A1"] = "ready"\noutput_file = Path("xlsx_library_output.xlsx")\nwb.save(output_file)\nprint(output_file.exists())';
 const screenshotCode=correctCode.replace('"ready"','"Ready"').replace('"xlsx_library_output.xlsx"','"pandas_excel_students"');
 const wrongFile=stage06Preflight(stage6,screenshotCode);
