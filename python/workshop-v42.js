@@ -316,6 +316,30 @@
     return postRpc(config.rpc.submit,{p_registration_id:session.registrationId,p_access_token:session.accessToken,p_topic_slug:topic.slug,p_item_key:item.key,p_answer:String(answer??''),p_code_snapshot:codeSnapshot??null},{timeoutMs:SUBMIT_TIMEOUT_MS});
   }
 
+  // A second browser or an expired 4-hour grant must not discard the Python
+  // execution that a student has already completed on this workstation.
+  async function recoverStudentSessionForValidation(){
+    const stored=readSession();
+    const email=String(stored?.emails?.[0]||'').trim().toLowerCase();
+    const group=String(stored?.groupCode||'').trim().toUpperCase();
+    if(!/^\S+@ijr\.edu\.co$/.test(email) || !['11A','11B','11C'].includes(group)){
+      throw new Error('Your student identity is unavailable. Open the Learning Hub, sign in again, and return to this workshop.');
+    }
+    const next=await postRpc('python_hub_lab_login_v51',{
+      p_group_code:group,
+      p_institutional_email:email,
+      p_session_id:crypto.randomUUID(),
+      p_user_agent:navigator.userAgent
+    },{timeoutMs:API_TIMEOUT_MS});
+    if(!next?.access_token || !next?.registration_id ||
+       next.registration_id!==stored.registrationId){
+      throw new Error('Your original learning record could not be verified. Reopen the Learning Hub to restore it.');
+    }
+    const restored={...stored,accessToken:next.access_token,savedAt:new Date().toISOString()};
+    localStorage.setItem(config.sessionStorageKey,JSON.stringify(restored));
+    state.registration=restored;
+  }
+
   function topicProgress(){ return state.snapshot?.topics?.find(row=>row.slug===topic.slug)||null; }
   function serverItem(key){ return topicProgress()?.items?.find(item=>item.key===key)||null; }
   function activeExercise(){ return topic.exercises[state.stageIndex]||topic.exercises[0]; }
@@ -470,7 +494,19 @@
     if(preflight){$('saveMessage').textContent=preflight;return;}
     $('validateButton').disabled=true; $('validateButton').textContent='Validating…'; $('saveMessage').textContent='Checking your result with Supabase…';
     try{
-      const result=await submit(ex,answer,codeSnapshot); if(result?.snapshot)state.snapshot=result.snapshot;else{const refreshed=await resume();state.snapshot=refreshed.snapshot;}
+      let result;
+      try {
+        result=await submit(ex,answer,codeSnapshot);
+      } catch(error) {
+        // Retry only definitive stale-token rejections, never timeouts or
+        // ambiguous responses that may already have saved a submission.
+        if(masterPreview || !/Invalid or expired learning hub session/i.test(String(error?.message||''))) throw error;
+        $('saveMessage').textContent='Your session expired. Restoring access and retrying this validation…';
+        await recoverStudentSessionForValidation();
+        result=await submit(ex,answer,codeSnapshot);
+      }
+      if(result?.snapshot)state.snapshot=result.snapshot;
+      else{const refreshed=await resume();state.snapshot=refreshed.snapshot;}
       const feedback=validationFeedback(result);
       render();
       // render() reinitializes saveMessage; restore the actual Supabase feedback afterwards.
