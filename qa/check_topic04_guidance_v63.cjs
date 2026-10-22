@@ -11,7 +11,7 @@ const css = fs.readFileSync('python/workshop-topic04-guidance-v63.css', 'utf8');
 
 assert(workshop.includes('workshop-topic04-guidance-v63.css?v=20260922-v63'), 'Workshop must load V63 guidance CSS.');
 assert(workshop.includes('workshop-topic04-guidance-v63.js?v=20260922-v63'), 'Workshop must load V63 guidance JS.');
-assert(workshop.includes('workshop-v42.js?v=20261015-stage06-preflight-v70'), 'Workshop must load the Stage 06 preflight runtime without losing saved progress.');
+assert(workshop.includes('workshop-v42.js?v=20261022-topic04-validate-v72'), 'Workshop must load the Stage 06 preflight and validation state runtime without losing saved progress.');
 assert(workshop.includes('workshop-xlsx-topic-v46.js?v=20260922-v63'), 'Topic 04 XLSX overlay cache key must expose the V63 concept-preservation update.');
 
 for (let stage = 1; stage <= 12; stage += 1) {
@@ -92,6 +92,77 @@ assert.match(runtime,/run\.code===String\(\$\('codeEditor'\)\.value\|\|''\) && !
 console.log('STAGE 06 NO-WASTED-ATTEMPTS PREFLIGHT PASS');
 
 
+
+// Topic 04 regression: Run -> Validate must unlock ONLY on a fresh,
+// successful Python execution with the exact Stage 06 output.
+const validationSource = runtime.match(/function updateValidationState\(\)\s*\{[\s\S]*?\n  \}/);
+assert(validationSource, 'Run-to-Validate state handler not found.');
+function renderValidationState(exercise, code, run) {
+  const fields = {
+    codeEditor: { value:code },
+    validateButton: { disabled:true },
+    saveMessage: { textContent:'' }
+  };
+  const state = { runs:new Map(run ? [[exercise.key,run]] : []) };
+  vm.runInNewContext(validationSource[0]+';updateValidationState()', {
+    state, stage06Preflight, activeExercise:()=>exercise, $:key=>fields[key]
+  });
+  return fields;
+}
+const successfulRun = {ok:true,code:correctCode,output:'True'};
+let ui = renderValidationState(stage6,correctCode,successfulRun);
+assert.strictEqual(ui.validateButton.disabled,false,'Successful actual Stage 06 Run MUST enable Validate.');
+assert.match(ui.saveMessage.textContent,/Ready to validate/);
+ui = renderValidationState(stage6,correctCode,null);
+assert.strictEqual(ui.validateButton.disabled,true,'Never allow validation without executing Python.');
+ui = renderValidationState(stage6,correctCode,{...successfulRun,output:'False'});
+assert.strictEqual(ui.validateButton.disabled,true,'False result must not enable Stage 06 validation.');
+assert.match(ui.saveMessage.textContent,/print exactly True/);
+ui = renderValidationState(stage6,correctCode,{...successfulRun,ok:false,output:'Traceback'});
+assert.strictEqual(ui.validateButton.disabled,true,'Python runtime errors must block submission.');
+assert.match(ui.saveMessage.textContent,/execution failed/);
+ui = renderValidationState(stage6,correctCode+'\n# code was edited',successfulRun);
+assert.strictEqual(ui.validateButton.disabled,true,'Editing code invalidates the prior Run.');
+assert.match(ui.saveMessage.textContent,/changed after running/);
+ui = renderValidationState(stage6,screenshotCode,{ok:true,code:screenshotCode,output:'True'});
+assert.strictEqual(ui.validateButton.disabled,true,'Incorrect workbook metadata must fail preflight.');
+assert.match(ui.saveMessage.textContent,/xlsx_library_output/);
+console.log('TOPIC 04 RUN TO VALIDATE V72 STATE REGRESSION PASS');
+
+// Only Topic 04 permits legitimate multi-line paste. The original no-paste
+// classroom policy remains enforced for all other workshops.
+const authorship = fs.readFileSync('python/workshop-authorship-v53.js','utf8');
+assert(workshop.includes('workshop-authorship-v53.js?v=20261022-topic04-input-v72'), 'Updated Topic 04 editor must not be served from stale cache.');
+function editorPolicy(topicSlug) {
+  const listeners = {};
+  const editor = {
+    dataset:{}, addEventListener:(event,handler)=>{listeners[event]=handler;}, focus:()=>{}
+  };
+  const modeLabel={textContent:''};
+  const saveMessage={textContent:''};
+  const elements={codeEditor:editor,cellModeLabel:modeLabel,saveMessage};
+  const windowStub={IJR_PYTHON_HUB_TOPICS:[],clearTimeout:()=>{},setTimeout:()=>1};
+  vm.runInNewContext(authorship,{
+    URLSearchParams, location:{search:'?topic='+topicSlug},
+    window:windowStub,
+    document:{readyState:'complete',getElementById:id=>elements[id]||null}
+  });
+  function prevented(eventName,inputType){
+    const e={inputType,defaultPrevented:false,preventDefault(){this.defaultPrevented=true;}};
+    listeners[eventName](e);
+    return e.defaultPrevented;
+  }
+  return {prevented,modeLabel};
+}
+const logicEditor=editorPolicy('logic');
+assert.strictEqual(logicEditor.prevented('paste'),false,'Topic 04 paste must not be blocked.');
+assert.strictEqual(logicEditor.prevented('beforeinput','insertFromPaste'),false,'Topic 04 browser paste should enter code.');
+assert.strictEqual(logicEditor.prevented('drop'),true,'File drops must remain blocked.');
+assert.match(logicEditor.modeLabel.textContent,/Run, then Validate/);
+const arraysEditor=editorPolicy('arrays');
+assert.strictEqual(arraysEditor.prevented('paste'),true,'Other workshops must retain no-paste policy.');
+assert.strictEqual(arraysEditor.prevented('beforeinput','insertFromPaste'),true,'Other workshop paste must remain blocked.');
+console.log('TOPIC 04 INPUT POLICY V72 REGRESSION PASS');
 
 console.log('TOPIC 04 EXPLICIT GUIDANCE V63 CONTRACT PASS');
 console.log('12_stages=PASS exact_names=PASS exact_lines=PASS flowcharts=PASS expected_output=PASS common_mistakes=PASS');
