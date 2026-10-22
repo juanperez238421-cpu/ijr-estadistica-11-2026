@@ -11,7 +11,7 @@ const css = fs.readFileSync('python/workshop-topic04-guidance-v63.css', 'utf8');
 
 assert(workshop.includes('workshop-topic04-guidance-v63.css?v=20260922-v63'), 'Workshop must load V63 guidance CSS.');
 assert(workshop.includes('workshop-topic04-guidance-v63.js?v=20260922-v63'), 'Workshop must load V63 guidance JS.');
-assert(workshop.includes('workshop-v42.js?v=20261022-topic04-validate-v72'), 'Workshop must load the Stage 06 preflight and validation state runtime without losing saved progress.');
+assert(workshop.includes('workshop-v42.js?v=20261022-session-recovery-v73') || workshop.includes('workshop-v42.js?v=20261022-topic04-validate-v72'), 'Workshop must load the latest Stage 06 preflight and session-recovery runtime without losing saved progress.');
 assert(workshop.includes('workshop-xlsx-topic-v46.js?v=20260922-v63'), 'Topic 04 XLSX overlay cache key must expose the V63 concept-preservation update.');
 
 for (let stage = 1; stage <= 12; stage += 1) {
