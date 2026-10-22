@@ -399,10 +399,21 @@
 
   function updateValidationState(){
     const ex=activeExercise(); const run=state.runs.get(ex.key); let enabled=false;
-    const preflight=ex.mode==='code' ? stage06Preflight(ex,String($('codeEditor').value||'')) : null;
-    if(ex.mode==='choice') enabled=Boolean(run?.choice); else enabled=Boolean(run?.ok && run.code===String($('codeEditor').value||'') && !preflight);
+    const source=String($('codeEditor').value||'');
+    const preflight=ex.mode==='code' ? stage06Preflight(ex,source) : null;
+    // A successful run is mandatory. Stage 06 must also produce the exact
+    // expected result before the Validate button can submit to Supabase.
+    if(ex.mode==='choice') enabled=Boolean(run?.choice); else enabled=Boolean(run?.ok && run.code===String($('codeEditor').value||'') && !preflight && (ex.key!=='logic-06' || String(run.output).trim()==='True'));
     $('validateButton').disabled=!enabled;
-    $('saveMessage').textContent=preflight || (enabled?'Ready to validate with the course backend.':'Run the cell, inspect the output, then validate.');
+    let message='Run the cell, inspect the output, then validate.';
+    if(preflight) message=preflight;
+    else if(enabled) message='Ready to validate with the course backend.';
+    else if(ex.mode==='code' && !source.trim()) message='Write Python code in the editor, then press Run.';
+    else if(ex.mode==='code' && run && run.code!==source) message='The code changed after running. Press Run again before Validate.';
+    else if(ex.mode==='code' && run && !run.ok) message='Python execution failed. Check the output above, fix the code, then press Run again.';
+    else if(ex.key==='logic-06' && run?.ok && String(run.output).trim()!=='True')
+      message='Stage 06 must print exactly True. Save xlsx_library_output.xlsx with Summary!A1 = "ready", then Run again.';
+    $('saveMessage').textContent=message;
   }
 
   function setRuntime(mode,label){ $('connectButton').className=`runtime-button ${mode||''}`.trim(); $('runtimeLabel').textContent=label; }
