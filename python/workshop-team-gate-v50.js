@@ -157,14 +157,40 @@
 
   async function startTeam(cfg,session,emails){
     if(!session?.registrationId || !session?.accessToken) throw new Error('Your Statistics 11 learning session is missing. Return to the Learning Hub and sign in again.');
-    return postRpc(cfg,'python_hub_start_workshop_team_v3',{
-      p_registration_id:session.registrationId,
-      p_access_token:session.accessToken,
+
+    const request=(current)=>postRpc(cfg,'python_hub_start_workshop_team_v3',{
+      p_registration_id:current.registrationId,
+      p_access_token:current.accessToken,
       p_topic_slug:topicSlug,
       p_student_emails:emails,
       p_session_id:crypto.randomUUID(),
       p_user_agent:navigator.userAgent
     });
+
+    try {
+      return await request(session);
+    } catch(error) {
+      if(!/Invalid or expired learning hub session/i.test(String(error?.message||''))) throw error;
+      // The students have explicitly clicked Start workshop. Restore only
+      // their same institutional registration, never silently change identity.
+      const email=normalizeEmail(session?.emails?.[0]);
+      const group=String(session?.groupCode||'').trim().toUpperCase();
+      if(!validInstitutionalEmail(email) || !['11A','11B','11C'].includes(group)){
+        throw new Error('The student session expired. Return to the Learning Hub and sign in again.');
+      }
+      const fresh=await postRpc(cfg,'python_hub_lab_login_v51',{
+        p_group_code:group,
+        p_institutional_email:email,
+        p_session_id:crypto.randomUUID(),
+        p_user_agent:navigator.userAgent
+      });
+      if(!fresh?.access_token || fresh.registration_id!==session.registrationId){
+        throw new Error('Student identity could not be restored. Sign in again from the Learning Hub.');
+      }
+      const restored={...session,accessToken:fresh.access_token,savedAt:new Date().toISOString()};
+      localStorage.setItem(cfg.sessionStorageKey,JSON.stringify(restored));
+      return request(restored);
+    }
   }
 
   function renderTeamChip(data){
