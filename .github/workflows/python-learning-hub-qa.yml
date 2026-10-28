@@ -10,6 +10,7 @@ on:
       - 'python/**'
       - 'qa/check_arrays_workshop_v37.cjs'
       - 'qa/check_workshop_v47_contract.cjs'
+      - 'qa/check_workshop4_independent_classes_v74.cjs'
       - 'qa/arrays_workshop_v47_e2e.cjs'
       - 'qa/check_statistics11_xlsx_curriculum_v46.cjs'
       - 'qa/check_library_playground_v62.cjs'
@@ -30,6 +31,7 @@ on:
       - 'python/**'
       - 'qa/check_arrays_workshop_v37.cjs'
       - 'qa/check_workshop_v47_contract.cjs'
+      - 'qa/check_workshop4_independent_classes_v74.cjs'
       - 'qa/arrays_workshop_v47_e2e.cjs'
       - 'qa/check_statistics11_xlsx_curriculum_v46.cjs'
       - 'qa/check_library_playground_v62.cjs'
@@ -73,6 +75,7 @@ jobs:
           node --check python/library-playground-v62.js
           node --check qa/check_arrays_workshop_v37.cjs
           node --check qa/check_workshop_v47_contract.cjs
+          node --check qa/check_workshop4_independent_classes_v74.cjs
           node --check qa/check_statistics11_xlsx_curriculum_v46.cjs
           node --check qa/arrays_workshop_v47_e2e.cjs
           node --check qa/check_library_playground_v62.cjs
@@ -87,6 +90,7 @@ jobs:
       - name: Current production course contracts
         run: |
           node qa/check_workshop_v47_contract.cjs
+          node qa/check_workshop4_independent_classes_v74.cjs
           node qa/check_arrays_workshop_v37.cjs
           node qa/check_statistics11_xlsx_curriculum_v46.cjs
           node qa/check_library_playground_v62.cjs
