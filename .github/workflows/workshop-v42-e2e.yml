@@ -18,6 +18,7 @@ on:
       - 'python/curriculum-xlsx-first-v46.js'
       - 'qa/check_arrays_workshop_v37.cjs'
       - 'qa/check_workshop_v47_contract.cjs'
+      - 'qa/check_workshop4_independent_classes_v74.cjs'
       - 'qa/arrays_workshop_v47_e2e.cjs'
       - '.github/workflows/workshop-v42-e2e.yml'
   push:
@@ -38,6 +39,7 @@ on:
       - 'python/curriculum-xlsx-first-v46.js'
       - 'qa/check_arrays_workshop_v37.cjs'
       - 'qa/check_workshop_v47_contract.cjs'
+      - 'qa/check_workshop4_independent_classes_v74.cjs'
       - 'qa/arrays_workshop_v47_e2e.cjs'
       - '.github/workflows/workshop-v42-e2e.yml'
   workflow_dispatch:
@@ -61,8 +63,10 @@ jobs:
           node --check python/workshop-progression-guard-v44.js
           node --check qa/check_arrays_workshop_v37.cjs
           node --check qa/check_workshop_v47_contract.cjs
+          node --check qa/check_workshop4_independent_classes_v74.cjs
           node --check qa/arrays_workshop_v47_e2e.cjs
           node qa/check_workshop_v47_contract.cjs
+          node qa/check_workshop4_independent_classes_v74.cjs
           node qa/check_arrays_workshop_v37.cjs
 
       - name: Install deterministic browser runtime
