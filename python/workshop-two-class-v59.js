@@ -29,7 +29,7 @@
       '<div class="v59-roadmap-head">' +
         '<div><p class="eyebrow">TOPIC 04 · MAXIMUM 2 CLASSES</p>' +
         '<h2>Two classes. Same Colab workflow. One real Excel file.</h2>' +
-        '<p>Each class combines approximately <strong>20 min theory + 30 min workshop</strong>. The 12 validated exercises stay in one topic, divided into two coherent six-stage blocks.</p></div>' +
+        '<p>Each class combines approximately <strong>20 min theory + 30 min workshop</strong>. The 12 validated exercises stay in one topic, divided into two coherent six-stage blocks. <strong>Start either class independently:</strong> Class 2 does not require finishing Class 1.</p></div>' +
         '<span class="v59-route-badge">2 × 50 min</span>' +
       '</div>' +
       '<div class="v59-class-cards">' +
