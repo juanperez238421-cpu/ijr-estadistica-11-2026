@@ -19,8 +19,8 @@
     const topics=member?.progress?.topics||[];
     return topics.map(topic=>`<div class="student-topic-progress-row">
       <span class="student-topic-number">${String(Number(topic.sequence||0)).padStart(2,'0')}</span>
-      <div class="student-topic-copy"><strong>${escapeHtml(topic.title||topic.slug)}</strong><small>${percent(topic.percent)}% individual stage mastery</small><div class="progress-track" role="progressbar" aria-label="${escapeHtml(topic.title||topic.slug)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent(topic.percent)}"><span style="width:${percent(topic.percent)}%"></span></div></div>
-      <div class="student-topic-result"><strong>${Number(topic.correct_count||0)} / ${Number(topic.total_count||0)}</strong>${topic.historical_credit?'<small>Historical credit</small>':''}</div>
+      <div class="student-topic-copy"><strong>${escapeHtml(topic.title||topic.slug)}</strong><small>${percent(topic.percent)}% effective topic progress${topic.historical_credit?' · recognized credit':' · validated answers'}</small><div class="progress-track" role="progressbar" aria-label="${escapeHtml(topic.title||topic.slug)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent(topic.percent)}"><span style="width:${percent(topic.percent)}%"></span></div></div>
+      <div class="student-topic-result"><strong>${Number(topic.correct_count||0)} / ${Number(topic.total_count||0)}</strong>${topic.historical_credit?'<small>Recognized topic credit (historical or teacher)</small>':''}</div>
     </div>`).join('');
   }
 
@@ -82,7 +82,7 @@
         track.setAttribute('aria-valuemax','100');
         track.setAttribute('aria-valuenow',String(value));
       }
-      if($('globalProgressCopy')) $('globalProgressCopy').textContent=`${Number(progress.correct_count||0)} / ${Number(progress.total_count||0)} workshop stages correct`;
+      if($('globalProgressCopy')) $('globalProgressCopy').textContent=`${Number(progress.correct_count||0)} / ${Number(progress.total_count||0)} effective stage equivalents (validated + recognized credits)`;
     }
 
     const mount=$('identityProgressPanel');
@@ -105,13 +105,13 @@
               <div><p class="eyebrow">STUDENT ${Number(member.order||0)}</p><h3>${escapeHtml(member.display_name||member.email)}</h3><p>${escapeHtml(member.email||'')}</p></div>
               <div class="student-user-code"><span>User ID</span><strong>${escapeHtml(member.user_id||'Pending')}</strong></div>
             </div>
-            <div class="student-progress-summary"><strong>${Number(progress.percent||0)}%</strong><span>${Number(progress.correct_count||0)} / ${Number(progress.total_count||0)} currently validated workshop stages</span></div>
+            <div class="student-progress-summary"><strong>${Number(progress.percent||0)}%</strong><span>${Number(progress.correct_count||0)} / ${Number(progress.total_count||0)} effective stage equivalents</span></div>
             <div class="progress-track" aria-label="Individual progress"><span style="width:${Math.max(0,Math.min(100,Number(progress.percent||0)))}%"></span></div>
             <div class="student-topic-progress-list">${topicRows(member)}</div>
           </article>`;
         }).join('')}
       </div>
-      <div class="student-identity-note"><strong>Audit rule:</strong> current stage counts come only from server-validated workshop responses. A “Historical credit” badge is shown separately when older verified classroom evidence exists; it does not fabricate completion of the current 12 stages.</div>
+      <div class="student-identity-note"><strong>Audit rule:</strong> effective progress combines distinct server-validated exercises and previously recognized historical/teacher topic credits, never counting both twice. A credited 12/12 represents a recognized topic, not twelve newly submitted solutions. Pending exercises and original code evidence remain unchanged.</div>
       ${qaEvaluationCard(members)}
     </div>`;
 

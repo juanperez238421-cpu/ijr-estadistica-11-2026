@@ -5,13 +5,23 @@
   if(!cfg||!window.supabase){document.body.innerHTML='<main style="padding:40px;font-family:sans-serif">Teacher master configuration unavailable.</main>';return;}
   const $=id=>document.getElementById(id);
   const sb=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
-  const topicOrder=['operations','types','arrays','logic','conditions','loops','functions','statistics'];
+  // Display every published Statistics 11 topic, not only the legacy first eight.
+  const topicColumns=[
+    ['operations','Operations'],['types','Types'],['arrays','Arrays'],
+    ['logic','Libraries / XLSX / Pandas'],['conditions','CSV / DataFrames'],
+    ['loops','Central tendency'],['functions','Functions'],['statistics','Statistics'],
+    ['descriptive','Descriptive'],['position-outliers','Quartiles / IQR'],
+    ['pandas-dataframes','Pandas DataFrames'],['data-cleaning','Data cleaning'],
+    ['filter-transform','Filter / transform'],['group-aggregate','Aggregation'],
+    ['visualization','Visualization'],['analyst-project','Analyst project']
+  ];
+  const topicOrder=topicColumns.map(([slug])=>slug);
   const state={token:sessionStorage.getItem(cfg.teacherSessionKey)||'',snapshot:null,group:'',search:'',loading:false,timer:null,recovery:null};
 
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmtTime=v=>{if(!v)return'—';try{return new Date(v).toLocaleString('es-CO',{dateStyle:'short',timeStyle:'short'})}catch{return'—'}};
   const setStatus=(id,text,kind='')=>{const el=$(id);if(!el)return;el.textContent=text||'';el.className=`status ${kind}`.trim();};
-  const topicOf=(student,slug)=>Array.isArray(student?.hub?.topics)?student.hub.topics.find(t=>t.slug===slug):null;
+  const topicOf=(student,slug)=>Array.isArray(student?.effective_progress?.topics)?student.effective_progress.topics.find(t=>t.slug===slug):null;
   const creditOf=(student,slug)=>Array.isArray(student?.topic_credits)?student.topic_credits.find(c=>c.topic_slug===slug):null;
   const displayRegistrationId=id=>id?`REG-${String(id).replace(/-/g,'').slice(0,8).toUpperCase()}`:'—';
 
@@ -70,35 +80,60 @@
   function topicCell(student,slug){
     const p=topicOf(student,slug);
     const credit=creditOf(student,slug);
-    if(!p&&credit){
-      return `<td class="topic-cell"><strong>✓ Credited</strong><span class="student-sub">Historical/teacher verified</span><span class="student-sub">${esc(fmtTime(credit.completed_at))}</span></td>`;
-    }
-    if(!p)return '<td class="topic-cell"><span class="muted">—</span></td>';
-    const done=p.status==='completed',credited=p.completion_source==='legacy_credit'||Boolean(credit);
-    return `<td class="topic-cell"><strong>${done?'✓ ':''}${Number(p.percent||0)}%</strong><span class="student-sub">${credited?'Topic credit (not fake stage validation)':`${Number(p.correct_count||0)}/${Number(p.total_count||0)}`}</span><span class="mini-track"><i style="width:${Math.max(0,Math.min(100,Number(p.percent||0)))}%"></i></span></td>`;
+    if(!p)return '<td class="topic-cell"><span class="muted">Identity not verified</span></td>';
+    const recognized=Boolean(p.historical_credit);
+    const raw=Number(student?.validated_by_topic?.[slug]||0);
+    const awarded=Number(p.correct_count||0),total=Number(p.total_count||0);
+    const percentage=total?Math.round(100*awarded/total):0;
+    const source=String(credit?.source_key||'');
+    const reason=recognized
+      ? (source.startsWith('teacher_recognition_')?'Teacher recognition':source?'Historical/team credit':'Verified prior credit')
+      : 'Server-validated responses';
+    const detail=recognized
+      ? `${reason} · ${raw}/${total} individually validated`
+      : `${raw}/${total} validated`;
+    return `<td class="topic-cell"><strong>${awarded>=total&&total?'✓ ':''}${percentage}%</strong><span class="student-sub">${esc(detail)}</span><span class="mini-track"><i style="width:${Math.max(0,Math.min(100,percentage))}%"></i></span></td>`;
+  }
+
+  // The exact same 192-stage denominator as the individual student Hub.
+  function globalCell(student){
+    const p=student?.effective_progress;
+    if(!p)return '<td class="topic-cell"><strong>—</strong><span class="student-sub">Unlinked roster identity</span></td>';
+    const correct=Number(p.correct_count||0), total=Number(p.total_count||0);
+    const pct=total?Math.round(100*correct/total):0;
+    const validated=Object.values(student.validated_by_topic||{}).reduce((sum,n)=>sum+Number(n||0),0);
+    return `<td class="topic-cell"><strong>${pct}%</strong><span class="student-sub">${correct}/${total} effective · ${validated} validated</span><span class="mini-track"><i style="width:${Math.max(0,Math.min(100,pct))}%"></i></span></td>`;
   }
 
   function renderMetrics(students,registrations){
-    const legacyDone=students.filter(s=>s.legacy_types?.status==='completed').length;
-    const hubRegistered=students.filter(s=>s.hub).length;
-    const hubTypesDone=students.filter(s=>topicOf(s,'types')?.status==='completed'||creditOf(s,'types')).length;
-    const individualOnly=students.filter(s=>s.registration_policy?.force_individual).length;
-    $('metrics').innerHTML=[
-      ['Roster students',students.length],
-      ['Verified Types credits',legacyDone],
-      ['Hub registered students',hubRegistered],
-      ['Hub Types complete/credited',hubTypesDone],
-      ['Hub registrations',registrations.length],
-      ['Individual-only students',individualOnly]
-    ].map(([label,value])=>`<div class="metric"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`).join('');
+    const linked=students.filter(s=>s.effective_progress);
+    const correct=linked.reduce((sum,s)=>sum+Number(s.effective_progress.correct_count||0),0);
+    const total=linked.reduce((sum,s)=>sum+Number(s.effective_progress.total_count||0),0);
+    const mean=total?(Math.round(1000*correct/total)/10):0;
+    const teacherCredits=students.filter(s=>(s.topic_credits||[]).some(c=>String(c.source_key||'').startsWith('teacher_recognition_'))).length;
+    const metrics=[
+      ['Students in roster',students.length],
+      ['Verified identities',linked.length],
+      ['Average effective progress',mean.toFixed(1)+'%'],
+      ['Teacher-credit students',teacherCredits],
+      ['Current Hub registrations',registrations.length]
+    ];
+    $('metrics').innerHTML=metrics.map(([label,value])=>`<div class="metric"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`).join('');
   }
   function renderStudents(students){
-    $('studentCount').textContent=`${students.length} students shown`;
+    const heading=$('studentColumns');
+    if(heading){
+      heading.innerHTML='<th>Student</th><th>Legacy Types</th><th>Hub registration</th><th>Global / 192</th>'
+        + topicColumns.map(([slug,name],i)=>`<th title="${esc(slug)}">${String(i+1).padStart(2,'0')} ${esc(name)}</th>`).join('')
+        + '<th>Last activity</th>';
+    }
+    $('studentCount').textContent=`${students.length} students shown · canonical per-roster progress`;
     $('studentBody').innerHTML=students.map(student=>{
       const last=student.hub?.last_activity_at||student.legacy_types?.last_activity_at;
-      return `<tr><td class="student-name">${esc(student.display_name)}<span class="student-sub">${esc(student.group_code)}</span></td><td>${legacyBadge(student.legacy_types)}</td><td>${hubIdentity(student)}</td>${topicOrder.map(slug=>topicCell(student,slug)).join('')}<td>${esc(fmtTime(last))}</td></tr>`;
-    }).join('')||'<tr><td colspan="12" class="muted">No roster students match this filter.</td></tr>';
+      return `<tr><td class="student-name">${esc(student.display_name)}<span class="student-sub">${esc(student.group_code)}</span></td><td>${legacyBadge(student.legacy_types)}</td><td>${hubIdentity(student)}</td>${globalCell(student)}${topicOrder.map(slug=>topicCell(student,slug)).join('')}<td>${esc(fmtTime(last))}</td></tr>`;
+    }).join('')||`<tr><td colspan="${topicOrder.length+5}" class="muted">No roster students match this filter.</td></tr>`;
   }
+
   function renderRegistrations(registrations){
     $('registrationCount').textContent=`${registrations.length} registrations shown`;
     $('registrationList').innerHTML=registrations.map(r=>{
@@ -118,7 +153,7 @@
     if(!state.snapshot)return;
     const students=filteredStudents(),registrations=filteredRegistrations();
     renderMetrics(students,registrations);renderStudents(students);renderRegistrations(registrations);renderIdentityReview();
-    setStatus('dashboardStatus',`Code-session verified · snapshot ${fmtTime(state.snapshot.generated_at)} · individual registration history visible per roster student`,'ok');
+    setStatus('dashboardStatus',`Verified teacher session · ${fmtTime(state.snapshot.generated_at)} · canonical roster progress across 16 topics (192 stages); teacher credits distinguished from validated submissions`,'ok');
   }
 
   function schedule(){clearTimeout(state.timer);if(state.token&&!$('dashboardPanel').classList.contains('hidden'))state.timer=setTimeout(()=>{if(!document.hidden)loadDashboard();else schedule();},cfg.refreshMs);}
