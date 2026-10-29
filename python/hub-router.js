@@ -346,8 +346,8 @@
     $('globalPercent').textContent=`${stagePercent}%`;
     $('globalProgressBar').style.width=`${stagePercent}%`;
     $('globalProgressCopy').textContent=individual
-      ? `${correctStages} / ${totalStages} validated stages or verified prior credits`
-      : `${correctStages} / ${totalStages} workshop stages correct`;
+      ? `${correctStages} / ${totalStages} effective stage equivalents (validated answers + recognized credits)`
+      : `${correctStages} / ${totalStages} effective stage equivalents`;
 
     renderEvaluationPanel();
     $('topicGrid').innerHTML=topics.map(topic=>{
@@ -361,7 +361,7 @@
         <div class="hub-topic-top"><span class="hub-topic-number">${String(topic.sequence).padStart(2,'0')}</span><span class="hub-topic-status">${escapeHtml(statusLabel)}</span></div>
         <h2>${escapeHtml(topic.title)}</h2>
         <p>${escapeHtml(topic.lead)}</p>
-        <div class="hub-topic-progress"><div><strong>${Number(p.percent||0)}%</strong><span>${Number(p.correct_count||0)} / ${Number(p.total_count||topic.exercises.length)} ${p.historical_credit?'verified prior credit':'validated workshop stages'}</span></div><div class="progress-track"><span style="width:${Number(p.percent||0)}%"></span></div></div>
+        <div class="hub-topic-progress"><div><strong>${Number(p.percent||0)}%</strong><span>${Number(p.correct_count||0)} / ${Number(p.total_count||topic.exercises.length)} ${p.historical_credit?'recognized topic credit (not new submissions)':'validated workshop stages'}</span></div><div class="progress-track"><span style="width:${Number(p.percent||0)}%"></span></div></div>
         <div class="hub-topic-actions">
           <a class="button button-light ${locked?'disabled-link':''}" href="${theoryHref}" ${locked?'aria-disabled="true" tabindex="-1"':''}>Theory</a>
           <a class="button button-dark ${locked?'disabled-link':''}" href="${workshopHref}" ${locked?'aria-disabled="true" tabindex="-1"':''}>Workshop</a>
