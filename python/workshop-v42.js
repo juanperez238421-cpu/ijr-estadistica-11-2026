@@ -465,11 +465,24 @@
   async function runCode(){
     const ex=activeExercise(); if(ex.mode!=='code') return;
     const code=String($('codeEditor').value||''); if(!code.trim()){showOutput('Write your Python solution before running the cell.',false);return;}
+    // Arrays stages must be independent: a previous "print = ..." can shadow
+    // Python's print() and produce "int object is not callable" on correct code.
+    const arraysRunner=topic.slug==='arrays'?window.IJR_ARRAYS_STAGE_ISOLATION_V76:null;
+    if(topic.slug==='arrays'){
+      if(!arraysRunner){showOutput('Arrays runtime is not ready. Reload the page and try again.',false);return;}
+      const hint=arraysRunner.guidance(code);
+      if(hint){
+        state.runs.delete(ex.key);
+        showOutput(hint,false);
+        updateValidationState();
+        return;
+      }
+    }
     $('runButton').classList.add('running'); $('runButton').disabled=true; $('validateButton').disabled=true; setRuntime('loading',state.runtime?'Running…':'Connecting…');
     try{
       const py=await ensureRuntime(); const stdout=[]; const stderr=[]; py.setStdout({batched:text=>stdout.push(text)}); py.setStderr({batched:text=>stderr.push(text)});
       let result=null;
-      try{result=await py.runPythonAsync(code);if(result!==undefined&&result!==null){const text=String(result);if(text!=='None')stdout.push(text);if(typeof result.destroy==='function')result.destroy();}}catch(error){stderr.push(String(error?.message||error));}
+      try{result=arraysRunner ? await arraysRunner.run(py,code) : await py.runPythonAsync(code);if(result!==undefined&&result!==null){const text=String(result);if(text!=='None')stdout.push(text);if(typeof result.destroy==='function')result.destroy();}}catch(error){stderr.push(String(error?.message||error));}
       state.executionCount+=1; const ok=stderr.length===0; const output=(ok?stdout:stderr).join('\n').trim()||(ok?'Cell executed with no printed output.':'Python execution failed.');
       state.runs.set(ex.key,{ok,output,display:true,execution:state.executionCount,code}); showOutput(output,ok); $('executionCount').textContent=`[${state.executionCount}]`; setRuntime('ready','Connected');
     }catch(error){state.executionCount+=1;const output=`Runtime error: ${error.message}`;state.runs.set(ex.key,{ok:false,output,display:true,execution:state.executionCount,code});showOutput(output,false);$('executionCount').textContent=`[${state.executionCount}]`;}
