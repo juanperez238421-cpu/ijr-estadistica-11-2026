@@ -8,13 +8,13 @@
   <meta name="color-scheme" content="light">
   <title>Statistics 11 · Python Teacher Master</title>
   <link rel="preconnect" href="https://rlfxnjbqxbozjdzkbwlz.supabase.co" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20260910-master-v35">
+  <link rel="stylesheet" href="styles.css?v=20261029-canonical-progress-v76">
   <link rel="stylesheet" href="topic-review.css?v=20260910-master-v35">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="../course-data-v4.js?v=20260910-master-v35"></script>
   <script defer src="session-bridge-v35.js?v=20260910-master-v35"></script>
   <script defer src="config.js?v=20260910-master-v35"></script>
-  <script defer src="app.js?v=20260910-master-v35"></script>
+  <script defer src="app.js?v=20261029-canonical-progress-v76"></script>
   <script defer src="topic-review.js?v=20260910-master-v35"></script>
 </head>
 <body>
@@ -43,7 +43,7 @@
         <div>
           <p class="eyebrow">TEACHER · CODE SESSION VERIFIED</p>
           <h1>Progress and curriculum review.</h1>
-          <p class="muted">Operations, Variable Types and Arrays are available immediately after registration. Logic unlocks after Arrays is complete, and the remaining topics continue sequentially. Verified Class 01 Types evidence is credited automatically only when roster identity is certain.</p>
+          <p class="muted">Operations, Variable Types and Arrays are available immediately after registration. Logic unlocks after Arrays is complete, and the remaining topics continue sequentially. Progress percentages come from the verified school identity across linked registrations, group sessions, and historical/teacher credits. These credits are reported separately from actual submitted answers.</p>
         </div>
         <div class="filters">
           <button class="filter-button active" data-group="" type="button">All</button>
@@ -71,10 +71,10 @@
       </section>
 
       <section class="section">
-        <div class="section-head"><div><h2>Roster progress</h2><p>Verified legacy Types credit and current Python Hub mastery, one row per active roster student.</p></div><span id="studentCount" class="muted"></span></div>
+        <div class="section-head"><div><h2>Roster progress · 16 workshops / 192 stages</h2><p>Canonical individual percentage based on verified roster identity. Effective credits (teacher/historical) are distinguished from server-validated submissions; missing identity is never reported as 0%.</p></div><span id="studentCount" class="muted"></span></div>
         <div class="table-wrap">
-          <table>
-            <thead><tr><th>Student</th><th>Legacy Variable Types</th><th>Hub registration</th><th>01 Operations</th><th>02 Types</th><th>03 Arrays</th><th>04 Logic</th><th>05 Conditions</th><th>06 Loops</th><th>07 Functions</th><th>08 Statistics</th><th>Last activity</th></tr></thead>
+          <table class="roster-table">
+            <thead><tr id="studentColumns"><th>Student</th><th>Legacy Types</th><th>Hub registration</th><th>Global / 192</th><th colspan="16">Loading 16 workshop topics…</th><th>Last activity</th></tr></thead>
             <tbody id="studentBody"></tbody>
           </table>
         </div>
