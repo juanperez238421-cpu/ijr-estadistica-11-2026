@@ -79,6 +79,8 @@
   const $ = id => document.getElementById(id);
   const escapeHtml = value => String(value ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
   const state = { snapshot:null, registration:null };
+  let progressRefreshInFlight=false;
+  let lastProgressRefreshAt=0;
   let evaluationAvailabilityTimer = null;
   const requestedReturnTo = new URLSearchParams(location.search).get('returnTo') || '';
   const LAB_LOGIN_RPC = config.rpc?.labLogin || 'python_hub_lab_login_v51';
@@ -190,7 +192,28 @@
     $('continueIdentityButton').textContent='Enter Learning Hub';
   }
 
-  function progressFor(slug){ return state.snapshot?.topics?.find(item=>item.slug===slug) || null; }
+  // The current registration can be new even when the verified roster student
+  // has validated answers under an older institutional email or another team.
+  // Use the backend's roster-consolidated individual progress for DISPLAY only;
+  // workshop access continues to follow the registration's server status.
+  function individualProgress(){
+    const members=state.snapshot?.members;
+    return members?.length===1 ? members[0]?.progress||null : null;
+  }
+
+  function progressFor(slug){
+    const registration=state.snapshot?.topics?.find(item=>item.slug===slug)||null;
+    const student=individualProgress()?.topics?.find(item=>item.slug===slug)||null;
+    if(!student) return registration;
+    const correct=Number(student.correct_count||0);
+    const total=Number(student.total_count||0);
+    let status=registration?.status||'locked';
+    if(status!=='locked'){
+      if(student.historical_credit||(total>0&&correct>=total)) status='completed';
+      else if(correct>0) status='in_progress';
+    }
+    return {...registration,...student,status};
+  }
 
   function localEvaluationIdentity(){
     const storedEmail=normalizeEmail(state.registration?.emails?.[0]||'');
@@ -314,17 +337,23 @@
     const reg=snapshot.registration;
     $('sessionBadge').textContent=`${reg.group_code} · Institutional lab access · ${snapshot.completed_topics}/${snapshot.total_topics}`;
     $('identitySummary').textContent=`${reg.group_code} · ${reg.display_label}`;
-    const totalStages=(snapshot.topics || []).reduce((sum,item)=>sum+Number(item.total_count||0),0);
-    const correctStages=(snapshot.topics || []).reduce((sum,item)=>sum+Number(item.correct_count||0),0);
+    const individual=individualProgress();
+    const totalStages=individual ? Number(individual.total_count||0)
+      : (snapshot.topics || []).reduce((sum,item)=>sum+Number(item.total_count||0),0);
+    const correctStages=individual ? Number(individual.correct_count||0)
+      : (snapshot.topics || []).reduce((sum,item)=>sum+Number(item.correct_count||0),0);
     const stagePercent=totalStages ? Math.round(100*correctStages/totalStages) : 0;
     $('globalPercent').textContent=`${stagePercent}%`;
     $('globalProgressBar').style.width=`${stagePercent}%`;
-    $('globalProgressCopy').textContent=`${correctStages} / ${totalStages} workshop stages correct`;
+    $('globalProgressCopy').textContent=individual
+      ? `${correctStages} / ${totalStages} validated stages or verified prior credits`
+      : `${correctStages} / ${totalStages} workshop stages correct`;
 
     renderEvaluationPanel();
     $('topicGrid').innerHTML=topics.map(topic=>{
       const p=progressFor(topic.slug) || {status:'locked',percent:0,correct_count:0,total_count:topic.exercises.length};
-      const locked=p.status==='locked';
+      const access=state.snapshot?.topics?.find(item=>item.slug===topic.slug);
+      const locked=access?.status==='locked';
       const statusLabel=p.status==='completed'?'Complete':p.status==='in_progress'?'In progress':p.status==='available'?'Available':'Locked';
       const theoryHref=locked?'#':`theory.html?topic=${encodeURIComponent(topic.slug)}`;
       const workshopHref=locked?'#':`workshop.html?topic=${encodeURIComponent(topic.slug)}`;
@@ -332,7 +361,7 @@
         <div class="hub-topic-top"><span class="hub-topic-number">${String(topic.sequence).padStart(2,'0')}</span><span class="hub-topic-status">${escapeHtml(statusLabel)}</span></div>
         <h2>${escapeHtml(topic.title)}</h2>
         <p>${escapeHtml(topic.lead)}</p>
-        <div class="hub-topic-progress"><div><strong>${Number(p.percent||0)}%</strong><span>${Number(p.correct_count||0)} / ${Number(p.total_count||topic.exercises.length)} workshop stages</span></div><div class="progress-track"><span style="width:${Number(p.percent||0)}%"></span></div></div>
+        <div class="hub-topic-progress"><div><strong>${Number(p.percent||0)}%</strong><span>${Number(p.correct_count||0)} / ${Number(p.total_count||topic.exercises.length)} ${p.historical_credit?'verified prior credit':'validated workshop stages'}</span></div><div class="progress-track"><span style="width:${Number(p.percent||0)}%"></span></div></div>
         <div class="hub-topic-actions">
           <a class="button button-light ${locked?'disabled-link':''}" href="${theoryHref}" ${locked?'aria-disabled="true" tabindex="-1"':''}>Theory</a>
           <a class="button button-dark ${locked?'disabled-link':''}" href="${workshopHref}" ${locked?'aria-disabled="true" tabindex="-1"':''}>Workshop</a>
@@ -349,6 +378,8 @@
     $('sessionBadge').classList.remove('hidden');
     $('changeRegistrationButton').textContent='Switch student';
     renderHub();
+    lastProgressRefreshAt=Date.now();
+    window.dispatchEvent(new CustomEvent('ijr:stat11-hub-snapshot',{detail:{snapshot:state.snapshot}}));
 
     const overviewRule=document.querySelector('#hubPanel .hub-overview .sequence-rule');
     if(overviewRule){
@@ -362,6 +393,40 @@
     if(match){
       const progress=progressFor(match[1]);
       if(progress && progress.status!=='locked') setTimeout(()=>location.replace(requestedReturnTo),0);
+    }
+  }
+
+  // Refresh on return from workshops, restored tabs and explicit request.
+  // A failed refresh never signs out a student or erases previously shown data.
+  async function refreshHubProgress(){
+    if(progressRefreshInFlight || $('hubPanel')?.classList.contains('hidden')) return;
+    const saved=getStoredSession();
+    if(!saved?.registrationId || !saved?.accessToken) return;
+    progressRefreshInFlight=true;
+    const button=$('refreshProgressButton');
+    const status=$('progressRefreshStatus');
+    if(button) button.disabled=true;
+    if(status) status.textContent='Updating progress…';
+    try{
+      const data=await rpc(config.rpc.resume,{
+        p_registration_id:saved.registrationId,
+        p_access_token:saved.accessToken
+      });
+      if(!data?.snapshot?.registration || !Array.isArray(data.snapshot.topics))
+        throw new Error('Progress snapshot is incomplete.');
+      // Ignore any late response after a shared computer switches students.
+      if(getStoredSession()?.registrationId!==saved.registrationId) return;
+      state.snapshot=data.snapshot;
+      renderHub();
+      lastProgressRefreshAt=Date.now();
+      window.dispatchEvent(new CustomEvent('ijr:stat11-hub-snapshot',{detail:{snapshot:data.snapshot}}));
+      if(status) status.textContent='Progress updated from Supabase.';
+    }catch(error){
+      if(status) status.textContent='Could not update. Your saved work is unchanged; retry.';
+      console.warn('Learning Hub progress refresh failed.',error);
+    }finally{
+      if(button) button.disabled=false;
+      progressRefreshInFlight=false;
     }
   }
 
@@ -469,6 +534,14 @@
     prepareLabAccessCopy();
     $('identityStepForm').addEventListener('submit',handleIdentityStep);
     $('changeRegistrationButton').addEventListener('click',signOutAndSwitch);
+    $('refreshProgressButton')?.addEventListener('click',refreshHubProgress);
+    window.addEventListener('pageshow',event=>{if(event.persisted) refreshHubProgress();});
+    document.addEventListener('visibilitychange',()=>{
+      if(!document.hidden && Date.now()-lastProgressRefreshAt>8000) refreshHubProgress();
+    });
+    window.addEventListener('focus',()=>{
+      if(Date.now()-lastProgressRefreshAt>8000) refreshHubProgress();
+    });
 
     // The password and email-confirmation controls remain in the HTML only for
     // backward-compatible markup. V51 does not use them in the supervised lab.
