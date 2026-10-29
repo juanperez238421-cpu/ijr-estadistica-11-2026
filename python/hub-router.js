@@ -207,9 +207,11 @@
     if(!student) return registration;
     const correct=Number(student.correct_count||0);
     const total=Number(student.total_count||0);
-    const available=registration?.status!=='locked';
-    const status=!available?'locked':student.historical_credit||(total>0&&correct>=total)
-      ?'completed':correct>0?'in_progress':registration?.status||'available';
+    let status=registration?.status||'locked';
+    if(status!=='locked'){
+      if(student.historical_credit||(total>0&&correct>=total)) status='completed';
+      else if(correct>0) status='in_progress';
+    }
     return {...registration,...student,status};
   }
 
