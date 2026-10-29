@@ -127,6 +127,7 @@
     try{
       const {data,error}=await client.rpc(config.rpc.resume,{p_registration_id:saved.registrationId,p_access_token:saved.accessToken});
       if(error||!data?.snapshot) throw error||new Error('Progress snapshot unavailable.');
+      if(getSession()?.registrationId!==saved.registrationId) return;
       lastRegistrationId=saved.registrationId;
       render(data.snapshot);
     }catch(error){
@@ -145,11 +146,21 @@
     const hub=$('hubPanel');
     if(hub){
       const observer=new MutationObserver(()=>{
-        if(!hub.classList.contains('hidden')) refresh();
+        if(!hub.classList.contains('hidden') && getSession()?.registrationId!==lastRegistrationId) refresh();
       });
       observer.observe(hub,{attributes:true,attributeFilter:['class']});
     }
     refresh();
+  });
+
+  // Reuse the same server snapshot as the Hub header/cards, avoiding an
+  // independent request race that can replace fresh percentages with stale data.
+  window.addEventListener('ijr:stat11-hub-snapshot',event=>{
+    const snapshot=event.detail?.snapshot;
+    const session=getSession();
+    if(!session?.registrationId || snapshot?.registration?.id!==session.registrationId) return;
+    lastRegistrationId=session.registrationId;
+    render(snapshot);
   });
 
   window.addEventListener('pageshow',()=>{
