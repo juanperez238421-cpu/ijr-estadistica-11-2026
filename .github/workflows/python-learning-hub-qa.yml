@@ -12,6 +12,7 @@ on:
       - 'qa/check_workshop_v47_contract.cjs'
       - 'qa/check_workshop4_independent_classes_v74.cjs'
       - 'qa/arrays_workshop_v47_e2e.cjs'
+      - 'qa/arrays_stage04_pyodide_v76.mjs'
       - 'qa/check_statistics11_xlsx_curriculum_v46.cjs'
       - 'qa/check_library_playground_v62.cjs'
       - 'qa/check_topic04_guidance_v63.cjs'
@@ -34,6 +35,7 @@ on:
       - 'qa/check_workshop_v47_contract.cjs'
       - 'qa/check_workshop4_independent_classes_v74.cjs'
       - 'qa/arrays_workshop_v47_e2e.cjs'
+      - 'qa/arrays_stage04_pyodide_v76.mjs'
       - 'qa/check_statistics11_xlsx_curriculum_v46.cjs'
       - 'qa/check_library_playground_v62.cjs'
       - 'qa/check_topic04_guidance_v63.cjs'
@@ -80,6 +82,8 @@ jobs:
           node --check qa/check_workshop4_independent_classes_v74.cjs
           node --check qa/check_statistics11_xlsx_curriculum_v46.cjs
           node --check qa/arrays_workshop_v47_e2e.cjs
+          node --check python/arrays-stage-isolation-v76.js
+          node --check qa/arrays_stage04_pyodide_v76.mjs
           node --check qa/check_library_playground_v62.cjs
           node --check qa/check_topic04_guidance_v63.cjs
           node --check qa/check_statistics11_team_progress_v66.cjs
@@ -113,3 +117,4 @@ jobs:
           npm install --no-save --ignore-scripts pyodide@0.27.7
           node qa/library_playground_v62_pyodide_smoke.mjs
           node qa/statistics11_eval_pyodide_v71.mjs
+          node qa/arrays_stage04_pyodide_v76.mjs
