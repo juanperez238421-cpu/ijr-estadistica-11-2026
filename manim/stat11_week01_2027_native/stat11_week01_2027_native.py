@@ -291,5 +291,5 @@ class Statistics11Week01Native(JPMathClassroomScene):
             self.play(FadeIn(p,shift=UP*.10),run_time=RUN_NORMAL)
             self.wait(PAUSE_READ)
         self.show_pause('Next week: from a complete tree to the multiplication rule.', 5)
-        self.clear_stage(keep_header=False)
+        # standard_closing handles FadeOut of the remaining objects.
         self.standard_closing('Every outcome once. Every choice justified.')
