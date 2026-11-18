@@ -167,7 +167,7 @@ class Stat11W01Companion2027(SeniorCompanion):
         table.group.move_to(UP*.08)
         self.assert_content_safe(table.group,"12-cell table")
         self.animate_table_rows(table,include_header=True,pause=.35)
-        self.play(self.shade_cells(table,[(i,3) for i in range(1,5)]),
+        self.play(self.shade_cells(table,[(i,3) for i in range(1,5)],opacity=.23),
                   run_time=RUN_NORMAL)
         self.pause_line("The previously missing outcomes are visible in the last column.",4)
 
@@ -180,6 +180,7 @@ class Stat11W01Companion2027(SeniorCompanion):
         root=Dot(origin,radius=.105,color=BLACK_LINE)
         self.play(FadeIn(root),run_time=RUN_QUICK)
         leaves=VGroup()
+        current_label=None
         for i,y in enumerate(first_y):
             mid=np.array([-3.45,y,0])
             trunk=Line(origin,mid,color=BLACK_LINE,stroke_width=2.5)
@@ -194,11 +195,22 @@ class Stat11W01Companion2027(SeniorCompanion):
                 self.play(Create(path),MoveAlongPath(cursor,path),
                           run_time=.37)
                 self.remove(cursor)
-                leaf=self.pill(f"S{i+1}+B{j+1}",width=2.73)
-                leaf.move_to([2.36,target[1],0])
+                leaf=Dot(target,radius=.070,color=BLACK_LINE)
                 leaves.add(leaf)
-                self.play(FadeIn(leaf,shift=RIGHT*.10),run_time=.26)
-        self.assert_content_safe(leaves,"twelve leaves")
+                label=self.pill(f"S{i+1} + B{j+1}",width=3.20).move_to([4.08,.68,0])
+                if current_label is None:
+                    self.play(GrowFromCenter(leaf),FadeIn(label),
+                              run_time=.31)
+                else:
+                    self.play(GrowFromCenter(leaf),
+                              ReplacementTransform(current_label,label),
+                              run_time=.31)
+                current_label=label
+        self.assert_content_safe(leaves,"twelve non-overlapping endpoints")
+        result=self.tile("12 COMPLETE PATHS",
+                         "Each endpoint represents one shirt + badge",
+                         width=5.10,height=1.64,size=32).move_to([4.08,-1.35,0])
+        self.play(FadeIn(result,shift=UP*.14),run_time=RUN_NORMAL)
         self.pause_line("Count completed paths — not only the first branches.",3.7)
 
     def challenge(self):
@@ -299,7 +311,7 @@ class Stat11W02Companion2027(SeniorCompanion):
         tab.group.move_to(UP*.31)
         self.assert_content_safe(tab.group,"restricted table")
         self.animate_table_rows(tab,include_header=True,pause=.28)
-        self.play(self.shade_cells(tab,[(1,3),(3,2)]),
+        self.play(self.shade_cells(tab,[(1,3),(3,2)],opacity=.23),
                   run_time=RUN_NORMAL)
         self.equation(r"4\times3-2=10",DOWN*2.65,55)
         self.pause_line("Cross out the two invalid cells. Ten options remain.",3.5)
