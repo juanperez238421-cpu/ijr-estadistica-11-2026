@@ -21,7 +21,14 @@ from stat11_week01_2027_native import Statistics11Week01Native
 from stat11_q1_2027_overview import Statistics11Quarter1Overview
 
 
-class Statistics11Week01_2027(Statistics11Week01Native):
+class SequentialWeekNumbering:
+    """Use visually contiguous section numbers even for validated reused scenes."""
+    def step(self, number: int, title: str, subtitle: str) -> None:
+        self._lesson_section = getattr(self, "_lesson_section", 0) + 1
+        return super().step(self._lesson_section, title, subtitle)
+
+
+class Statistics11Week01_2027(SequentialWeekNumbering, Statistics11Week01Native):
     """Week 1 — INTRODUCTION TO COUNTING PROBLEMS, 19–22 Jan 2027.
 
     Formative evidence: recognize counting, complete list/table/tree, explain
@@ -64,7 +71,7 @@ class Statistics11Week01_2027(Statistics11Week01Native):
         self.show_pause("Next: count the same results using multiplication.",3)
 
 
-class Statistics11Week02_2027(Statistics11Quarter1Overview):
+class Statistics11Week02_2027(SequentialWeekNumbering, Statistics11Quarter1Overview):
     """Week 2 — FUNDAMENTAL COUNTING PRINCIPLE, 25–29 Jan 2027."""
     def opening(self) -> None:
         self.standard_opening(
@@ -192,7 +199,7 @@ class Statistics11Week02_2027(Statistics11Quarter1Overview):
         self.standard_closing("Count by stages. Verify every completed outcome.")
 
 
-class Statistics11Week03_2027(Statistics11Quarter1Overview):
+class Statistics11Week03_2027(SequentialWeekNumbering, Statistics11Quarter1Overview):
     """Week 3 — MULTI-STAGE COUNTING AND TREE DIAGRAMS, 1–5 Feb 2027."""
     def opening(self) -> None:
         self.standard_opening(
@@ -320,7 +327,7 @@ class Statistics11Week03_2027(Statistics11Quarter1Overview):
         self.standard_closing("A complete path makes each stage visible.")
 
 
-class Statistics11Week04_2027(Statistics11Quarter1Overview):
+class Statistics11Week04_2027(SequentialWeekNumbering, Statistics11Quarter1Overview):
     """Week 4 — BASIC PERMUTATIONS WITHOUT REPETITION, 8–12 Feb 2027."""
     def opening(self) -> None:
         self.standard_opening(
