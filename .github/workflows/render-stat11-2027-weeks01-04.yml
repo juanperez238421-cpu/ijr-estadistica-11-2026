@@ -142,7 +142,7 @@ jobs:
           name: Statistics11-2027-${{ matrix.week }}-REAL-MANIMCE-PQH
           retention-days: 60
           if-no-files-found: error
-          path: manim/stat11_2027_weeks01_04/delivery/Statistics11_Week01_2027_NATIVE_FINAL_PQH.mp4
+          path: manim/stat11_2027_weeks01_04/delivery/Statistics11_2027_${{ matrix.week }}_FINAL_PQH.mp4
 
       - name: Upload source and technical QA
         if: always()
