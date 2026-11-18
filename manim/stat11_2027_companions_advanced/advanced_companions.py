@@ -176,7 +176,7 @@ class Stat11W01Companion2027(SeniorCompanion):
                   "Each branch goes from a shirt to one of its three badges.")
         origin=np.array([-6.50,0.0,0])
         first_y=[1.85,.54,-.77,-2.08]
-        terminal_y=[2.25-i*.38 for i in range(12)]
+        terminal_y=[2.12-i*.37 for i in range(12)]
         root=Dot(origin,radius=.105,color=BLACK_LINE)
         self.play(FadeIn(root),run_time=RUN_QUICK)
         leaves=VGroup()
@@ -212,6 +212,7 @@ class Stat11W01Companion2027(SeniorCompanion):
         self.assert_content_safe(panel,"club example")
         self.fade_items(panel,3.0)
         self.pause_line("PAUSE: list ALL unique club + time choices.",8)
+        self.play(FadeOut(panel),run_time=RUN_NORMAL)
         results=self.outcome_grid([f"C{i}-T{j}" for i in range(1,4)
                                    for j in range(1,5)],
                                   cols=4,width=2.81,center=DOWN*.85)
@@ -268,7 +269,7 @@ class Stat11W02Companion2027(SeniorCompanion):
         label=self.tile("6 ROWS","Each row contains 4 complete lunches",
                         width=6.05,height=1.62,size=33).move_to([3.70,.78,0])
         self.play(FadeIn(label,shift=RIGHT*.15))
-        self.equation(r"6\cdot4=24",pos=RIGHT*3.63+DOWN*1.29,size=64)
+        self.equation(r"6\cdot4=24",position=RIGHT*3.63+DOWN*1.29,size=64)
         self.pause_line("The dots are 24 DIFFERENT meal-and-drink pairs.",4)
 
     def derive_product(self):
