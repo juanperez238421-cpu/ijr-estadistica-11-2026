@@ -1,0 +1,175 @@
+name: Statistics 11 2027 - Four ADVANCED Companion Videos Real PQH
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "manim/stat11_2027_companions_advanced/**"
+      - ".github/workflows/render-stat11-2027-companions-advanced.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  render-weekly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - week: W01
+            scene: Stat11W01Companion2027
+          - week: W02
+            scene: Stat11W02Companion2027
+          - week: W03
+            scene: Stat11W03Companion2027
+          - week: W04
+            scene: Stat11W04Companion2027
+    env:
+      PROJECT: manim/stat11_2027_companions_advanced
+      WEEK: ${{ matrix.week }}
+      IMAGE: manimcommunity/manim:v0.20.1
+      SCENE: ${{ matrix.scene }}
+      PY: advanced_companions.py
+      NAME: Statistics11_2027_${{ matrix.week }}_ADVANCED_FINAL_PQH.mp4
+      TAG: statistics11-2027-${{ matrix.week }}-advanced-companion-v1
+
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+
+      - name: Static QA - exact consolidated library and lesson data
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT"
+          mkdir -p delivery qa
+          python -m py_compile "$PY" stat11_q1_2027_overview.py library/jp_classroom_style.py
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('advanced_companions.py').read_text()
+          style=Path('library/jp_classroom_style.py').read_text()
+          basis=Path('stat11_q1_2027_overview.py').read_text()
+          assert 'class SeniorCompanion(Statistics11Quarter1Overview)' in src
+          for n in range(1,5):
+              assert f'class Stat11W0{n}Companion2027(SeniorCompanion)' in src
+          for key in ('validate_lesson_data', 'self.assert_content_safe', 'self.standard_closing', 'self.build_table', 'MoveAlongPath'):
+              assert key in src, key
+          assert 'class Statistics11Quarter1Overview(JPMathClassroomScene)' in basis
+          assert 'class JPClassroomScene(MovingCameraScene)' in style
+          assert 'config.pixel_width = 1920' in style
+          assert 'config.pixel_height = 1080' in style
+          assert 'config.frame_rate = 30' in style
+          print('ADVANCED_NATIVE_STATIC_QA=PASS')
+          PY
+          sha256sum "$PY" stat11_q1_2027_overview.py library/jp_classroom_style.py > qa/source_sha256.txt
+
+      - name: Pull ManimCE v0.20.1 Docker image
+        run: docker pull "$IMAGE"
+
+      - name: Required native PQL test
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-user -e LESSON_TIME_SCALE=0.18 \
+            -v "$PWD:/manim" -w "/manim/$PROJECT" \
+            --entrypoint bash "$IMAGE" -c '
+              set -euo pipefail
+              mkdir -p /tmp/xdg-safe
+              printf "#!/bin/sh\nexit 0\n" > /tmp/xdg-safe/xdg-open
+              chmod +x /tmp/xdg-safe/xdg-open
+              export PATH="/tmp/xdg-safe:$PATH"
+              manim -pql "$0" "$1" --format=mp4 --media_dir media_qa --disable_caching
+            ' "$PY" "$SCENE"
+          PREVIEW="$(find "$PROJECT/media_qa" -type f -name '*.mp4' ! -path '*/partial_movie_files/*' | head -n 1)"
+          test -s "$PREVIEW"
+          echo "$PREVIEW" > "$PROJECT/qa/preview_path.txt"
+
+      - name: Native ManimCE final PQH render
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-user -e LESSON_TIME_SCALE=1.00 \
+            -v "$PWD:/manim" -w "/manim/$PROJECT" \
+            --entrypoint bash "$IMAGE" -c '
+              set -euo pipefail
+              mkdir -p /tmp/xdg-safe
+              printf "#!/bin/sh\nexit 0\n" > /tmp/xdg-safe/xdg-open
+              chmod +x /tmp/xdg-safe/xdg-open
+              export PATH="/tmp/xdg-safe:$PATH"
+              manim -pqh "$0" "$1" --format=mp4 --media_dir media_final --disable_caching
+            ' "$PY" "$SCENE"
+          FINAL="$(find "$PROJECT/media_final" -type f -name '*.mp4' ! -path '*/partial_movie_files/*' | head -n 1)"
+          test -s "$FINAL"
+          cp "$FINAL" "$PROJECT/delivery/$NAME"
+
+      - name: Install FFmpeg tools required by host-side QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg zip
+
+      - name: Media QA, archive and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          V="$PROJECT/delivery/$NAME"
+          ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt \
+            -show_entries format=duration,size -of default=noprint_wrappers=1 "$V" \
+            | tee "$PROJECT/qa/ffprobe.txt"
+          grep -q '^codec_name=h264$' "$PROJECT/qa/ffprobe.txt"
+          grep -q '^width=1920$' "$PROJECT/qa/ffprobe.txt"
+          grep -q '^height=1080$' "$PROJECT/qa/ffprobe.txt"
+          grep -q '^r_frame_rate=30/1$' "$PROJECT/qa/ffprobe.txt"
+          ffmpeg -nostdin -hide_banner -v error -i "$V" -f null - 2> "$PROJECT/qa/decode_errors.txt"
+          test ! -s "$PROJECT/qa/decode_errors.txt"
+          sha256sum "$V" > "$PROJECT/qa/video_sha256.txt"
+          mkdir -p "$PROJECT/qa/contact"
+          ffmpeg -nostdin -hide_banner -v error -i "$V" \
+            -vf "fps=1/18,scale=960:-2" -frames:v 20 \
+            "$PROJECT/qa/contact/frame_%02d.jpg"
+          cd "$PROJECT"
+          zip -q -r "delivery/Statistics11_2027_${{ matrix.week }}_ADVANCED_SOURCE_QA.zip" \
+            "$PY" stat11_q1_2027_overview.py library qa -x "qa/contact/*"
+
+      - name: Upload verified native video
+        uses: actions/upload-artifact@v4
+        with:
+          name: Statistics11-2027-${{ matrix.week }}-ADVANCED-REAL-PQH
+          retention-days: 60
+          if-no-files-found: error
+          path: manim/stat11_2027_companions_advanced/delivery/Statistics11_2027_${{ matrix.week }}_ADVANCED_FINAL_PQH.mp4
+
+      - name: Upload source and technical QA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Statistics11-2027-${{ matrix.week }}-ADVANCED-SOURCE-QA
+          retention-days: 60
+          if-no-files-found: warn
+          path: |
+            manim/stat11_2027_companions_advanced/advanced_companions.py
+            manim/stat11_2027_companions_advanced/stat11_q1_2027_overview.py
+            manim/stat11_2027_companions_advanced/library/jp_classroom_style.py
+            manim/stat11_2027_companions_advanced/qa/**
+
+      - name: Publish permanent MP4 download in GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          VIDEO="$PROJECT/delivery/$NAME"
+          PACKAGE="$PROJECT/delivery/Statistics11_2027_${{ matrix.week }}_ADVANCED_SOURCE_QA.zip"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$VIDEO" "$PACKAGE" --clobber
+          else
+            gh release create "$TAG" "$VIDEO" "$PACKAGE" \
+              --title "Statistics 11 Quarter I | $WEEK | Native ManimCE PQH" \
+              --notes "Native ManimCE v0.20.1, Four distinct advanced worked-example companion lessons; PQL smoke passed; literal PQH final rendered; 1920x1080 30fps H264; source and QA attached."
+          fi
