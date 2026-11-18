@@ -21,7 +21,7 @@ jobs:
       SCENE: Statistics11Period1Full
       PY: stat11_period1_full_2027.py
       NAME: Statistics11_Period1_2027_FULL_FINAL_PQH.mp4
-      TAG: statistics11-period1-2027-full-v3
+      TAG: statistics11-period1-2027-full-v4
 
     steps:
       - name: Checkout exact source
@@ -37,6 +37,26 @@ jobs:
           cp ../stat11_week01_2027_native/library/jp_classroom_style.py library/jp_classroom_style.py
           echo "d0035741a2b0308f398aa4a78a367cc5d40140d85c69aac400b1cb21a95b0d8a  $PY" | sha256sum -c -
           echo "Reconstructed scene matches the source SHA-256."
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("stat11_period1_full_2027.py")
+          scene=p.read_text()
+          corrections=(
+             ("mids_y=(2.06,1.36,.51,-.25,-1.08,-1.80)",
+              "mids_y=(2.02,1.23,.44,-.35,-1.14,-1.93)"),
+             ("Create(Line(parent,p,stroke_width=2.0,color=BLACK_LINE)),",
+              "Create(Line(parent+RIGHT*.60,p+LEFT*.765,stroke_width=2.0,color=BLACK_LINE)),"),
+             ("route=Line(p,dest,stroke_width=1.9,color=BLACK_LINE)",
+              "route=Line(p+RIGHT*.765,np.array([3.17,y,0]),stroke_width=1.9,color=BLACK_LINE)"),
+          )
+          for before,after in corrections:
+              assert scene.count(before)==1, before
+              scene=scene.replace(before,after)
+          p.write_text(scene)
+          PY
+          echo "00e81716766959677cafca6017075e3fa68a9521520479f736ae7892e04b8f64  $PY" | sha256sum -c -
+          echo "V4 connector QA patch: no lines through graphical node labels."
+
           
       - name: Static QA - exact consolidated library and lesson data
         shell: bash
@@ -168,6 +188,6 @@ jobs:
             gh release upload "$TAG" "$VIDEO" "$PACKAGE" --clobber
           else
             gh release create "$TAG" "$VIDEO" "$PACKAGE" \
-              --title "Statistics 11 Period I Complete 2027 - Native ManimCE PQH" \
+              --title "Statistics 11 Period I Complete 2027 - Native ManimCE PQH V4" \
               --notes "Native ManimCE v0.20.1; full period I axes verified against the 2026 institutional malla; 2027 weekly schedule only weeks 1-4; PQL/PQH and QA evidence included."
           fi
