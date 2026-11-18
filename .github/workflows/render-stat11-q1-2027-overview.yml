@@ -1,0 +1,162 @@
+name: Statistics 11 Q1 Overview 2027 - REAL ManimCE PQH
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "manim/stat11_q1_2027_overview/**"
+      - ".github/workflows/render-stat11-q1-2027-overview.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  render-native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      PROJECT: manim/stat11_q1_2027_overview
+      IMAGE: manimcommunity/manim:v0.20.1
+      SCENE: Statistics11Quarter1Overview
+      PY: stat11_q1_2027_overview.py
+      NAME: Statistics11_Q1_2027_OVERVIEW_FINAL_PQH.mp4
+      TAG: statistics11-q1-2027-overview-v1
+
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+
+      - name: Static QA - exact consolidated library and lesson data
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT"
+          mkdir -p delivery qa
+          python -m py_compile "$PY" library/jp_classroom_style.py
+          python - <<'PY'
+          from pathlib import Path
+          src = Path("stat11_q1_2027_overview.py").read_text()
+          lib = Path("library/jp_classroom_style.py").read_text()
+          for token in ["class Statistics11Quarter1Overview(JPMathClassroomScene)",
+                        "validate_lesson_data", "standard_opening",
+                        "assert_content_safe", "clear_stage",
+                        "build_table", "MoveAlongPath", "standard_closing"]:
+              assert token in src, token
+          for token in ["class JPClassroomScene(MovingCameraScene)",
+                        "class JPMathClassroomScene(JPClassroomScene)",
+                        "assert_within_frame", "standard_opening", "set_header"]:
+              assert token in lib, token
+          assert 'SCHOOL_PAIRS = ' in src
+          assert 'PERMUTATIONS_3 = ' in src
+          assert 'LATER IN QUARTER 1' in src
+          print("NATIVE SOURCE & CURRICULAR CHECK: PASS")
+          PY
+          sha256sum "$PY" library/jp_classroom_style.py > qa/source_sha256.txt
+
+      - name: Pull ManimCE v0.20.1 Docker image
+        run: docker pull "$IMAGE"
+
+      - name: Required native PQL test
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-user -e LESSON_TIME_SCALE=0.18 \
+            -v "$PWD:/manim" -w "/manim/$PROJECT" \
+            --entrypoint bash "$IMAGE" -c '
+              set -euo pipefail
+              mkdir -p /tmp/xdg-safe
+              printf "#!/bin/sh\nexit 0\n" > /tmp/xdg-safe/xdg-open
+              chmod +x /tmp/xdg-safe/xdg-open
+              export PATH="/tmp/xdg-safe:$PATH"
+              manim -pql "$0" "$1" --format=mp4 --media_dir media_qa --disable_caching
+            ' "$PY" "$SCENE"
+          PREVIEW="$(find "$PROJECT/media_qa" -type f -name '*.mp4' ! -path '*/partial_movie_files/*' | head -n 1)"
+          test -s "$PREVIEW"
+          echo "$PREVIEW" > "$PROJECT/qa/preview_path.txt"
+
+      - name: Native ManimCE final PQH render
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp/manim-user -e LESSON_TIME_SCALE=0.90 \
+            -v "$PWD:/manim" -w "/manim/$PROJECT" \
+            --entrypoint bash "$IMAGE" -c '
+              set -euo pipefail
+              mkdir -p /tmp/xdg-safe
+              printf "#!/bin/sh\nexit 0\n" > /tmp/xdg-safe/xdg-open
+              chmod +x /tmp/xdg-safe/xdg-open
+              export PATH="/tmp/xdg-safe:$PATH"
+              manim -pqh "$0" "$1" --format=mp4 --media_dir media_final --disable_caching
+            ' "$PY" "$SCENE"
+          FINAL="$(find "$PROJECT/media_final" -type f -name '*.mp4' ! -path '*/partial_movie_files/*' | head -n 1)"
+          test -s "$FINAL"
+          cp "$FINAL" "$PROJECT/delivery/$NAME"
+
+      - name: Install FFmpeg tools required by host-side QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg zip
+
+      - name: Media QA, archive and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          V="$PROJECT/delivery/$NAME"
+          ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate,pix_fmt \
+            -show_entries format=duration,size -of default=noprint_wrappers=1 "$V" \
+            | tee "$PROJECT/qa/ffprobe.txt"
+          grep -q '^codec_name=h264$' "$PROJECT/qa/ffprobe.txt"
+          grep -q '^width=1920$' "$PROJECT/qa/ffprobe.txt"
+          grep -q '^height=1080$' "$PROJECT/qa/ffprobe.txt"
+          grep -q '^r_frame_rate=30/1$' "$PROJECT/qa/ffprobe.txt"
+          ffmpeg -nostdin -hide_banner -v error -i "$V" -f null - 2> "$PROJECT/qa/decode_errors.txt"
+          test ! -s "$PROJECT/qa/decode_errors.txt"
+          sha256sum "$V" > "$PROJECT/qa/video_sha256.txt"
+          mkdir -p "$PROJECT/qa/contact"
+          ffmpeg -nostdin -hide_banner -v error -i "$V" \
+            -vf "fps=1/18,scale=960:-2" -frames:v 20 \
+            "$PROJECT/qa/contact/frame_%02d.jpg"
+          cd "$PROJECT"
+          zip -q -r "delivery/Statistics11_Q1_2027_OVERVIEW_SOURCE_QA.zip" \
+            "$PY" library qa -x "qa/contact/*"
+
+      - name: Upload verified native video
+        uses: actions/upload-artifact@v4
+        with:
+          name: Statistics11-Q1-2027-REAL-MANIMCE-PQH
+          retention-days: 60
+          if-no-files-found: error
+          path: manim/stat11_q1_2027_overview/delivery/Statistics11_Q1_2027_OVERVIEW_FINAL_PQH.mp4
+
+      - name: Upload source and technical QA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Statistics11-Q1-2027-SOURCE-QA
+          retention-days: 60
+          if-no-files-found: warn
+          path: |
+            manim/stat11_q1_2027_overview/stat11_q1_2027_overview.py
+            manim/stat11_q1_2027_overview/library/jp_classroom_style.py
+            manim/stat11_q1_2027_overview/qa/**
+
+      - name: Publish permanent MP4 download in GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          VIDEO="$PROJECT/delivery/$NAME"
+          PACKAGE="$PROJECT/delivery/Statistics11_Q1_2027_OVERVIEW_SOURCE_QA.zip"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$VIDEO" "$PACKAGE" --clobber
+          else
+            gh release create "$TAG" "$VIDEO" "$PACKAGE" \
+              --title "Statistics 11 Quarter 1 Overview 2027 - Native ManimCE PQH" \
+              --notes "Native ManimCE v0.20.1; first four 2027 quarter-one weeks verified, later topics labeled preview; PQL/PQH and QA evidence included."
+          fi
